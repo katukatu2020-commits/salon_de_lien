@@ -1,4 +1,6 @@
 import { put } from "@vercel/blob";
+import { checkGeneratedImageIdentity } from "@/lib/ai/identity-checker";
+import { checkGeneratedImageQuality } from "@/lib/ai/image-quality-checker";
 import { editHairWithOpenAi } from "@/lib/ai/providers/openai-hair-edit";
 import type {
   StyleSimulationAngle,
@@ -16,13 +18,13 @@ const ANGLES: Array<{
     key: "front_three_quarter",
     label: "斜め正面",
     masterPrompt:
-      "three-quarter front view, face clearly visible, preserve identity and original facial proportions"
+      "three-quarter front view, face clearly visible, preserve identity and original facial proportions, one person only, one face only"
   },
   {
     key: "side",
     label: "横",
     masterPrompt:
-      "side profile view, preserve nose profile, jawline, ear position, neck line, and head silhouette"
+      "side profile view, one person only, one head only, preserve nose profile, jawline, ear position, neck line, and head silhouette"
   },
   {
     key: "back_three_quarter",
@@ -78,7 +80,12 @@ async function createReferenceArchiveUrl(params: {
   const referenceUrls = selectedReferenceUrls(params);
   let addedCount = 0;
 
-  console.log("[photomaker] selected reference image count", referenceUrls.length);
+  console.log("[identity-master] selected reference image count", referenceUrls.length);
+  console.log("[identity-master] selected groups", {
+    front: params.frontImageUrls.slice(0, 4).length,
+    side: params.sideImageUrls.slice(0, 1).length,
+    back: 0
+  });
 
   if (referenceUrls.length === 0) {
     throw new Error("PhotoMakerに渡す参照写真がありません。");
@@ -89,7 +96,7 @@ async function createReferenceArchiveUrl(params: {
       const response = await fetch(url);
 
       if (!response.ok) {
-        console.warn("[photomaker] reference image fetch failed", { status: response.status });
+        console.warn("[identity-master] reference image fetch failed", { status: response.status });
         continue;
       }
 
@@ -97,7 +104,7 @@ async function createReferenceArchiveUrl(params: {
       const extension = imageExtension(contentType);
 
       if (!extension) {
-        console.warn("[photomaker] reference image skipped: unsupported content-type", {
+        console.warn("[identity-master] reference image skipped: unsupported content-type", {
           contentType: contentType || "missing"
         });
         continue;
@@ -106,14 +113,14 @@ async function createReferenceArchiveUrl(params: {
       const buffer = Buffer.from(await response.arrayBuffer());
 
       if (buffer.byteLength === 0) {
-        console.warn("[photomaker] reference image skipped: empty response");
+        console.warn("[identity-master] reference image skipped: empty response");
         continue;
       }
 
       addedCount += 1;
       zip.file(`reference-${String(addedCount).padStart(2, "0")}.${extension}`, buffer);
     } catch (error) {
-      console.warn("[photomaker] reference image fetch failed", { error });
+      console.warn("[identity-master] reference image fetch failed", { error });
     }
   }
 
@@ -122,7 +129,7 @@ async function createReferenceArchiveUrl(params: {
   }
 
   const archiveBuffer = await zip.generateAsync({ type: "nodebuffer", compression: "DEFLATE" });
-  console.log("[photomaker] zip bytes", archiveBuffer.length);
+  console.log("[identity-master] zip bytes", archiveBuffer.length);
   const blob = await put(
     `customers/${params.customerId}/style-simulations/identity-${params.styleSuggestionId}-${Date.now()}.zip`,
     archiveBuffer,
@@ -134,28 +141,29 @@ async function createReferenceArchiveUrl(params: {
     }
   );
 
-  console.log("[photomaker] image_archive_url", blob.url ? "present" : "missing");
+  console.log("[identity-master] image_archive_url", blob.url ? "present" : "missing");
 
   return blob.url;
 }
 
 function buildIdentityMasterPrompt(anglePrompt: string) {
+  // fal PhotoMaker は最終髪型画像ではなく、本人性の高い基準顔画像を作るために使う。
+  // 髪型変更は後段のOpenAI hair editで行う。
+  // ここでは髪型を作り込みすぎない。
   return [
-    "portrait photo of img",
-    "the same person img from the reference images",
-    "identity-preserving neutral salon reference image",
-    "single person only",
-    "no collage",
-    "no split face",
-    "no multiple faces",
-    "no duplicated face",
-    "no face fragments",
-    "preserve the person's facial features, eyes, eyebrows, nose, mouth, jawline, face shape, ears, neck, skin texture, age impression, and facial proportions",
-    "Do not change the identity",
+    "single-person portrait photo of img",
+    "only one person, one face only, solo portrait, centered head-and-shoulders composition",
+    "no other people, no second person, no split face, no collage, no comparison image, no duplicated face, no face fragments",
+    "identity master reference image for a hair salon consultation",
+    "preserve the same person's identity from the reference images",
+    "preserve facial features, eyes, eyebrows, nose, mouth, jawline, face shape, cheeks, ears, neck, skin texture, age impression, and facial proportions",
+    "Keep the hairstyle close to the reference photos",
+    "Do not create the final hairstyle simulation yet",
+    "Use neutral, simple, tidy hair that keeps the face visible",
     "Do not beautify the face",
     "Do not make the person younger",
-    "Keep the hairstyle close to the reference photos; this is an identity master image, not the final hairstyle simulation",
-    "Neutral studio background, soft even lighting, natural realistic photo, consultation image for a hair salon",
+    "Do not retouch the skin heavily",
+    "Neutral studio background, soft even lighting, natural realistic photo, one person only",
     anglePrompt
   ].join(", ");
 }
@@ -180,15 +188,33 @@ function negativePrompt() {
     "bad anatomy",
     "blurry",
     "low quality",
-    "collage",
-    "multiple faces",
+    "multiple people",
+    "two people",
+    "second person",
+    "group photo",
+    "two faces",
     "duplicate face",
     "split face",
+    "face collage",
+    "comparison image",
+    "before and after",
     "face fragments",
-    "noise pattern",
-    "abstract pattern",
+    "cropped facial parts",
+    "extra eyes",
+    "extra nose",
+    "extra mouth",
+    "abstract noise",
+    "corrupted image",
+    "colorful noise pattern",
+    "glitch",
     "broken image",
-    "corrupted image"
+    "different person",
+    "changed face",
+    "beautified face",
+    "younger face",
+    "over-retouched skin",
+    "celebrity lookalike",
+    "fashion model face"
   ].join(", ");
 }
 
@@ -206,6 +232,60 @@ function extractImageUrl(result: unknown): string | null {
   };
 
   return body.images?.[0]?.url ?? body.image?.url ?? body.url ?? null;
+}
+
+async function validateIdentityMasterImages({
+  images,
+  referenceFrontUrls,
+  referenceSideUrls
+}: {
+  images: StyleSimulationImage[];
+  referenceFrontUrls: string[];
+  referenceSideUrls: string[];
+}) {
+  const passed: StyleSimulationImage[] = [];
+
+  for (const image of images) {
+    const qualityCheck = await checkGeneratedImageQuality({
+      imageUrl: image.url,
+      angle: image.angle,
+      provider: image.provider
+    });
+
+    if (!qualityCheck.ok) {
+      console.warn("identity master rejected by quality check", {
+        angle: image.angle,
+        reason: qualityCheck.reason,
+        warnings: qualityCheck.warnings
+      });
+      continue;
+    }
+
+    const identityCheck = await checkGeneratedImageIdentity({
+      referenceFrontImageUrls: referenceFrontUrls,
+      referenceSideImageUrls: referenceSideUrls,
+      generatedImageUrl: image.url,
+      angle: image.angle
+    });
+
+    if (identityCheck.score < 75) {
+      console.warn("identity master rejected by identity score", {
+        angle: image.angle,
+        score: identityCheck.score,
+        level: identityCheck.level,
+        reason: identityCheck.reason
+      });
+      continue;
+    }
+
+    passed.push({
+      ...image,
+      identityScore: identityCheck.score,
+      warning: identityCheck.warnings.join(" / ") || undefined
+    });
+  }
+
+  return passed;
 }
 
 export async function generateIdentityMasterImagesWithPhotoMaker(params: {
@@ -276,10 +356,10 @@ export async function generateIdentityMasterImagesWithPhotoMaker(params: {
   return images;
 }
 
-export async function generateWithFalPhotoMakerThenOpenAiEdit(
+export async function generateWithFalIdentityMasterThenOpenAiEdit(
   request: StyleSimulationRequest
 ): Promise<StyleSimulationResult> {
-  console.log("style simulation provider: fal-photomaker-openai-edit", {
+  console.log("style simulation provider: fal-identity-master-openai-edit", {
     customerId: request.customerId,
     styleSuggestionId: request.styleSuggestionId
   });
@@ -292,11 +372,26 @@ export async function generateWithFalPhotoMakerThenOpenAiEdit(
     backImageUrls: request.backImageUrls,
     angles: request.angles
   });
+  const passedMasterImages = await validateIdentityMasterImages({
+    images: masterImages,
+    referenceFrontUrls: request.frontImageUrls,
+    referenceSideUrls: request.sideImageUrls
+  });
+
+  if (passedMasterImages.length === 0) {
+    return {
+      ok: false,
+      provider: "fal-identity-master-openai-edit",
+      images: [],
+      message:
+        "FaceID基準画像の本人らしさが低いため、髪型編集に進めませんでした。参照写真を見直すか、OpenAI安定版で再生成してください。"
+    };
+  }
+
   const finalImages: StyleSimulationImage[] = [];
   const errors: string[] = [];
-  let usedPhotoMakerFallback = false;
 
-  for (const master of masterImages) {
+  for (const master of passedMasterImages) {
     try {
       const finalUrl = await editHairWithOpenAi({
         customerId: request.customerId,
@@ -312,7 +407,7 @@ export async function generateWithFalPhotoMakerThenOpenAiEdit(
       finalImages.push({
         angle: master.angle,
         url: finalUrl,
-        provider: "fal-photomaker-openai-edit"
+        provider: "fal-identity-master-openai-edit"
       });
     } catch (error) {
       console.error("openai hair edit stage failed", {
@@ -321,17 +416,10 @@ export async function generateWithFalPhotoMakerThenOpenAiEdit(
         angle: master.angle,
         error
       });
-      console.warn("openai hair edit failed, using photomaker master images as final fallback", {
+      console.warn("openai hair edit failed; identity master image was not saved as final output", {
         customerId: request.customerId,
         styleSuggestionId: request.styleSuggestionId,
-        angle: master.angle,
-        fallbackProvider: "fal-photomaker"
-      });
-      usedPhotoMakerFallback = true;
-      finalImages.push({
-        angle: master.angle,
-        url: master.url,
-        provider: "fal-photomaker"
+        angle: master.angle
       });
       errors.push(error instanceof Error ? error.message : `${master.angle}のOpenAI編集に失敗しました。`);
     }
@@ -339,21 +427,19 @@ export async function generateWithFalPhotoMakerThenOpenAiEdit(
 
   return {
     ok: finalImages.length > 0,
-    provider: "fal-photomaker-openai-edit",
+    provider: "fal-identity-master-openai-edit",
     images: finalImages,
     message:
-      usedPhotoMakerFallback
-        ? "OpenAI髪型編集で認証エラーが発生したため、FaceID基準画像を保存しました。"
-        : errors.length > 0
+      errors.length > 0
         ? `一部の角度で生成に失敗しました: ${errors.join(" / ")}`
-        : "FaceID基準画像を作成後、髪型編集を行いました。"
+        : "FaceID基準画像が本人らしさチェックを通過したため、髪型編集を行いました。"
   };
 }
 
-export async function generateWithFalPhotoMakerOnly(
+export async function generateWithFalIdentityMasterOnly(
   request: StyleSimulationRequest
 ): Promise<StyleSimulationResult> {
-  console.log("style simulation provider: fal-photomaker", {
+  console.log("style simulation provider: fal-identity-master", {
     customerId: request.customerId,
     styleSuggestionId: request.styleSuggestionId
   });
@@ -366,14 +452,30 @@ export async function generateWithFalPhotoMakerOnly(
     backImageUrls: request.backImageUrls,
     angles: request.angles
   });
+  const passedMasterImages = await validateIdentityMasterImages({
+    images: masterImages,
+    referenceFrontUrls: request.frontImageUrls,
+    referenceSideUrls: request.sideImageUrls
+  });
+
+  if (passedMasterImages.length === 0) {
+    return {
+      ok: false,
+      provider: "fal-identity-master",
+      images: [],
+      message:
+        "FaceID基準画像の本人らしさが低いため、髪型編集に進めませんでした。参照写真を見直すか、OpenAI安定版で再生成してください。"
+    };
+  }
 
   return {
-    ok: masterImages.length > 0,
-    provider: "fal-photomaker",
-    images: masterImages.map((image) => ({
-      ...image,
-      provider: "fal-photomaker"
-    })),
-    message: "FaceID基準画像を生成し、最終画像として保存しました。"
+    ok: true,
+    provider: "fal-identity-master",
+    images: [],
+    message:
+      "FaceID基準画像を生成し、本人らしさチェックを通過しました。これは最終髪型シミュレーション画像としては保存していません。"
   };
 }
+
+export const generateWithFalPhotoMakerThenOpenAiEdit = generateWithFalIdentityMasterThenOpenAiEdit;
+export const generateWithFalPhotoMakerOnly = generateWithFalIdentityMasterOnly;

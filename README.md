@@ -327,3 +327,26 @@ OPENAI_IMAGE_MODEL="gpt-image-1.5"
 The OpenAI-only provider uses the registered front and side reference photos, optional rear photos, and the hairstyle prompt to create three consultation images: three-quarter front, side, and rear three-quarter. The identity score display, generated image delete button, progress UI, and proposal selector are still available.
 
 If `gpt-image-1.5` is not available in the deployment environment, the code retries image generation once with `gpt-image-1`.
+
+## Experimental Identity Master Providers
+
+For stable demos, keep:
+
+```env
+STYLE_SIMULATION_PROVIDER="openai"
+```
+
+The following providers are for identity-preservation experiments only:
+
+```env
+STYLE_SIMULATION_PROVIDER="fal-identity-master"
+STYLE_SIMULATION_PROVIDER="fal-identity-master-openai-edit"
+FAL_KEY=""
+FAL_STYLE_MODEL="photomaker"
+```
+
+`fal-identity-master` uses fal PhotoMaker to generate identity master reference images only. These images are not treated as final hairstyle simulation images and are not mixed into `StyleSuggestion.imageUrlsJson`.
+
+`fal-identity-master-openai-edit` sends only identity master images that pass quality and identity checks to OpenAI hair edit. If OpenAI hair edit fails, identity master images are not automatically saved as final outputs.
+
+The legacy values `fal-photomaker` and `fal-photomaker-openai-edit` are kept for backward compatibility and are normalized internally to the new identity master providers.

@@ -1,8 +1,8 @@
 import { generateStyleSimulationImages } from "@/lib/ai/style-image-generator";
 import { generateWithFalFaceId } from "@/lib/ai/providers/fal-faceid";
 import {
-  generateWithFalPhotoMakerOnly,
-  generateWithFalPhotoMakerThenOpenAiEdit
+  generateWithFalIdentityMasterOnly,
+  generateWithFalIdentityMasterThenOpenAiEdit
 } from "@/lib/ai/providers/fal-photomaker";
 
 export type StyleSimulationAngle = "front_three_quarter" | "side" | "back_three_quarter";
@@ -26,8 +26,18 @@ export type StyleSimulationImage = {
   provider?: string;
 };
 
-export type StyleSimulationProvider = "openai" | "fal-photomaker-openai-edit" | "fal-photomaker" | "fal-faceid";
-type EffectiveStyleSimulationProvider = "openai" | "fal-photomaker-openai-edit" | "fal-photomaker" | "fal-faceid";
+export type StyleSimulationProvider =
+  | "openai"
+  | "fal-identity-master"
+  | "fal-identity-master-openai-edit"
+  | "fal-photomaker-openai-edit"
+  | "fal-photomaker"
+  | "fal-faceid";
+type EffectiveStyleSimulationProvider =
+  | "openai"
+  | "fal-identity-master"
+  | "fal-identity-master-openai-edit"
+  | "fal-faceid";
 
 export type StyleSimulationResult = {
   ok: boolean;
@@ -39,12 +49,12 @@ export type StyleSimulationResult = {
 };
 
 export function styleSimulationProviderLabel(provider = process.env.STYLE_SIMULATION_PROVIDER || "openai") {
-  if (provider === "fal-photomaker") {
-    return "FaceID基準（検証用・非推奨）";
+  if (provider === "fal-identity-master" || provider === "fal-photomaker") {
+    return "FaceID基準顔生成（検証用）";
   }
 
-  if (provider === "fal-photomaker-openai-edit") {
-    return "FaceID + 髪型編集（検証用・非推奨）";
+  if (provider === "fal-identity-master-openai-edit" || provider === "fal-photomaker-openai-edit") {
+    return "FaceID基準顔 + 髪型編集（検証用）";
   }
 
   if (provider === "fal-faceid") {
@@ -82,7 +92,12 @@ export async function generateStyleSimulation(
   request: StyleSimulationRequest
 ): Promise<StyleSimulationResult> {
   const requestedProvider = (process.env.STYLE_SIMULATION_PROVIDER || "openai") as StyleSimulationProvider;
-  const provider = requestedProvider;
+  const provider =
+    requestedProvider === "fal-photomaker"
+      ? "fal-identity-master"
+      : requestedProvider === "fal-photomaker-openai-edit"
+        ? "fal-identity-master-openai-edit"
+        : requestedProvider;
 
   console.log("style simulation provider selected", {
     provider,
@@ -93,9 +108,9 @@ export async function generateStyleSimulation(
     styleSuggestionId: request.styleSuggestionId
   });
 
-  if (provider === "fal-photomaker-openai-edit") {
+  if (provider === "fal-identity-master-openai-edit") {
     try {
-      return await generateWithFalPhotoMakerThenOpenAiEdit(request);
+      return await generateWithFalIdentityMasterThenOpenAiEdit(request);
     } catch (error) {
       const fallbackReason =
         error instanceof Error
@@ -111,7 +126,7 @@ export async function generateStyleSimulation(
       if (!process.env.OPENAI_API_KEY) {
         return {
           ok: false,
-          provider: "fal-photomaker-openai-edit",
+          provider: "fal-identity-master-openai-edit",
           images: [],
           message:
             error instanceof Error
@@ -133,9 +148,9 @@ export async function generateStyleSimulation(
     }
   }
 
-  if (provider === "fal-photomaker") {
+  if (provider === "fal-identity-master") {
     try {
-      return await generateWithFalPhotoMakerOnly(request);
+      return await generateWithFalIdentityMasterOnly(request);
     } catch (error) {
       const fallbackReason =
         error instanceof Error ? error.message : "PhotoMaker stageに失敗しました。";
@@ -149,7 +164,7 @@ export async function generateStyleSimulation(
       if (!process.env.OPENAI_API_KEY) {
         return {
           ok: false,
-          provider: "fal-photomaker",
+          provider: "fal-identity-master",
           images: [],
           message: fallbackReason
         };

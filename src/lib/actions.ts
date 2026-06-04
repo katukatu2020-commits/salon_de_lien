@@ -105,7 +105,7 @@ type StyleImageUrlEntry = {
 };
 
 function isPhotomakerOnlyImage(provider: string | undefined) {
-  return provider === "fal-photomaker";
+  return provider === "fal-photomaker" || provider === "fal-identity-master";
 }
 
 function parseJsonStringArray(value: string | null | undefined) {
@@ -1083,6 +1083,19 @@ export async function generateStyleSuggestionImageAction(
       ok: simulationResult.ok
     });
 
+    if (simulationResult.ok && simulationResult.provider === "fal-identity-master" && simulationResult.images.length === 0) {
+      revalidatePath(`/customers/${customerId}`);
+
+      return {
+        ok: true,
+        message:
+          simulationResult.message ??
+          "FaceID基準画像を生成しました。最終髪型シミュレーション画像としては保存していません。",
+        imageUrls: suggestion.imageUrls,
+        selectedSuggestionId: styleSuggestionId
+      };
+    }
+
     if (!simulationResult.ok || simulationResult.images.length === 0) {
       return {
         ok: false,
@@ -1122,11 +1135,11 @@ export async function generateStyleSuggestionImageAction(
       }
     }
 
-    if (qualityCheckedImages.length === 0 || (simulationResult.provider === "fal-photomaker" && qualityCheckedImages.length < 3)) {
+    if (qualityCheckedImages.length === 0 || (simulationResult.provider === "fal-identity-master" && qualityCheckedImages.length < 3)) {
       return {
         ok: false,
         message:
-          simulationResult.provider === "fal-photomaker" || simulationResult.images.some((image) => isPhotomakerOnlyImage(image.provider))
+          simulationResult.provider === "fal-identity-master" || simulationResult.images.some((image) => isPhotomakerOnlyImage(image.provider))
             ? "PhotoMaker生成画像が破綻したため保存しませんでした。"
             : "生成画像が破綻したため保存しませんでした。別の方式で再生成してください。"
       };
