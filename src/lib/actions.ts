@@ -22,7 +22,21 @@ const ALLOWED_PROFILE_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 type StyleImageGenerationState = {
   ok: boolean;
   message: string;
+  imageUrls?: string[];
 };
+
+function parseImageUrls(imageUrlsJson: string | null, fallback: string[] = []) {
+  if (!imageUrlsJson) {
+    return fallback;
+  }
+
+  try {
+    const parsed = JSON.parse(imageUrlsJson) as unknown;
+    return Array.isArray(parsed) ? parsed.filter((url): url is string => typeof url === "string") : fallback;
+  } catch {
+    return fallback;
+  }
+}
 
 export async function createCustomer(formData: FormData) {
   const customer = await prisma.customer.create({
@@ -286,7 +300,18 @@ export async function toggleCourseRecommendationAccepted(id: string, customerId:
 }
 
 export async function addStyleSuggestionImageUrl(customerId: string, suggestionId: string, formData: FormData) {
-  const imageUrl = requiredString(formData, "imageUrl").trim();
+  const imageUrlValue = formData.get("imageUrl");
+
+  if (typeof imageUrlValue !== "string" || imageUrlValue.trim().length === 0) {
+    console.warn("manual image url add skipped: imageUrl is empty", {
+      customerId,
+      suggestionId
+    });
+    revalidatePath(`/customers/${customerId}`);
+    return;
+  }
+
+  const imageUrl = imageUrlValue.trim();
 
   try {
     new URL(imageUrl);
@@ -303,7 +328,7 @@ export async function addStyleSuggestionImageUrl(customerId: string, suggestionI
     throw new Error("髪型提案が見つかりません。");
   }
 
-  const existingUrls = suggestion.imageUrlsJson ? (JSON.parse(suggestion.imageUrlsJson) as string[]) : suggestion.imageUrls;
+  const existingUrls = parseImageUrls(suggestion.imageUrlsJson, suggestion.imageUrls);
   const nextUrls = [...existingUrls, imageUrl].slice(0, 3);
 
   await prisma.styleSuggestion.update({
@@ -389,9 +414,7 @@ export async function generateStyleSuggestionImageAction(
       return { ok: false, message: "画像生成結果が空でした。Vercel Logsで詳細を確認してください。" };
     }
 
-    const existingUrls = suggestion.imageUrlsJson
-      ? (JSON.parse(suggestion.imageUrlsJson) as string[])
-      : suggestion.imageUrls;
+    const existingUrls = parseImageUrls(suggestion.imageUrlsJson, suggestion.imageUrls);
     const nextUrls = [...existingUrls, ...generatedUrls].slice(0, 3);
 
     await prisma.styleSuggestion.update({
@@ -404,7 +427,11 @@ export async function generateStyleSuggestionImageAction(
 
     revalidatePath(`/customers/${customerId}`);
 
-    return { ok: true, message: "本人写真ベースの画像を生成しました。" };
+    return {
+      ok: true,
+      message: "本人写真ベースの画像を生成しました。",
+      imageUrls: nextUrls
+    };
   } catch (error) {
     console.error("image generation failed", {
       customerId,

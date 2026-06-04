@@ -9,6 +9,7 @@ import { generateStyleSuggestionImageAction } from "@/lib/actions";
 type ImageGenerationState = {
   ok: boolean;
   message: string;
+  imageUrls?: string[];
 };
 
 const initialState: ImageGenerationState = {
