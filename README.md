@@ -117,9 +117,79 @@ npm run start
 npm run lint
 npm run typecheck
 npm run prisma:generate
+npm run prisma:deploy
 npm run prisma:migrate
 npm run prisma:studio
 ```
+
+## クラウドデプロイ手順（Vercel + Neon PostgreSQL）
+
+Vercel とクラウド PostgreSQL に公開する場合は、ローカルの Docker PostgreSQL ではなく、Neon などで作成した PostgreSQL の接続文字列を使います。
+
+### 1. GitHub に push
+
+変更内容を GitHub リポジトリへ push します。
+
+```bash
+git add .
+git commit -m "Prepare Vercel deployment"
+git push
+```
+
+### 2. Neon で PostgreSQL を作成
+
+Neon で新しい PostgreSQL プロジェクトを作成し、接続文字列を取得します。
+
+接続文字列は以下のような形式です。
+
+```env
+DATABASE_URL="postgresql://USER:PASSWORD@HOST.neon.tech/DBNAME?sslmode=require"
+```
+
+### 3. Vercel に GitHub リポジトリを Import
+
+Vercel の New Project から GitHub リポジトリを Import します。
+
+Framework Preset は Next.js を選択します。
+
+### 4. Vercel Environment Variables を設定
+
+Vercel の Project Settings で Environment Variables に以下を追加します。
+
+```env
+DATABASE_URL=postgresql://USER:PASSWORD@HOST.neon.tech/DBNAME?sslmode=require
+```
+
+Production / Preview / Development のどこで使うかは運用に合わせて選択します。まずは Production に設定してください。
+
+### 5. 本番DBへ migration を適用
+
+Vercel に設定したものと同じ `DATABASE_URL` をローカル環境に一時的に設定して、本番DBへ migration を適用します。
+
+Windows PowerShell の例:
+
+```powershell
+$env:DATABASE_URL="postgresql://USER:PASSWORD@HOST.neon.tech/DBNAME?sslmode=require"
+npm.cmd run prisma:deploy
+```
+
+`prisma:deploy` は `prisma migrate deploy` を実行し、既存の migration をクラウドDBに適用します。
+
+### 6. Vercel で再デプロイ
+
+Vercel の Deployments から Redeploy を実行します。
+
+このプロジェクトでは `postinstall` で `prisma generate` を実行するため、Vercel build 時にも Prisma Client が生成されます。
+
+### 7. 公開URLを確認
+
+デプロイ完了後、Vercel の公開URLで以下を確認します。
+
+- `/customers`
+- `/customers/new`
+- `/customers/[id]`
+
+初期データがない場合は、まず `/customers/new` から顧客を登録してください。
 
 ## 検証コマンド
 
