@@ -42,6 +42,7 @@ import { prisma } from "@/lib/prisma";
 import { EmptyState, Section, SelectField, SubmitButton, TextAreaField, TextField } from "@/components/ui";
 import { ProfileImageUploader } from "@/components/customers/profile-image-uploader";
 import { StyleSuggestionImageGenerator } from "@/components/customers/style-suggestion-image-generator";
+import { StyleSuggestionSelector } from "@/components/customers/style-suggestion-selector";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type CustomerDetailPageProps = {
@@ -187,6 +188,24 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
     ?.split(/\r?\n|、|,/)
     .map((item) => item.trim())
     .filter(Boolean);
+  const styleSuggestionItems = customer.styleSuggestions.map((suggestion) => ({
+    id: suggestion.id,
+    customerId: suggestion.customerId,
+    suggestedStyleName: suggestion.suggestedStyleName,
+    reason: suggestion.reason,
+    caution: suggestion.caution,
+    stylingAdvice: suggestion.stylingAdvice,
+    imageUrls: suggestion.imageUrls,
+    imageUrlsJson: suggestion.imageUrlsJson,
+    menuSuggestion: suggestion.menuSuggestion,
+    estimatedMinutes: suggestion.estimatedMinutes,
+    maintenanceLevel: suggestion.maintenanceLevel,
+    label: suggestion.label,
+    faceAnalysis: suggestion.faceAnalysis,
+    accepted: suggestion.accepted,
+    createdAt: suggestion.createdAt.toISOString(),
+    visit: suggestion.visit ? { visitedAt: suggestion.visit.visitedAt.toISOString() } : null
+  }));
 
   return (
     <div className="mx-auto grid w-full max-w-7xl gap-5">
@@ -571,9 +590,14 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
                   AIで3案を生成して保存
                 </button>
               </form>
+              <p className="mt-2 text-xs font-semibold text-amber-900">
+                新しく3案を追加します。既存の提案は削除されません。表示は最新20件と採用済み提案を中心に整理されます。
+              </p>
             </div>
 
-            <div className="grid gap-4">
+            <StyleSuggestionSelector customerId={customer.id} suggestions={styleSuggestionItems} />
+
+            <div className="hidden">
               {customer.styleSuggestions.map((suggestion, index) => {
                 const acceptAction = updateStyleSuggestionAccepted.bind(null, customer.id, suggestion.id, !suggestion.accepted);
                 const addImageAction = addStyleSuggestionImageUrl.bind(null, customer.id, suggestion.id);

@@ -25,16 +25,61 @@ type StyleImageGenerationState = {
   imageUrls?: string[];
 };
 
-function parseImageUrls(imageUrlsJson: string | null, fallback: string[] = []) {
+const STYLE_IMAGE_ANGLES = ["斜め正面", "横", "斜め後ろ"] as const;
+
+type StyleImageUrlEntry = {
+  angle: string;
+  url: string;
+};
+
+function parseImageUrlEntries(imageUrlsJson: string | null, fallback: string[] = []): StyleImageUrlEntry[] {
   if (!imageUrlsJson) {
-    return fallback;
+    return fallback.map((url, index) => ({
+      angle: STYLE_IMAGE_ANGLES[index] ?? `画像${index + 1}`,
+      url
+    }));
   }
 
   try {
     const parsed = JSON.parse(imageUrlsJson) as unknown;
-    return Array.isArray(parsed) ? parsed.filter((url): url is string => typeof url === "string") : fallback;
+    if (!Array.isArray(parsed)) {
+      return fallback.map((url, index) => ({
+        angle: STYLE_IMAGE_ANGLES[index] ?? `画像${index + 1}`,
+        url
+      }));
+    }
+
+    return parsed
+      .map((item, index): StyleImageUrlEntry | null => {
+        if (typeof item === "string") {
+          return {
+            angle: STYLE_IMAGE_ANGLES[index] ?? `画像${index + 1}`,
+            url: item
+          };
+        }
+
+        if (
+          typeof item === "object" &&
+          item !== null &&
+          typeof (item as { url?: unknown }).url === "string"
+        ) {
+          return {
+            angle:
+              typeof (item as { angle?: unknown }).angle === "string"
+                ? ((item as { angle: string }).angle)
+                : STYLE_IMAGE_ANGLES[index] ?? `画像${index + 1}`,
+            url: (item as { url: string }).url
+          };
+        }
+
+        return null;
+      })
+      .filter((entry): entry is StyleImageUrlEntry => Boolean(entry));
   } catch {
-    return fallback;
+    return fallback.map((url, index) => ({
+      angle: STYLE_IMAGE_ANGLES[index] ?? `画像${index + 1}`,
+      url
+    }));
   }
 }
 
@@ -328,14 +373,21 @@ export async function addStyleSuggestionImageUrl(customerId: string, suggestionI
     throw new Error("髪型提案が見つかりません。");
   }
 
-  const existingUrls = parseImageUrls(suggestion.imageUrlsJson, suggestion.imageUrls);
-  const nextUrls = [...existingUrls, imageUrl].slice(0, 3);
+  const existingEntries = parseImageUrlEntries(suggestion.imageUrlsJson, suggestion.imageUrls);
+  const nextEntries = [
+    ...existingEntries,
+    {
+      angle: STYLE_IMAGE_ANGLES[existingEntries.length] ?? `画像${existingEntries.length + 1}`,
+      url: imageUrl
+    }
+  ].slice(0, 3);
+  const nextUrls = nextEntries.map((entry) => entry.url);
 
   await prisma.styleSuggestion.update({
     where: { id: suggestionId },
     data: {
       imageUrls: nextUrls,
-      imageUrlsJson: JSON.stringify(nextUrls)
+      imageUrlsJson: JSON.stringify(nextEntries)
     }
   });
 
@@ -414,14 +466,23 @@ export async function generateStyleSuggestionImageAction(
       return { ok: false, message: "画像生成結果が空でした。Vercel Logsで詳細を確認してください。" };
     }
 
-    const existingUrls = parseImageUrls(suggestion.imageUrlsJson, suggestion.imageUrls);
-    const nextUrls = [...existingUrls, ...generatedUrls].slice(0, 3);
+    const existingEntries = parseImageUrlEntries(suggestion.imageUrlsJson, suggestion.imageUrls);
+    const generatedEntries = generatedUrls.map((url, index) => ({
+      angle: STYLE_IMAGE_ANGLES[index] ?? `画像${index + 1}`,
+      url
+    }));
+    const generatedAngles = new Set<string>(generatedEntries.map((entry) => entry.angle));
+    const nextEntries = [
+      ...generatedEntries,
+      ...existingEntries.filter((entry) => !generatedAngles.has(entry.angle))
+    ].slice(0, 3);
+    const nextUrls = nextEntries.map((entry) => entry.url);
 
     await prisma.styleSuggestion.update({
       where: { id: styleSuggestionId },
       data: {
         imageUrls: nextUrls,
-        imageUrlsJson: JSON.stringify(nextUrls)
+        imageUrlsJson: JSON.stringify(nextEntries)
       }
     });
 
