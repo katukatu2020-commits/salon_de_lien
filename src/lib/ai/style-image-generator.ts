@@ -172,7 +172,7 @@ export async function generateStyleSimulationImages({
     const images = await client.images.edit({
       image: referenceFiles,
       prompt,
-      model: process.env.OPENAI_IMAGE_MODEL ?? "gpt-image-1.5",
+      model: process.env.OPENAI_IMAGE_MODEL ?? "gpt-image-1",
       n: 1,
       size: "1024x1024",
       quality: "low",

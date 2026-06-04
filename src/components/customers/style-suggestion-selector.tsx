@@ -281,6 +281,13 @@ export function StyleSuggestionSelector({
   const imageEntries = parseImageEntries(selectedSuggestion);
   const hasThreeImages = ANGLES.every((angle, index) => Boolean(imageForAngle(imageEntries, angle, index)));
   const hasLowIdentityScore = imageEntries.some((entry) => entry.identityLevel === "low");
+  const imageProviders = new Set(imageEntries.map((entry) => entry.provider).filter(Boolean));
+  const displayProviderLabel =
+    hasThreeImages && styleSimulationProvider.includes("顔保護") && imageProviders.size === 1 && imageProviders.has("fal-photomaker")
+      ? "FaceID基準 fallback"
+      : hasThreeImages && imageProviders.has("fal-photomaker-openai-edit")
+        ? "FaceID基準 + 顔保護マスク髪型編集"
+        : styleSimulationProvider;
   const canGenerateImages = hasAiReferencePhotos && hasAiPhotoConsent && isStyleImageGenerationEnabled;
   const generationDisabledReason = !hasAiPhotoConsent
     ? "AI画像生成への同意を保存してください。"
@@ -455,7 +462,7 @@ export function StyleSuggestionSelector({
           <StyleSuggestionImageGenerator
             styleSuggestionId={selectedSuggestion.id}
             customerId={customerId}
-            providerLabel={styleSimulationProvider}
+            providerLabel={displayProviderLabel}
             disabled={(hasThreeImages && !hasLowIdentityScore) || !canGenerateImages}
             disabledReason={generationDisabledReason}
             hasLowIdentityScore={hasLowIdentityScore}

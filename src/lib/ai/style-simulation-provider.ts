@@ -1,6 +1,9 @@
 import { generateStyleSimulationImages } from "@/lib/ai/style-image-generator";
 import { generateWithFalFaceId } from "@/lib/ai/providers/fal-faceid";
-import { generateWithFalPhotoMakerThenOpenAiEdit } from "@/lib/ai/providers/fal-photomaker";
+import {
+  generateWithFalPhotoMakerOnly,
+  generateWithFalPhotoMakerThenOpenAiEdit
+} from "@/lib/ai/providers/fal-photomaker";
 
 export type StyleSimulationAngle = "front_three_quarter" | "side" | "back_three_quarter";
 
@@ -24,7 +27,7 @@ export type StyleSimulationImage = {
 };
 
 export type StyleSimulationProvider = "openai" | "fal-photomaker-openai-edit" | "fal-photomaker" | "fal-faceid";
-type EffectiveStyleSimulationProvider = "openai" | "fal-photomaker-openai-edit" | "fal-faceid";
+type EffectiveStyleSimulationProvider = "openai" | "fal-photomaker-openai-edit" | "fal-photomaker" | "fal-faceid";
 
 export type StyleSimulationResult = {
   ok: boolean;
@@ -36,7 +39,11 @@ export type StyleSimulationResult = {
 };
 
 export function styleSimulationProviderLabel(provider = process.env.STYLE_SIMULATION_PROVIDER || "openai") {
-  if (provider === "fal-photomaker-openai-edit" || provider === "fal-photomaker") {
+  if (provider === "fal-photomaker") {
+    return "FaceID基準";
+  }
+
+  if (provider === "fal-photomaker-openai-edit") {
     return "FaceID基準 + 顔保護マスク髪型編集";
   }
 
@@ -75,7 +82,7 @@ export async function generateStyleSimulation(
   request: StyleSimulationRequest
 ): Promise<StyleSimulationResult> {
   const requestedProvider = (process.env.STYLE_SIMULATION_PROVIDER || "openai") as StyleSimulationProvider;
-  const provider = requestedProvider === "fal-photomaker" ? "fal-photomaker-openai-edit" : requestedProvider;
+  const provider = requestedProvider;
 
   console.log("style simulation provider selected", {
     provider,
@@ -122,6 +129,39 @@ export async function generateStyleSimulation(
         message: fallbackReason.includes("FAL_KEY")
           ? "FAL_KEY未設定のためOpenAI fallbackで生成しました。"
           : `PhotoMaker stageに失敗したためOpenAI fallbackで生成しました。理由: ${fallbackReason}`
+      };
+    }
+  }
+
+  if (provider === "fal-photomaker") {
+    try {
+      return await generateWithFalPhotoMakerOnly(request);
+    } catch (error) {
+      const fallbackReason =
+        error instanceof Error ? error.message : "PhotoMaker stageに失敗しました。";
+
+      console.warn("fal photomaker failed, falling back to openai", {
+        customerId: request.customerId,
+        styleSuggestionId: request.styleSuggestionId,
+        error: fallbackReason
+      });
+
+      if (!process.env.OPENAI_API_KEY) {
+        return {
+          ok: false,
+          provider: "fal-photomaker",
+          images: [],
+          message: fallbackReason
+        };
+      }
+
+      const fallbackResult = await generateWithOpenAiFallback(request);
+
+      return {
+        ...fallbackResult,
+        requestedProvider,
+        fallbackReason,
+        message: `PhotoMaker stageに失敗したためOpenAI fallbackで生成しました。理由: ${fallbackReason}`
       };
     }
   }

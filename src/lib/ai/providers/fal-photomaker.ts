@@ -242,6 +242,7 @@ export async function generateWithFalPhotoMakerThenOpenAiEdit(
   });
   const finalImages: StyleSimulationImage[] = [];
   const errors: string[] = [];
+  let usedPhotoMakerFallback = false;
 
   for (const master of masterImages) {
     try {
@@ -268,6 +269,18 @@ export async function generateWithFalPhotoMakerThenOpenAiEdit(
         angle: master.angle,
         error
       });
+      console.warn("openai hair edit failed, using photomaker master images as final fallback", {
+        customerId: request.customerId,
+        styleSuggestionId: request.styleSuggestionId,
+        angle: master.angle,
+        fallbackProvider: "fal-photomaker"
+      });
+      usedPhotoMakerFallback = true;
+      finalImages.push({
+        angle: master.angle,
+        url: master.url,
+        provider: "fal-photomaker"
+      });
       errors.push(error instanceof Error ? error.message : `${master.angle}のOpenAI編集に失敗しました。`);
     }
   }
@@ -277,8 +290,38 @@ export async function generateWithFalPhotoMakerThenOpenAiEdit(
     provider: "fal-photomaker-openai-edit",
     images: finalImages,
     message:
-      errors.length > 0
+      usedPhotoMakerFallback
+        ? "OpenAI髪型編集で認証エラーが発生したため、FaceID基準画像を保存しました。"
+        : errors.length > 0
         ? `一部の角度で生成に失敗しました: ${errors.join(" / ")}`
         : "FaceID基準画像を作成後、髪型編集を行いました。"
+  };
+}
+
+export async function generateWithFalPhotoMakerOnly(
+  request: StyleSimulationRequest
+): Promise<StyleSimulationResult> {
+  console.log("style simulation provider: fal-photomaker", {
+    customerId: request.customerId,
+    styleSuggestionId: request.styleSuggestionId
+  });
+
+  const masterImages = await generateIdentityMasterImagesWithPhotoMaker({
+    customerId: request.customerId,
+    styleSuggestionId: request.styleSuggestionId,
+    frontImageUrls: request.frontImageUrls,
+    sideImageUrls: request.sideImageUrls,
+    backImageUrls: request.backImageUrls,
+    angles: request.angles
+  });
+
+  return {
+    ok: masterImages.length > 0,
+    provider: "fal-photomaker",
+    images: masterImages.map((image) => ({
+      ...image,
+      provider: "fal-photomaker"
+    })),
+    message: "FaceID基準画像を生成し、最終画像として保存しました。"
   };
 }

@@ -101,6 +101,31 @@ function buildPrompt({
   ].join("\n");
 }
 
+function isOpenAiImageModelAuthError(error: unknown) {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const candidate = error as {
+    status?: number;
+    code?: string;
+    type?: string;
+    message?: string;
+  };
+  const message = candidate.message?.toLowerCase() ?? "";
+
+  return (
+    candidate.status === 401 ||
+    candidate.status === 403 ||
+    candidate.code === "model_not_found" ||
+    candidate.code === "permission_denied" ||
+    candidate.type === "invalid_request_error" ||
+    message.includes("not authorized") ||
+    message.includes("does not have access") ||
+    message.includes("model")
+  );
+}
+
 export async function editHairWithOpenAi({
   customerId,
   styleName,
@@ -182,17 +207,52 @@ export async function editHairWithOpenAi({
     angle
   });
 
-  const images = await client.images.edit({
+  const prompt = buildPrompt({ styleName, hairPrompt, angle });
+  const requestedModel = process.env.OPENAI_IMAGE_MODEL ?? "gpt-image-1";
+  const editParams = {
     image: imageFiles,
     ...(maskFile ? { mask: maskFile } : {}),
-    prompt: buildPrompt({ styleName, hairPrompt, angle }),
-    model: process.env.OPENAI_IMAGE_MODEL ?? "gpt-image-1.5",
+    prompt,
     n: 1,
-    size: "1024x1024",
-    quality: "low",
-    output_format: "webp",
-    input_fidelity: "high"
-  });
+    size: "1024x1024" as const,
+    quality: "low" as const,
+    output_format: "webp" as const,
+    input_fidelity: "high" as const
+  };
+  let images;
+
+  try {
+    images = await client.images.edit({
+      ...editParams,
+      model: requestedModel
+    });
+  } catch (error) {
+    if (requestedModel !== "gpt-image-1" && isOpenAiImageModelAuthError(error)) {
+      console.warn("openai image model failed, retrying with gpt-image-1", {
+        customerId,
+        angle,
+        requestedModel,
+        error
+      });
+
+      try {
+        images = await client.images.edit({
+          ...editParams,
+          model: "gpt-image-1"
+        });
+      } catch (fallbackError) {
+        if (isOpenAiImageModelAuthError(fallbackError)) {
+          throw new Error("OpenAI画像編集の認証またはモデル権限で失敗しました。");
+        }
+
+        throw fallbackError;
+      }
+    } else if (isOpenAiImageModelAuthError(error)) {
+      throw new Error("OpenAI画像編集の認証またはモデル権限で失敗しました。");
+    } else {
+      throw error;
+    }
+  }
   const generatedImage = images.data?.[0];
 
   if (!generatedImage?.b64_json && !generatedImage?.url) {
