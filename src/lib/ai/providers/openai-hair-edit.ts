@@ -1,4 +1,5 @@
 import { put } from "@vercel/blob";
+import { buildHairEditMask } from "@/lib/image/build-hair-edit-mask";
 
 type HairEditAngle = "斜め正面" | "横" | "斜め後ろ";
 
@@ -13,6 +14,17 @@ async function imageUrlToFile(url: string, fileName: string) {
   return toFile(Buffer.from(await response.arrayBuffer()), fileName, {
     type: response.headers.get("content-type") ?? "image/png"
   });
+}
+
+async function imageUrlToPngBuffer(url: string) {
+  const sharp = (await import("sharp")).default;
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error(`参照画像の取得に失敗しました: ${response.status}`);
+  }
+
+  return sharp(Buffer.from(await response.arrayBuffer())).png().toBuffer();
 }
 
 function supplementalReferences({
@@ -64,6 +76,10 @@ function buildPrompt({
     "Do not change the face.",
     "Do not change the eyes, eyebrows, nose, mouth, jawline, face shape, ears, neck, skin texture, age impression, expression, or facial proportions.",
     "Only modify the hair.",
+    "This edit uses a mask. Only edit the transparent masked hair-related area.",
+    "Do not modify any unmasked area.",
+    "The unmasked face and body areas must remain identical to the source image.",
+    "Only change hair length, bangs, side hair, neckline hair, top volume, hair flow, and hair texture inside the editable mask.",
     `New hairstyle: ${styleName}`,
     `Hair details: ${hairPrompt}`,
     anglePrompt(angle),
@@ -72,6 +88,11 @@ function buildPrompt({
     "Do not make the person younger.",
     "Do not redraw the person.",
     "Do not generate a different person.",
+    "この編集ではマスクを使用しています。",
+    "編集対象の髪周辺だけを変更してください。",
+    "マスク外の顔、目、眉、鼻、口、顎、頬、耳、首、肌、表情、年齢感、顔比率は変更しないでください。",
+    "マスク外の領域は元画像と同じに保ってください。",
+    "変更してよいのは髪の長さ、前髪、サイド、襟足、トップ、毛流れ、髪質だけです。",
     "これは本人性基準画像をもとにした画像編集です。",
     "人物を新しく生成しないでください。",
     "顔、目、眉、鼻、口、顎、輪郭、耳、首、肌質、年齢感、表情、顔比率を変更しないでください。",
@@ -113,6 +134,7 @@ export async function editHairWithOpenAi({
   });
 
   const OpenAI = (await import("openai")).default;
+  const { toFile } = await import("openai/uploads");
   const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   const supportUrls = supplementalReferences({
     angle,
@@ -120,13 +142,49 @@ export async function editHairWithOpenAi({
     referenceSideUrls,
     referenceBackUrls
   });
+  const identityMasterBuffer = await imageUrlToPngBuffer(identityMasterImageUrl);
+  let maskFile: Awaited<ReturnType<typeof toFile>> | undefined;
+
+  try {
+    const maskBuffer = await buildHairEditMask({
+      imageBuffer: identityMasterBuffer,
+      angle
+    });
+
+    maskFile = await toFile(maskBuffer, "hair-edit-mask.png", {
+      type: "image/png"
+    });
+  } catch (error) {
+    console.error("hair edit mask failed", {
+      customerId,
+      angle,
+      error
+    });
+
+    if (process.env.ALLOW_UNMASKED_HAIR_EDIT_FALLBACK !== "true") {
+      console.warn("unmasked hair edit fallback disabled", {
+        customerId,
+        angle
+      });
+      throw new Error("顔保護用の編集マスクを作成できなかったため、髪型編集を中止しました。");
+    }
+  }
+
   const imageFiles = await Promise.all([
-    imageUrlToFile(identityMasterImageUrl, "identity-master.png"),
+    toFile(identityMasterBuffer, "identity-master.png", {
+      type: "image/png"
+    }),
     ...supportUrls.map((url, index) => imageUrlToFile(url, `support-${index + 1}.png`))
   ]);
 
+  console.log(maskFile ? "openai hair edit with mask started" : "openai hair edit without mask started", {
+    customerId,
+    angle
+  });
+
   const images = await client.images.edit({
     image: imageFiles,
+    ...(maskFile ? { mask: maskFile } : {}),
     prompt: buildPrompt({ styleName, hairPrompt, angle }),
     model: process.env.OPENAI_IMAGE_MODEL ?? "gpt-image-1.5",
     n: 1,
@@ -155,6 +213,12 @@ export async function editHairWithOpenAi({
       token: process.env.BLOB_READ_WRITE_TOKEN
     }
   );
+
+  console.log(maskFile ? "openai hair edit with mask completed" : "openai hair edit without mask completed", {
+    customerId,
+    angle,
+    url: blob.url
+  });
 
   console.log("openai hair edit stage completed", {
     customerId,

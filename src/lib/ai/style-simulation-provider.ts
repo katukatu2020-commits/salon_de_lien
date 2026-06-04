@@ -37,7 +37,7 @@ export type StyleSimulationResult = {
 
 export function styleSimulationProviderLabel(provider = process.env.STYLE_SIMULATION_PROVIDER || "openai") {
   if (provider === "fal-photomaker-openai-edit" || provider === "fal-photomaker") {
-    return "FaceID基準 + 髪型編集";
+    return "FaceID基準 + 顔保護マスク髪型編集";
   }
 
   if (provider === "fal-faceid") {

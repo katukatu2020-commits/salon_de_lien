@@ -140,7 +140,7 @@ export function StyleSuggestionImageGenerator({
         <p className="mt-1 text-xs font-semibold text-teal-800">生成エンジン: {providerLabel}</p>
         <p className="mt-1 text-xs font-semibold text-teal-900">
           {isFaceIdEdit
-            ? "FaceID基準画像で本人性を高めた後、髪型だけを編集する方式です。"
+            ? "FaceID基準画像を作成した後、顔保護マスクを使って髪周辺だけを編集します。"
             : "本人らしさを最優先し、顔パーツを保ったまま髪型のみを変更する方針で生成します。"}
           生成画像は相談用の参考であり、本人性や仕上がりを完全に保証するものではありません。
         </p>
@@ -148,6 +148,7 @@ export function StyleSuggestionImageGenerator({
           <li>・背景・ライティングは比較しやすいよう統一して生成されます。</li>
           <li>・参照写真の不足部分は、他の登録写真を参考に最小限だけ補完されます。</li>
           <li>・顔の骨格・目鼻口・耳・首・頭部形状は、元写真の印象を優先します。</li>
+          {isFaceIdEdit ? <li>・顔パーツを保護するため、マスク生成に失敗した場合は編集を中止します。</li> : null}
         </ul>
         <p className="mt-1 text-xs text-teal-800">画像生成にはAPI利用料が発生します。必要な提案だけ生成してください。</p>
       </div>
