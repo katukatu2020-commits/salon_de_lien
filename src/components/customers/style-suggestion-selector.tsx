@@ -1,7 +1,8 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   AlertCircle,
   CheckCircle2,
@@ -43,6 +44,7 @@ export type SelectableStyleSuggestion = {
   label: string | null;
   faceAnalysis: string | null;
   accepted: boolean;
+  archivedAt: string | null;
   createdAt: string;
   visit: {
     visitedAt: string;
@@ -126,31 +128,105 @@ function imageForAngle(entries: StyleImageEntry[], angle: string, index: number)
   return entries.find((entry) => entry.angle === angle)?.url ?? entries[index]?.url ?? "";
 }
 
+function isAiSuggestion(suggestion: SelectableStyleSuggestion) {
+  return (
+    ["本命", "安全", "挑戦", "AI提案"].includes(suggestion.label ?? "") ||
+    Boolean(suggestion.faceAnalysis) ||
+    Boolean(suggestion.imageUrlsJson)
+  );
+}
+
+function suggestionKey(suggestion: SelectableStyleSuggestion) {
+  return `${suggestion.suggestedStyleName.trim().toLowerCase()}:${suggestion.label ?? ""}`;
+}
+
+function uniqueLatest(suggestions: SelectableStyleSuggestion[]) {
+  const seen = new Set<string>();
+  const unique: SelectableStyleSuggestion[] = [];
+
+  for (const suggestion of suggestions) {
+    const key = suggestionKey(suggestion);
+    if (seen.has(key)) {
+      continue;
+    }
+
+    seen.add(key);
+    unique.push(suggestion);
+  }
+
+  return unique;
+}
+
+function buildVisibleSuggestions(suggestions: SelectableStyleSuggestion[]) {
+  const accepted = suggestions.filter((suggestion) => suggestion.accepted);
+  const openAiSuggestions = suggestions.filter(
+    (suggestion) => !suggestion.accepted && !suggestion.archivedAt && isAiSuggestion(suggestion)
+  );
+  const manualSuggestions = suggestions.filter(
+    (suggestion) => !suggestion.accepted && !suggestion.archivedAt && !isAiSuggestion(suggestion)
+  );
+  const map = new Map<string, SelectableStyleSuggestion>();
+
+  [
+    ...accepted,
+    ...uniqueLatest(openAiSuggestions).slice(0, 3),
+    ...uniqueLatest(manualSuggestions).slice(0, 3)
+  ].forEach((suggestion) => map.set(suggestion.id, suggestion));
+
+  return Array.from(map.values()).sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+}
+
 export function StyleSuggestionSelector({
   customerId,
   suggestions,
   hasAiReferencePhotos,
-  hasAiPhotoConsent
+  hasAiPhotoConsent,
+  initialSelectedSuggestionId
 }: {
   customerId: string;
   suggestions: SelectableStyleSuggestion[];
   hasAiReferencePhotos: boolean;
   hasAiPhotoConsent: boolean;
+  initialSelectedSuggestionId?: string;
 }) {
-  const selectableSuggestions = useMemo(() => {
-    const latest = suggestions.slice(0, 20);
-    const accepted = suggestions.filter((suggestion) => suggestion.accepted);
-    const map = new Map<string, SelectableStyleSuggestion>();
-
-    [...accepted, ...latest].forEach((suggestion) => map.set(suggestion.id, suggestion));
-    return Array.from(map.values()).sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
-  }, [suggestions]);
-  const defaultSuggestion = selectableSuggestions.find((suggestion) => suggestion.accepted) ?? selectableSuggestions[0];
+  const router = useRouter();
+  const selectableSuggestions = useMemo(() => buildVisibleSuggestions(suggestions), [suggestions]);
+  const archivedSuggestions = useMemo(
+    () =>
+      suggestions.filter(
+        (suggestion) => suggestion.archivedAt && !selectableSuggestions.some((visible) => visible.id === suggestion.id)
+      ),
+    [selectableSuggestions, suggestions]
+  );
+  const defaultSuggestion =
+    selectableSuggestions.find((suggestion) => suggestion.id === initialSelectedSuggestionId) ??
+    selectableSuggestions.find((suggestion) => suggestion.accepted) ??
+    selectableSuggestions[0];
   const [selectedId, setSelectedId] = useState(defaultSuggestion?.id ?? "");
   const selectedIndex = selectableSuggestions.findIndex((suggestion) => suggestion.id === selectedId);
-  const selectedSuggestion = selectableSuggestions[selectedIndex] ?? defaultSuggestion;
+  const selectedSuggestion = suggestions.find((suggestion) => suggestion.id === selectedId) ?? defaultSuggestion;
+  const dropdownSuggestions =
+    selectedSuggestion && !selectableSuggestions.some((suggestion) => suggestion.id === selectedSuggestion.id)
+      ? [selectedSuggestion, ...selectableSuggestions]
+      : selectableSuggestions;
+
+  useEffect(() => {
+    if (initialSelectedSuggestionId && suggestions.some((suggestion) => suggestion.id === initialSelectedSuggestionId)) {
+      setSelectedId(initialSelectedSuggestionId);
+      return;
+    }
+
+    if (!suggestions.some((suggestion) => suggestion.id === selectedId)) {
+      setSelectedId(defaultSuggestion?.id ?? "");
+    }
+  }, [defaultSuggestion?.id, initialSelectedSuggestionId, selectableSuggestions, selectedId, suggestions]);
+
+  function selectSuggestion(nextId: string) {
+    setSelectedId(nextId);
+    router.replace(`/customers/${customerId}?suggestionId=${nextId}`, { scroll: false });
+  }
 
   if (!selectedSuggestion) {
     return (
@@ -183,10 +259,10 @@ export function StyleSuggestionSelector({
           提案を選択
           <select
             value={selectedSuggestion.id}
-            onChange={(event) => setSelectedId(event.target.value)}
+            onChange={(event) => selectSuggestion(event.target.value)}
             className="h-11 rounded-md border border-stone-200 bg-white px-3 text-sm text-stone-950 shadow-sm outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
           >
-            {selectableSuggestions.map((suggestion) => {
+            {dropdownSuggestions.map((suggestion) => {
               const originalIndex = suggestions.findIndex((item) => item.id === suggestion.id);
               const suggestionNumber = String(suggestions.length - originalIndex).padStart(2, "0");
               return (
@@ -201,13 +277,13 @@ export function StyleSuggestionSelector({
         </label>
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
           <p className="text-xs leading-5 text-stone-500">
-            Dropdownには最新20件と採用済み提案を表示します。新しく3案を追加しても既存の提案は削除されません。
+            通常表示は最新のAI 3案と採用候補を中心に整理します。古い未採用AI提案は過去の提案へ移動します。
           </p>
           <div className="flex gap-2">
             <button
               type="button"
               disabled={selectedIndex <= 0}
-              onClick={() => setSelectedId(selectableSuggestions[selectedIndex - 1]?.id ?? selectedSuggestion.id)}
+              onClick={() => selectSuggestion(selectableSuggestions[selectedIndex - 1]?.id ?? selectedSuggestion.id)}
               className="inline-flex h-9 items-center gap-1 rounded-md border border-stone-200 bg-white px-3 text-xs font-semibold text-stone-700 hover:bg-stone-50 disabled:opacity-50"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -215,8 +291,8 @@ export function StyleSuggestionSelector({
             </button>
             <button
               type="button"
-              disabled={selectedIndex >= selectableSuggestions.length - 1}
-              onClick={() => setSelectedId(selectableSuggestions[selectedIndex + 1]?.id ?? selectedSuggestion.id)}
+              disabled={selectedIndex < 0 || selectedIndex >= selectableSuggestions.length - 1}
+              onClick={() => selectSuggestion(selectableSuggestions[selectedIndex + 1]?.id ?? selectedSuggestion.id)}
               className="inline-flex h-9 items-center gap-1 rounded-md border border-stone-200 bg-white px-3 text-xs font-semibold text-stone-700 hover:bg-stone-50 disabled:opacity-50"
             >
               次の提案
@@ -287,6 +363,25 @@ export function StyleSuggestionSelector({
               );
             })}
           </div>
+          {hasThreeImages ? (
+            <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2">
+              <p className="text-xs leading-5 text-amber-900">
+                AI生成画像は参考です。本人性や仕上がりを完全に保証するものではありません。
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {["本人に近い", "微妙", "別人っぽい"].map((label) => (
+                  <button
+                    key={label}
+                    type="button"
+                    className="inline-flex h-8 items-center rounded-md border border-amber-200 bg-white px-3 text-xs font-semibold text-amber-900 hover:bg-amber-100"
+                    aria-label={`生成画像の評価: ${label}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </div>
 
         <div className="mt-4">
@@ -366,6 +461,28 @@ export function StyleSuggestionSelector({
           </div>
         </div>
       </article>
+      {archivedSuggestions.length > 0 ? (
+        <details className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
+          <summary className="cursor-pointer text-sm font-semibold text-stone-800">
+            過去の提案を見る（{archivedSuggestions.length}件）
+          </summary>
+          <div className="mt-3 grid gap-2">
+            {archivedSuggestions.slice(0, 20).map((suggestion) => (
+              <button
+                key={suggestion.id}
+                type="button"
+                onClick={() => selectSuggestion(suggestion.id)}
+                className="flex flex-col gap-1 rounded-md border border-stone-200 bg-[#fbf8f3] px-3 py-2 text-left text-sm hover:bg-stone-50"
+              >
+                <span className="font-semibold text-stone-900">{suggestion.suggestedStyleName}</span>
+                <span className="text-xs text-stone-500">
+                  {suggestion.label ?? "AI提案"} / {formatDate(suggestion.createdAt)}
+                </span>
+              </button>
+            ))}
+          </div>
+        </details>
+      ) : null}
     </div>
   );
 }

@@ -6,6 +6,11 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { generateCourseRecommendations } from "@/lib/ai/course-recommender";
 import { generateStyleSimulationImages } from "@/lib/ai/style-image-generator";
+import {
+  attachSimulationImages,
+  fallbackAdvisorResult,
+  type StyleSuggestionDraft
+} from "@/lib/ai/style-advisor";
 import { generateAiStyleSuggestionDrafts } from "@/lib/style-suggestion";
 import { buildStyleSuggestionContext } from "@/lib/style-suggestion";
 import {
@@ -23,6 +28,14 @@ type StyleImageGenerationState = {
   ok: boolean;
   message: string;
   imageUrls?: string[];
+  selectedSuggestionId?: string;
+};
+
+type StyleSuggestionGenerationState = {
+  ok: boolean;
+  message: string;
+  suggestionIds?: string[];
+  selectedSuggestionId?: string;
 };
 
 type AiReferencePhotoAngle = "front" | "side" | "back";
@@ -368,29 +381,165 @@ export async function createStyleSuggestion(customerId: string, formData: FormDa
   revalidatePath(`/customers/${customerId}`);
 }
 
-export async function createAiStyleSuggestion(customerId: string) {
-  const suggestions = await generateAiStyleSuggestionDrafts(customerId);
+function normalizeSuggestionText(value: string | null | undefined) {
+  return (value ?? "")
+    .toLowerCase()
+    .replace(/\s+/g, "")
+    .replace(/[｜|・,、。.!！?？\-_ー]/g, "");
+}
 
-  await prisma.styleSuggestion.createMany({
-    data: suggestions.map((suggestion) => ({
+function dedupeByStyleNameAndLabel(suggestions: StyleSuggestionDraft[]) {
+  const seen = new Set<string>();
+  const unique: StyleSuggestionDraft[] = [];
+
+  for (const suggestion of suggestions) {
+    const key = `${normalizeSuggestionText(suggestion.styleName)}:${suggestion.label}`;
+    const reasonKey = normalizeSuggestionText(suggestion.reason).slice(0, 60);
+
+    if (seen.has(key) || seen.has(reasonKey)) {
+      continue;
+    }
+
+    seen.add(key);
+    if (reasonKey) {
+      seen.add(reasonKey);
+    }
+    unique.push(suggestion);
+  }
+
+  return unique;
+}
+
+async function buildUniqueStyleSuggestionDrafts(customerId: string) {
+  const aiDrafts = dedupeByStyleNameAndLabel(await generateAiStyleSuggestionDrafts(customerId));
+
+  if (aiDrafts.length >= 3) {
+    return aiDrafts.slice(0, 3);
+  }
+
+  const context = await buildStyleSuggestionContext(customerId);
+  const fallbackDrafts = await attachSimulationImages(
+    customerId,
+    context.customer.profileImageUrl,
+    fallbackAdvisorResult(context)
+  );
+  const merged = dedupeByStyleNameAndLabel([...aiDrafts, ...fallbackDrafts]);
+
+  return merged.slice(0, 3);
+}
+
+async function archiveOpenAiStyleSuggestions(customerId: string) {
+  await prisma.styleSuggestion.updateMany({
+    where: {
       customerId,
-      suggestedStyleName: suggestion.styleName,
-      reason: suggestion.reason,
-      caution: suggestion.caution,
-      stylingAdvice: suggestion.stylingAdvice,
-      imageUrls: suggestion.imageUrls,
-      imageUrlsJson: JSON.stringify(suggestion.imageUrls),
-      menuSuggestion: suggestion.menuSuggestion,
-      estimatedMinutes: suggestion.estimatedMinutes,
-      maintenanceLevel: suggestion.maintenanceLevel,
-      label: suggestion.label,
-      faceAnalysis: suggestion.faceAnalysis,
-      imagePrompt: suggestion.imageEditPrompt,
-      accepted: false
-    }))
+      accepted: false,
+      archivedAt: null,
+      OR: [
+        { label: { in: ["本命", "安全", "挑戦", "AI提案"] } },
+        { imagePrompt: { not: null } },
+        { faceAnalysis: { not: null } }
+      ]
+    },
+    data: { archivedAt: new Date() }
   });
+}
 
-  revalidatePath(`/customers/${customerId}`);
+async function createAiStyleSuggestionRecords(
+  customerId: string,
+  { archiveExisting }: { archiveExisting: boolean }
+): Promise<StyleSuggestionGenerationState> {
+  try {
+    const suggestions = await buildUniqueStyleSuggestionDrafts(customerId);
+
+    if (suggestions.length === 0) {
+      return { ok: false, message: "AI髪型提案を作成できませんでした。時間をおいて再試行してください。" };
+    }
+
+    const createdSuggestions = await prisma.$transaction(async (tx) => {
+      if (archiveExisting) {
+        await tx.styleSuggestion.updateMany({
+          where: {
+            customerId,
+            accepted: false,
+            archivedAt: null,
+            OR: [
+              { label: { in: ["本命", "安全", "挑戦", "AI提案"] } },
+              { imagePrompt: { not: null } },
+              { faceAnalysis: { not: null } }
+            ]
+          },
+          data: { archivedAt: new Date() }
+        });
+      }
+
+      const created = [];
+
+      for (const suggestion of suggestions) {
+        created.push(
+          await tx.styleSuggestion.create({
+            data: {
+              customerId,
+              suggestedStyleName: suggestion.styleName,
+              reason: suggestion.reason,
+              caution: suggestion.caution,
+              stylingAdvice: suggestion.stylingAdvice,
+              imageUrls: suggestion.imageUrls,
+              imageUrlsJson: JSON.stringify(suggestion.imageUrls),
+              menuSuggestion: suggestion.menuSuggestion,
+              estimatedMinutes: suggestion.estimatedMinutes,
+              maintenanceLevel: suggestion.maintenanceLevel,
+              label: suggestion.label,
+              faceAnalysis: suggestion.faceAnalysis,
+              imagePrompt: suggestion.imageEditPrompt,
+              accepted: false,
+              archivedAt: null
+            }
+          })
+        );
+      }
+
+      return created;
+    });
+
+    revalidatePath(`/customers/${customerId}`);
+
+    return {
+      ok: true,
+      message: "AI髪型提案を3案作成しました。",
+      suggestionIds: createdSuggestions.map((suggestion) => suggestion.id),
+      selectedSuggestionId:
+        createdSuggestions.find((suggestion) => suggestion.label === "本命")?.id ?? createdSuggestions[0]?.id
+    };
+  } catch (error) {
+    console.error("style suggestion generation failed", { customerId, error });
+
+    return {
+      ok: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "AI髪型提案の生成に失敗しました。時間をおいて再試行してください。"
+    };
+  }
+}
+
+export async function createAiStyleSuggestion(
+  customerId: string,
+  _previousState?: StyleSuggestionGenerationState
+): Promise<StyleSuggestionGenerationState> {
+  void _previousState;
+
+  return createAiStyleSuggestionRecords(customerId, { archiveExisting: true });
+}
+
+export async function regenerateStyleSuggestionsAction(
+  customerId: string,
+  _previousState?: StyleSuggestionGenerationState
+): Promise<StyleSuggestionGenerationState> {
+  void _previousState;
+
+  await archiveOpenAiStyleSuggestions(customerId);
+  return createAiStyleSuggestionRecords(customerId, { archiveExisting: false });
 }
 
 export async function generateCourseRecommendationsAction(customerId: string) {
@@ -596,7 +745,8 @@ export async function generateStyleSuggestionImageAction(
     return {
       ok: true,
       message: "本人写真ベースの画像を生成しました。",
-      imageUrls: nextUrls
+      imageUrls: nextUrls,
+      selectedSuggestionId: styleSuggestionId
     };
   } catch (error) {
     console.error("image generation failed", {

@@ -27,7 +27,6 @@ import {
 } from "lucide-react";
 import {
   addStyleSuggestionImageUrl,
-  createAiStyleSuggestion,
   createStyleSuggestion,
   createVisit,
   deleteCustomer,
@@ -43,12 +42,16 @@ import { EmptyState, Section, SelectField, SubmitButton, TextAreaField, TextFiel
 import { AiReferencePhotoUploader } from "@/components/customers/ai-reference-photo-uploader";
 import { ProfileImageUploader } from "@/components/customers/profile-image-uploader";
 import { StyleSuggestionImageGenerator } from "@/components/customers/style-suggestion-image-generator";
+import { StyleSuggestionGenerator } from "@/components/customers/style-suggestion-generator";
 import { StyleSuggestionSelector } from "@/components/customers/style-suggestion-selector";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type CustomerDetailPageProps = {
   params: {
     id: string;
+  };
+  searchParams?: {
+    suggestionId?: string;
   };
 };
 
@@ -145,7 +148,7 @@ function styleSuggestionImageUrls(suggestion: { imageUrls: string[]; imageUrlsJs
   }
 }
 
-export default async function CustomerDetailPage({ params }: CustomerDetailPageProps) {
+export default async function CustomerDetailPage({ params, searchParams }: CustomerDetailPageProps) {
   const { id } = params;
   const customer = await prisma.customer.findFirst({
     where: { id, deletedAt: null },
@@ -179,7 +182,6 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
   const upsertPreferenceAction = upsertPreference.bind(null, customer.id);
   const createVisitAction = createVisit.bind(null, customer.id);
   const createStyleSuggestionAction = createStyleSuggestion.bind(null, customer.id);
-  const createAiStyleSuggestionAction = createAiStyleSuggestion.bind(null, customer.id);
   const deleteCustomerAction = deleteCustomer.bind(null, customer.id);
   const generateCourseRecommendations = generateCourseRecommendationsAction.bind(null, customer.id);
   const latestVisit = customer.visits[0];
@@ -204,9 +206,13 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
     label: suggestion.label,
     faceAnalysis: suggestion.faceAnalysis,
     accepted: suggestion.accepted,
+    archivedAt: suggestion.archivedAt?.toISOString() ?? null,
     createdAt: suggestion.createdAt.toISOString(),
     visit: suggestion.visit ? { visitedAt: suggestion.visit.visitedAt.toISOString() } : null
   }));
+  const hasVisibleStyleSuggestions = styleSuggestionItems.some(
+    (suggestion) => suggestion.accepted || (!suggestion.archivedAt && ["本命", "安全", "挑戦", "AI提案"].includes(suggestion.label ?? ""))
+  );
 
   return (
     <div className="mx-auto grid w-full max-w-7xl gap-5">
@@ -590,17 +596,9 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
                   本人写真を登録すると、顔型・骨格バランスを踏まえた提案精度が上がります。
                 </p>
               ) : null}
-              <form action={createAiStyleSuggestionAction} className="mt-3">
-                <button
-                  type="submit"
-                  className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-teal-900 px-4 text-sm font-semibold text-white shadow-sm hover:bg-teal-950"
-                >
-                  <WandSparkles className="h-4 w-4" />
-                  AIで3案を生成して保存
-                </button>
-              </form>
+              <StyleSuggestionGenerator customerId={customer.id} hasVisibleSuggestions={hasVisibleStyleSuggestions} />
               <p className="mt-2 text-xs font-semibold text-amber-900">
-                新しく3案を追加します。既存の提案は削除されません。表示は最新20件と採用済み提案を中心に整理されます。
+                3案を再作成すると、未採用のAI提案は過去の提案へ移動します。採用候補にした提案は残ります。
               </p>
             </div>
 
@@ -609,6 +607,7 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
               suggestions={styleSuggestionItems}
               hasAiReferencePhotos={Boolean(customer.aiFrontImageUrl && customer.aiSideImageUrl && customer.aiBackImageUrl)}
               hasAiPhotoConsent={customer.aiPhotoConsent}
+              initialSelectedSuggestionId={searchParams?.suggestionId}
             />
 
             <div className="hidden">

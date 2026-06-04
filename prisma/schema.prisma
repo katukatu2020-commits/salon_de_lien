@@ -92,6 +92,7 @@ model StyleSuggestion {
   faceAnalysis       String?
   imagePrompt        String?
   accepted           Boolean  @default(false)
+  archivedAt         DateTime?
   createdAt          DateTime @default(now())
   customer           Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
   visit              Visit?   @relation(fields: [visitId], references: [id], onDelete: SetNull)
