@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   AlertCircle,
@@ -13,11 +13,13 @@ import {
   LinkIcon,
   Plus,
   Scissors,
+  Trash2,
   UserRound,
   WandSparkles
 } from "lucide-react";
 import {
   addStyleSuggestionImageUrl,
+  removeStyleSuggestionImageAction,
   updateStyleSuggestionAccepted
 } from "@/lib/actions";
 import { StyleSuggestionImageGenerator } from "@/components/customers/style-suggestion-image-generator";
@@ -234,6 +236,8 @@ export function StyleSuggestionSelector({
   initialSelectedSuggestionId?: string;
 }) {
   const router = useRouter();
+  const [isDeletingImage, startImageDeleteTransition] = useTransition();
+  const [imageDeleteMessage, setImageDeleteMessage] = useState("");
   const selectableSuggestions = useMemo(() => buildVisibleSuggestions(suggestions), [suggestions]);
   const archivedSuggestions = useMemo(
     () =>
@@ -268,6 +272,37 @@ export function StyleSuggestionSelector({
   function selectSuggestion(nextId: string) {
     setSelectedId(nextId);
     router.replace(`/customers/${customerId}?suggestionId=${nextId}`, { scroll: false });
+  }
+
+  function deleteGeneratedImage(imageUrl: string) {
+    const confirmed = window.confirm(
+      "この生成画像を削除しますか？\n破綻画像や不要な画像を提案カードから外します。"
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setImageDeleteMessage("");
+    startImageDeleteTransition(() => {
+      void (async () => {
+        const formData = new FormData();
+        formData.set("styleSuggestionId", selectedSuggestion?.id ?? "");
+        formData.set("customerId", customerId);
+        formData.set("imageUrl", imageUrl);
+
+        const result = await removeStyleSuggestionImageAction(formData);
+
+        setImageDeleteMessage(result.message);
+
+        if (result.ok) {
+          router.replace(`/customers/${customerId}?suggestionId=${selectedSuggestion?.id ?? ""}`, { scroll: false });
+          router.refresh();
+        }
+      })().catch(() => {
+        setImageDeleteMessage("生成画像を削除できませんでした。");
+      });
+    });
   }
 
   if (!selectedSuggestion) {
@@ -412,6 +447,19 @@ export function StyleSuggestionSelector({
                   <div className="border-t border-stone-200 bg-white px-3 py-2 text-center text-xs font-semibold text-stone-700">
                     {angle}
                   </div>
+                  {imageUrl ? (
+                    <div className="border-t border-stone-200 bg-white px-3 py-2">
+                      <button
+                        type="button"
+                        disabled={isDeletingImage}
+                        onClick={() => deleteGeneratedImage(imageUrl)}
+                        className="inline-flex h-8 w-full items-center justify-center gap-2 rounded-md border border-red-100 bg-red-50 px-3 text-xs font-semibold text-red-700 hover:bg-red-100"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        生成画像を削除
+                      </button>
+                    </div>
+                  ) : null}
                   {imageUrl && typeof imageEntry?.identityScore === "number" ? (
                     <div className="border-t border-stone-200 bg-white px-3 py-2">
                       <div className={`inline-flex rounded border px-2 py-1 text-[11px] font-semibold ${identityTone(imageEntry.identityLevel)}`}>
@@ -455,6 +503,11 @@ export function StyleSuggestionSelector({
                 ))}
               </div>
             </div>
+          ) : null}
+          {imageDeleteMessage ? (
+            <p className="mt-3 rounded-md border border-stone-200 bg-white px-3 py-2 text-xs font-semibold text-stone-700">
+              {imageDeleteMessage}
+            </p>
           ) : null}
         </div>
 

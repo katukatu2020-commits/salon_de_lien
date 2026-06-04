@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { generateCourseRecommendations } from "@/lib/ai/course-recommender";
 import { checkGeneratedImageIdentity } from "@/lib/ai/identity-checker";
+import { checkGeneratedImageQuality } from "@/lib/ai/image-quality-checker";
 import { generateStyleSimulation } from "@/lib/ai/style-simulation-provider";
 import {
   attachSimulationImages,
@@ -102,6 +103,10 @@ type StyleImageUrlEntry = {
   identityLevel?: "high" | "medium" | "low";
   identityWarning?: string | null;
 };
+
+function isPhotomakerOnlyImage(provider: string | undefined) {
+  return provider === "fal-photomaker";
+}
 
 function parseJsonStringArray(value: string | null | undefined) {
   if (!value) {
@@ -853,6 +858,111 @@ export async function addStyleSuggestionImageUrl(customerId: string, suggestionI
   revalidatePath(`/customers/${customerId}`);
 }
 
+export async function removeStyleSuggestionImageUrl(customerId: string, suggestionId: string, imageUrl: string) {
+  if (!imageUrl) {
+    return;
+  }
+
+  const suggestion = await prisma.styleSuggestion.findFirst({
+    where: {
+      id: suggestionId,
+      customerId,
+      customer: { deletedAt: null }
+    },
+    select: { imageUrls: true, imageUrlsJson: true }
+  });
+
+  if (!suggestion) {
+    throw new Error("髪型提案が見つかりません。");
+  }
+
+  const nextEntries = parseImageUrlEntries(suggestion.imageUrlsJson, suggestion.imageUrls).filter(
+    (entry) => entry.url !== imageUrl
+  );
+  const nextUrls = nextEntries.map((entry) => entry.url);
+
+  await prisma.styleSuggestion.update({
+    where: { id: suggestionId },
+    data: {
+      imageUrls: nextUrls,
+      imageUrlsJson: JSON.stringify(nextEntries)
+    }
+  });
+
+  revalidatePath(`/customers/${customerId}`);
+}
+
+export async function removeStyleSuggestionImageAction(formData: FormData) {
+  const styleSuggestionId = String(formData.get("styleSuggestionId") || "");
+  const customerId = String(formData.get("customerId") || "");
+  const imageUrl = String(formData.get("imageUrl") || "");
+
+  if (!styleSuggestionId || !customerId || !imageUrl) {
+    return {
+      ok: false,
+      message: "生成画像を削除できませんでした。"
+    };
+  }
+
+  try {
+    const suggestion = await prisma.styleSuggestion.findFirst({
+      where: {
+        id: styleSuggestionId,
+        customerId,
+        customer: { deletedAt: null }
+      },
+      select: { imageUrls: true, imageUrlsJson: true }
+    });
+
+    if (!suggestion) {
+      return {
+        ok: false,
+        message: "生成画像を削除できませんでした。"
+      };
+    }
+
+    const existingEntries = parseImageUrlEntries(suggestion.imageUrlsJson, suggestion.imageUrls);
+    const nextEntries = existingEntries.filter((entry) => entry.url !== imageUrl);
+
+    if (nextEntries.length === existingEntries.length) {
+      return {
+        ok: false,
+        message: "対象の生成画像が見つかりませんでした。"
+      };
+    }
+
+    const nextUrls = nextEntries.map((entry) => entry.url);
+
+    await prisma.styleSuggestion.update({
+      where: { id: styleSuggestionId },
+      data: {
+        imageUrls: nextUrls,
+        imageUrlsJson: JSON.stringify(nextEntries)
+      }
+    });
+
+    // TODO: Delete the actual Blob file from Vercel Blob when storage cleanup is required.
+    revalidatePath(`/customers/${customerId}`);
+
+    return {
+      ok: true,
+      message: "生成画像を削除しました。"
+    };
+  } catch (error) {
+    console.error("style suggestion image delete failed", {
+      customerId,
+      styleSuggestionId,
+      imageUrl,
+      error
+    });
+
+    return {
+      ok: false,
+      message: "生成画像を削除できませんでした。"
+    };
+  }
+}
+
 export async function generateStyleSuggestionImageAction(
   styleSuggestionId: string,
   customerId: string,
@@ -982,8 +1092,47 @@ export async function generateStyleSuggestionImageAction(
 
     const existingEntries = parseImageUrlEntries(suggestion.imageUrlsJson, suggestion.imageUrls);
     const generatedEntries: StyleImageUrlEntry[] = [];
+    const qualityCheckedImages: typeof simulationResult.images = [];
 
     for (const image of simulationResult.images) {
+      const provider = image.provider ?? simulationResult.provider;
+
+      if (!isPhotomakerOnlyImage(provider)) {
+        qualityCheckedImages.push(image);
+        continue;
+      }
+
+      const qualityCheck = await checkGeneratedImageQuality({
+        imageUrl: image.url,
+        angle: image.angle,
+        provider
+      });
+
+      if (qualityCheck.ok) {
+        qualityCheckedImages.push(image);
+      } else {
+        console.warn("generated image rejected by quality check", {
+          customerId,
+          styleSuggestionId,
+          angle: image.angle,
+          provider,
+          reason: qualityCheck.reason,
+          warnings: qualityCheck.warnings
+        });
+      }
+    }
+
+    if (qualityCheckedImages.length === 0 || (simulationResult.provider === "fal-photomaker" && qualityCheckedImages.length < 3)) {
+      return {
+        ok: false,
+        message:
+          simulationResult.provider === "fal-photomaker" || simulationResult.images.some((image) => isPhotomakerOnlyImage(image.provider))
+            ? "PhotoMaker生成画像が破綻したため保存しませんでした。"
+            : "生成画像が破綻したため保存しませんでした。別の方式で再生成してください。"
+      };
+    }
+
+    for (const image of qualityCheckedImages) {
       const identityCheck = await checkGeneratedImageIdentity({
         referenceFrontImageUrls: frontUrls,
         referenceSideImageUrls: sideUrls,

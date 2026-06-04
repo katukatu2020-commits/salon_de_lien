@@ -34,27 +34,32 @@ const ANGLES: Array<{
 
 function selectedReferenceUrls({
   frontImageUrls,
-  sideImageUrls,
-  backImageUrls
+  sideImageUrls
 }: {
   frontImageUrls: string[];
   sideImageUrls: string[];
   backImageUrls: string[];
 }) {
   const front = frontImageUrls.slice(0, 4);
-  const side = sideImageUrls.slice(0, 2);
-  const back = backImageUrls.slice(0, 1);
-  const refs = [...front, ...side, ...back];
+  const side = sideImageUrls.slice(0, 1);
 
-  if (refs.length <= 6) {
-    return Array.from(new Set(refs));
+  return Array.from(new Set([...front, ...side])).slice(0, 5);
+}
+
+function imageExtension(contentType: string) {
+  if (contentType.includes("image/png")) {
+    return "png";
   }
 
-  if (back.length > 0 && side.length > 1) {
-    return Array.from(new Set([...front, side[0], ...back])).slice(0, 6);
+  if (contentType.includes("image/webp")) {
+    return "webp";
   }
 
-  return Array.from(new Set(refs)).slice(0, 6);
+  if (contentType.includes("image/jpeg") || contentType.includes("image/jpg")) {
+    return "jpg";
+  }
+
+  return null;
 }
 
 async function createReferenceArchiveUrl(params: {
@@ -71,24 +76,53 @@ async function createReferenceArchiveUrl(params: {
   const JSZip = (await import("jszip")).default;
   const zip = new JSZip();
   const referenceUrls = selectedReferenceUrls(params);
+  let addedCount = 0;
+
+  console.log("[photomaker] selected reference image count", referenceUrls.length);
 
   if (referenceUrls.length === 0) {
     throw new Error("PhotoMakerに渡す参照写真がありません。");
   }
 
-  for (const [index, url] of referenceUrls.entries()) {
-    const response = await fetch(url);
+  for (const url of referenceUrls) {
+    try {
+      const response = await fetch(url);
 
-    if (!response.ok) {
-      throw new Error(`参照画像の取得に失敗しました: ${response.status}`);
+      if (!response.ok) {
+        console.warn("[photomaker] reference image fetch failed", { status: response.status });
+        continue;
+      }
+
+      const contentType = response.headers.get("content-type") ?? "";
+      const extension = imageExtension(contentType);
+
+      if (!extension) {
+        console.warn("[photomaker] reference image skipped: unsupported content-type", {
+          contentType: contentType || "missing"
+        });
+        continue;
+      }
+
+      const buffer = Buffer.from(await response.arrayBuffer());
+
+      if (buffer.byteLength === 0) {
+        console.warn("[photomaker] reference image skipped: empty response");
+        continue;
+      }
+
+      addedCount += 1;
+      zip.file(`reference-${String(addedCount).padStart(2, "0")}.${extension}`, buffer);
+    } catch (error) {
+      console.warn("[photomaker] reference image fetch failed", { error });
     }
+  }
 
-    const contentType = response.headers.get("content-type") ?? "image/jpeg";
-    const extension = contentType.includes("png") ? "png" : contentType.includes("webp") ? "webp" : "jpg";
-    zip.file(`identity-${index + 1}.${extension}`, Buffer.from(await response.arrayBuffer()));
+  if (addedCount === 0) {
+    throw new Error("PhotoMakerに渡せる有効な参照画像がありませんでした。");
   }
 
   const archiveBuffer = await zip.generateAsync({ type: "nodebuffer", compression: "DEFLATE" });
+  console.log("[photomaker] zip bytes", archiveBuffer.length);
   const blob = await put(
     `customers/${params.customerId}/style-simulations/identity-${params.styleSuggestionId}-${Date.now()}.zip`,
     archiveBuffer,
@@ -100,13 +134,22 @@ async function createReferenceArchiveUrl(params: {
     }
   );
 
+  console.log("[photomaker] image_archive_url", blob.url ? "present" : "missing");
+
   return blob.url;
 }
 
 function buildIdentityMasterPrompt(anglePrompt: string) {
   return [
-    "portrait photo of the same person img",
+    "portrait photo of img",
+    "the same person img from the reference images",
     "identity-preserving neutral salon reference image",
+    "single person only",
+    "no collage",
+    "no split face",
+    "no multiple faces",
+    "no duplicated face",
+    "no face fragments",
     "preserve the person's facial features, eyes, eyebrows, nose, mouth, jawline, face shape, ears, neck, skin texture, age impression, and facial proportions",
     "Do not change the identity",
     "Do not beautify the face",
@@ -136,7 +179,16 @@ function negativePrompt() {
     "distorted face",
     "bad anatomy",
     "blurry",
-    "low quality"
+    "low quality",
+    "collage",
+    "multiple faces",
+    "duplicate face",
+    "split face",
+    "face fragments",
+    "noise pattern",
+    "abstract pattern",
+    "broken image",
+    "corrupted image"
   ].join(", ");
 }
 
