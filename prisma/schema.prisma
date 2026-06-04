@@ -17,6 +17,9 @@ model Customer {
   aiFrontImageUrl       String?
   aiSideImageUrl        String?
   aiBackImageUrl        String?
+  aiFrontImageUrlsJson  String?
+  aiSideImageUrlsJson   String?
+  aiBackImageUrlsJson   String?
   aiPhotoConsent        Boolean                @default(false)
   memo                  String?
   deletedAt             DateTime?

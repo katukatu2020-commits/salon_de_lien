@@ -148,6 +148,23 @@ function styleSuggestionImageUrls(suggestion: { imageUrls: string[]; imageUrlsJs
   }
 }
 
+function parseJsonStringArray(value?: string | null) {
+  if (!value) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string" && item.length > 0) : [];
+  } catch {
+    return [];
+  }
+}
+
+function uniqueUrls(urls: Array<string | null | undefined>) {
+  return Array.from(new Set(urls.filter((url): url is string => Boolean(url))));
+}
+
 export default async function CustomerDetailPage({ params, searchParams }: CustomerDetailPageProps) {
   const { id } = params;
   const customer = await prisma.customer.findFirst({
@@ -213,6 +230,18 @@ export default async function CustomerDetailPage({ params, searchParams }: Custo
   const hasVisibleStyleSuggestions = styleSuggestionItems.some(
     (suggestion) => suggestion.accepted || (!suggestion.archivedAt && ["本命", "安全", "挑戦", "AI提案"].includes(suggestion.label ?? ""))
   );
+  const aiFrontImageUrls = uniqueUrls([
+    ...parseJsonStringArray(customer.aiFrontImageUrlsJson),
+    customer.aiFrontImageUrl
+  ]).slice(0, 4);
+  const aiSideImageUrls = uniqueUrls([
+    ...parseJsonStringArray(customer.aiSideImageUrlsJson),
+    customer.aiSideImageUrl
+  ]).slice(0, 4);
+  const aiBackImageUrls = uniqueUrls([
+    ...parseJsonStringArray(customer.aiBackImageUrlsJson),
+    customer.aiBackImageUrl
+  ]).slice(0, 2);
 
   return (
     <div className="mx-auto grid w-full max-w-7xl gap-5">
@@ -348,13 +377,13 @@ export default async function CustomerDetailPage({ params, searchParams }: Custo
         </TabsList>
 
         <TabsContent value="basic">
-          <AiReferencePhotoUploader
-            customerId={customer.id}
-            frontImageUrl={customer.aiFrontImageUrl}
-            sideImageUrl={customer.aiSideImageUrl}
-            backImageUrl={customer.aiBackImageUrl}
-            consent={customer.aiPhotoConsent}
-          />
+              <AiReferencePhotoUploader
+                customerId={customer.id}
+                frontImageUrls={aiFrontImageUrls}
+                sideImageUrls={aiSideImageUrls}
+                backImageUrls={aiBackImageUrls}
+                consent={customer.aiPhotoConsent}
+              />
 
           <div className="grid gap-5 xl:grid-cols-[0.8fr_1.2fr]">
             <Section title="基本情報サマリー">
@@ -605,8 +634,9 @@ export default async function CustomerDetailPage({ params, searchParams }: Custo
             <StyleSuggestionSelector
               customerId={customer.id}
               suggestions={styleSuggestionItems}
-              hasAiReferencePhotos={Boolean(customer.aiFrontImageUrl && customer.aiSideImageUrl && customer.aiBackImageUrl)}
+              hasAiReferencePhotos={aiFrontImageUrls.length >= 2 && aiSideImageUrls.length >= 2}
               hasAiPhotoConsent={customer.aiPhotoConsent}
+              isStyleImageGenerationEnabled={process.env.ENABLE_STYLE_IMAGE_GENERATION === "true"}
               initialSelectedSuggestionId={searchParams?.suggestionId}
             />
 

@@ -183,12 +183,14 @@ export function StyleSuggestionSelector({
   suggestions,
   hasAiReferencePhotos,
   hasAiPhotoConsent,
+  isStyleImageGenerationEnabled,
   initialSelectedSuggestionId
 }: {
   customerId: string;
   suggestions: SelectableStyleSuggestion[];
   hasAiReferencePhotos: boolean;
   hasAiPhotoConsent: boolean;
+  isStyleImageGenerationEnabled: boolean;
   initialSelectedSuggestionId?: string;
 }) {
   const router = useRouter();
@@ -238,11 +240,13 @@ export function StyleSuggestionSelector({
 
   const imageEntries = parseImageEntries(selectedSuggestion);
   const hasThreeImages = ANGLES.every((angle, index) => Boolean(imageForAngle(imageEntries, angle, index)));
-  const canGenerateImages = hasAiReferencePhotos && hasAiPhotoConsent;
+  const canGenerateImages = hasAiReferencePhotos && hasAiPhotoConsent && isStyleImageGenerationEnabled;
   const generationDisabledReason = !hasAiPhotoConsent
     ? "AI画像生成への同意を保存してください。"
+    : !isStyleImageGenerationEnabled
+      ? "画像生成機能が無効です。ENABLE_STYLE_IMAGE_GENERATION=true を設定してください。"
     : !hasAiReferencePhotos
-      ? "AIシミュレーション用写真（斜め正面・横・斜め後ろ）を3枚登録してください。"
+      ? "正面写真2枚以上・横顔写真2枚以上を登録すると、髪型シミュレーションを生成できます。"
       : undefined;
   const addImageAction = addStyleSuggestionImageUrl.bind(null, customerId, selectedSuggestion.id);
   const acceptAction = updateStyleSuggestionAccepted.bind(

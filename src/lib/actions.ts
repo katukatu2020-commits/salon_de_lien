@@ -39,12 +39,14 @@ type StyleSuggestionGenerationState = {
 };
 
 type AiReferencePhotoAngle = "front" | "side" | "back";
+type AiReferencePhotoGroup = "front" | "side" | "back";
 
 type AiReferencePhotoUploadState = {
   ok: boolean;
   message: string;
   imageUrl?: string;
   cacheKey?: number;
+  imageUrls?: string[];
 };
 
 const STYLE_IMAGE_ANGLES = ["斜め正面", "横", "斜め後ろ"] as const;
@@ -58,10 +60,60 @@ const AI_REFERENCE_PHOTO_CONFIG: Record<
   back: { field: "aiBackImageUrl", label: "斜め後ろ", slug: "back-three-quarter" }
 };
 
+const AI_REFERENCE_PHOTO_GROUP_CONFIG: Record<
+  AiReferencePhotoGroup,
+  {
+    jsonField: "aiFrontImageUrlsJson" | "aiSideImageUrlsJson" | "aiBackImageUrlsJson";
+    legacyField: "aiFrontImageUrl" | "aiSideImageUrl" | "aiBackImageUrl";
+    label: string;
+    slug: string;
+    max: number;
+  }
+> = {
+  front: {
+    jsonField: "aiFrontImageUrlsJson",
+    legacyField: "aiFrontImageUrl",
+    label: "正面写真",
+    slug: "front",
+    max: 4
+  },
+  side: {
+    jsonField: "aiSideImageUrlsJson",
+    legacyField: "aiSideImageUrl",
+    label: "横顔写真",
+    slug: "side",
+    max: 4
+  },
+  back: {
+    jsonField: "aiBackImageUrlsJson",
+    legacyField: "aiBackImageUrl",
+    label: "後ろ姿写真",
+    slug: "back",
+    max: 2
+  }
+};
+
 type StyleImageUrlEntry = {
   angle: string;
   url: string;
 };
+
+function parseJsonStringArray(value: string | null | undefined) {
+  if (!value) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string" && item.length > 0) : [];
+  } catch {
+    return [];
+  }
+}
+
+function uniqueUrls(urls: Array<string | null | undefined>) {
+  return Array.from(new Set(urls.filter((url): url is string => Boolean(url))));
+}
 
 function parseImageUrlEntries(imageUrlsJson: string | null, fallback: string[] = []): StyleImageUrlEntry[] {
   if (!imageUrlsJson) {
@@ -272,6 +324,150 @@ export async function uploadCustomerAiReferencePhoto(
       message: error instanceof Error ? error.message : "AIシミュレーション用写真のアップロードに失敗しました。"
     };
   }
+}
+
+export async function uploadAiReferencePhotoAction(
+  customerId: string,
+  group: AiReferencePhotoGroup,
+  _previousState: AiReferencePhotoUploadState,
+  formData: FormData
+): Promise<AiReferencePhotoUploadState> {
+  void _previousState;
+
+  try {
+    const config = AI_REFERENCE_PHOTO_GROUP_CONFIG[group];
+    const rawFiles = formData.getAll("aiReferencePhoto");
+    const imageFiles = rawFiles.filter((file): file is File => file instanceof File && file.size > 0);
+
+    if (!config) {
+      return { ok: false, message: "写真の区分が不正です。" };
+    }
+
+    if (imageFiles.length === 0) {
+      return { ok: false, message: `${config.label}を選択してください。` };
+    }
+
+    const customer = await prisma.customer.findFirst({
+      where: { id: customerId, deletedAt: null },
+      select: {
+        aiFrontImageUrl: true,
+        aiSideImageUrl: true,
+        aiBackImageUrl: true,
+        aiFrontImageUrlsJson: true,
+        aiSideImageUrlsJson: true,
+        aiBackImageUrlsJson: true
+      }
+    });
+
+    if (!customer) {
+      return { ok: false, message: "顧客が見つかりません。" };
+    }
+
+    const existingUrls = uniqueUrls([
+      ...parseJsonStringArray(customer[config.jsonField]),
+      customer[config.legacyField]
+    ]);
+    const remainingSlots = config.max - existingUrls.length;
+
+    if (remainingSlots <= 0) {
+      return { ok: false, message: `${config.label}は最大${config.max}枚まで登録できます。` };
+    }
+
+    const filesToUpload = imageFiles.slice(0, remainingSlots);
+    const uploadedUrls: string[] = [];
+
+    for (const imageFile of filesToUpload) {
+      if (!ALLOWED_PROFILE_IMAGE_TYPES.includes(imageFile.type)) {
+        return { ok: false, message: "AIシミュレーション用写真は JPG / PNG / WebP のみ登録できます。" };
+      }
+
+      if (imageFile.size > MAX_PROFILE_IMAGE_SIZE) {
+        return { ok: false, message: "AIシミュレーション用写真は5MB以下にしてください。" };
+      }
+
+      const extension = imageFile.name.split(".").pop()?.toLowerCase() ?? "jpg";
+      const safeFileName = imageFile.name.replace(/[^\w.-]/g, "_");
+      const cacheKey = Date.now();
+      const blob = await put(
+        `customers/${customerId}/ai-reference/${config.slug}-${cacheKey}-${safeFileName || `image.${extension}`}`,
+        imageFile,
+        {
+          access: "public",
+          addRandomSuffix: true,
+          token: process.env.BLOB_READ_WRITE_TOKEN
+        }
+      );
+
+      uploadedUrls.push(blob.url);
+    }
+
+    const nextUrls = uniqueUrls([...existingUrls, ...uploadedUrls]).slice(0, config.max);
+
+    await prisma.customer.update({
+      where: { id: customerId },
+      data: { [config.jsonField]: JSON.stringify(nextUrls) }
+    });
+
+    revalidatePath(`/customers/${customerId}`);
+
+    return {
+      ok: true,
+      message: `${config.label}を${uploadedUrls.length}枚追加しました。`,
+      imageUrl: uploadedUrls[0],
+      imageUrls: nextUrls,
+      cacheKey: Date.now()
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      message: error instanceof Error ? error.message : "AIシミュレーション用写真のアップロードに失敗しました。"
+    };
+  }
+}
+
+export async function removeAiReferencePhotoAction(formData: FormData) {
+  const customerIdValue = formData.get("customerId");
+  const groupValue = formData.get("group");
+  const imageUrlValue = formData.get("imageUrl");
+
+  if (typeof customerIdValue !== "string" || typeof groupValue !== "string" || typeof imageUrlValue !== "string") {
+    throw new Error("削除対象の写真情報が不正です。");
+  }
+
+  if (!["front", "side", "back"].includes(groupValue)) {
+    throw new Error("写真の区分が不正です。");
+  }
+
+  const group = groupValue as AiReferencePhotoGroup;
+  const config = AI_REFERENCE_PHOTO_GROUP_CONFIG[group];
+  const customer = await prisma.customer.findFirst({
+    where: { id: customerIdValue, deletedAt: null },
+    select: {
+      aiFrontImageUrlsJson: true,
+      aiSideImageUrlsJson: true,
+      aiBackImageUrlsJson: true,
+      aiFrontImageUrl: true,
+      aiSideImageUrl: true,
+      aiBackImageUrl: true
+    }
+  });
+
+  if (!customer) {
+    throw new Error("顧客が見つかりません。");
+  }
+
+  const nextUrls = parseJsonStringArray(customer[config.jsonField]).filter((url) => url !== imageUrlValue);
+  const legacyUpdate = customer[config.legacyField] === imageUrlValue ? { [config.legacyField]: null } : {};
+
+  await prisma.customer.update({
+    where: { id: customerIdValue },
+    data: {
+      [config.jsonField]: JSON.stringify(nextUrls),
+      ...legacyUpdate
+    }
+  });
+
+  revalidatePath(`/customers/${customerIdValue}`);
 }
 
 export async function updateCustomerAiPhotoConsent(customerId: string, formData: FormData) {
@@ -662,19 +858,40 @@ export async function generateStyleSuggestionImageAction(
             aiFrontImageUrl: true,
             aiSideImageUrl: true,
             aiBackImageUrl: true,
+            aiFrontImageUrlsJson: true,
+            aiSideImageUrlsJson: true,
+            aiBackImageUrlsJson: true,
             aiPhotoConsent: true
           }
         }
       }
     });
+    const frontUrls = suggestion
+      ? uniqueUrls([
+          ...parseJsonStringArray(suggestion.customer.aiFrontImageUrlsJson),
+          suggestion.customer.aiFrontImageUrl
+        ])
+      : [];
+    const sideUrls = suggestion
+      ? uniqueUrls([
+          ...parseJsonStringArray(suggestion.customer.aiSideImageUrlsJson),
+          suggestion.customer.aiSideImageUrl
+        ])
+      : [];
+    const backUrls = suggestion
+      ? uniqueUrls([
+          ...parseJsonStringArray(suggestion.customer.aiBackImageUrlsJson),
+          suggestion.customer.aiBackImageUrl
+        ])
+      : [];
 
     console.log("image generation started", {
       customerId,
       styleSuggestionId,
       ENABLE_STYLE_IMAGE_GENERATION: process.env.ENABLE_STYLE_IMAGE_GENERATION,
-      hasAiFrontImageUrl: Boolean(suggestion?.customer.aiFrontImageUrl),
-      hasAiSideImageUrl: Boolean(suggestion?.customer.aiSideImageUrl),
-      hasAiBackImageUrl: Boolean(suggestion?.customer.aiBackImageUrl),
+      frontImageCount: frontUrls.length,
+      sideImageCount: sideUrls.length,
+      backImageCount: backUrls.length,
       aiPhotoConsent: Boolean(suggestion?.customer.aiPhotoConsent),
       OPENAI_IMAGE_MODEL: process.env.OPENAI_IMAGE_MODEL
     });
@@ -687,8 +904,13 @@ export async function generateStyleSuggestionImageAction(
       return { ok: false, message: "AI画像生成への同意を取得済みにしてください。" };
     }
 
-    if (!suggestion.customer.aiFrontImageUrl || !suggestion.customer.aiSideImageUrl || !suggestion.customer.aiBackImageUrl) {
-      return { ok: false, message: "AIシミュレーション用写真（斜め正面・横・斜め後ろ）を3枚登録してください。" };
+    const missingMessages = [
+      frontUrls.length < 2 ? `正面写真があと${2 - frontUrls.length}枚必要です` : "",
+      sideUrls.length < 2 ? `横顔写真があと${2 - sideUrls.length}枚必要です` : ""
+    ].filter(Boolean);
+
+    if (missingMessages.length > 0) {
+      return { ok: false, message: `${missingMessages.join("、")}。` };
     }
 
     if (process.env.ENABLE_STYLE_IMAGE_GENERATION !== "true") {
@@ -697,10 +919,10 @@ export async function generateStyleSuggestionImageAction(
 
     const generatedUrls = await generateStyleSimulationImages({
       customerId,
-      referenceImageUrls: {
-        front: suggestion.customer.aiFrontImageUrl,
-        side: suggestion.customer.aiSideImageUrl,
-        back: suggestion.customer.aiBackImageUrl
+      referencePhotos: {
+        frontUrls,
+        sideUrls,
+        backUrls
       },
       styleName: suggestion.suggestedStyleName,
       imageEditPrompt:
