@@ -56,6 +56,7 @@ DATABASE_URL="postgresql://salon:salon_password@localhost:5432/salon_de_lien?sch
 BLOB_READ_WRITE_TOKEN=""
 OPENAI_API_KEY=""
 OPENAI_MODEL="gpt-4.1-mini"
+ENABLE_STYLE_IMAGE_GENERATION="false"
 ```
 
 ### 3. Docker Compose による PostgreSQL 起動
@@ -164,6 +165,7 @@ DATABASE_URL=postgresql://USER:PASSWORD@HOST.neon.tech/DBNAME?sslmode=require
 BLOB_READ_WRITE_TOKEN=Vercel Blob の Read Write Token
 OPENAI_API_KEY=OpenAI API Key
 OPENAI_MODEL=gpt-4.1-mini
+ENABLE_STYLE_IMAGE_GENERATION=false
 ```
 
 Production / Preview / Development のどこで使うかは運用に合わせて選択します。まずは Production に設定してください。
@@ -220,6 +222,9 @@ npm run typecheck
 - 来店履歴の新しい順表示
 - 髪型提案追加
 - OpenAI APIを使ったAI髪型提案生成・保存
+- AI髪型提案の3案生成（本命・安全・挑戦）
+- 髪型提案カードへの参考画像URL追加
+- 顧客本人写真を前提にした髪型シミュレーション提案の土台
 - 髪型提案の新しい順表示
 - 髪型提案の採用フラグ更新
 - Vercel Blobを使った顧客プロフィール画像アップロード
@@ -238,10 +243,37 @@ npm run typecheck
 ## 今回実装していないこと
 
 - 顔写真の画像解析
-- AIによる自動髪型判定
+- AIによる絶対的な髪型判定
 - 顔認識
 - 決済機能
 - 予約機能
 - LINE連携
 - 複数店舗管理
 - 高度な権限管理
+
+## AI髪型提案と画像利用の注意
+
+AI髪型提案はスタッフ向けの参考情報です。最終判断はスタッフが行い、顧客本人の希望・NG条件を必ず優先してください。
+
+顧客本人の写真をAI提案や髪型シミュレーションに使う場合は、必ず本人の同意を取ってください。生成画像は仕上がりを保証するものではなく、髪質・骨格・施術条件により実際の仕上がりは変わります。
+
+本番利用では、認証とアクセス制御が必要です。また、実顧客写真をPublic Blobに保存しない構成も検討してください。デモでは許可済み画像のみを使ってください。
+
+`ENABLE_STYLE_IMAGE_GENERATION` が `false` または未設定の場合、画像生成は行わず、AI文章提案のみ保存します。`true` にした場合でも、現在の `src/lib/ai/style-image-generator.ts` は将来の画像編集API接続用インターフェースで、実画像生成処理は安全なスタブです。
+## 顧客削除機能
+
+顧客削除は論理削除です。削除操作では `Customer.deletedAt` に削除日時を保存し、来店履歴・髪質・好み・髪型提案・おすすめコースの関連データは物理削除しません。
+
+- 顧客一覧と検索には、削除済み顧客を表示しません。
+- 削除済み顧客の詳細URLへ直接アクセスした場合は404相当として扱います。
+- 本番利用では復元機能、監査ログ、削除権限の追加を検討してください。
+
+## AIおすすめコース提案機能
+
+顧客詳細の「おすすめコース」タブで、髪質・好み・NG条件・来店履歴・髪型提案履歴をもとに、スタッフ向けの施術コース候補を3件生成して保存できます。
+
+- 提案は「本命」「低負担」「挑戦」の3件です。
+- 価格と所要時間は目安です。正式な施術内容・料金は店舗で確認してください。
+- AI提案は参考情報です。最終判断はスタッフが行い、顧客本人の希望・NG条件を必ず優先してください。
+- `OPENAI_API_KEY` が未設定の場合でも画面は落ちず、カルテ情報ベースのフォールバック提案を作成します。
+- フォールバックでは、髪量が多い場合は毛量調整、頭皮状態が気になる場合は炭酸スパ、セット時間が短い場合は扱いやすいショートやニュアンスパーマ候補を優先します。

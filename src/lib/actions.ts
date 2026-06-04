@@ -4,7 +4,9 @@ import { put } from "@vercel/blob";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { generateAiStyleSuggestionDraft } from "@/lib/style-suggestion";
+import { generateCourseRecommendations } from "@/lib/ai/course-recommender";
+import { generateAiStyleSuggestionDrafts } from "@/lib/style-suggestion";
+import { buildStyleSuggestionContext } from "@/lib/style-suggestion";
 import {
   nullableBoolean,
   nullableInt,
@@ -45,6 +47,21 @@ export async function updateCustomer(customerId: string, formData: FormData) {
 
   revalidatePath("/customers");
   revalidatePath(`/customers/${customerId}`);
+}
+
+export async function deleteCustomer(customerId: string, formData?: FormData) {
+  if (formData && formData.get("confirmDelete") !== "yes") {
+    throw new Error("削除確認にチェックを入れてください。");
+  }
+
+  await prisma.customer.update({
+    where: { id: customerId },
+    data: { deletedAt: new Date() }
+  });
+
+  revalidatePath("/customers");
+  revalidatePath(`/customers/${customerId}`);
+  redirect("/customers");
 }
 
 export async function uploadCustomerProfileImage(
@@ -182,6 +199,12 @@ export async function createStyleSuggestion(customerId: string, formData: FormDa
       reason: nullableString(formData, "reason"),
       caution: nullableString(formData, "caution"),
       stylingAdvice: nullableString(formData, "stylingAdvice"),
+      faceAnalysis: nullableString(formData, "faceAnalysis"),
+      imagePrompt: nullableString(formData, "imagePrompt"),
+      menuSuggestion: nullableString(formData, "menuSuggestion"),
+      estimatedMinutes: nullableInt(formData, "estimatedMinutes"),
+      maintenanceLevel: nullableString(formData, "maintenanceLevel"),
+      label: nullableString(formData, "label"),
       accepted: nullableBoolean(formData, "accepted")
     }
   });
@@ -190,16 +213,98 @@ export async function createStyleSuggestion(customerId: string, formData: FormDa
 }
 
 export async function createAiStyleSuggestion(customerId: string) {
-  const suggestion = await generateAiStyleSuggestionDraft(customerId);
+  const suggestions = await generateAiStyleSuggestionDrafts(customerId);
 
-  await prisma.styleSuggestion.create({
-    data: {
+  await prisma.styleSuggestion.createMany({
+    data: suggestions.map((suggestion) => ({
       customerId,
-      suggestedStyleName: suggestion.suggestedStyleName,
+      suggestedStyleName: suggestion.styleName,
       reason: suggestion.reason,
       caution: suggestion.caution,
       stylingAdvice: suggestion.stylingAdvice,
+      imageUrls: suggestion.imageUrls,
+      imageUrlsJson: JSON.stringify(suggestion.imageUrls),
+      menuSuggestion: suggestion.menuSuggestion,
+      estimatedMinutes: suggestion.estimatedMinutes,
+      maintenanceLevel: suggestion.maintenanceLevel,
+      label: suggestion.label,
+      faceAnalysis: suggestion.faceAnalysis,
+      imagePrompt: suggestion.imageEditPrompt,
       accepted: false
+    }))
+  });
+
+  revalidatePath(`/customers/${customerId}`);
+}
+
+export async function generateCourseRecommendationsAction(customerId: string) {
+  const context = await buildStyleSuggestionContext(customerId);
+  const recommendations = await generateCourseRecommendations(context);
+
+  await prisma.courseRecommendation.createMany({
+    data: recommendations.map((recommendation) => ({
+      customerId,
+      title: recommendation.title,
+      reason: recommendation.reason,
+      caution: recommendation.caution,
+      estimatedMinutes: recommendation.estimatedMinutes,
+      estimatedPrice: recommendation.estimatedPrice,
+      priority: recommendation.priority,
+      accepted: false
+    }))
+  });
+
+  revalidatePath(`/customers/${customerId}`);
+}
+
+export async function toggleCourseRecommendationAccepted(id: string, customerId: string) {
+  const recommendation = await prisma.courseRecommendation.findFirst({
+    where: {
+      id,
+      customerId,
+      customer: { deletedAt: null }
+    },
+    select: { accepted: true }
+  });
+
+  if (!recommendation) {
+    throw new Error("おすすめコースが見つかりません。");
+  }
+
+  await prisma.courseRecommendation.update({
+    where: { id },
+    data: { accepted: !recommendation.accepted }
+  });
+
+  revalidatePath(`/customers/${customerId}`);
+}
+
+export async function addStyleSuggestionImageUrl(customerId: string, suggestionId: string, formData: FormData) {
+  const imageUrl = requiredString(formData, "imageUrl").trim();
+
+  try {
+    new URL(imageUrl);
+  } catch {
+    throw new Error("正しい画像URLを入力してください。");
+  }
+
+  const suggestion = await prisma.styleSuggestion.findUnique({
+    where: { id: suggestionId },
+    select: { imageUrls: true, imageUrlsJson: true }
+  });
+
+  if (!suggestion) {
+    throw new Error("髪型提案が見つかりません。");
+  }
+
+  const existingUrls = suggestion.imageUrlsJson ? (JSON.parse(suggestion.imageUrlsJson) as string[]) : suggestion.imageUrls;
+  const nextUrls = [...existingUrls, imageUrl].slice(0, 3);
+
+  await prisma.styleSuggestion.update({
+    where: { id: suggestionId },
+    data: {
+      imageUrls: nextUrls,
+      imageUrlsJson: JSON.stringify(nextUrls)
     }
   });
 

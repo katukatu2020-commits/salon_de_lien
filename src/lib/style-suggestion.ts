@@ -1,55 +1,14 @@
+import {
+  attachSimulationImages,
+  fallbackAdvisorResult,
+  parseAdvisorResult,
+  type StyleSuggestionContext
+} from "@/lib/ai/style-advisor";
 import { prisma } from "@/lib/prisma";
 
-type AiStyleSuggestion = {
-  suggestedStyleName: string;
-  reason: string;
-  caution: string;
-  stylingAdvice: string;
-};
-
-function fallbackSuggestionFromContext(context: Awaited<ReturnType<typeof buildStyleSuggestionContext>>): AiStyleSuggestion {
-  const preferredLength = context.preference?.preferredLength ?? "扱いやすい長さ";
-  const preferredStyle = context.preference?.preferredStyle ?? "自然で清潔感のある雰囲気";
-  const hairTexture = context.hairProfile?.hairTexture ?? "現在の髪質";
-  const latestVisit = context.recentVisits[0];
-
-  return {
-    suggestedStyleName: `${preferredLength}を活かしたナチュラルショート`,
-    reason: `好みの「${preferredStyle}」と${hairTexture}を踏まえ、日常で扱いやすい提案としてまとめています。${
-      latestVisit?.performedStyle ? `前回の「${latestVisit.performedStyle}」から大きく変えすぎない方向です。` : ""
-    }`,
-    caution: context.preference?.dislikes
-      ? `NG条件（${context.preference.dislikes}）を必ず優先し、施術前に顧客本人へ確認してください。`
-      : "顧客本人の希望を確認し、顔周りや長さの変化はスタッフ判断で調整してください。",
-    stylingAdvice:
-      context.hairProfile?.stylingTimeMinutes != null
-        ? `朝のセット時間 ${context.hairProfile.stylingTimeMinutes}分以内で整えやすいよう、軽めのワックスやバームで自然に仕上げます。`
-        : "乾かすだけで形が出やすいベースを作り、必要に応じて軽めのスタイリング剤で整えます。"
-  };
-}
-
-function parseAiSuggestion(text: string, context: Awaited<ReturnType<typeof buildStyleSuggestionContext>>) {
-  try {
-    const parsed = JSON.parse(text) as Partial<AiStyleSuggestion>;
-
-    if (parsed.suggestedStyleName && parsed.reason) {
-      return {
-        suggestedStyleName: parsed.suggestedStyleName,
-        reason: parsed.reason,
-        caution: parsed.caution ?? "顧客本人の希望・NG条件を優先してスタッフが最終判断してください。",
-        stylingAdvice: parsed.stylingAdvice ?? "日々の扱いやすさを確認しながらスタイリング方法を提案してください。"
-      };
-    }
-  } catch {
-    // Fall through to a deterministic fallback so the demo flow can still save a suggestion.
-  }
-
-  return fallbackSuggestionFromContext(context);
-}
-
-export async function buildStyleSuggestionContext(customerId: string) {
-  const customer = await prisma.customer.findUnique({
-    where: { id: customerId },
+export async function buildStyleSuggestionContext(customerId: string): Promise<StyleSuggestionContext> {
+  const customer = await prisma.customer.findFirst({
+    where: { id: customerId, deletedAt: null },
     include: {
       hairProfile: true,
       preference: true,
@@ -71,6 +30,7 @@ export async function buildStyleSuggestionContext(customerId: string) {
   const acceptedStyleSuggestions = await prisma.styleSuggestion.findMany({
     where: {
       customerId,
+      customer: { deletedAt: null },
       accepted: true
     },
     orderBy: { createdAt: "desc" }
@@ -103,11 +63,11 @@ export async function generateStyleSuggestions(customerId: string) {
   };
 }
 
-export async function generateAiStyleSuggestionDraft(customerId: string) {
+export async function generateAiStyleSuggestionDrafts(customerId: string) {
   const context = await buildStyleSuggestionContext(customerId);
 
   if (!process.env.OPENAI_API_KEY) {
-    return fallbackSuggestionFromContext(context);
+    return attachSimulationImages(customerId, context.customer.profileImageUrl, fallbackAdvisorResult(context));
   }
 
   const OpenAI = (await import("openai")).default;
@@ -149,21 +109,59 @@ export async function generateAiStyleSuggestionDraft(customerId: string) {
   > = [
     {
       type: "input_text",
-      text: `顧客カルテをもとに、美容師・理容師スタッフ向けの髪型提案を1件だけ作成してください。
+      text: `顧客本人のプロフィール写真とカルテをもとに、スタッフ向けの髪型提案を作成してください。
 
 重要:
-- AI提案は参考情報です。
-- 最終判断はスタッフが行います。
+- AI提案は参考情報です。最終判断はスタッフが行います。
 - 顧客本人の希望・NG条件を必ず優先してください。
-- 医療的・断定的な判断はしないでください。
+- 写真上の印象として表現し、顔型・骨格を断定しないでください。
+- 欠点を隠す、必ず似合う、これしかない、などの断定表現は禁止です。
+- 本人写真を使う前提で、髪型だけを自然に変更する imageEditPrompt を作ってください。
+- 顔立ち・骨格バランス・表情・顔の向きはできるだけ維持し、別人化させない指示を含めてください。
 - 出力はJSONのみで、余計な説明文は不要です。
 
 JSON形式:
 {
-  "suggestedStyleName": "提案スタイル名",
-  "reason": "提案理由。髪質・好み・履歴を根拠にする",
-  "caution": "注意点。NG条件や確認事項を含める",
-  "stylingAdvice": "スタッフが顧客に伝えられるセット方法"
+  "faceShapeImpression": "写真上の顔型の印象。断定しない",
+  "boneStructureImpression": "骨格バランスの印象。断定しない",
+  "currentHairObservation": "現在の髪型・髪量・毛流れの印象",
+  "overallDirection": "全体の提案方針",
+  "avoidPoints": ["避けた方がよい方向"],
+  "suggestions": [
+    {
+      "label": "本命",
+      "styleName": "提案スタイル名",
+      "reason": "本人写真・髪質・好み・履歴を根拠にした提案理由",
+      "caution": "NG条件や確認事項",
+      "stylingAdvice": "セット方法",
+      "menuSuggestion": "おすすめ施術メニュー",
+      "estimatedMinutes": 60,
+      "maintenanceLevel": "低",
+      "imageEditPrompt": "本人写真を入力として髪型だけを自然に変更する画像編集プロンプト"
+    },
+    {
+      "label": "安全",
+      "styleName": "...",
+      "reason": "...",
+      "caution": "...",
+      "stylingAdvice": "...",
+      "menuSuggestion": "...",
+      "estimatedMinutes": 60,
+      "maintenanceLevel": "中",
+      "imageEditPrompt": "..."
+    },
+    {
+      "label": "挑戦",
+      "styleName": "...",
+      "reason": "...",
+      "caution": "...",
+      "stylingAdvice": "...",
+      "menuSuggestion": "...",
+      "estimatedMinutes": 70,
+      "maintenanceLevel": "高",
+      "imageEditPrompt": "..."
+    }
+  ]
 }
 
 顧客カルテ:
@@ -187,8 +185,12 @@ ${contextText}`
         content
       }
     ],
-    max_output_tokens: 900
+    max_output_tokens: 1400
   });
 
-  return parseAiSuggestion(response.output_text, context);
+  return attachSimulationImages(
+    customerId,
+    context.customer.profileImageUrl,
+    parseAdvisorResult(response.output_text, context)
+  );
 }

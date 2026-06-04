@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import {
   AlertCircle,
   ArrowLeft,
+  BadgeDollarSign,
   CalendarDays,
   CheckCircle2,
   ChevronRight,
@@ -12,18 +13,26 @@ import {
   Edit3,
   FileText,
   Heart,
+  ImageIcon,
+  LinkIcon,
   MoreHorizontal,
   Phone,
+  Plus,
   Save,
   Scissors,
   Sparkles,
+  Trash2,
   WandSparkles,
   UserRound
 } from "lucide-react";
 import {
+  addStyleSuggestionImageUrl,
   createAiStyleSuggestion,
   createStyleSuggestion,
   createVisit,
+  deleteCustomer,
+  generateCourseRecommendationsAction,
+  toggleCourseRecommendationAccepted,
   updateCustomer,
   updateStyleSuggestionAccepted,
   upsertHairProfile,
@@ -116,10 +125,27 @@ function SaveLabel({ children }: { children: ReactNode }) {
   );
 }
 
+function suggestionImageSlots(imageUrls: string[]) {
+  return [...imageUrls.slice(0, 3), ...Array(Math.max(0, 3 - imageUrls.length)).fill("")] as string[];
+}
+
+function styleSuggestionImageUrls(suggestion: { imageUrls: string[]; imageUrlsJson: string | null }) {
+  if (!suggestion.imageUrlsJson) {
+    return suggestion.imageUrls;
+  }
+
+  try {
+    const parsed = JSON.parse(suggestion.imageUrlsJson) as unknown;
+    return Array.isArray(parsed) ? parsed.filter((url): url is string => typeof url === "string") : suggestion.imageUrls;
+  } catch {
+    return suggestion.imageUrls;
+  }
+}
+
 export default async function CustomerDetailPage({ params }: CustomerDetailPageProps) {
   const { id } = params;
-  const customer = await prisma.customer.findUnique({
-    where: { id },
+  const customer = await prisma.customer.findFirst({
+    where: { id, deletedAt: null },
     include: {
       hairProfile: true,
       preference: true,
@@ -127,6 +153,12 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
         orderBy: { visitedAt: "desc" }
       },
       styleSuggestions: {
+        orderBy: { createdAt: "desc" },
+        include: {
+          visit: true
+        }
+      },
+      courseRecommendations: {
         orderBy: { createdAt: "desc" },
         include: {
           visit: true
@@ -145,6 +177,8 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
   const createVisitAction = createVisit.bind(null, customer.id);
   const createStyleSuggestionAction = createStyleSuggestion.bind(null, customer.id);
   const createAiStyleSuggestionAction = createAiStyleSuggestion.bind(null, customer.id);
+  const deleteCustomerAction = deleteCustomer.bind(null, customer.id);
+  const generateCourseRecommendations = generateCourseRecommendationsAction.bind(null, customer.id);
   const latestVisit = customer.visits[0];
   const hasNgCondition = Boolean(customer.preference?.dislikes?.trim());
   const nextVisitDate = latestVisit ? addMonths(latestVisit.visitedAt, 2) : null;
@@ -280,6 +314,10 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
             <Sparkles className="mr-2 h-4 w-4" />
             髪型提案
           </TabsTrigger>
+          <TabsTrigger value="courses" className="rounded-none border-b-2 border-transparent data-[state=active]:border-teal-800 data-[state=active]:shadow-none">
+            <BadgeDollarSign className="mr-2 h-4 w-4" />
+            おすすめコース
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="basic">
@@ -308,6 +346,38 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
                   <SubmitButton><SaveLabel>保存する</SaveLabel></SubmitButton>
                 </div>
               </form>
+            </Section>
+          </div>
+
+          <div className="mt-5">
+            <Section title="危険操作">
+              <div className="grid gap-4 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-900">
+                <div>
+                  <p className="font-semibold">この顧客情報を削除しますか？</p>
+                  <p className="mt-2 leading-6">
+                    来店履歴・髪質・好み・髪型提案も一覧から参照できなくなります。この操作は元に戻せません。
+                  </p>
+                </div>
+                <form action={deleteCustomerAction} className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
+                  <label className="flex items-center gap-2 font-medium">
+                    <input
+                      name="confirmDelete"
+                      value="yes"
+                      type="checkbox"
+                      required
+                      className="h-4 w-4 rounded border-red-300 text-red-700"
+                    />
+                    削除内容を確認しました
+                  </label>
+                  <button
+                    type="submit"
+                    className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-red-700 px-4 text-sm font-semibold text-white shadow-sm hover:bg-red-800"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    顧客を削除
+                  </button>
+                </form>
+              </div>
             </Section>
           </div>
 
@@ -474,73 +544,191 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
         </TabsContent>
 
         <TabsContent value="suggestions">
-          <div className="grid gap-5 xl:grid-cols-[1fr_0.75fr]">
-            <Section title="髪型提案">
-              <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
-                <div className="flex items-center gap-2 font-semibold">
-                  <WandSparkles className="h-4 w-4" />
-                  AI提案について
-                </div>
-                <ul className="mt-2 grid gap-1">
-                  <li>・AI提案は参考情報です。</li>
-                  <li>・最終判断はスタッフが行ってください。</li>
-                  <li>・顧客本人の希望・NG条件を必ず優先してください。</li>
-                </ul>
-                <form action={createAiStyleSuggestionAction} className="mt-3">
-                  <button
-                    type="submit"
-                    className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-teal-900 px-4 text-sm font-semibold text-white shadow-sm hover:bg-teal-950"
-                  >
-                    <WandSparkles className="h-4 w-4" />
-                    AIで提案を生成して保存
-                  </button>
-                </form>
+          <div className="grid gap-5">
+            <div className="rounded-md border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
+              <div className="flex items-center gap-2 font-semibold">
+                <WandSparkles className="h-4 w-4" />
+                AI提案について
               </div>
-              <div className="grid gap-3">
-                {customer.styleSuggestions.map((suggestion) => {
-                  const acceptAction = updateStyleSuggestionAccepted.bind(null, customer.id, suggestion.id, !suggestion.accepted);
+              <ul className="mt-2 grid gap-1">
+                <li>・AI提案は参考情報です。最終判断はスタッフが行ってください。</li>
+                <li>・顧客本人の希望・NG条件を必ず優先してください。</li>
+                <li>・生成画像は仕上がりを保証するものではありません。髪質・骨格・施術条件で実際の仕上がりは変わります。</li>
+                <li>・顧客本人の写真をAI提案に使う場合は、必ず本人の同意を取ってください。</li>
+              </ul>
+              {!customer.profileImageUrl ? (
+                <p className="mt-3 rounded-md border border-amber-200 bg-white/60 px-3 py-2 font-semibold">
+                  本人写真を登録すると、顔型・骨格バランスを踏まえた提案精度が上がります。
+                </p>
+              ) : null}
+              <form action={createAiStyleSuggestionAction} className="mt-3">
+                <button
+                  type="submit"
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-teal-900 px-4 text-sm font-semibold text-white shadow-sm hover:bg-teal-950"
+                >
+                  <WandSparkles className="h-4 w-4" />
+                  AIで3案を生成して保存
+                </button>
+              </form>
+            </div>
 
-                  return (
-                    <RecordCard key={suggestion.id} className={suggestion.accepted ? "border-teal-300 bg-teal-50" : ""}>
-                      <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div>
-                          <div className="flex flex-wrap items-center gap-2">
-                            <Scissors className="h-4 w-4 text-teal-800" />
-                            <h3 className="font-semibold text-stone-950">{suggestion.suggestedStyleName}</h3>
-                            {suggestion.accepted ? <Pill tone="green">採用済み</Pill> : <Pill>提案中</Pill>}
-                          </div>
-                          <p className="mt-1 text-xs text-stone-500">提案日: {formatDate(suggestion.createdAt)}</p>
+            <div className="grid gap-4">
+              {customer.styleSuggestions.map((suggestion, index) => {
+                const acceptAction = updateStyleSuggestionAccepted.bind(null, customer.id, suggestion.id, !suggestion.accepted);
+                const addImageAction = addStyleSuggestionImageUrl.bind(null, customer.id, suggestion.id);
+                const imageUrls = styleSuggestionImageUrls(suggestion);
+
+                return (
+                  <article
+                    key={suggestion.id}
+                    className={`rounded-lg border bg-white p-5 shadow-sm ${
+                      suggestion.accepted ? "border-teal-300 bg-teal-50/50" : "border-stone-200"
+                    }`}
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                      <div>
+                        <div className="inline-flex rounded-full border border-stone-200 bg-white px-3 py-1 text-xs font-semibold text-stone-500">
+                          提案 {String(index + 1).padStart(2, "0")}
                         </div>
+                        <div className="mt-3 flex flex-wrap items-center gap-3">
+                          <h3 className="text-2xl font-semibold text-stone-950">{suggestion.suggestedStyleName}</h3>
+                          <Pill tone="amber">{suggestion.label ?? "AI提案"}</Pill>
+                          {suggestion.accepted ? <Pill tone="green">採用済み</Pill> : <Pill>提案中</Pill>}
+                          <span className="text-sm text-stone-500">{formatDate(suggestion.createdAt)}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
                         <form action={acceptAction}>
                           <button
                             type="submit"
-                            className={`inline-flex h-9 items-center gap-2 rounded-md px-3 text-xs font-semibold ${
+                            className={`inline-flex h-11 items-center gap-2 rounded-md px-4 text-sm font-semibold shadow-sm ${
                               suggestion.accepted
-                                ? "bg-teal-800 text-white hover:bg-teal-900"
-                                : "border border-stone-200 bg-white text-stone-700 hover:bg-stone-50"
+                                ? "border border-stone-200 bg-white text-stone-700 hover:bg-stone-50"
+                                : "bg-teal-900 text-white hover:bg-teal-950"
                             }`}
                           >
                             <CheckCircle2 className="h-4 w-4" />
                             {suggestion.accepted ? "採用を解除" : "採用にする"}
                           </button>
                         </form>
+                        <button className="inline-flex h-11 w-11 items-center justify-center rounded-md border border-stone-200 text-stone-600">
+                          <MoreHorizontal className="h-5 w-5" />
+                        </button>
                       </div>
-                      <dl className="mt-4 grid gap-3 sm:grid-cols-2">
-                        <InfoRow label="提案理由" value={suggestion.reason} />
-                        <InfoRow label="注意点" value={suggestion.caution} alert />
-                        <InfoRow label="スタイリングアドバイス" value={suggestion.stylingAdvice} />
-                        <InfoRow label="紐づく来店" value={suggestion.visit ? formatDate(suggestion.visit.visitedAt) : null} />
-                      </dl>
-                    </RecordCard>
-                  );
-                })}
-                {customer.styleSuggestions.length === 0 ? <EmptyState>髪型提案はまだありません。</EmptyState> : null}
-              </div>
-            </Section>
+                    </div>
+
+                    <div className="mt-5">
+                      <div className="mb-3 inline-flex rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-900">
+                        本人写真ベースのAIシミュレーション
+                      </div>
+                      <div className="grid gap-4 md:grid-cols-3">
+                      {suggestionImageSlots(imageUrls).map((imageUrl, imageIndex) => (
+                        <div
+                          key={`${suggestion.id}-${imageIndex}`}
+                          className="aspect-[4/3] overflow-hidden rounded-md border border-stone-200 bg-[#f4efe8]"
+                        >
+                          {imageUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={imageUrl}
+                              alt={`${suggestion.suggestedStyleName}の参考画像 ${imageIndex + 1}`}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-full flex-col items-center justify-center gap-2 px-5 text-center text-sm text-stone-500">
+                              <ImageIcon className="h-7 w-7 text-stone-400" />
+                              <span className="font-semibold text-stone-700">
+                                本人写真ベースのシミュレーション画像は未生成です。
+                              </span>
+                              <span className="text-xs">
+                                画像生成を有効にすると、プロフィール写真をもとに髪型試着イメージを作成できます。
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                      </div>
+                    </div>
+
+                    <form action={addImageAction} className="mt-4 flex flex-col gap-2 rounded-md border border-dashed border-stone-300 bg-[#fbf8f3] p-3 sm:flex-row">
+                      <label className="relative min-w-0 flex-1">
+                        <LinkIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
+                        <input
+                          name="imageUrl"
+                          type="url"
+                          placeholder="画像URLを追加"
+                          className="h-10 w-full rounded-md border border-stone-200 bg-white pl-9 pr-3 text-sm outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
+                        />
+                      </label>
+                      <button
+                        type="submit"
+                        className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-stone-200 bg-white px-3 text-sm font-semibold text-stone-700 hover:bg-stone-50"
+                      >
+                        <Plus className="h-4 w-4" />
+                        画像URLを追加
+                      </button>
+                    </form>
+
+                    <div className="mt-5 grid gap-4 lg:grid-cols-2">
+                      <div className="rounded-md border border-stone-200 bg-white p-4 lg:col-span-2">
+                        <h4 className="flex items-center gap-2 font-semibold text-stone-950">
+                          <ClipboardList className="h-4 w-4 text-stone-500" />
+                          顔型・骨格印象の要約
+                        </h4>
+                        <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-stone-700">
+                          {suggestion.faceAnalysis ?? "本人写真ベースの印象分析は未生成です。"}
+                        </p>
+                      </div>
+                      <div className="rounded-md border border-stone-200 bg-white p-4">
+                        <h4 className="flex items-center gap-2 font-semibold text-stone-950">
+                          <UserRound className="h-4 w-4 text-stone-500" />
+                          提案理由
+                        </h4>
+                        <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-stone-700">{suggestion.reason ?? "未登録"}</p>
+                      </div>
+                      <div className="rounded-md border border-red-100 bg-red-50 p-4">
+                        <h4 className="flex items-center gap-2 font-semibold text-red-800">
+                          <AlertCircle className="h-4 w-4" />
+                          注意点
+                        </h4>
+                        <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-red-900">{suggestion.caution ?? "未登録"}</p>
+                      </div>
+                      <div className="rounded-md border border-stone-200 bg-white p-4">
+                        <h4 className="flex items-center gap-2 font-semibold text-stone-950">
+                          <WandSparkles className="h-4 w-4 text-stone-500" />
+                          スタイリングアドバイス
+                        </h4>
+                        <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-stone-700">
+                          {suggestion.stylingAdvice ?? "未登録"}
+                        </p>
+                      </div>
+                      <div className="rounded-md border border-stone-200 bg-white p-4">
+                        <h4 className="flex items-center gap-2 font-semibold text-stone-950">
+                          <Scissors className="h-4 w-4 text-stone-500" />
+                          おすすめメニュー
+                        </h4>
+                        <div className="mt-3 grid gap-2 text-sm text-stone-700">
+                          <p>{suggestion.menuSuggestion ?? "未登録"}</p>
+                          <div className="flex flex-wrap gap-2 pt-1">
+                            {suggestion.estimatedMinutes ? <Pill>所要時間: 約{suggestion.estimatedMinutes}分</Pill> : null}
+                            {suggestion.maintenanceLevel ? <Pill>メンテナンス: {suggestion.maintenanceLevel}</Pill> : null}
+                            {suggestion.visit ? <Pill>紐づく来店: {formatDate(suggestion.visit.visitedAt)}</Pill> : null}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+              {customer.styleSuggestions.length === 0 ? <EmptyState>髪型提案はまだありません。</EmptyState> : null}
+            </div>
 
             <Section title="新しい髪型を提案">
               <form action={createStyleSuggestionAction} className="grid gap-4">
-                <TextField label="提案スタイル名" name="suggestedStyleName" required />
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <TextField label="提案スタイル名" name="suggestedStyleName" required />
+                  <SelectField label="ラベル" name="label" options={["AI提案", "本命", "安全", "挑戦"]} />
+                </div>
                 <label className="grid gap-1 text-sm font-medium text-stone-700">
                   紐づける来店履歴
                   <select
@@ -559,6 +747,11 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
                 <TextAreaField label="提案理由" name="reason" />
                 <TextAreaField label="注意点" name="caution" />
                 <TextAreaField label="スタイリングアドバイス" name="stylingAdvice" />
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <TextField label="おすすめメニュー" name="menuSuggestion" placeholder="例: カット + 炭酸スパ" />
+                  <TextField label="所要時間（分）" name="estimatedMinutes" type="number" placeholder="例: 60" />
+                  <SelectField label="メンテナンス難易度" name="maintenanceLevel" options={["低", "中", "高"]} />
+                </div>
                 <label className="flex items-center gap-2 text-sm font-medium text-stone-700">
                   <input name="accepted" type="checkbox" className="h-4 w-4 rounded border-stone-300 text-teal-700" />
                   採用済みとして保存
@@ -571,6 +764,105 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
                 </SubmitButton>
               </form>
             </Section>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="courses">
+          <div className="grid gap-5">
+            <div className="rounded-md border border-teal-100 bg-teal-50 p-4 text-sm leading-6 text-teal-950">
+              <div className="flex items-center gap-2 font-semibold">
+                <BadgeDollarSign className="h-4 w-4" />
+                AIおすすめコースについて
+              </div>
+              <p className="mt-2">
+                おすすめコースは、髪質・好み・NG条件・来店履歴を参考にしたスタッフ向けの提案補助です。
+                価格と所要時間は目安です。実際の施術内容・料金は店舗で確認してください。
+              </p>
+              <form action={generateCourseRecommendations} className="mt-3">
+                <button
+                  type="submit"
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-teal-900 px-4 text-sm font-semibold text-white shadow-sm hover:bg-teal-950"
+                >
+                  <WandSparkles className="h-4 w-4" />
+                  AIでおすすめコースを作成
+                </button>
+              </form>
+            </div>
+
+            <div className="grid gap-4">
+              {customer.courseRecommendations.map((course) => {
+                const toggleCourseAction = toggleCourseRecommendationAccepted.bind(null, course.id, customer.id);
+
+                return (
+                  <article
+                    key={course.id}
+                    className={`rounded-lg border bg-white p-5 shadow-sm ${
+                      course.accepted ? "border-teal-300 bg-teal-50/50" : "border-stone-200"
+                    }`}
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          {course.priority ? <Pill tone="amber">{course.priority}</Pill> : null}
+                          {course.accepted ? <Pill tone="green">採用済み</Pill> : <Pill>提案済み</Pill>}
+                          <span className="text-sm text-stone-500">{formatDate(course.createdAt)}</span>
+                        </div>
+                        <h3 className="mt-3 text-2xl font-semibold text-stone-950">{course.title}</h3>
+                      </div>
+                      <form action={toggleCourseAction}>
+                        <button
+                          type="submit"
+                          className={`inline-flex h-11 items-center gap-2 rounded-md px-4 text-sm font-semibold shadow-sm ${
+                            course.accepted
+                              ? "border border-stone-200 bg-white text-stone-700 hover:bg-stone-50"
+                              : "bg-teal-900 text-white hover:bg-teal-950"
+                          }`}
+                        >
+                          <CheckCircle2 className="h-4 w-4" />
+                          {course.accepted ? "採用を解除" : "採用する"}
+                        </button>
+                      </form>
+                    </div>
+
+                    <div className="mt-5 grid gap-4 lg:grid-cols-2">
+                      <div className="rounded-md border border-stone-200 bg-white p-4">
+                        <h4 className="flex items-center gap-2 font-semibold text-stone-950">
+                          <UserRound className="h-4 w-4 text-stone-500" />
+                          理由
+                        </h4>
+                        <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-stone-700">{course.reason}</p>
+                      </div>
+                      <div className="rounded-md border border-red-100 bg-red-50 p-4">
+                        <h4 className="flex items-center gap-2 font-semibold text-red-800">
+                          <AlertCircle className="h-4 w-4" />
+                          注意点
+                        </h4>
+                        <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-red-900">
+                          {course.caution ?? "顧客本人の希望・NG条件を確認してから提案してください。"}
+                        </p>
+                      </div>
+                      <div className="rounded-md border border-stone-200 bg-white p-4 lg:col-span-2">
+                        <h4 className="flex items-center gap-2 font-semibold text-stone-950">
+                          <Clock3 className="h-4 w-4 text-stone-500" />
+                          目安
+                        </h4>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {course.estimatedMinutes ? <Pill>所要時間: 約{course.estimatedMinutes}分</Pill> : null}
+                          {course.estimatedPrice ? <Pill>価格目安: {course.estimatedPrice.toLocaleString("ja-JP")}円</Pill> : null}
+                          {course.visit ? <Pill>関連来店: {formatDate(course.visit.visitedAt)}</Pill> : null}
+                        </div>
+                        <p className="mt-3 text-xs leading-6 text-stone-500">
+                          価格と所要時間はAIによる目安です。正式な施術内容・料金は店舗で確認してください。
+                        </p>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+              {customer.courseRecommendations.length === 0 ? (
+                <EmptyState>おすすめコースはまだありません。AIで3件作成できます。</EmptyState>
+              ) : null}
+            </div>
           </div>
         </TabsContent>
       </Tabs>

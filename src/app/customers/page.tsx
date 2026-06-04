@@ -30,13 +30,14 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
   const customers = await prisma.customer.findMany({
     where: keyword
       ? {
+          deletedAt: null,
           OR: [
             { name: { contains: keyword, mode: "insensitive" } },
             { phone: { contains: keyword, mode: "insensitive" } },
             { memo: { contains: keyword, mode: "insensitive" } }
           ]
         }
-      : undefined,
+      : { deletedAt: null },
     include: {
       visits: {
         orderBy: { visitedAt: "desc" },

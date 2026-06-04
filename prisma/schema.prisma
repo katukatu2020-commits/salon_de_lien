@@ -8,19 +8,21 @@ datasource db {
 }
 
 model Customer {
-  id               String            @id @default(cuid())
-  name             String
-  gender           String?
-  birthYear        Int?
-  phone            String?
-  profileImageUrl  String?
-  memo             String?
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
-  hairProfile      HairProfile?
-  preference       Preference?
-  visits           Visit[]
-  styleSuggestions StyleSuggestion[]
+  id                    String                 @id @default(cuid())
+  name                  String
+  gender                String?
+  birthYear             Int?
+  phone                 String?
+  profileImageUrl       String?
+  memo                  String?
+  deletedAt             DateTime?
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  hairProfile           HairProfile?
+  preference            Preference?
+  visits                Visit[]
+  styleSuggestions      StyleSuggestion[]
+  courseRecommendations CourseRecommendation[]
 }
 
 model HairProfile {
@@ -51,35 +53,64 @@ model Preference {
 }
 
 model Visit {
-  id                 String            @id @default(cuid())
-  customerId         String
-  visitedAt          DateTime
-  stylistName        String?
-  requestedStyle     String?
-  performedStyle     String?
-  cutNotes           String?
-  colorNotes         String?
-  permNotes          String?
-  customerReaction   String?
-  nextRecommendation String?
-  customer           Customer          @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  styleSuggestions   StyleSuggestion[]
+  id                    String                 @id @default(cuid())
+  customerId            String
+  visitedAt             DateTime
+  stylistName           String?
+  requestedStyle        String?
+  performedStyle        String?
+  cutNotes              String?
+  colorNotes            String?
+  permNotes             String?
+  customerReaction      String?
+  nextRecommendation    String?
+  customer              Customer               @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  styleSuggestions      StyleSuggestion[]
+  courseRecommendations CourseRecommendation[]
 
   @@index([customerId, visitedAt])
 }
 
 model StyleSuggestion {
-  id                 String    @id @default(cuid())
+  id                 String   @id @default(cuid())
   customerId         String
   visitId            String?
   suggestedStyleName String
   reason             String?
   caution            String?
   stylingAdvice      String?
-  accepted           Boolean   @default(false)
-  createdAt          DateTime  @default(now())
-  customer           Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  visit              Visit?    @relation(fields: [visitId], references: [id], onDelete: SetNull)
+  imageUrls          String[] @default([])
+  imageUrlsJson      String?
+  menuSuggestion     String?
+  estimatedMinutes   Int?
+  maintenanceLevel   String?
+  label              String?
+  faceAnalysis       String?
+  imagePrompt        String?
+  accepted           Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  customer           Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  visit              Visit?   @relation(fields: [visitId], references: [id], onDelete: SetNull)
 
   @@index([customerId, createdAt])
+}
+
+model CourseRecommendation {
+  id               String   @id @default(uuid())
+  customerId       String
+  visitId          String?
+  title            String
+  reason           String
+  caution          String?
+  estimatedMinutes Int?
+  estimatedPrice   Int?
+  priority         String?
+  accepted         Boolean  @default(false)
+  createdAt        DateTime @default(now())
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  visit    Visit?   @relation(fields: [visitId], references: [id], onDelete: SetNull)
+
+  @@index([customerId, createdAt])
+  @@index([visitId])
 }
