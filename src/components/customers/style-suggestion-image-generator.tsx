@@ -121,8 +121,13 @@ export function StyleSuggestionImageGenerator({
       <div className="text-sm leading-6 text-teal-950">
         <p>本人写真と顔型・骨格バランスの印象を参考にした、相談用の角度別イメージを作成します。</p>
         <p className="mt-1 text-xs font-semibold text-teal-900">
-          本人性を優先して髪型のみを変更するモードです。生成結果が本人から離れて見える場合は、参照写真を撮り直すか、再生成してください。
+          本人らしさを最優先して髪型のみを変えるモードです。生成結果が本人から離れて見える場合は、参照写真を撮り直すか、再生成してください。
         </p>
+        <ul className="mt-2 grid gap-1 text-xs text-teal-800">
+          <li>・背景・ライティングは比較しやすいよう統一して生成されます。</li>
+          <li>・参照写真の不足部分は、他の角度を参考に最小限だけ補完されます。</li>
+          <li>・顔の骨格・目鼻口・耳・首・頭部形状は、元写真の印象を優先します。</li>
+        </ul>
         <p className="mt-1 text-xs text-teal-800">画像生成にはAPI利用料が発生します。必要な提案だけ生成してください。</p>
       </div>
       <div className="grid gap-2 sm:justify-items-end">
