@@ -164,6 +164,15 @@ export async function generateIdentityMasterImagesWithPhotoMaker(params: {
   backImageUrls: string[];
   angles: StyleSimulationAngle[];
 }): Promise<StyleSimulationImage[]> {
+  console.log("photomaker stage started", {
+    customerId: params.customerId,
+    styleSuggestionId: params.styleSuggestionId,
+    hasFalKey: Boolean(process.env.FAL_KEY),
+    frontImageCount: params.frontImageUrls.length,
+    sideImageCount: params.sideImageUrls.length,
+    backImageCount: params.backImageUrls.length
+  });
+
   if (process.env.ENABLE_IDENTITY_MASTER_GENERATION !== "true") {
     throw new Error("ENABLE_IDENTITY_MASTER_GENERATION=true を設定してください。");
   }
@@ -171,11 +180,6 @@ export async function generateIdentityMasterImagesWithPhotoMaker(params: {
   if (!process.env.FAL_KEY) {
     throw new Error("FAL_KEY is not set. PhotoMakerを使うにはFAL_KEYを設定してください。");
   }
-
-  console.log("photomaker stage started", {
-    customerId: params.customerId,
-    styleSuggestionId: params.styleSuggestionId
-  });
 
   const { fal } = await import("@fal-ai/client");
   fal.config({ credentials: process.env.FAL_KEY });

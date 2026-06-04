@@ -24,12 +24,15 @@ export type StyleSimulationImage = {
 };
 
 export type StyleSimulationProvider = "openai" | "fal-photomaker-openai-edit" | "fal-photomaker" | "fal-faceid";
+type EffectiveStyleSimulationProvider = "openai" | "fal-photomaker-openai-edit" | "fal-faceid";
 
 export type StyleSimulationResult = {
   ok: boolean;
-  provider: StyleSimulationProvider;
+  provider: EffectiveStyleSimulationProvider;
+  requestedProvider?: StyleSimulationProvider;
   images: StyleSimulationImage[];
   message?: string;
+  fallbackReason?: string;
 };
 
 export function styleSimulationProviderLabel(provider = process.env.STYLE_SIMULATION_PROVIDER || "openai") {
@@ -71,22 +74,31 @@ async function generateWithOpenAiFallback(request: StyleSimulationRequest): Prom
 export async function generateStyleSimulation(
   request: StyleSimulationRequest
 ): Promise<StyleSimulationResult> {
-  const provider = (process.env.STYLE_SIMULATION_PROVIDER || "openai") as StyleSimulationProvider;
+  const requestedProvider = (process.env.STYLE_SIMULATION_PROVIDER || "openai") as StyleSimulationProvider;
+  const provider = requestedProvider === "fal-photomaker" ? "fal-photomaker-openai-edit" : requestedProvider;
 
   console.log("style simulation provider selected", {
     provider,
+    requestedProvider,
+    STYLE_SIMULATION_PROVIDER: process.env.STYLE_SIMULATION_PROVIDER,
+    hasFalKey: Boolean(process.env.FAL_KEY),
     customerId: request.customerId,
     styleSuggestionId: request.styleSuggestionId
   });
 
-  if (provider === "fal-photomaker-openai-edit" || provider === "fal-photomaker") {
+  if (provider === "fal-photomaker-openai-edit") {
     try {
       return await generateWithFalPhotoMakerThenOpenAiEdit(request);
     } catch (error) {
-      console.error("fal-photomaker-openai-edit provider failed; falling back to OpenAI", {
+      const fallbackReason =
+        error instanceof Error
+          ? error.message
+          : "FaceID基準 + 髪型編集に失敗しました。";
+
+      console.warn("fal photomaker failed, falling back to openai", {
         customerId: request.customerId,
         styleSuggestionId: request.styleSuggestionId,
-        error
+        error: fallbackReason
       });
 
       if (!process.env.OPENAI_API_KEY) {
@@ -101,7 +113,16 @@ export async function generateStyleSimulation(
         };
       }
 
-      return generateWithOpenAiFallback(request);
+      const fallbackResult = await generateWithOpenAiFallback(request);
+
+      return {
+        ...fallbackResult,
+        requestedProvider,
+        fallbackReason,
+        message: fallbackReason.includes("FAL_KEY")
+          ? "FAL_KEY未設定のためOpenAI fallbackで生成しました。"
+          : `PhotoMaker stageに失敗したためOpenAI fallbackで生成しました。理由: ${fallbackReason}`
+      };
     }
   }
 

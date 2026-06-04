@@ -894,6 +894,8 @@ export async function generateStyleSuggestionImageAction(
       customerId,
       styleSuggestionId,
       ENABLE_STYLE_IMAGE_GENERATION: process.env.ENABLE_STYLE_IMAGE_GENERATION,
+      STYLE_SIMULATION_PROVIDER: process.env.STYLE_SIMULATION_PROVIDER,
+      hasFalKey: Boolean(process.env.FAL_KEY),
       frontImageCount: frontUrls.length,
       sideImageCount: sideUrls.length,
       backImageCount: backUrls.length,
@@ -947,6 +949,8 @@ export async function generateStyleSuggestionImageAction(
       customerId,
       styleSuggestionId,
       provider: simulationResult.provider,
+      requestedProvider: simulationResult.requestedProvider,
+      fallbackReason: simulationResult.fallbackReason,
       imageCount: simulationResult.images.length,
       ok: simulationResult.ok
     });
@@ -983,7 +987,9 @@ export async function generateStyleSuggestionImageAction(
 
     return {
       ok: true,
-      message: `${simulationResult.provider}で本人写真ベースの画像を生成しました。`,
+      message:
+        simulationResult.message ??
+        `${simulationResult.provider}で本人写真ベースの画像を生成しました。`,
       imageUrls: nextUrls,
       selectedSuggestionId: styleSuggestionId
     };
