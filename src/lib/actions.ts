@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { generateCourseRecommendations } from "@/lib/ai/course-recommender";
+import { checkGeneratedImageIdentity } from "@/lib/ai/identity-checker";
 import { generateStyleSimulation } from "@/lib/ai/style-simulation-provider";
 import {
   attachSimulationImages,
@@ -97,6 +98,9 @@ type StyleImageUrlEntry = {
   angle: string;
   url: string;
   provider?: string;
+  identityScore?: number;
+  identityLevel?: "high" | "medium" | "low";
+  identityWarning?: string | null;
 };
 
 function parseJsonStringArray(value: string | null | undefined) {
@@ -156,7 +160,21 @@ function parseImageUrlEntries(imageUrlsJson: string | null, fallback: string[] =
             provider:
               typeof (item as { provider?: unknown }).provider === "string"
                 ? (item as { provider: string }).provider
-                : undefined
+                : undefined,
+            identityScore:
+              typeof (item as { identityScore?: unknown }).identityScore === "number"
+                ? (item as { identityScore: number }).identityScore
+                : undefined,
+            identityLevel:
+              (item as { identityLevel?: unknown }).identityLevel === "high" ||
+              (item as { identityLevel?: unknown }).identityLevel === "medium" ||
+              (item as { identityLevel?: unknown }).identityLevel === "low"
+                ? (item as { identityLevel: "high" | "medium" | "low" }).identityLevel
+                : undefined,
+            identityWarning:
+              typeof (item as { identityWarning?: unknown }).identityWarning === "string"
+                ? (item as { identityWarning: string }).identityWarning
+                : null
           };
         }
 
@@ -963,11 +981,30 @@ export async function generateStyleSuggestionImageAction(
     }
 
     const existingEntries = parseImageUrlEntries(suggestion.imageUrlsJson, suggestion.imageUrls);
-    const generatedEntries = simulationResult.images.map((image) => ({
-      angle: image.angle,
-      url: image.url,
-      provider: image.provider ?? simulationResult.provider
-    }));
+    const generatedEntries: StyleImageUrlEntry[] = [];
+
+    for (const image of simulationResult.images) {
+      const identityCheck = await checkGeneratedImageIdentity({
+        referenceFrontImageUrls: frontUrls,
+        referenceSideImageUrls: sideUrls,
+        generatedImageUrl: image.url,
+        angle: image.angle
+      });
+
+      generatedEntries.push({
+        angle: image.angle,
+        url: image.url,
+        provider: image.provider ?? simulationResult.provider,
+        identityScore: identityCheck.score,
+        identityLevel: identityCheck.level,
+        identityWarning:
+          identityCheck.level === "low"
+            ? identityCheck.reason
+            : identityCheck.warnings.length > 0
+              ? identityCheck.warnings.join(" / ")
+              : null
+      });
+    }
     const generatedAngles = new Set<string>(generatedEntries.map((entry) => entry.angle));
     const nextEntries = [
       ...generatedEntries,

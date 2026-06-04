@@ -45,13 +45,15 @@ export function StyleSuggestionImageGenerator({
   customerId,
   providerLabel = "OpenAI fallback",
   disabled = false,
-  disabledReason
+  disabledReason,
+  hasLowIdentityScore = false
 }: {
   styleSuggestionId: string;
   customerId: string;
   providerLabel?: string;
   disabled?: boolean;
   disabledReason?: string;
+  hasLowIdentityScore?: boolean;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -75,6 +77,16 @@ export function StyleSuggestionImageGenerator({
   function runImageGeneration() {
     if (disabled) {
       return;
+    }
+
+    if (hasLowIdentityScore) {
+      const confirmed = window.confirm(
+        "本人らしさが低い画像を再生成します。\n画像生成にはAPI利用料が発生します。\nよろしいですか？"
+      );
+
+      if (!confirmed) {
+        return;
+      }
     }
 
     setStatus("running");
@@ -116,6 +128,8 @@ export function StyleSuggestionImageGenerator({
       ? "生成不可"
       : disabled
         ? "3方向画像を生成済み"
+        : hasLowIdentityScore
+          ? "本人性を優先して再生成"
         : "3方向画像を生成";
   const isFaceIdEdit = providerLabel.includes("FaceID基準");
 

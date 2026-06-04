@@ -27,6 +27,10 @@ const ANGLES = ["斜め正面", "横", "斜め後ろ"] as const;
 type StyleImageEntry = {
   angle: string;
   url: string;
+  provider?: string;
+  identityScore?: number;
+  identityLevel?: "high" | "medium" | "low";
+  identityWarning?: string | null;
 };
 
 export type SelectableStyleSuggestion = {
@@ -112,7 +116,25 @@ function parseImageEntries(suggestion: SelectableStyleSuggestion): StyleImageEnt
               typeof (item as { angle?: unknown }).angle === "string"
                 ? (item as { angle: string }).angle
                 : ANGLES[index] ?? `画像${index + 1}`,
-            url: (item as { url: string }).url
+            url: (item as { url: string }).url,
+            provider:
+              typeof (item as { provider?: unknown }).provider === "string"
+                ? (item as { provider: string }).provider
+                : undefined,
+            identityScore:
+              typeof (item as { identityScore?: unknown }).identityScore === "number"
+                ? (item as { identityScore: number }).identityScore
+                : undefined,
+            identityLevel:
+              (item as { identityLevel?: unknown }).identityLevel === "high" ||
+              (item as { identityLevel?: unknown }).identityLevel === "medium" ||
+              (item as { identityLevel?: unknown }).identityLevel === "low"
+                ? (item as { identityLevel: "high" | "medium" | "low" }).identityLevel
+                : undefined,
+            identityWarning:
+              typeof (item as { identityWarning?: unknown }).identityWarning === "string"
+                ? (item as { identityWarning: string }).identityWarning
+                : null
           };
         }
 
@@ -126,6 +148,22 @@ function parseImageEntries(suggestion: SelectableStyleSuggestion): StyleImageEnt
 
 function imageForAngle(entries: StyleImageEntry[], angle: string, index: number) {
   return entries.find((entry) => entry.angle === angle)?.url ?? entries[index]?.url ?? "";
+}
+
+function imageEntryForAngle(entries: StyleImageEntry[], angle: string, index: number) {
+  return entries.find((entry) => entry.angle === angle) ?? entries[index] ?? null;
+}
+
+function identityTone(level?: StyleImageEntry["identityLevel"]) {
+  if (level === "low") {
+    return "bg-red-50 text-red-700 border-red-200";
+  }
+
+  if (level === "medium") {
+    return "bg-amber-50 text-amber-800 border-amber-200";
+  }
+
+  return "bg-emerald-50 text-emerald-700 border-emerald-200";
 }
 
 function isAiSuggestion(suggestion: SelectableStyleSuggestion) {
@@ -242,6 +280,7 @@ export function StyleSuggestionSelector({
 
   const imageEntries = parseImageEntries(selectedSuggestion);
   const hasThreeImages = ANGLES.every((angle, index) => Boolean(imageForAngle(imageEntries, angle, index)));
+  const hasLowIdentityScore = imageEntries.some((entry) => entry.identityLevel === "low");
   const canGenerateImages = hasAiReferencePhotos && hasAiPhotoConsent && isStyleImageGenerationEnabled;
   const generationDisabledReason = !hasAiPhotoConsent
     ? "AI画像生成への同意を保存してください。"
@@ -348,7 +387,8 @@ export function StyleSuggestionSelector({
           </div>
           <div className="grid gap-4 md:grid-cols-3">
             {ANGLES.map((angle, index) => {
-              const imageUrl = imageForAngle(imageEntries, angle, index);
+              const imageEntry = imageEntryForAngle(imageEntries, angle, index);
+              const imageUrl = imageEntry?.url ?? "";
               return (
                 <div key={angle} className="overflow-hidden rounded-md border border-stone-200 bg-[#f4efe8]">
                   <div className="aspect-[4/3]">
@@ -365,6 +405,24 @@ export function StyleSuggestionSelector({
                   <div className="border-t border-stone-200 bg-white px-3 py-2 text-center text-xs font-semibold text-stone-700">
                     {angle}
                   </div>
+                  {imageUrl && typeof imageEntry?.identityScore === "number" ? (
+                    <div className="border-t border-stone-200 bg-white px-3 py-2">
+                      <div className={`inline-flex rounded border px-2 py-1 text-[11px] font-semibold ${identityTone(imageEntry.identityLevel)}`}>
+                        本人らしさ目安: {imageEntry.identityScore}%
+                      </div>
+                      {imageEntry.identityLevel === "low" ? (
+                        <p className="mt-2 text-xs leading-5 text-red-700">
+                          {imageEntry.identityWarning ?? "本人から離れて見える可能性があります。再生成をおすすめします。"}
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : imageUrl ? (
+                    <div className="border-t border-stone-200 bg-white px-3 py-2">
+                      <p className="text-xs leading-5 text-stone-500">
+                        本人らしさチェックは実行できませんでした。生成画像を目視で確認してください。
+                      </p>
+                    </div>
+                  ) : null}
                 </div>
               );
             })}
@@ -398,8 +456,9 @@ export function StyleSuggestionSelector({
             styleSuggestionId={selectedSuggestion.id}
             customerId={customerId}
             providerLabel={styleSimulationProvider}
-            disabled={hasThreeImages || !canGenerateImages}
+            disabled={(hasThreeImages && !hasLowIdentityScore) || !canGenerateImages}
             disabledReason={generationDisabledReason}
+            hasLowIdentityScore={hasLowIdentityScore}
           />
         </div>
 
