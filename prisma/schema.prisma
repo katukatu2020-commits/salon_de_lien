@@ -1,0 +1,84 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Customer {
+  id               String            @id @default(cuid())
+  name             String
+  gender           String?
+  birthYear        Int?
+  phone            String?
+  memo             String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  hairProfile      HairProfile?
+  preference       Preference?
+  visits           Visit[]
+  styleSuggestions StyleSuggestion[]
+}
+
+model HairProfile {
+  id                 String   @id @default(cuid())
+  customerId         String   @unique
+  hairThickness      String?
+  hairVolume         String?
+  hairTexture        String?
+  scalpCondition     String?
+  faceShape          String?
+  forehead           String?
+  lifestyle          String?
+  stylingTimeMinutes Int?
+  updatedAt          DateTime @updatedAt
+  customer           Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+}
+
+model Preference {
+  id               String   @id @default(cuid())
+  customerId       String   @unique
+  preferredLength  String?
+  preferredStyle   String?
+  dislikes         String?
+  colorPreference  String?
+  maintenanceLevel String?
+  referenceNotes   String?
+  customer         Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+}
+
+model Visit {
+  id                 String            @id @default(cuid())
+  customerId         String
+  visitedAt          DateTime
+  stylistName        String?
+  requestedStyle     String?
+  performedStyle     String?
+  cutNotes           String?
+  colorNotes         String?
+  permNotes          String?
+  customerReaction   String?
+  nextRecommendation String?
+  customer           Customer          @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  styleSuggestions   StyleSuggestion[]
+
+  @@index([customerId, visitedAt])
+}
+
+model StyleSuggestion {
+  id                 String    @id @default(cuid())
+  customerId         String
+  visitId            String?
+  suggestedStyleName String
+  reason             String?
+  caution            String?
+  stylingAdvice      String?
+  accepted           Boolean   @default(false)
+  createdAt          DateTime  @default(now())
+  customer           Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  visit              Visit?    @relation(fields: [visitId], references: [id], onDelete: SetNull)
+
+  @@index([customerId, createdAt])
+}
