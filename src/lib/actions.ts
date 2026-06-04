@@ -47,35 +47,56 @@ export async function updateCustomer(customerId: string, formData: FormData) {
   revalidatePath(`/customers/${customerId}`);
 }
 
-export async function uploadCustomerProfileImage(customerId: string, formData: FormData) {
-  const imageFile = formData.get("profileImage");
+export async function uploadCustomerProfileImage(
+  customerId: string,
+  _previousState: { ok: boolean; message: string; imageUrl?: string; cacheKey?: number },
+  formData: FormData
+) {
+  try {
+    const imageFile = formData.get("profileImage");
 
-  if (!(imageFile instanceof File) || imageFile.size === 0) {
-    throw new Error("プロフィール画像を選択してください。");
+    if (!(imageFile instanceof File) || imageFile.size === 0) {
+      return { ok: false, message: "プロフィール画像を選択してください。" };
+    }
+
+    if (!ALLOWED_PROFILE_IMAGE_TYPES.includes(imageFile.type)) {
+      return { ok: false, message: "プロフィール画像は JPG / PNG / WebP のみアップロードできます。" };
+    }
+
+    if (imageFile.size > MAX_PROFILE_IMAGE_SIZE) {
+      return { ok: false, message: "プロフィール画像は5MB以下にしてください。" };
+    }
+
+    const extension = imageFile.name.split(".").pop()?.toLowerCase() ?? "jpg";
+    const safeFileName = imageFile.name.replace(/[^\w.-]/g, "_");
+    const cacheKey = Date.now();
+    const blobPath = `customers/${customerId}/profile-${cacheKey}-${safeFileName || `image.${extension}`}`;
+    const blob = await put(blobPath, imageFile, {
+      access: "public",
+      addRandomSuffix: true,
+      token: process.env.BLOB_READ_WRITE_TOKEN
+    });
+
+    await prisma.customer.update({
+      where: { id: customerId },
+      data: { profileImageUrl: blob.url }
+    });
+
+    revalidatePath("/customers");
+    revalidatePath(`/customers/${customerId}`);
+
+    return {
+      ok: true,
+      message: "画像を更新しました。",
+      imageUrl: blob.url,
+      cacheKey
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      message: error instanceof Error ? error.message : "画像アップロードに失敗しました。"
+    };
   }
-
-  if (!ALLOWED_PROFILE_IMAGE_TYPES.includes(imageFile.type)) {
-    throw new Error("プロフィール画像は JPG / PNG / WebP のみアップロードできます。");
-  }
-
-  if (imageFile.size > MAX_PROFILE_IMAGE_SIZE) {
-    throw new Error("プロフィール画像は5MB以下にしてください。");
-  }
-
-  const extension = imageFile.name.split(".").pop()?.toLowerCase() ?? "jpg";
-  const blob = await put(`customers/${customerId}/profile.${extension}`, imageFile, {
-    access: "public",
-    addRandomSuffix: true,
-    token: process.env.BLOB_READ_WRITE_TOKEN
-  });
-
-  await prisma.customer.update({
-    where: { id: customerId },
-    data: { profileImageUrl: blob.url }
-  });
-
-  revalidatePath("/customers");
-  revalidatePath(`/customers/${customerId}`);
 }
 
 export async function upsertHairProfile(customerId: string, formData: FormData) {

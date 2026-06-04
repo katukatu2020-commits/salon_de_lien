@@ -17,7 +17,6 @@ import {
   Save,
   Scissors,
   Sparkles,
-  Upload,
   WandSparkles,
   UserRound
 } from "lucide-react";
@@ -27,12 +26,12 @@ import {
   createVisit,
   updateCustomer,
   updateStyleSuggestionAccepted,
-  uploadCustomerProfileImage,
   upsertHairProfile,
   upsertPreference
 } from "@/lib/actions";
 import { prisma } from "@/lib/prisma";
 import { EmptyState, Section, SelectField, SubmitButton, TextAreaField, TextField } from "@/components/ui";
+import { ProfileImageUploader } from "@/components/customers/profile-image-uploader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type CustomerDetailPageProps = {
@@ -145,7 +144,6 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
   const upsertPreferenceAction = upsertPreference.bind(null, customer.id);
   const createVisitAction = createVisit.bind(null, customer.id);
   const createStyleSuggestionAction = createStyleSuggestion.bind(null, customer.id);
-  const uploadCustomerProfileImageAction = uploadCustomerProfileImage.bind(null, customer.id);
   const createAiStyleSuggestionAction = createAiStyleSuggestion.bind(null, customer.id);
   const latestVisit = customer.visits[0];
   const hasNgCondition = Boolean(customer.preference?.dislikes?.trim());
@@ -169,43 +167,11 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
       <section className="rounded-lg border border-stone-200 bg-white p-5 shadow-sm">
         <div className="grid gap-5 xl:grid-cols-[1.05fr_0.9fr_0.9fr_auto] xl:items-stretch">
           <div className="grid gap-5 sm:grid-cols-[128px_1fr]">
-            <div className="grid justify-items-center gap-3">
-              <div className="relative flex h-32 w-32 items-center justify-center overflow-hidden rounded-full bg-[#e7ebe7] text-4xl font-semibold text-teal-900 shadow-inner">
-                {customer.profileImageUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={customer.profileImageUrl}
-                    alt={`${customer.name}のプロフィール画像`}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  customer.name.slice(0, 1)
-                )}
-                <span className="absolute bottom-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-teal-900 text-white ring-4 ring-white">
-                  <UserRound className="h-4 w-4" />
-                </span>
-              </div>
-              <form action={uploadCustomerProfileImageAction} className="grid justify-items-center gap-2">
-                <label className="inline-flex h-9 cursor-pointer items-center justify-center gap-2 rounded-md border border-stone-200 bg-white px-3 text-xs font-semibold text-stone-700 shadow-sm hover:bg-stone-50">
-                  <Upload className="h-4 w-4" />
-                  画像を更新
-                  <input
-                    type="file"
-                    name="profileImage"
-                    accept="image/jpeg,image/png,image/webp"
-                    className="sr-only"
-                    required
-                  />
-                </label>
-                <button
-                  type="submit"
-                  className="h-8 rounded-md bg-teal-900 px-3 text-xs font-semibold text-white shadow-sm hover:bg-teal-950"
-                >
-                  アップロード
-                </button>
-                <p className="text-center text-[11px] leading-4 text-stone-500">JPG / PNG / WebP・5MB以下</p>
-              </form>
-            </div>
+            <ProfileImageUploader
+              customerId={customer.id}
+              customerName={customer.name}
+              profileImageUrl={customer.profileImageUrl}
+            />
             <div>
               <div className="flex flex-wrap items-center gap-3">
                 <h1 className="text-3xl font-semibold text-stone-950">{customer.name}</h1>
