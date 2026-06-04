@@ -317,11 +317,12 @@ export function StyleSuggestionSelector({
   const hasThreeImages = ANGLES.every((angle, index) => Boolean(imageForAngle(imageEntries, angle, index)));
   const hasLowIdentityScore = imageEntries.some((entry) => entry.identityLevel === "low");
   const imageProviders = new Set(imageEntries.map((entry) => entry.provider).filter(Boolean));
+  const isExperimentalProvider = styleSimulationProvider.includes("FaceID") || styleSimulationProvider.includes("検証用");
   const displayProviderLabel =
-    hasThreeImages && styleSimulationProvider.includes("顔保護") && imageProviders.size === 1 && imageProviders.has("fal-photomaker")
-      ? "FaceID基準 fallback"
-      : hasThreeImages && imageProviders.has("fal-photomaker-openai-edit")
-        ? "FaceID基準 + 顔保護マスク髪型編集"
+    isExperimentalProvider && hasThreeImages && imageProviders.size === 1 && imageProviders.has("fal-photomaker")
+      ? "FaceID基準 fallback（検証用・非推奨）"
+      : isExperimentalProvider && hasThreeImages && imageProviders.has("fal-photomaker-openai-edit")
+        ? "FaceID + 髪型編集（検証用・非推奨）"
         : styleSimulationProvider;
   const canGenerateImages = hasAiReferencePhotos && hasAiPhotoConsent && isStyleImageGenerationEnabled;
   const generationDisabledReason = !hasAiPhotoConsent

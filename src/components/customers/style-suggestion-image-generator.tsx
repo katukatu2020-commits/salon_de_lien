@@ -43,7 +43,7 @@ function stepForProgress(progress: number) {
 export function StyleSuggestionImageGenerator({
   styleSuggestionId,
   customerId,
-  providerLabel = "OpenAI fallback",
+  providerLabel = "OpenAI安定版",
   disabled = false,
   disabledReason,
   hasLowIdentityScore = false
@@ -131,24 +131,24 @@ export function StyleSuggestionImageGenerator({
         : hasLowIdentityScore
           ? "本人性を優先して再生成"
         : "3方向画像を生成";
-  const isFaceIdEdit = providerLabel.includes("FaceID基準");
+  const isExperimentalProvider = providerLabel.includes("検証用") || providerLabel.includes("FaceID");
 
   return (
     <div className="grid gap-3 rounded-md border border-teal-100 bg-teal-50 p-3 sm:grid-cols-[1fr_auto] sm:items-start">
       <div className="text-sm leading-6 text-teal-950">
-        <p>正面写真と横顔写真を中心に、本人性を高めた相談用の角度別イメージを作成します。</p>
+        <p>正面写真と横顔写真を中心に、本人らしさを高めた相談用の角度別イメージを作成します。</p>
         <p className="mt-1 text-xs font-semibold text-teal-800">生成エンジン: {providerLabel}</p>
         <p className="mt-1 text-xs font-semibold text-teal-900">
-          {isFaceIdEdit
-            ? "FaceID基準画像を作成した後、顔保護マスクを使って髪周辺だけを編集します。"
-            : "本人らしさを最優先し、顔パーツを保ったまま髪型のみを変更する方針で生成します。"}
+          {isExperimentalProvider
+            ? "この生成方式は検証用です。デモ安定運用ではOpenAI安定版を推奨します。"
+            : "顔パーツを保ったまま髪型のみを変える方針で生成します。"}
           生成画像は相談用の参考であり、本人性や仕上がりを完全に保証するものではありません。
         </p>
         <ul className="mt-2 grid gap-1 text-xs text-teal-800">
           <li>・背景・ライティングは比較しやすいよう統一して生成されます。</li>
           <li>・参照写真の不足部分は、他の登録写真を参考に最小限だけ補完されます。</li>
           <li>・顔の骨格・目鼻口・耳・首・頭部形状は、元写真の印象を優先します。</li>
-          {isFaceIdEdit ? <li>・顔パーツを保護するため、マスク生成に失敗した場合は編集を中止します。</li> : null}
+          {isExperimentalProvider ? <li>・fal系Providerは画像破綻や認証問題の検証用として残しています。</li> : null}
         </ul>
         <p className="mt-1 text-xs text-teal-800">画像生成にはAPI利用料が発生します。必要な提案だけ生成してください。</p>
       </div>

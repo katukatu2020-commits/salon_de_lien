@@ -40,18 +40,18 @@ export type StyleSimulationResult = {
 
 export function styleSimulationProviderLabel(provider = process.env.STYLE_SIMULATION_PROVIDER || "openai") {
   if (provider === "fal-photomaker") {
-    return "FaceID基準（非推奨・検証用）";
+    return "FaceID基準（検証用・非推奨）";
   }
 
   if (provider === "fal-photomaker-openai-edit") {
-    return "FaceID基準 + 顔保護マスク髪型編集";
+    return "FaceID + 髪型編集（検証用・非推奨）";
   }
 
   if (provider === "fal-faceid") {
     return "FaceID";
   }
 
-  return "OpenAI fallback";
+  return "OpenAI安定版";
 }
 
 async function generateWithOpenAiFallback(request: StyleSimulationRequest): Promise<StyleSimulationResult> {
@@ -74,7 +74,7 @@ async function generateWithOpenAiFallback(request: StyleSimulationRequest): Prom
       angle: angleLabels[index] ?? "斜め正面",
       url
     })),
-    message: urls.length > 0 ? "OpenAI fallbackで画像を生成しました。" : "OpenAI fallbackの画像生成結果が空でした。"
+    message: urls.length > 0 ? "OpenAI安定版で画像を生成しました。" : "OpenAI安定版の画像生成結果が空でした。"
   };
 }
 

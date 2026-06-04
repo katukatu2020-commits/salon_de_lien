@@ -59,6 +59,31 @@ function orderReferencesForAngle(
   return [...byGroup("back"), ...byGroup("side"), ...byGroup("front")];
 }
 
+function isOpenAiImageModelAuthError(error: unknown) {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const candidate = error as {
+    status?: number;
+    code?: string;
+    type?: string;
+    message?: string;
+  };
+  const message = candidate.message?.toLowerCase() ?? "";
+
+  return (
+    candidate.status === 401 ||
+    candidate.status === 403 ||
+    candidate.code === "model_not_found" ||
+    candidate.code === "permission_denied" ||
+    candidate.type === "invalid_request_error" ||
+    message.includes("not authorized") ||
+    message.includes("does not have access") ||
+    message.includes("model")
+  );
+}
+
 export async function generateStyleSimulationImages({
   customerId,
   referencePhotos,
@@ -169,16 +194,40 @@ export async function generateStyleSimulationImages({
       imageEditPrompt
     ].join("\n");
 
-    const images = await client.images.edit({
+    const requestedModel = process.env.OPENAI_IMAGE_MODEL ?? "gpt-image-1.5";
+    const editParams = {
       image: referenceFiles,
       prompt,
-      model: process.env.OPENAI_IMAGE_MODEL ?? "gpt-image-1",
       n: 1,
-      size: "1024x1024",
-      quality: "low",
-      output_format: "webp",
-      input_fidelity: "high"
-    });
+      size: "1024x1024" as const,
+      quality: "low" as const,
+      output_format: "webp" as const,
+      input_fidelity: "high" as const
+    };
+    let images;
+
+    try {
+      images = await client.images.edit({
+        ...editParams,
+        model: requestedModel
+      });
+    } catch (error) {
+      if (requestedModel !== "gpt-image-1" && isOpenAiImageModelAuthError(error)) {
+        console.warn("openai stable image model failed, retrying with gpt-image-1", {
+          customerId,
+          angle: angle.label,
+          requestedModel,
+          error
+        });
+
+        images = await client.images.edit({
+          ...editParams,
+          model: "gpt-image-1"
+        });
+      } else {
+        throw error;
+      }
+    }
 
     const generatedImage = images.data?.[0];
 

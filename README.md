@@ -56,6 +56,7 @@ DATABASE_URL="postgresql://salon:salon_password@localhost:5432/salon_de_lien?sch
 BLOB_READ_WRITE_TOKEN=""
 OPENAI_API_KEY=""
 OPENAI_MODEL="gpt-4.1-mini"
+OPENAI_IMAGE_MODEL="gpt-image-1.5"
 ENABLE_STYLE_IMAGE_GENERATION="false"
 STYLE_SIMULATION_PROVIDER="openai"
 FAL_KEY=""
@@ -169,6 +170,7 @@ DATABASE_URL=postgresql://USER:PASSWORD@HOST.neon.tech/DBNAME?sslmode=require
 BLOB_READ_WRITE_TOKEN=Vercel Blob の Read Write Token
 OPENAI_API_KEY=OpenAI API Key
 OPENAI_MODEL=gpt-4.1-mini
+OPENAI_IMAGE_MODEL=gpt-image-1.5
 ENABLE_STYLE_IMAGE_GENERATION=false
 STYLE_SIMULATION_PROVIDER=openai
 FAL_KEY=
@@ -311,3 +313,17 @@ ENABLE_IDENTITY_MASTER_GENERATION="true"
 - AI提案は参考情報です。最終判断はスタッフが行い、顧客本人の希望・NG条件を必ず優先してください。
 - `OPENAI_API_KEY` が未設定の場合でも画面は落ちず、カルテ情報ベースのフォールバック提案を作成します。
 - フォールバックでは、髪量が多い場合は毛量調整、頭皮状態が気になる場合は炭酸スパ、セット時間が短い場合は扱いやすいショートやニュアンスパーマ候補を優先します。
+## Demo Stable Style Simulation Provider
+
+For demo stability, use the OpenAI-only simulation provider.
+
+```env
+STYLE_SIMULATION_PROVIDER="openai"
+OPENAI_IMAGE_MODEL="gpt-image-1.5"
+```
+
+`fal-photomaker` and `fal-photomaker-openai-edit` remain in the codebase for experiments only. They are not recommended for production demos because they can produce broken images, unstable identity results, or OpenAI hair edit authorization errors.
+
+The OpenAI-only provider uses the registered front and side reference photos, optional rear photos, and the hairstyle prompt to create three consultation images: three-quarter front, side, and rear three-quarter. The identity score display, generated image delete button, progress UI, and proposal selector are still available.
+
+If `gpt-image-1.5` is not available in the deployment environment, the code retries image generation once with `gpt-image-1`.
