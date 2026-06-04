@@ -41,6 +41,7 @@ import {
 import { prisma } from "@/lib/prisma";
 import { EmptyState, Section, SelectField, SubmitButton, TextAreaField, TextField } from "@/components/ui";
 import { ProfileImageUploader } from "@/components/customers/profile-image-uploader";
+import { StyleSuggestionImageGenerator } from "@/components/customers/style-suggestion-image-generator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type CustomerDetailPageProps = {
@@ -648,6 +649,13 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
                         </div>
                       ))}
                       </div>
+                    </div>
+
+                    <div className="mt-4">
+                      <StyleSuggestionImageGenerator
+                        styleSuggestionId={suggestion.id}
+                        customerId={customer.id}
+                      />
                     </div>
 
                     <form action={addImageAction} className="mt-4 flex flex-col gap-2 rounded-md border border-dashed border-stone-300 bg-[#fbf8f3] p-3 sm:flex-row">

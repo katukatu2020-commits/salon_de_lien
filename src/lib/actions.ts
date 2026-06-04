@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { generateCourseRecommendations } from "@/lib/ai/course-recommender";
+import { generateStyleSimulationImages } from "@/lib/ai/style-image-generator";
 import { generateAiStyleSuggestionDrafts } from "@/lib/style-suggestion";
 import { buildStyleSuggestionContext } from "@/lib/style-suggestion";
 import {
@@ -17,6 +18,11 @@ import {
 
 const MAX_PROFILE_IMAGE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_PROFILE_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+type StyleImageGenerationState = {
+  ok: boolean;
+  message: string;
+};
 
 export async function createCustomer(formData: FormData) {
   const customer = await prisma.customer.create({
@@ -309,6 +315,108 @@ export async function addStyleSuggestionImageUrl(customerId: string, suggestionI
   });
 
   revalidatePath(`/customers/${customerId}`);
+}
+
+export async function generateStyleSuggestionImageAction(
+  styleSuggestionId: string,
+  customerId: string,
+  _previousState: StyleImageGenerationState
+): Promise<StyleImageGenerationState> {
+  void _previousState;
+
+  console.log("image generation started", {
+    customerId,
+    styleSuggestionId,
+    ENABLE_STYLE_IMAGE_GENERATION: process.env.ENABLE_STYLE_IMAGE_GENERATION,
+    hasProfileImageUrl: "lookup_pending",
+    OPENAI_IMAGE_MODEL: process.env.OPENAI_IMAGE_MODEL
+  });
+
+  try {
+    const suggestion = await prisma.styleSuggestion.findFirst({
+      where: {
+        id: styleSuggestionId,
+        customerId,
+        customer: { deletedAt: null }
+      },
+      include: {
+        customer: {
+          select: {
+            profileImageUrl: true
+          }
+        }
+      }
+    });
+
+    console.log("image generation started", {
+      customerId,
+      styleSuggestionId,
+      ENABLE_STYLE_IMAGE_GENERATION: process.env.ENABLE_STYLE_IMAGE_GENERATION,
+      hasProfileImageUrl: Boolean(suggestion?.customer.profileImageUrl),
+      OPENAI_IMAGE_MODEL: process.env.OPENAI_IMAGE_MODEL
+    });
+
+    if (!suggestion) {
+      return { ok: false, message: "髪型提案が見つかりません。" };
+    }
+
+    if (!suggestion.customer.profileImageUrl) {
+      return { ok: false, message: "本人写真を登録してから画像生成してください。" };
+    }
+
+    if (process.env.ENABLE_STYLE_IMAGE_GENERATION !== "true") {
+      return { ok: false, message: "画像生成は無効です。ENABLE_STYLE_IMAGE_GENERATION=true を設定してください。" };
+    }
+
+    const generatedUrls = await generateStyleSimulationImages({
+      customerId,
+      sourceImageUrl: suggestion.customer.profileImageUrl,
+      styleName: suggestion.suggestedStyleName,
+      imageEditPrompt:
+        suggestion.imagePrompt ??
+        [
+          "顧客本人の写真をもとに、顔立ち・表情・顔の向きは維持し、髪型だけを自然に変更してください。",
+          suggestion.suggestedStyleName,
+          suggestion.reason,
+          suggestion.caution,
+          suggestion.stylingAdvice
+        ]
+          .filter(Boolean)
+          .join("\n")
+    });
+
+    if (generatedUrls.length === 0) {
+      return { ok: false, message: "画像生成結果が空でした。Vercel Logsで詳細を確認してください。" };
+    }
+
+    const existingUrls = suggestion.imageUrlsJson
+      ? (JSON.parse(suggestion.imageUrlsJson) as string[])
+      : suggestion.imageUrls;
+    const nextUrls = [...existingUrls, ...generatedUrls].slice(0, 3);
+
+    await prisma.styleSuggestion.update({
+      where: { id: styleSuggestionId },
+      data: {
+        imageUrls: nextUrls,
+        imageUrlsJson: JSON.stringify(nextUrls)
+      }
+    });
+
+    revalidatePath(`/customers/${customerId}`);
+
+    return { ok: true, message: "本人写真ベースの画像を生成しました。" };
+  } catch (error) {
+    console.error("image generation failed", {
+      customerId,
+      styleSuggestionId,
+      error
+    });
+
+    return {
+      ok: false,
+      message: error instanceof Error ? error.message : "画像生成に失敗しました。"
+    };
+  }
 }
 
 export async function updateStyleSuggestionAccepted(
