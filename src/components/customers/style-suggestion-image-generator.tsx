@@ -43,11 +43,13 @@ function stepForProgress(progress: number) {
 export function StyleSuggestionImageGenerator({
   styleSuggestionId,
   customerId,
+  providerLabel = "OpenAI fallback",
   disabled = false,
   disabledReason
 }: {
   styleSuggestionId: string;
   customerId: string;
+  providerLabel?: string;
   disabled?: boolean;
   disabledReason?: string;
 }) {
@@ -115,13 +117,18 @@ export function StyleSuggestionImageGenerator({
       : disabled
         ? "3方向画像を生成済み"
         : "3方向画像を生成";
+  const isFaceIdEdit = providerLabel.includes("FaceID基準");
 
   return (
     <div className="grid gap-3 rounded-md border border-teal-100 bg-teal-50 p-3 sm:grid-cols-[1fr_auto] sm:items-start">
       <div className="text-sm leading-6 text-teal-950">
         <p>正面写真と横顔写真を中心に、本人性を高めた相談用の角度別イメージを作成します。</p>
+        <p className="mt-1 text-xs font-semibold text-teal-800">生成エンジン: {providerLabel}</p>
         <p className="mt-1 text-xs font-semibold text-teal-900">
-          本人らしさを最優先し、顔パーツを保ったまま髪型のみを変更する方針で生成します。ただしAI生成画像は参考であり、本人性や仕上がりを完全に保証するものではありません。
+          {isFaceIdEdit
+            ? "FaceID基準画像で本人性を高めた後、髪型だけを編集する方式です。"
+            : "本人らしさを最優先し、顔パーツを保ったまま髪型のみを変更する方針で生成します。"}
+          生成画像は相談用の参考であり、本人性や仕上がりを完全に保証するものではありません。
         </p>
         <ul className="mt-2 grid gap-1 text-xs text-teal-800">
           <li>・背景・ライティングは比較しやすいよう統一して生成されます。</li>

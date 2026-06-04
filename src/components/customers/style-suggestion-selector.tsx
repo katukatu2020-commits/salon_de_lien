@@ -184,6 +184,7 @@ export function StyleSuggestionSelector({
   hasAiReferencePhotos,
   hasAiPhotoConsent,
   isStyleImageGenerationEnabled,
+  styleSimulationProvider,
   initialSelectedSuggestionId
 }: {
   customerId: string;
@@ -191,6 +192,7 @@ export function StyleSuggestionSelector({
   hasAiReferencePhotos: boolean;
   hasAiPhotoConsent: boolean;
   isStyleImageGenerationEnabled: boolean;
+  styleSimulationProvider: string;
   initialSelectedSuggestionId?: string;
 }) {
   const router = useRouter();
@@ -395,6 +397,7 @@ export function StyleSuggestionSelector({
           <StyleSuggestionImageGenerator
             styleSuggestionId={selectedSuggestion.id}
             customerId={customerId}
+            providerLabel={styleSimulationProvider}
             disabled={hasThreeImages || !canGenerateImages}
             disabledReason={generationDisabledReason}
           />

@@ -38,6 +38,7 @@ import {
   upsertPreference
 } from "@/lib/actions";
 import { prisma } from "@/lib/prisma";
+import { styleSimulationProviderLabel } from "@/lib/ai/style-simulation-provider";
 import { EmptyState, Section, SelectField, SubmitButton, TextAreaField, TextField } from "@/components/ui";
 import { AiReferencePhotoUploader } from "@/components/customers/ai-reference-photo-uploader";
 import { ProfileImageUploader } from "@/components/customers/profile-image-uploader";
@@ -242,6 +243,7 @@ export default async function CustomerDetailPage({ params, searchParams }: Custo
     ...parseJsonStringArray(customer.aiBackImageUrlsJson),
     customer.aiBackImageUrl
   ]).slice(0, 2);
+  const styleSimulationProvider = styleSimulationProviderLabel();
 
   return (
     <div className="mx-auto grid w-full max-w-7xl gap-5">
@@ -637,6 +639,7 @@ export default async function CustomerDetailPage({ params, searchParams }: Custo
               hasAiReferencePhotos={aiFrontImageUrls.length >= 2 && aiSideImageUrls.length >= 2}
               hasAiPhotoConsent={customer.aiPhotoConsent}
               isStyleImageGenerationEnabled={process.env.ENABLE_STYLE_IMAGE_GENERATION === "true"}
+              styleSimulationProvider={styleSimulationProvider}
               initialSelectedSuggestionId={searchParams?.suggestionId}
             />
 

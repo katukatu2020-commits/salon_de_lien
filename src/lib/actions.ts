@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { generateCourseRecommendations } from "@/lib/ai/course-recommender";
-import { generateStyleSimulationImages } from "@/lib/ai/style-image-generator";
+import { generateStyleSimulation } from "@/lib/ai/style-simulation-provider";
 import {
   attachSimulationImages,
   fallbackAdvisorResult,
@@ -96,6 +96,7 @@ const AI_REFERENCE_PHOTO_GROUP_CONFIG: Record<
 type StyleImageUrlEntry = {
   angle: string;
   url: string;
+  provider?: string;
 };
 
 function parseJsonStringArray(value: string | null | undefined) {
@@ -151,7 +152,11 @@ function parseImageUrlEntries(imageUrlsJson: string | null, fallback: string[] =
               typeof (item as { angle?: unknown }).angle === "string"
                 ? ((item as { angle: string }).angle)
                 : STYLE_IMAGE_ANGLES[index] ?? `画像${index + 1}`,
-            url: (item as { url: string }).url
+            url: (item as { url: string }).url,
+            provider:
+              typeof (item as { provider?: unknown }).provider === "string"
+                ? (item as { provider: string }).provider
+                : undefined
           };
         }
 
@@ -917,15 +922,11 @@ export async function generateStyleSuggestionImageAction(
       return { ok: false, message: "画像生成は無効です。ENABLE_STYLE_IMAGE_GENERATION=true を設定してください。" };
     }
 
-    const generatedUrls = await generateStyleSimulationImages({
+    const simulationResult = await generateStyleSimulation({
       customerId,
-      referencePhotos: {
-        frontUrls,
-        sideUrls,
-        backUrls
-      },
+      styleSuggestionId,
       styleName: suggestion.suggestedStyleName,
-      imageEditPrompt:
+      hairPrompt:
         suggestion.imagePrompt ??
         [
           "顧客本人の写真をもとに、顔立ち・表情・顔の向きは維持し、髪型だけを自然に変更してください。",
@@ -935,17 +936,33 @@ export async function generateStyleSuggestionImageAction(
           suggestion.stylingAdvice
         ]
           .filter(Boolean)
-          .join("\n")
+          .join("\n"),
+      frontImageUrls: frontUrls,
+      sideImageUrls: sideUrls,
+      backImageUrls: backUrls,
+      angles: ["front_three_quarter", "side", "back_three_quarter"]
     });
 
-    if (generatedUrls.length === 0) {
-      return { ok: false, message: "画像生成結果が空でした。Vercel Logsで詳細を確認してください。" };
+    console.log("style simulation generation finished", {
+      customerId,
+      styleSuggestionId,
+      provider: simulationResult.provider,
+      imageCount: simulationResult.images.length,
+      ok: simulationResult.ok
+    });
+
+    if (!simulationResult.ok || simulationResult.images.length === 0) {
+      return {
+        ok: false,
+        message: simulationResult.message ?? "画像生成結果が空でした。Vercel Logsで詳細を確認してください。"
+      };
     }
 
     const existingEntries = parseImageUrlEntries(suggestion.imageUrlsJson, suggestion.imageUrls);
-    const generatedEntries = generatedUrls.map((url, index) => ({
-      angle: STYLE_IMAGE_ANGLES[index] ?? `画像${index + 1}`,
-      url
+    const generatedEntries = simulationResult.images.map((image) => ({
+      angle: image.angle,
+      url: image.url,
+      provider: image.provider ?? simulationResult.provider
     }));
     const generatedAngles = new Set<string>(generatedEntries.map((entry) => entry.angle));
     const nextEntries = [
@@ -966,7 +983,7 @@ export async function generateStyleSuggestionImageAction(
 
     return {
       ok: true,
-      message: "本人写真ベースの画像を生成しました。",
+      message: `${simulationResult.provider}で本人写真ベースの画像を生成しました。`,
       imageUrls: nextUrls,
       selectedSuggestionId: styleSuggestionId
     };
