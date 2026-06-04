@@ -121,7 +121,7 @@ export function StyleSuggestionImageGenerator({
       <div className="text-sm leading-6 text-teal-950">
         <p>正面写真と横顔写真を中心に、本人性を高めた相談用の角度別イメージを作成します。</p>
         <p className="mt-1 text-xs font-semibold text-teal-900">
-          本人らしさを最優先して髪型のみを変えるモードです。生成結果が本人から離れて見える場合は、参照写真を撮り直すか、再生成してください。
+          本人らしさを最優先し、顔パーツを保ったまま髪型のみを変更する方針で生成します。ただしAI生成画像は参考であり、本人性や仕上がりを完全に保証するものではありません。
         </p>
         <ul className="mt-2 grid gap-1 text-xs text-teal-800">
           <li>・背景・ライティングは比較しやすいよう統一して生成されます。</li>

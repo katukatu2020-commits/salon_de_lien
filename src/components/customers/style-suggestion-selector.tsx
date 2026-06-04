@@ -372,6 +372,9 @@ export function StyleSuggestionSelector({
               <p className="text-xs leading-5 text-amber-900">
                 AI生成画像は参考です。本人性や仕上がりを完全に保証するものではありません。
               </p>
+              <p className="mt-1 text-xs leading-5 text-amber-900">
+                顔が変わりすぎて見える場合は「別人っぽい」を選び、再生成してください。
+              </p>
               <div className="mt-2 flex flex-wrap gap-2">
                 {["本人に近い", "微妙", "別人っぽい"].map((label) => (
                   <button
