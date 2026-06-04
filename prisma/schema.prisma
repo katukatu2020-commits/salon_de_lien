@@ -13,6 +13,7 @@ model Customer {
   gender           String?
   birthYear        Int?
   phone            String?
+  profileImageUrl  String?
   memo             String?
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt

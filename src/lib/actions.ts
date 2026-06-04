@@ -1,8 +1,10 @@
 "use server";
 
+import { put } from "@vercel/blob";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { generateAiStyleSuggestionDraft } from "@/lib/style-suggestion";
 import {
   nullableBoolean,
   nullableInt,
@@ -10,6 +12,9 @@ import {
   requiredDate,
   requiredString
 } from "@/lib/form";
+
+const MAX_PROFILE_IMAGE_SIZE = 5 * 1024 * 1024;
+const ALLOWED_PROFILE_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 export async function createCustomer(formData: FormData) {
   const customer = await prisma.customer.create({
@@ -36,6 +41,37 @@ export async function updateCustomer(customerId: string, formData: FormData) {
       phone: nullableString(formData, "phone"),
       memo: nullableString(formData, "memo")
     }
+  });
+
+  revalidatePath("/customers");
+  revalidatePath(`/customers/${customerId}`);
+}
+
+export async function uploadCustomerProfileImage(customerId: string, formData: FormData) {
+  const imageFile = formData.get("profileImage");
+
+  if (!(imageFile instanceof File) || imageFile.size === 0) {
+    throw new Error("プロフィール画像を選択してください。");
+  }
+
+  if (!ALLOWED_PROFILE_IMAGE_TYPES.includes(imageFile.type)) {
+    throw new Error("プロフィール画像は JPG / PNG / WebP のみアップロードできます。");
+  }
+
+  if (imageFile.size > MAX_PROFILE_IMAGE_SIZE) {
+    throw new Error("プロフィール画像は5MB以下にしてください。");
+  }
+
+  const extension = imageFile.name.split(".").pop()?.toLowerCase() ?? "jpg";
+  const blob = await put(`customers/${customerId}/profile.${extension}`, imageFile, {
+    access: "public",
+    addRandomSuffix: true,
+    token: process.env.BLOB_READ_WRITE_TOKEN
+  });
+
+  await prisma.customer.update({
+    where: { id: customerId },
+    data: { profileImageUrl: blob.url }
   });
 
   revalidatePath("/customers");
@@ -126,6 +162,23 @@ export async function createStyleSuggestion(customerId: string, formData: FormDa
       caution: nullableString(formData, "caution"),
       stylingAdvice: nullableString(formData, "stylingAdvice"),
       accepted: nullableBoolean(formData, "accepted")
+    }
+  });
+
+  revalidatePath(`/customers/${customerId}`);
+}
+
+export async function createAiStyleSuggestion(customerId: string) {
+  const suggestion = await generateAiStyleSuggestionDraft(customerId);
+
+  await prisma.styleSuggestion.create({
+    data: {
+      customerId,
+      suggestedStyleName: suggestion.suggestedStyleName,
+      reason: suggestion.reason,
+      caution: suggestion.caution,
+      stylingAdvice: suggestion.stylingAdvice,
+      accepted: false
     }
   });
 

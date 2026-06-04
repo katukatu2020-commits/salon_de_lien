@@ -17,13 +17,17 @@ import {
   Save,
   Scissors,
   Sparkles,
+  Upload,
+  WandSparkles,
   UserRound
 } from "lucide-react";
 import {
+  createAiStyleSuggestion,
   createStyleSuggestion,
   createVisit,
   updateCustomer,
   updateStyleSuggestionAccepted,
+  uploadCustomerProfileImage,
   upsertHairProfile,
   upsertPreference
 } from "@/lib/actions";
@@ -141,6 +145,8 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
   const upsertPreferenceAction = upsertPreference.bind(null, customer.id);
   const createVisitAction = createVisit.bind(null, customer.id);
   const createStyleSuggestionAction = createStyleSuggestion.bind(null, customer.id);
+  const uploadCustomerProfileImageAction = uploadCustomerProfileImage.bind(null, customer.id);
+  const createAiStyleSuggestionAction = createAiStyleSuggestion.bind(null, customer.id);
   const latestVisit = customer.visits[0];
   const hasNgCondition = Boolean(customer.preference?.dislikes?.trim());
   const nextVisitDate = latestVisit ? addMonths(latestVisit.visitedAt, 2) : null;
@@ -163,11 +169,42 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
       <section className="rounded-lg border border-stone-200 bg-white p-5 shadow-sm">
         <div className="grid gap-5 xl:grid-cols-[1.05fr_0.9fr_0.9fr_auto] xl:items-stretch">
           <div className="grid gap-5 sm:grid-cols-[128px_1fr]">
-            <div className="relative flex h-32 w-32 items-center justify-center rounded-full bg-[#e7ebe7] text-4xl font-semibold text-teal-900 shadow-inner">
-              {customer.name.slice(0, 1)}
-              <span className="absolute bottom-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-teal-900 text-white ring-4 ring-white">
-                <UserRound className="h-4 w-4" />
-              </span>
+            <div className="grid justify-items-center gap-3">
+              <div className="relative flex h-32 w-32 items-center justify-center overflow-hidden rounded-full bg-[#e7ebe7] text-4xl font-semibold text-teal-900 shadow-inner">
+                {customer.profileImageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={customer.profileImageUrl}
+                    alt={`${customer.name}のプロフィール画像`}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  customer.name.slice(0, 1)
+                )}
+                <span className="absolute bottom-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-teal-900 text-white ring-4 ring-white">
+                  <UserRound className="h-4 w-4" />
+                </span>
+              </div>
+              <form action={uploadCustomerProfileImageAction} className="grid justify-items-center gap-2">
+                <label className="inline-flex h-9 cursor-pointer items-center justify-center gap-2 rounded-md border border-stone-200 bg-white px-3 text-xs font-semibold text-stone-700 shadow-sm hover:bg-stone-50">
+                  <Upload className="h-4 w-4" />
+                  画像を更新
+                  <input
+                    type="file"
+                    name="profileImage"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="sr-only"
+                    required
+                  />
+                </label>
+                <button
+                  type="submit"
+                  className="h-8 rounded-md bg-teal-900 px-3 text-xs font-semibold text-white shadow-sm hover:bg-teal-950"
+                >
+                  アップロード
+                </button>
+                <p className="text-center text-[11px] leading-4 text-stone-500">JPG / PNG / WebP・5MB以下</p>
+              </form>
             </div>
             <div>
               <div className="flex flex-wrap items-center gap-3">
@@ -473,6 +510,26 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
         <TabsContent value="suggestions">
           <div className="grid gap-5 xl:grid-cols-[1fr_0.75fr]">
             <Section title="髪型提案">
+              <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
+                <div className="flex items-center gap-2 font-semibold">
+                  <WandSparkles className="h-4 w-4" />
+                  AI提案について
+                </div>
+                <ul className="mt-2 grid gap-1">
+                  <li>・AI提案は参考情報です。</li>
+                  <li>・最終判断はスタッフが行ってください。</li>
+                  <li>・顧客本人の希望・NG条件を必ず優先してください。</li>
+                </ul>
+                <form action={createAiStyleSuggestionAction} className="mt-3">
+                  <button
+                    type="submit"
+                    className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-teal-900 px-4 text-sm font-semibold text-white shadow-sm hover:bg-teal-950"
+                  >
+                    <WandSparkles className="h-4 w-4" />
+                    AIで提案を生成して保存
+                  </button>
+                </form>
+              </div>
               <div className="grid gap-3">
                 {customer.styleSuggestions.map((suggestion) => {
                   const acceptAction = updateStyleSuggestionAccepted.bind(null, customer.id, suggestion.id, !suggestion.accepted);
