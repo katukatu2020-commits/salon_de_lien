@@ -1,5 +1,3 @@
-import { generateStyleSimulationImages } from "@/lib/ai/style-image-generator";
-
 export type StyleSuggestionContext = {
   customer: {
     id: string;
@@ -170,20 +168,14 @@ export async function attachSimulationImages(
   sourceImageUrl: string | null,
   result: AiStyleSuggestionResult
 ): Promise<StyleSuggestionDraft[]> {
+  void customerId;
+  void sourceImageUrl;
+
   const faceAnalysis = buildFaceAnalysis(result);
 
-  return Promise.all(
-    result.suggestions.map(async (suggestion) => ({
-      ...suggestion,
-      faceAnalysis,
-      imageUrls: sourceImageUrl
-        ? await generateStyleSimulationImages({
-            customerId,
-            sourceImageUrl,
-            styleName: suggestion.styleName,
-            imageEditPrompt: suggestion.imageEditPrompt
-          })
-        : []
-    }))
-  );
+  return result.suggestions.map((suggestion) => ({
+    ...suggestion,
+    faceAnalysis,
+    imageUrls: []
+  }));
 }

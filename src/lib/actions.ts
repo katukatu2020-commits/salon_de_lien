@@ -25,7 +25,25 @@ type StyleImageGenerationState = {
   imageUrls?: string[];
 };
 
+type AiReferencePhotoAngle = "front" | "side" | "back";
+
+type AiReferencePhotoUploadState = {
+  ok: boolean;
+  message: string;
+  imageUrl?: string;
+  cacheKey?: number;
+};
+
 const STYLE_IMAGE_ANGLES = ["斜め正面", "横", "斜め後ろ"] as const;
+
+const AI_REFERENCE_PHOTO_CONFIG: Record<
+  AiReferencePhotoAngle,
+  { field: "aiFrontImageUrl" | "aiSideImageUrl" | "aiBackImageUrl"; label: string; slug: string }
+> = {
+  front: { field: "aiFrontImageUrl", label: "斜め正面", slug: "front-three-quarter" },
+  side: { field: "aiSideImageUrl", label: "横", slug: "side" },
+  back: { field: "aiBackImageUrl", label: "斜め後ろ", slug: "back-three-quarter" }
+};
 
 type StyleImageUrlEntry = {
   angle: string;
@@ -179,6 +197,79 @@ export async function uploadCustomerProfileImage(
       message: error instanceof Error ? error.message : "画像アップロードに失敗しました。"
     };
   }
+}
+
+export async function uploadCustomerAiReferencePhoto(
+  customerId: string,
+  angle: AiReferencePhotoAngle,
+  _previousState: AiReferencePhotoUploadState,
+  formData: FormData
+): Promise<AiReferencePhotoUploadState> {
+  void _previousState;
+
+  try {
+    const config = AI_REFERENCE_PHOTO_CONFIG[angle];
+    const imageFile = formData.get("aiReferencePhoto");
+
+    if (!config) {
+      return { ok: false, message: "写真の角度が不正です。" };
+    }
+
+    if (!(imageFile instanceof File) || imageFile.size === 0) {
+      return { ok: false, message: `${config.label}の写真を選択してください。` };
+    }
+
+    if (!ALLOWED_PROFILE_IMAGE_TYPES.includes(imageFile.type)) {
+      return { ok: false, message: "AIシミュレーション用写真は JPG / PNG / WebP のみ登録できます。" };
+    }
+
+    if (imageFile.size > MAX_PROFILE_IMAGE_SIZE) {
+      return { ok: false, message: "AIシミュレーション用写真は5MB以下にしてください。" };
+    }
+
+    const extension = imageFile.name.split(".").pop()?.toLowerCase() ?? "jpg";
+    const safeFileName = imageFile.name.replace(/[^\w.-]/g, "_");
+    const cacheKey = Date.now();
+    const blob = await put(
+      `customers/${customerId}/ai-reference/${config.slug}-${cacheKey}-${safeFileName || `image.${extension}`}`,
+      imageFile,
+      {
+        access: "public",
+        addRandomSuffix: true,
+        token: process.env.BLOB_READ_WRITE_TOKEN
+      }
+    );
+
+    await prisma.customer.update({
+      where: { id: customerId },
+      data: { [config.field]: blob.url }
+    });
+
+    revalidatePath(`/customers/${customerId}`);
+
+    return {
+      ok: true,
+      message: `${config.label}の写真を更新しました。`,
+      imageUrl: blob.url,
+      cacheKey
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      message: error instanceof Error ? error.message : "AIシミュレーション用写真のアップロードに失敗しました。"
+    };
+  }
+}
+
+export async function updateCustomerAiPhotoConsent(customerId: string, formData: FormData) {
+  await prisma.customer.update({
+    where: { id: customerId },
+    data: {
+      aiPhotoConsent: formData.get("aiPhotoConsent") === "on"
+    }
+  });
+
+  revalidatePath(`/customers/${customerId}`);
 }
 
 export async function upsertHairProfile(customerId: string, formData: FormData) {
@@ -405,7 +496,7 @@ export async function generateStyleSuggestionImageAction(
     customerId,
     styleSuggestionId,
     ENABLE_STYLE_IMAGE_GENERATION: process.env.ENABLE_STYLE_IMAGE_GENERATION,
-    hasProfileImageUrl: "lookup_pending",
+    hasAiReferencePhotos: "lookup_pending",
     OPENAI_IMAGE_MODEL: process.env.OPENAI_IMAGE_MODEL
   });
 
@@ -419,7 +510,10 @@ export async function generateStyleSuggestionImageAction(
       include: {
         customer: {
           select: {
-            profileImageUrl: true
+            aiFrontImageUrl: true,
+            aiSideImageUrl: true,
+            aiBackImageUrl: true,
+            aiPhotoConsent: true
           }
         }
       }
@@ -429,7 +523,10 @@ export async function generateStyleSuggestionImageAction(
       customerId,
       styleSuggestionId,
       ENABLE_STYLE_IMAGE_GENERATION: process.env.ENABLE_STYLE_IMAGE_GENERATION,
-      hasProfileImageUrl: Boolean(suggestion?.customer.profileImageUrl),
+      hasAiFrontImageUrl: Boolean(suggestion?.customer.aiFrontImageUrl),
+      hasAiSideImageUrl: Boolean(suggestion?.customer.aiSideImageUrl),
+      hasAiBackImageUrl: Boolean(suggestion?.customer.aiBackImageUrl),
+      aiPhotoConsent: Boolean(suggestion?.customer.aiPhotoConsent),
       OPENAI_IMAGE_MODEL: process.env.OPENAI_IMAGE_MODEL
     });
 
@@ -437,8 +534,12 @@ export async function generateStyleSuggestionImageAction(
       return { ok: false, message: "髪型提案が見つかりません。" };
     }
 
-    if (!suggestion.customer.profileImageUrl) {
-      return { ok: false, message: "本人写真を登録してから画像生成してください。" };
+    if (!suggestion.customer.aiPhotoConsent) {
+      return { ok: false, message: "AI画像生成への同意を取得済みにしてください。" };
+    }
+
+    if (!suggestion.customer.aiFrontImageUrl || !suggestion.customer.aiSideImageUrl || !suggestion.customer.aiBackImageUrl) {
+      return { ok: false, message: "AIシミュレーション用写真（斜め正面・横・斜め後ろ）を3枚登録してください。" };
     }
 
     if (process.env.ENABLE_STYLE_IMAGE_GENERATION !== "true") {
@@ -447,7 +548,11 @@ export async function generateStyleSuggestionImageAction(
 
     const generatedUrls = await generateStyleSimulationImages({
       customerId,
-      sourceImageUrl: suggestion.customer.profileImageUrl,
+      referenceImageUrls: {
+        front: suggestion.customer.aiFrontImageUrl,
+        side: suggestion.customer.aiSideImageUrl,
+        back: suggestion.customer.aiBackImageUrl
+      },
       styleName: suggestion.suggestedStyleName,
       imageEditPrompt:
         suggestion.imagePrompt ??

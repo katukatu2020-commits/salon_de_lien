@@ -17,7 +17,7 @@ const initialState: ImageGenerationState = {
   message: ""
 };
 
-function GenerateButton({ disabled }: { disabled: boolean }) {
+function GenerateButton({ disabled, disabledReason }: { disabled: boolean; disabledReason?: string }) {
   const { pending } = useFormStatus();
 
   return (
@@ -27,7 +27,13 @@ function GenerateButton({ disabled }: { disabled: boolean }) {
       className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-teal-900 px-4 text-sm font-semibold text-white shadow-sm hover:bg-teal-950 disabled:cursor-not-allowed disabled:opacity-60"
     >
       <ImagePlus className="h-4 w-4" />
-      {pending ? "生成中..." : disabled ? "3方向画像を生成済み" : "3方向の画像を生成"}
+      {pending
+        ? "生成中..."
+        : disabledReason
+          ? "生成不可"
+          : disabled
+            ? "3方向画像を生成済み"
+            : "3方向参照写真からシミュレーション生成"}
     </button>
   );
 }
@@ -35,11 +41,13 @@ function GenerateButton({ disabled }: { disabled: boolean }) {
 export function StyleSuggestionImageGenerator({
   styleSuggestionId,
   customerId,
-  disabled = false
+  disabled = false,
+  disabledReason
 }: {
   styleSuggestionId: string;
   customerId: string;
   disabled?: boolean;
+  disabledReason?: string;
 }) {
   const router = useRouter();
   const [state, formAction] = useFormState(
@@ -60,7 +68,8 @@ export function StyleSuggestionImageGenerator({
         <span className="mt-1 block text-xs text-teal-800">画像生成にはAPI利用料が発生します。必要な提案だけ生成してください。</span>
       </p>
       <div className="grid gap-2 sm:justify-items-end">
-        <GenerateButton disabled={disabled} />
+        <GenerateButton disabled={disabled} disabledReason={disabledReason} />
+        {disabledReason ? <p className="text-xs font-semibold text-red-700">{disabledReason}</p> : null}
         {state.message ? (
           <p className={`text-xs font-semibold ${state.ok ? "text-emerald-700" : "text-red-700"}`}>
             {state.message}

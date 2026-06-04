@@ -2,33 +2,42 @@ import { put } from "@vercel/blob";
 
 const STYLE_IMAGE_ANGLES = [
   {
+    key: "front",
     label: "斜め正面",
     slug: "front-three-quarter",
     prompt:
-      "顧客本人のプロフィール写真を参考に、顔立ち・表情・雰囲気をできるだけ維持し、髪型だけを自然に変更してください。斜め正面から見たサロン提案用の髪型シミュレーション。顔型・骨格バランスの写真上の印象を参考に、トップ・前髪・サイドのバランスが分かるようにしてください。別人化させず、過度に美化しないでください。"
+      "斜め正面の本人参照写真を主に参考にしてください。前髪、顔周り、トップ、サイド、全体バランスが分かる相談用シミュレーションにしてください。顔立ち、輪郭、年齢感、肌色、目鼻立ちは不必要に変えず、髪型だけを自然に変更してください。"
   },
   {
+    key: "side",
     label: "横",
     slug: "side",
     prompt:
-      "顧客本人のプロフィール写真を参考に、横から見た髪型シミュレーションを作成してください。顔立ちや頭の形の印象をできるだけ維持し、サイド・襟足・後頭部のボリュームが分かる自然なサロン提案画像にしてください。髪型のみを中心に変更し、別人化させないでください。"
+      "横の本人参照写真を主に参考にしてください。フェイスライン、耳まわり、サイド、襟足、トップの高さが分かる相談用シミュレーションにしてください。頭部シルエットと骨格バランスの写真上の印象を保ち、髪型だけを自然に変更してください。"
   },
   {
+    key: "back",
     label: "斜め後ろ",
     slug: "back-three-quarter",
     prompt:
-      "顧客本人のプロフィール写真を参考に、斜め後ろから見た髪型シミュレーションを作成してください。後頭部の丸み、襟足、毛流れ、サイドとのつながりが分かるようにしてください。顔の再現よりも、本人の頭部シルエットと髪型提案の参考になる自然な画像にしてください。"
+      "斜め後ろの本人参照写真を主に参考にしてください。後頭部、襟足、耳まわり、毛流れ、サイドとのつながりが分かる相談用シミュレーションにしてください。顔の再現よりも本人の頭部シルエットと髪型提案の参考になる自然な画像にしてください。"
   }
 ] as const;
 
+type ReferenceImageUrls = {
+  front: string;
+  side: string;
+  back: string;
+};
+
 export async function generateStyleSimulationImages({
   customerId,
-  sourceImageUrl,
+  referenceImageUrls,
   styleName,
   imageEditPrompt
 }: {
   customerId: string;
-  sourceImageUrl: string;
+  referenceImageUrls: ReferenceImageUrls;
   styleName: string;
   imageEditPrompt: string;
 }): Promise<string[]> {
@@ -44,14 +53,6 @@ export async function generateStyleSimulationImages({
     throw new Error("BLOB_READ_WRITE_TOKEN is not set.");
   }
 
-  const sourceResponse = await fetch(sourceImageUrl);
-
-  if (!sourceResponse.ok) {
-    throw new Error(`Failed to fetch source image: ${sourceResponse.status}`);
-  }
-
-  const sourceContentType = sourceResponse.headers.get("content-type") ?? "image/png";
-  const sourceBytes = Buffer.from(await sourceResponse.arrayBuffer());
   const OpenAI = (await import("openai")).default;
   const { toFile } = await import("openai/uploads");
   const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -59,11 +60,22 @@ export async function generateStyleSimulationImages({
   const generatedUrls: string[] = [];
 
   for (const angle of STYLE_IMAGE_ANGLES) {
-    const sourceFile = await toFile(sourceBytes, "customer-profile.png", { type: sourceContentType });
+    const sourceImageUrl = referenceImageUrls[angle.key];
+    const sourceResponse = await fetch(sourceImageUrl);
+
+    if (!sourceResponse.ok) {
+      throw new Error(`Failed to fetch ${angle.label} reference image: ${sourceResponse.status}`);
+    }
+
+    const sourceContentType = sourceResponse.headers.get("content-type") ?? "image/png";
+    const sourceBytes = Buffer.from(await sourceResponse.arrayBuffer());
+    const sourceFile = await toFile(sourceBytes, `${angle.slug}-reference.png`, { type: sourceContentType });
     const prompt = [
-      "本人写真と顔型・骨格バランスの印象を参考にした、相談用の角度別髪型シミュレーション画像を作成してください。",
-      "骨格診断や仕上がり保証ではありません。顔立ち、表情、雰囲気はできるだけ維持し、髪型部分を中心に自然に変更してください。",
-      "顧客のNG条件を守り、別人化や過度な美化を避けてください。",
+      "本人写真と顔型・骨格バランスの印象を参考にした相談用シミュレーションを作成してください。",
+      "髪型だけを変え、本人の顔立ち・輪郭・骨格印象は極力維持してください。",
+      "別人化を避け、年齢感、肌色、目鼻立ちを不必要に変えないでください。",
+      "美化しすぎず、仕上がり保証ではない自然なサロン相談用画像にしてください。",
+      `生成角度: ${angle.label}`,
       `提案スタイル: ${styleName}`,
       angle.prompt,
       imageEditPrompt

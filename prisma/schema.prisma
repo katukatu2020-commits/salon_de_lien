@@ -14,6 +14,10 @@ model Customer {
   birthYear             Int?
   phone                 String?
   profileImageUrl       String?
+  aiFrontImageUrl       String?
+  aiSideImageUrl        String?
+  aiBackImageUrl        String?
+  aiPhotoConsent        Boolean                @default(false)
   memo                  String?
   deletedAt             DateTime?
   createdAt             DateTime               @default(now())

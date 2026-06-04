@@ -128,10 +128,14 @@ function imageForAngle(entries: StyleImageEntry[], angle: string, index: number)
 
 export function StyleSuggestionSelector({
   customerId,
-  suggestions
+  suggestions,
+  hasAiReferencePhotos,
+  hasAiPhotoConsent
 }: {
   customerId: string;
   suggestions: SelectableStyleSuggestion[];
+  hasAiReferencePhotos: boolean;
+  hasAiPhotoConsent: boolean;
 }) {
   const selectableSuggestions = useMemo(() => {
     const latest = suggestions.slice(0, 20);
@@ -158,6 +162,12 @@ export function StyleSuggestionSelector({
 
   const imageEntries = parseImageEntries(selectedSuggestion);
   const hasThreeImages = ANGLES.every((angle, index) => Boolean(imageForAngle(imageEntries, angle, index)));
+  const canGenerateImages = hasAiReferencePhotos && hasAiPhotoConsent;
+  const generationDisabledReason = !hasAiPhotoConsent
+    ? "AI画像生成への同意を保存してください。"
+    : !hasAiReferencePhotos
+      ? "AIシミュレーション用写真（斜め正面・横・斜め後ろ）を3枚登録してください。"
+      : undefined;
   const addImageAction = addStyleSuggestionImageUrl.bind(null, customerId, selectedSuggestion.id);
   const acceptAction = updateStyleSuggestionAccepted.bind(
     null,
@@ -283,7 +293,8 @@ export function StyleSuggestionSelector({
           <StyleSuggestionImageGenerator
             styleSuggestionId={selectedSuggestion.id}
             customerId={customerId}
-            disabled={hasThreeImages}
+            disabled={hasThreeImages || !canGenerateImages}
+            disabledReason={generationDisabledReason}
           />
         </div>
 

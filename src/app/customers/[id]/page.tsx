@@ -40,6 +40,7 @@ import {
 } from "@/lib/actions";
 import { prisma } from "@/lib/prisma";
 import { EmptyState, Section, SelectField, SubmitButton, TextAreaField, TextField } from "@/components/ui";
+import { AiReferencePhotoUploader } from "@/components/customers/ai-reference-photo-uploader";
 import { ProfileImageUploader } from "@/components/customers/profile-image-uploader";
 import { StyleSuggestionImageGenerator } from "@/components/customers/style-suggestion-image-generator";
 import { StyleSuggestionSelector } from "@/components/customers/style-suggestion-selector";
@@ -341,6 +342,14 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
         </TabsList>
 
         <TabsContent value="basic">
+          <AiReferencePhotoUploader
+            customerId={customer.id}
+            frontImageUrl={customer.aiFrontImageUrl}
+            sideImageUrl={customer.aiSideImageUrl}
+            backImageUrl={customer.aiBackImageUrl}
+            consent={customer.aiPhotoConsent}
+          />
+
           <div className="grid gap-5 xl:grid-cols-[0.8fr_1.2fr]">
             <Section title="基本情報サマリー">
               <dl className="grid gap-3 sm:grid-cols-2">
@@ -595,7 +604,12 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
               </p>
             </div>
 
-            <StyleSuggestionSelector customerId={customer.id} suggestions={styleSuggestionItems} />
+            <StyleSuggestionSelector
+              customerId={customer.id}
+              suggestions={styleSuggestionItems}
+              hasAiReferencePhotos={Boolean(customer.aiFrontImageUrl && customer.aiSideImageUrl && customer.aiBackImageUrl)}
+              hasAiPhotoConsent={customer.aiPhotoConsent}
+            />
 
             <div className="hidden">
               {customer.styleSuggestions.map((suggestion, index) => {
