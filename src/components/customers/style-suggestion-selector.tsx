@@ -83,7 +83,7 @@ function Pill({ children, tone = "stone" }: { children: ReactNode; tone?: "stone
   return <span className={`inline-flex rounded px-2.5 py-1 text-xs font-semibold ${className}`}>{children}</span>;
 }
 
-function parseImageEntries(suggestion: SelectableStyleSuggestion): StyleImageEntry[] {
+function parseImageEntries(): StyleImageEntry[] {
   // Use demo images for all suggestions
   return DEMO_IMAGE_ENTRIES;
 }
@@ -253,7 +253,7 @@ export function StyleSuggestionSelector({
     );
   }
 
-  const imageEntries = parseImageEntries(selectedSuggestion);
+  const imageEntries = parseImageEntries();
   const hasThreeImages = ANGLES.every((angle, index) => Boolean(imageForAngle(imageEntries, angle, index)));
   const hasLowIdentityScore = imageEntries.some((entry) => entry.identityLevel === "low");
   const imageProviders = new Set(imageEntries.map((entry) => entry.provider).filter(Boolean));
