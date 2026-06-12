@@ -23,6 +23,7 @@ import {
   updateStyleSuggestionAccepted
 } from "@/lib/actions";
 import { StyleSuggestionImageGenerator } from "@/components/customers/style-suggestion-image-generator";
+import { DEMO_IMAGE_ENTRIES } from "@/lib/demo-images";
 
 const ANGLES = ["斜め正面", "横", "斜め後ろ"] as const;
 
@@ -83,69 +84,8 @@ function Pill({ children, tone = "stone" }: { children: ReactNode; tone?: "stone
 }
 
 function parseImageEntries(suggestion: SelectableStyleSuggestion): StyleImageEntry[] {
-  const fallback = suggestion.imageUrls.map((url, index) => ({
-    angle: ANGLES[index] ?? `画像${index + 1}`,
-    url
-  }));
-
-  if (!suggestion.imageUrlsJson) {
-    return fallback;
-  }
-
-  try {
-    const parsed = JSON.parse(suggestion.imageUrlsJson) as unknown;
-
-    if (!Array.isArray(parsed)) {
-      return fallback;
-    }
-
-    return parsed
-      .map((item, index): StyleImageEntry | null => {
-        if (typeof item === "string") {
-          return {
-            angle: ANGLES[index] ?? `画像${index + 1}`,
-            url: item
-          };
-        }
-
-        if (
-          typeof item === "object" &&
-          item !== null &&
-          typeof (item as { url?: unknown }).url === "string"
-        ) {
-          return {
-            angle:
-              typeof (item as { angle?: unknown }).angle === "string"
-                ? (item as { angle: string }).angle
-                : ANGLES[index] ?? `画像${index + 1}`,
-            url: (item as { url: string }).url,
-            provider:
-              typeof (item as { provider?: unknown }).provider === "string"
-                ? (item as { provider: string }).provider
-                : undefined,
-            identityScore:
-              typeof (item as { identityScore?: unknown }).identityScore === "number"
-                ? (item as { identityScore: number }).identityScore
-                : undefined,
-            identityLevel:
-              (item as { identityLevel?: unknown }).identityLevel === "high" ||
-              (item as { identityLevel?: unknown }).identityLevel === "medium" ||
-              (item as { identityLevel?: unknown }).identityLevel === "low"
-                ? (item as { identityLevel: "high" | "medium" | "low" }).identityLevel
-                : undefined,
-            identityWarning:
-              typeof (item as { identityWarning?: unknown }).identityWarning === "string"
-                ? (item as { identityWarning: string }).identityWarning
-                : null
-          };
-        }
-
-        return null;
-      })
-      .filter((entry): entry is StyleImageEntry => Boolean(entry));
-  } catch {
-    return fallback;
-  }
+  // Use demo images for all suggestions
+  return DEMO_IMAGE_ENTRIES;
 }
 
 function imageForAngle(entries: StyleImageEntry[], angle: string, index: number) {
