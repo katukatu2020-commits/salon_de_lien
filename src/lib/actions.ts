@@ -616,6 +616,7 @@ export async function updateCustomer(customerId: string, formData: FormData) {
   revalidatePath("/customers?view=calendar");
   revalidatePath("/customers?view=messages");
   revalidatePath(`/customers/${customerId}`);
+  revalidatePath(`/app/${customerId}`);
 }
 
 export async function deleteCustomer(customerId: string, formData?: FormData) {
@@ -629,7 +630,13 @@ export async function deleteCustomer(customerId: string, formData?: FormData) {
   });
 
   revalidatePath("/customers");
+  revalidatePath("/customers?view=visits");
+  revalidatePath("/customers?view=calendar");
+  revalidatePath("/customers?view=messages");
   revalidatePath(`/customers/${customerId}`);
+  revalidatePath(`/app/${customerId}`);
+  revalidatePath(`/care/${customerId}`);
+  revalidatePath(`/feedback/${customerId}`);
   redirect("/customers");
 }
 
@@ -670,6 +677,7 @@ export async function uploadCustomerProfileImage(
 
     revalidatePath("/customers");
     revalidatePath(`/customers/${customerId}`);
+    revalidatePath(`/app/${customerId}`);
 
     return {
       ok: true,
@@ -732,6 +740,7 @@ export async function uploadCustomerAiReferencePhoto(
     });
 
     revalidatePath(`/customers/${customerId}`);
+    revalidatePath(`/app/${customerId}`);
 
     return {
       ok: true,
@@ -830,6 +839,7 @@ export async function uploadAiReferencePhotoAction(
     });
 
     revalidatePath(`/customers/${customerId}`);
+    revalidatePath(`/app/${customerId}`);
 
     return {
       ok: true,
@@ -889,6 +899,7 @@ export async function removeAiReferencePhotoAction(formData: FormData) {
   });
 
   revalidatePath(`/customers/${customerIdValue}`);
+  revalidatePath(`/app/${customerIdValue}`);
 }
 
 export async function updateCustomerAiPhotoConsent(customerId: string, formData: FormData) {
@@ -933,6 +944,7 @@ export async function updateCustomerAiPhotoConsent(customerId: string, formData:
   revalidatePath("/customers?view=settings");
   revalidatePath("/customers?view=messages");
   revalidatePath(`/customers/${customerId}`);
+  revalidatePath(`/app/${customerId}`);
 }
 
 export async function upsertHairProfile(customerId: string, formData: FormData) {

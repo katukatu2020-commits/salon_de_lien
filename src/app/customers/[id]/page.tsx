@@ -12,6 +12,7 @@ import {
   Phone,
   Scissors,
   Sparkles,
+  Trash2,
   UserRound
 } from "lucide-react";
 import {
@@ -21,6 +22,7 @@ import {
   createServiceSale,
   createStyleSuggestion,
   createVisit,
+  deleteCustomer,
   generateCourseRecommendationsAction,
   toggleCourseRecommendationAccepted,
   updateCustomer,
@@ -589,6 +591,7 @@ export default async function CustomerDetailPage({ params, searchParams }: Custo
   const createServiceSaleAction = createServiceSale.bind(null, customer.id);
   const createStyleSuggestionAction = createStyleSuggestion.bind(null, customer.id);
   const createVisitAction = createVisit.bind(null, customer.id);
+  const deleteCustomerAction = deleteCustomer.bind(null, customer.id);
   const generateCourseRecommendations = generateCourseRecommendationsAction.bind(null, customer.id);
   const updateCustomerAction = updateCustomer.bind(null, customer.id);
   const latestVisit = customer.visits[0] ?? null;
@@ -1365,6 +1368,41 @@ export default async function CustomerDetailPage({ params, searchParams }: Custo
         </TabsContent>
 
         <TabsContent value="actions" className="mt-0 grid gap-4 xl:grid-cols-2">
+          <section className="rounded-lg border border-red-200 bg-white p-4 shadow-sm xl:col-span-2">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h2 className="flex items-center gap-2 text-sm font-semibold text-red-800">
+                  <Trash2 className="h-4 w-4" />
+                  顧客情報の削除
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-stone-600">
+                  この顧客を削除すると、顧客一覧とお客様アプリから表示されなくなります。施術履歴などの関連データは復旧や確認のためDB上に保持されます。
+                </p>
+              </div>
+              <span className="rounded border border-red-200 bg-red-50 px-3 py-1 text-xs font-semibold text-red-800">
+                論理削除
+              </span>
+            </div>
+            <form action={deleteCustomerAction} className="mt-4 grid gap-3 rounded-md border border-red-100 bg-red-50 p-4">
+              <label className="flex items-start gap-2 text-sm font-semibold leading-6 text-red-900">
+                <input
+                  type="checkbox"
+                  name="confirmDelete"
+                  value="yes"
+                  required
+                  className="mt-1 h-4 w-4 rounded border-red-300 text-red-700"
+                />
+                {customer.name}さんの顧客情報を削除することを確認しました。
+              </label>
+              <button
+                type="submit"
+                className="inline-flex h-10 w-fit items-center justify-center gap-2 rounded-md bg-red-700 px-4 text-sm font-semibold text-white shadow-sm hover:bg-red-800"
+              >
+                <Trash2 className="h-4 w-4" />
+                顧客情報を削除
+              </button>
+            </form>
+          </section>
         </TabsContent>
 
         <TabsContent value="history" className="mt-0 grid gap-5">

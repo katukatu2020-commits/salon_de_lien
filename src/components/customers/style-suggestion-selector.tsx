@@ -24,6 +24,7 @@ import {
   removeStyleSuggestionImageAction,
   updateStyleSuggestionAccepted
 } from "@/lib/actions";
+import { HairColorAdjustmentPanel } from "@/components/customers/hair-color-adjustment-panel";
 import { StyleSuggestionImageGenerator } from "@/components/customers/style-suggestion-image-generator";
 
 const ANGLES = ["斜め正面", "横", "斜め後ろ"] as const;
@@ -341,6 +342,10 @@ export function StyleSuggestionSelector({
   }
 
   const imageEntries = parseImageEntries(selectedSuggestion);
+  const hairColorImages = ANGLES.flatMap((angle, index) => {
+    const entry = imageEntryForAngle(imageEntries, angle, index);
+    return entry?.url ? [{ angle, url: entry.url }] : [];
+  });
   const hasLowIdentityScore = imageEntries.some((entry) => entry.identityLevel === "low");
   const canGenerateImages = hasAiReferencePhotos && hasAiPhotoConsent && isStyleImageGenerationEnabled;
   const generationDisabledReason = !hasAiPhotoConsent
@@ -481,6 +486,10 @@ export function StyleSuggestionSelector({
               {imageDeleteMessage}
             </p>
           ) : null}
+        </div>
+
+        <div className="mt-4">
+          <HairColorAdjustmentPanel images={hairColorImages} />
         </div>
 
         <div className="mt-4">

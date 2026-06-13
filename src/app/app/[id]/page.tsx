@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CalendarDays, CheckCircle2, ChevronRight, Heart, MessageCircle, Scissors, Sparkles } from "lucide-react";
+import { CalendarDays, Camera, CheckCircle2, ChevronRight, Heart, MessageCircle, Scissors, Sparkles } from "lucide-react";
+import { CustomerAppAiPhotoUploader } from "@/components/customers/customer-app-ai-photo-uploader";
 import { prisma } from "@/lib/prisma";
 
 type CustomerAppPageProps = {
@@ -52,6 +53,23 @@ function addMonths(date: Date, months: number) {
 
 function isActiveAppointmentStatus(status: string) {
   return status !== "キャンセル" && status !== "無断キャンセル" && status !== "来店済み";
+}
+
+function parseJsonStringArray(value?: string | null) {
+  if (!value) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string" && item.length > 0) : [];
+  } catch {
+    return [];
+  }
+}
+
+function uniqueUrls(urls: Array<string | null | undefined>) {
+  return Array.from(new Set(urls.filter((url): url is string => Boolean(url))));
 }
 
 function AppLink({
@@ -129,6 +147,9 @@ export default async function CustomerAppPage({ params }: CustomerAppPageProps) 
   const carePath = `/care/${customer.id}`;
   const feedbackPath = `/feedback/${customer.id}`;
   const intakePath = `/intake?referrer=${encodeURIComponent(customer.id)}&referrerName=${encodeURIComponent(customer.name)}`;
+  const frontImageUrls = uniqueUrls([...parseJsonStringArray(customer.aiFrontImageUrlsJson), customer.aiFrontImageUrl]);
+  const sideImageUrls = uniqueUrls([...parseJsonStringArray(customer.aiSideImageUrlsJson), customer.aiSideImageUrl]);
+  const backImageUrls = uniqueUrls([...parseJsonStringArray(customer.aiBackImageUrlsJson), customer.aiBackImageUrl]);
 
   return (
     <main className="min-h-screen bg-[#f7f3ec] pb-24 text-stone-950">
@@ -184,12 +205,26 @@ export default async function CustomerAppPage({ params }: CustomerAppPageProps) 
             description="感想や次回の希望を送る"
           />
           <AppLink
+            href="#ai-photos"
+            icon={<Camera className="h-5 w-5" />}
+            title="AI写真登録"
+            description="正面・横・斜め後ろの写真を登録"
+          />
+          <AppLink
             href={intakePath}
             icon={<Heart className="h-5 w-5" />}
             title="紹介・相談"
             description="新しい相談フォームを開く"
           />
         </section>
+
+        <CustomerAppAiPhotoUploader
+          customerId={customer.id}
+          frontImageUrls={frontImageUrls}
+          sideImageUrls={sideImageUrls}
+          backImageUrls={backImageUrls}
+          consent={customer.aiPhotoConsent}
+        />
 
         {latestResponse ? (
           <section className="rounded-lg border border-teal-200 bg-teal-50 p-4 text-sm text-teal-950">
