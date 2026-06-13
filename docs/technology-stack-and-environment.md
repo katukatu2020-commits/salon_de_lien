@@ -155,26 +155,6 @@ STYLE_SIMULATION_PROVIDER="fal-identity-master-openai-edit"
 ENABLE_STYLE_IMAGE_GENERATION="true"
 ```
 
-## フロントエンド側の髪色プレビュー
-
-提案画像の3方向シミュレーション後に、フロントエンドだけで髪色を試せる機能があります。
-
-実装方針:
-
-- 生成画像そのものは保存し直さない
-- 元画像の上に色レイヤーを重ねる
-- `mix-blend-mode` で明暗、ハイライト、髪の質感を残す
-- 3方向ごとに初期マスクを用意
-- ブラシと消しゴムで髪色範囲を微調整できる
-
-実装ファイル:
-
-```text
-src/components/customers/hair-color-adjustment-panel.tsx
-```
-
-この機能はプレビュー用途です。DB上の生成画像URLや元画像データは変更しません。
-
 ## 本番環境
 
 本番環境は Vercel です。

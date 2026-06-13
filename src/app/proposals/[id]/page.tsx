@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import { CalendarDays, CheckCircle2, Clock3, MessageCircle, Scissors, Sparkles } from "lucide-react";
-import { HairColorAdjustmentPanel } from "@/components/customers/hair-color-adjustment-panel";
 import { createProposalResponse } from "@/lib/actions";
 import { prisma } from "@/lib/prisma";
 
@@ -151,7 +150,6 @@ export default async function ProposalPage({ params }: ProposalPageProps) {
   }));
   const mainImage = displayImages.find((image) => image.entry?.url)?.entry ?? null;
   const detailImages = displayImages.filter((image) => image.entry?.url !== mainImage?.url);
-  const hairColorImages = displayImages.flatMap(({ angle, entry }) => (entry?.url ? [{ angle, url: entry.url }] : []));
   const optionalCoursePrice = numberSum(suggestion.customer.courseRecommendations.map((course) => course.estimatedPrice));
 
   return (
@@ -233,8 +231,6 @@ export default async function ProposalPage({ params }: ProposalPageProps) {
             </div>
           ))}
         </section>
-
-        <HairColorAdjustmentPanel images={hairColorImages} title="髪色を試す" />
 
         <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="grid gap-4">
