@@ -107,12 +107,12 @@ export async function generateStyleSimulationImages({
     throw new Error("BLOB_READ_WRITE_TOKEN is not set.");
   }
 
-  const frontUrls = uniqueUrls(referencePhotos.frontUrls);
-  const sideUrls = uniqueUrls(referencePhotos.sideUrls);
-  const backUrls = uniqueUrls(referencePhotos.backUrls);
+  const frontUrls = uniqueUrls(referencePhotos.frontUrls).slice(0, 1);
+  const sideUrls = uniqueUrls(referencePhotos.sideUrls).slice(0, 1);
+  const backUrls = uniqueUrls(referencePhotos.backUrls).slice(0, 1);
 
-  if (frontUrls.length < 2 || sideUrls.length < 2) {
-    throw new Error("AIシミュレーションには正面写真2枚以上・横顔写真2枚以上が必要です。");
+  if (frontUrls.length < 1 || sideUrls.length < 1 || backUrls.length < 1) {
+    throw new Error("AIシミュレーションには正面・横顔・斜め後ろ写真が1枚ずつ必要です。");
   }
 
   const OpenAI = (await import("openai")).default;

@@ -9,6 +9,8 @@ import {
   ChevronLeft,
   ChevronRight,
   ClipboardList,
+  Copy,
+  ExternalLink,
   ImageIcon,
   LinkIcon,
   Plus,
@@ -22,8 +24,8 @@ import {
   removeStyleSuggestionImageAction,
   updateStyleSuggestionAccepted
 } from "@/lib/actions";
+import { HairColorAdjustmentPanel } from "@/components/customers/hair-color-adjustment-panel";
 import { StyleSuggestionImageGenerator } from "@/components/customers/style-suggestion-image-generator";
-import { DEMO_IMAGE_ENTRIES } from "@/lib/demo-images";
 
 const ANGLES = ["斜め正面", "横", "斜め後ろ"] as const;
 
@@ -83,29 +85,86 @@ function Pill({ children, tone = "stone" }: { children: ReactNode; tone?: "stone
   return <span className={`inline-flex rounded px-2.5 py-1 text-xs font-semibold ${className}`}>{children}</span>;
 }
 
-function parseImageEntries(): StyleImageEntry[] {
-  // Use demo images for all suggestions
-  return DEMO_IMAGE_ENTRIES;
-}
+function parseImageEntries(suggestion: SelectableStyleSuggestion): StyleImageEntry[] {
+  const fallback = suggestion.imageUrls.map((url, index) => ({
+    angle: ANGLES[index] ?? `画像${index + 1}`,
+    url
+  }));
 
-function imageForAngle(entries: StyleImageEntry[], angle: string, index: number) {
-  return entries.find((entry) => entry.angle === angle)?.url ?? entries[index]?.url ?? "";
+  if (!suggestion.imageUrlsJson) {
+    return fallback;
+  }
+
+  try {
+    const parsed = JSON.parse(suggestion.imageUrlsJson) as unknown;
+
+    if (!Array.isArray(parsed)) {
+      return fallback;
+    }
+
+    return parsed
+      .map((item, index): StyleImageEntry | null => {
+        if (typeof item === "string") {
+          return {
+            angle: ANGLES[index] ?? `画像${index + 1}`,
+            url: item
+          };
+        }
+
+        if (
+          typeof item === "object" &&
+          item !== null &&
+          typeof (item as { url?: unknown }).url === "string"
+        ) {
+          return {
+            angle:
+              typeof (item as { angle?: unknown }).angle === "string"
+                ? (item as { angle: string }).angle
+                : ANGLES[index] ?? `画像${index + 1}`,
+            url: (item as { url: string }).url,
+            provider:
+              typeof (item as { provider?: unknown }).provider === "string"
+                ? (item as { provider: string }).provider
+                : undefined,
+            identityScore:
+              typeof (item as { identityScore?: unknown }).identityScore === "number"
+                ? (item as { identityScore: number }).identityScore
+                : undefined,
+            identityLevel:
+              (item as { identityLevel?: unknown }).identityLevel === "high" ||
+              (item as { identityLevel?: unknown }).identityLevel === "medium" ||
+              (item as { identityLevel?: unknown }).identityLevel === "low"
+                ? (item as { identityLevel: "high" | "medium" | "low" }).identityLevel
+                : undefined,
+            identityWarning:
+              typeof (item as { identityWarning?: unknown }).identityWarning === "string"
+                ? (item as { identityWarning: string }).identityWarning
+                : null
+          };
+        }
+
+        return null;
+      })
+      .filter((entry): entry is StyleImageEntry => Boolean(entry));
+  } catch {
+    return fallback;
+  }
 }
 
 function imageEntryForAngle(entries: StyleImageEntry[], angle: string, index: number) {
-  return entries.find((entry) => entry.angle === angle) ?? entries[index] ?? null;
+  const exactEntry = entries.find((entry) => entry.angle === angle);
+
+  if (exactEntry) {
+    return exactEntry;
+  }
+
+  const hasAngleMetadata = entries.some((entry) => (ANGLES as readonly string[]).includes(entry.angle));
+
+  return hasAngleMetadata ? null : entries[index] ?? null;
 }
 
-function identityTone(level?: StyleImageEntry["identityLevel"]) {
-  if (level === "low") {
-    return "bg-red-50 text-red-700 border-red-200";
-  }
-
-  if (level === "medium") {
-    return "bg-amber-50 text-amber-800 border-amber-200";
-  }
-
-  return "bg-emerald-50 text-emerald-700 border-emerald-200";
+function displaySuggestionLabel(label?: string | null) {
+  return !label || label === "AI提案" ? "提案" : label;
 }
 
 function isAiSuggestion(suggestion: SelectableStyleSuggestion) {
@@ -158,13 +217,29 @@ function buildVisibleSuggestions(suggestions: SelectableStyleSuggestion[]) {
   );
 }
 
+function buildCustomerProposalMessage(suggestion: SelectableStyleSuggestion, sharePath?: string) {
+  const lines = [
+    `今回のおすすめは「${suggestion.suggestedStyleName}」です。`,
+    suggestion.reason
+      ? `似合わせの理由: ${suggestion.reason}`
+      : "顔立ち・髪質・普段の扱いやすさを見ながら、当日スタッフが最終調整します。",
+    suggestion.menuSuggestion ? `おすすめメニュー: ${suggestion.menuSuggestion}` : null,
+    suggestion.maintenanceLevel ? `メンテナンス目安: ${suggestion.maintenanceLevel}` : null,
+    suggestion.stylingAdvice ? `ご自宅での扱い方: ${suggestion.stylingAdvice}` : null,
+    suggestion.caution ? `注意点: ${suggestion.caution}` : null,
+    sharePath ? `提案ページ: ${sharePath}` : null,
+    "画像は相談用イメージです。来店時に似合う幅とNG条件を一緒に確認しましょう。"
+  ];
+
+  return lines.filter((line): line is string => Boolean(line)).join("\n");
+}
+
 export function StyleSuggestionSelector({
   customerId,
   suggestions,
   hasAiReferencePhotos,
   hasAiPhotoConsent,
   isStyleImageGenerationEnabled,
-  styleSimulationProvider,
   initialSelectedSuggestionId
 }: {
   customerId: string;
@@ -172,12 +247,12 @@ export function StyleSuggestionSelector({
   hasAiReferencePhotos: boolean;
   hasAiPhotoConsent: boolean;
   isStyleImageGenerationEnabled: boolean;
-  styleSimulationProvider: string;
   initialSelectedSuggestionId?: string;
 }) {
   const router = useRouter();
   const [isDeletingImage, startImageDeleteTransition] = useTransition();
   const [imageDeleteMessage, setImageDeleteMessage] = useState("");
+  const [isMessageCopied, setIsMessageCopied] = useState(false);
   const selectableSuggestions = useMemo(() => buildVisibleSuggestions(suggestions), [suggestions]);
   const archivedSuggestions = useMemo(
     () =>
@@ -245,6 +320,19 @@ export function StyleSuggestionSelector({
     });
   }
 
+  function copyCustomerMessage() {
+    if (!selectedSuggestion) {
+      return;
+    }
+
+    const message = buildCustomerProposalMessage(selectedSuggestion, `${window.location.origin}/proposals/${selectedSuggestion.id}`);
+    setIsMessageCopied(false);
+    void navigator.clipboard.writeText(message).then(() => {
+      setIsMessageCopied(true);
+      window.setTimeout(() => setIsMessageCopied(false), 1800);
+    });
+  }
+
   if (!selectedSuggestion) {
     return (
       <div className="rounded-md border border-dashed border-stone-300 bg-stone-50 px-4 py-7 text-center text-sm text-stone-500">
@@ -253,26 +341,22 @@ export function StyleSuggestionSelector({
     );
   }
 
-  const imageEntries = parseImageEntries();
-  const hasThreeImages = ANGLES.every((angle, index) => Boolean(imageForAngle(imageEntries, angle, index)));
+  const imageEntries = parseImageEntries(selectedSuggestion);
+  const hairColorImages = ANGLES.flatMap((angle, index) => {
+    const entry = imageEntryForAngle(imageEntries, angle, index);
+    return entry?.url ? [{ angle, url: entry.url }] : [];
+  });
   const hasLowIdentityScore = imageEntries.some((entry) => entry.identityLevel === "low");
-  const imageProviders = new Set(imageEntries.map((entry) => entry.provider).filter(Boolean));
-  const isExperimentalProvider = styleSimulationProvider.includes("FaceID") || styleSimulationProvider.includes("検証用");
-  const displayProviderLabel =
-    isExperimentalProvider && hasThreeImages && imageProviders.size === 1 && imageProviders.has("fal-photomaker")
-      ? "FaceID基準 fallback（検証用・非推奨）"
-      : isExperimentalProvider && hasThreeImages && imageProviders.has("fal-photomaker-openai-edit")
-        ? "FaceID + 髪型編集（検証用・非推奨）"
-        : styleSimulationProvider;
   const canGenerateImages = hasAiReferencePhotos && hasAiPhotoConsent && isStyleImageGenerationEnabled;
   const generationDisabledReason = !hasAiPhotoConsent
-    ? "AI画像生成への同意を保存してください。"
+    ? "お客様側の相談フォームで写真利用同意が必要です。"
     : !isStyleImageGenerationEnabled
       ? "画像生成機能が無効です。ENABLE_STYLE_IMAGE_GENERATION=true を設定してください。"
     : !hasAiReferencePhotos
-      ? "正面写真2枚以上・横顔写真2枚以上を登録すると、髪型シミュレーションを生成できます。"
+      ? "正面・横・斜め後ろ写真を1枚ずつ登録すると、髪型シミュレーションを生成できます。"
       : undefined;
   const addImageAction = addStyleSuggestionImageUrl.bind(null, customerId, selectedSuggestion.id);
+  const proposalSharePath = `/proposals/${selectedSuggestion.id}`;
   const acceptAction = updateStyleSuggestionAccepted.bind(
     null,
     customerId,
@@ -295,7 +379,7 @@ export function StyleSuggestionSelector({
               const suggestionNumber = String(suggestions.length - originalIndex).padStart(2, "0");
               return (
                 <option key={suggestion.id} value={suggestion.id}>
-                  {`提案${suggestionNumber}｜${suggestion.suggestedStyleName}｜${suggestion.label ?? "AI提案"}｜${
+                  {`提案${suggestionNumber}｜${suggestion.suggestedStyleName}｜${displaySuggestionLabel(suggestion.label)}｜${
                     suggestion.accepted ? "採用済み｜" : ""
                   }${formatDate(suggestion.createdAt)}`}
                 </option>
@@ -303,10 +387,7 @@ export function StyleSuggestionSelector({
             })}
           </select>
         </label>
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-          <p className="text-xs leading-5 text-stone-500">
-            通常表示は最新のAI 3案と採用候補を中心に整理します。古い未採用AI提案は過去の提案へ移動します。
-          </p>
+        <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
           <div className="flex gap-2">
             <button
               type="button"
@@ -334,7 +415,7 @@ export function StyleSuggestionSelector({
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <Pill tone="amber">{selectedSuggestion.label ?? "AI提案"}</Pill>
+              <Pill tone="amber">{displaySuggestionLabel(selectedSuggestion.label)}</Pill>
               {selectedSuggestion.accepted ? <Pill tone="green">採用候補</Pill> : <Pill>確認中</Pill>}
               <span className="text-sm text-stone-500">{formatDate(selectedSuggestion.createdAt)}</span>
             </div>
@@ -359,13 +440,8 @@ export function StyleSuggestionSelector({
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <div>
               <div className="inline-flex rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-900">
-                本人写真と顔型・骨格バランスの印象を参考にした相談用シミュレーション
+                3方向シミュレーション
               </div>
-              {!hasThreeImages ? (
-                <p className="mt-3 text-sm leading-6 text-stone-600">
-                  本人写真ベースの3方向シミュレーションは未生成です。画像生成を有効にすると、斜め正面・横・斜め後ろの相談用イメージを作成できます。
-                </p>
-              ) : null}
             </div>
           </div>
           <div className="grid gap-4 md:grid-cols-3">
@@ -401,50 +477,10 @@ export function StyleSuggestionSelector({
                       </button>
                     </div>
                   ) : null}
-                  {imageUrl && typeof imageEntry?.identityScore === "number" ? (
-                    <div className="border-t border-stone-200 bg-white px-3 py-2">
-                      <div className={`inline-flex rounded border px-2 py-1 text-[11px] font-semibold ${identityTone(imageEntry.identityLevel)}`}>
-                        本人らしさ目安: {imageEntry.identityScore}%
-                      </div>
-                      {imageEntry.identityLevel === "low" ? (
-                        <p className="mt-2 text-xs leading-5 text-red-700">
-                          {imageEntry.identityWarning ?? "本人から離れて見える可能性があります。再生成をおすすめします。"}
-                        </p>
-                      ) : null}
-                    </div>
-                  ) : imageUrl ? (
-                    <div className="border-t border-stone-200 bg-white px-3 py-2">
-                      <p className="text-xs leading-5 text-stone-500">
-                        本人らしさチェックは実行できませんでした。生成画像を目視で確認してください。
-                      </p>
-                    </div>
-                  ) : null}
                 </div>
               );
             })}
           </div>
-          {hasThreeImages ? (
-            <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2">
-              <p className="text-xs leading-5 text-amber-900">
-                AI生成画像は参考です。本人性や仕上がりを完全に保証するものではありません。
-              </p>
-              <p className="mt-1 text-xs leading-5 text-amber-900">
-                顔が変わりすぎて見える場合は「別人っぽい」を選び、再生成してください。
-              </p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {["本人に近い", "微妙", "別人っぽい"].map((label) => (
-                  <button
-                    key={label}
-                    type="button"
-                    className="inline-flex h-8 items-center rounded-md border border-amber-200 bg-white px-3 text-xs font-semibold text-amber-900 hover:bg-amber-100"
-                    aria-label={`生成画像の評価: ${label}`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : null}
           {imageDeleteMessage ? (
             <p className="mt-3 rounded-md border border-stone-200 bg-white px-3 py-2 text-xs font-semibold text-stone-700">
               {imageDeleteMessage}
@@ -453,15 +489,60 @@ export function StyleSuggestionSelector({
         </div>
 
         <div className="mt-4">
+          <HairColorAdjustmentPanel images={hairColorImages} />
+        </div>
+
+        <div className="mt-4">
           <StyleSuggestionImageGenerator
             styleSuggestionId={selectedSuggestion.id}
             customerId={customerId}
-            providerLabel={displayProviderLabel}
-            disabled={(hasThreeImages && !hasLowIdentityScore) || !canGenerateImages}
+            disabled={!canGenerateImages}
             disabledReason={generationDisabledReason}
             hasLowIdentityScore={hasLowIdentityScore}
           />
         </div>
+
+        <section className="mt-5 rounded-md border border-teal-200 bg-teal-50 p-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h4 className="flex items-center gap-2 font-semibold text-teal-950">
+              <ClipboardList className="h-4 w-4" />
+              提案シート
+            </h4>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={copyCustomerMessage}
+                className="inline-flex h-9 items-center gap-2 rounded-md border border-teal-200 bg-white px-3 text-xs font-semibold text-teal-900 hover:bg-teal-100"
+              >
+                <Copy className="h-3.5 w-3.5" />
+                {isMessageCopied ? "コピー済み" : "送信用文面をコピー"}
+              </button>
+              <a
+                href={proposalSharePath}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex h-9 items-center gap-2 rounded-md border border-teal-200 bg-white px-3 text-xs font-semibold text-teal-900 hover:bg-teal-100"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                共有ページ
+              </a>
+            </div>
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <Pill>{selectedSuggestion.suggestedStyleName}</Pill>
+            {selectedSuggestion.menuSuggestion ? <Pill>{selectedSuggestion.menuSuggestion}</Pill> : null}
+            {selectedSuggestion.estimatedMinutes ? <Pill>約{selectedSuggestion.estimatedMinutes}分</Pill> : null}
+            {selectedSuggestion.maintenanceLevel ? <Pill>メンテ: {selectedSuggestion.maintenanceLevel}</Pill> : null}
+          </div>
+          <details className="mt-3 rounded-md border border-teal-100 bg-white p-3">
+            <summary className="cursor-pointer text-xs font-semibold text-stone-600">送信用文面</summary>
+            <div className="mt-3 grid gap-3">
+              <p className="whitespace-pre-wrap text-xs leading-5 text-stone-700">
+                {buildCustomerProposalMessage(selectedSuggestion, proposalSharePath)}
+              </p>
+            </div>
+          </details>
+        </section>
 
         <form action={addImageAction} className="mt-4 flex flex-col gap-2 rounded-md border border-dashed border-stone-300 bg-[#fbf8f3] p-3 sm:flex-row">
           <label className="relative min-w-0 flex-1">
@@ -482,8 +563,10 @@ export function StyleSuggestionSelector({
           </button>
         </form>
 
-        <div className="mt-5 grid gap-4 lg:grid-cols-2">
-          <div className="rounded-md border border-stone-200 bg-white p-4 lg:col-span-2">
+        <details className="mt-5 rounded-md border border-stone-200 bg-white p-4">
+          <summary className="cursor-pointer text-sm font-semibold text-stone-800">詳細メモ</summary>
+          <div className="mt-4 grid gap-4 lg:grid-cols-2">
+            <div className="rounded-md border border-stone-200 bg-white p-4 lg:col-span-2">
             <h4 className="flex items-center gap-2 font-semibold text-stone-950">
               <ClipboardList className="h-4 w-4 text-stone-500" />
               顔型・骨格バランスの印象メモ
@@ -491,22 +574,22 @@ export function StyleSuggestionSelector({
             <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-stone-700">
               {selectedSuggestion.faceAnalysis ?? "本人写真ベースの印象整理は未生成です。"}
             </p>
-          </div>
-          <div className="rounded-md border border-stone-200 bg-white p-4">
+            </div>
+            <div className="rounded-md border border-stone-200 bg-white p-4">
             <h4 className="flex items-center gap-2 font-semibold text-stone-950">
               <UserRound className="h-4 w-4 text-stone-500" />
               提案理由
             </h4>
             <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-stone-700">{selectedSuggestion.reason ?? "未登録"}</p>
-          </div>
-          <div className="rounded-md border border-red-100 bg-red-50 p-4">
+            </div>
+            <div className="rounded-md border border-red-100 bg-red-50 p-4">
             <h4 className="flex items-center gap-2 font-semibold text-red-800">
               <AlertCircle className="h-4 w-4" />
               注意点
             </h4>
             <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-red-900">{selectedSuggestion.caution ?? "未登録"}</p>
-          </div>
-          <div className="rounded-md border border-stone-200 bg-white p-4">
+            </div>
+            <div className="rounded-md border border-stone-200 bg-white p-4">
             <h4 className="flex items-center gap-2 font-semibold text-stone-950">
               <WandSparkles className="h-4 w-4 text-stone-500" />
               スタイリングアドバイス
@@ -514,8 +597,8 @@ export function StyleSuggestionSelector({
             <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-stone-700">
               {selectedSuggestion.stylingAdvice ?? "未登録"}
             </p>
-          </div>
-          <div className="rounded-md border border-stone-200 bg-white p-4">
+            </div>
+            <div className="rounded-md border border-stone-200 bg-white p-4">
             <h4 className="flex items-center gap-2 font-semibold text-stone-950">
               <Scissors className="h-4 w-4 text-stone-500" />
               おすすめメニュー
@@ -528,8 +611,9 @@ export function StyleSuggestionSelector({
                 {selectedSuggestion.visit ? <Pill>関連来店: {formatDate(selectedSuggestion.visit.visitedAt)}</Pill> : null}
               </div>
             </div>
+            </div>
           </div>
-        </div>
+        </details>
       </article>
       {archivedSuggestions.length > 0 ? (
         <details className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
@@ -546,7 +630,7 @@ export function StyleSuggestionSelector({
               >
                 <span className="font-semibold text-stone-900">{suggestion.suggestedStyleName}</span>
                 <span className="text-xs text-stone-500">
-                  {suggestion.label ?? "AI提案"} / {formatDate(suggestion.createdAt)}
+                  {displaySuggestionLabel(suggestion.label)} / {formatDate(suggestion.createdAt)}
                 </span>
               </button>
             ))}

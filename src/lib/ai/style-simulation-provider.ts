@@ -1,4 +1,5 @@
 import { generateStyleSimulationImages } from "@/lib/ai/style-image-generator";
+import { generateWithOpenAiAnchorHairEdit } from "@/lib/ai/providers/openai-anchor-hair-edit";
 import { generateWithFalFaceId } from "@/lib/ai/providers/fal-faceid";
 import {
   generateWithFalIdentityMasterOnly,
@@ -28,6 +29,7 @@ export type StyleSimulationImage = {
 
 export type StyleSimulationProvider =
   | "openai"
+  | "openai-anchor-hair-edit"
   | "fal-identity-master"
   | "fal-identity-master-openai-edit"
   | "fal-photomaker-openai-edit"
@@ -35,6 +37,7 @@ export type StyleSimulationProvider =
   | "fal-faceid";
 type EffectiveStyleSimulationProvider =
   | "openai"
+  | "openai-anchor-hair-edit"
   | "fal-identity-master"
   | "fal-identity-master-openai-edit"
   | "fal-faceid";
@@ -49,6 +52,10 @@ export type StyleSimulationResult = {
 };
 
 export function styleSimulationProviderLabel(provider = process.env.STYLE_SIMULATION_PROVIDER || "openai") {
+  if (provider === "openai-anchor-hair-edit") {
+    return "OpenAI髪型編集";
+  }
+
   if (provider === "fal-identity-master" || provider === "fal-photomaker") {
     return "FaceID基準顔生成（検証用）";
   }
@@ -107,6 +114,10 @@ export async function generateStyleSimulation(
     customerId: request.customerId,
     styleSuggestionId: request.styleSuggestionId
   });
+
+  if (provider === "openai-anchor-hair-edit") {
+    return generateWithOpenAiAnchorHairEdit(request);
+  }
 
   if (provider === "fal-identity-master-openai-edit") {
     try {

@@ -25,6 +25,10 @@ function normalizeQualityCheckResult(value: unknown): GeneratedImageQualityCheck
   };
 }
 
+function isBackAngle(angle: string) {
+  return angle.includes("後") || angle.includes("back") || angle.includes("蠕後");
+}
+
 export async function checkGeneratedImageQuality({
   imageUrl,
   angle,
@@ -50,6 +54,19 @@ export async function checkGeneratedImageQuality({
   });
 
   try {
+    const angleInstruction = isBackAngle(angle)
+      ? [
+          "Angle-specific rule: this image is intended to be a rear or rear three-quarter hair reference.",
+          "For this angle, a visible front face is NOT required.",
+          "Do not mark ok=false merely because the face is hidden or turned away.",
+          "Accept a single realistic person if the back of head, hair, nape, neck, ears, or top of shoulders are usable.",
+          "Still mark ok=false for noise/glitch, collage/fragments, split-screen images, before/after comparison images, two stacked images, multiple hairstyle variations, multiple people, duplicated heads/faces, impossible anatomy, hands dominating the hair, or an image that is not a usable hair reference."
+        ].join("\n")
+      : [
+          "Angle-specific rule: this image should be a usable hair and face/head reference for its requested angle.",
+          "For front and side angles, the relevant face/head features should be visible enough to judge the image.",
+          "Mark ok=false for noise/glitch, collage/fragments, split-screen images, before/after comparison images, two stacked images, multiple hairstyle variations, multiple people, duplicated heads/faces, or an image that is not one single usable portrait."
+        ].join("\n");
     const OpenAI = (await import("openai")).default;
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const response = await client.responses.create({
@@ -58,6 +75,10 @@ export async function checkGeneratedImageQuality({
         {
           role: "user",
           content: [
+            {
+              type: "input_text",
+              text: angleInstruction
+            },
             {
               type: "input_text",
               text: `これは髪型シミュレーション画像の品質チェックです。
