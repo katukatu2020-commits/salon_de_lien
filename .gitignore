@@ -2,6 +2,11 @@
 node_modules
 .env
 .env.local
+.env.*
+!.env.example
 dist
 coverage
 *.tsbuildinfo
+.vercel
+tmp/
+identity-results-preview/

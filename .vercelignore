@@ -1,0 +1,8 @@
+.env
+.env.*
+.git
+.next
+node_modules
+tmp
+identity-results-preview
+*.tsbuildinfo

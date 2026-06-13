@@ -73,6 +73,102 @@ function buildFaceAnalysis(result: AiStyleSuggestionResult) {
   ].join("\n");
 }
 
+function fallbackLengthPlan(preferredLength: string) {
+  const text = preferredLength.toLowerCase();
+
+  if (
+    text.includes("セミロング") ||
+    text.includes("semi-long") ||
+    text.includes("semi long") ||
+    text.includes("鎖骨") ||
+    text.includes("肩下") ||
+    text.includes("collarbone") ||
+    text.includes("below shoulder")
+  ) {
+    return {
+      styleLengthName: "セミロング",
+      prompt:
+        "Semilong length is required. Keep collarbone to below-shoulder length where visible. Do not shorten into a short cut or short bob."
+    };
+  }
+
+  if (
+    text.includes("ロング") ||
+    text.includes("long") ||
+    text.includes("胸") ||
+    text.includes("バスト") ||
+    text.includes("chest")
+  ) {
+    return {
+      styleLengthName: "ロング",
+      prompt:
+        "Long hair length is required. Keep clearly below-shoulder length where visible. Do not shorten into a bob or short cut."
+    };
+  }
+
+  if (
+    text.includes("ミディ") ||
+    text.includes("ミディアム") ||
+    text.includes("medium") ||
+    text.includes("肩") ||
+    text.includes("ボブ")
+  ) {
+    return {
+      styleLengthName: "ミディアム",
+      prompt:
+        "Medium length is required. Keep jaw-to-shoulder or shoulder-length hair according to the style. Do not shorten into a compact short cut."
+    };
+  }
+
+  if (text.includes("ショート") || text.includes("short")) {
+    return {
+      styleLengthName: "ショート",
+      prompt: "Short length is requested. Keep a clean short silhouette without changing identity."
+    };
+  }
+
+  return {
+    styleLengthName: preferredLength || "ナチュラル",
+    prompt:
+      "Follow the customer's preferred length. Do not default to short hair unless the preferred length explicitly says short."
+  };
+}
+
+function normalizeFallbackSuggestionsForLength(
+  result: AiStyleSuggestionResult,
+  lengthPlan: ReturnType<typeof fallbackLengthPlan>,
+  preferredLength: string,
+  basePrompt: string,
+  preferredStyle: string
+): AiStyleSuggestionResult {
+  const styleNames = [
+    `${preferredLength}を活かした本人ベースの${lengthPlan.styleLengthName}レイヤー`,
+    `再現性重視の${lengthPlan.styleLengthName}スタイル`,
+    `${lengthPlan.styleLengthName}のニュアンスレイヤー`
+  ];
+  const promptDetails = [
+    `${preferredStyle}の印象に寄せた${lengthPlan.styleLengthName}レイヤー。`,
+    `まとまりと再現性を重視した${lengthPlan.styleLengthName}スタイル。`,
+    `軽い動きと束感を加えた${lengthPlan.styleLengthName}スタイル。`
+  ];
+
+  return {
+    ...result,
+    suggestions: result.suggestions.map((suggestion, index) => ({
+      ...suggestion,
+      styleName: styleNames[index] ?? suggestion.styleName,
+      imageEditPrompt: [
+        basePrompt,
+        lengthPlan.prompt,
+        promptDetails[index] ?? promptDetails[0],
+        "Only change bangs, side hair, neckline hair, top volume, hair flow, texture, and hair length.",
+        "Preserve the face, expression, age impression, neck, shoulders, pose, and overall identity.",
+        "Do not default to short hair unless the selected length explicitly says short."
+      ].join(" ")
+    }))
+  };
+}
+
 export function fallbackAdvisorResult(context: StyleSuggestionContext): AiStyleSuggestionResult {
   const preferredStyle = context.preference?.preferredStyle ?? "自然で清潔感のある雰囲気";
   const preferredLength = context.preference?.preferredLength ?? "扱いやすい長さ";
@@ -81,7 +177,9 @@ export function fallbackAdvisorResult(context: StyleSuggestionContext): AiStyleS
   const basePrompt =
     "顧客本人の写真をもとに、顔立ち・骨格バランス・表情・顔の向きはできるだけ維持し、髪型だけを自然に変更してください。本人の顔を過度に美化せず、別人化させない。実際のサロン提案用の自然な試着イメージ。";
 
-  return {
+  const lengthPlan = fallbackLengthPlan(preferredLength);
+
+  return normalizeFallbackSuggestionsForLength({
     faceShapeImpression: context.customer.profileImageUrl
       ? "写真上の印象では、顔周りをすっきり見せるシルエットが合いやすそうです。"
       : "プロフィール写真が未登録のため、顔型印象は髪質・好み情報から控えめに推定しています。",
@@ -127,7 +225,7 @@ export function fallbackAdvisorResult(context: StyleSuggestionContext): AiStyleS
         imageEditPrompt: `${basePrompt} 軽い束感と動きのあるニュアンスショート。トップに自然な高さ、サイドは膨らみすぎない。本人の顔立ちと表情は維持する。`
       }
     ]
-  };
+  }, lengthPlan, preferredLength, basePrompt, preferredStyle);
 }
 
 export function parseAdvisorResult(text: string, context: StyleSuggestionContext): AiStyleSuggestionResult {
