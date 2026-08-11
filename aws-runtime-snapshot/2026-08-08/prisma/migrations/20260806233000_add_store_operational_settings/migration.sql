@@ -1,0 +1,5 @@
+ALTER TABLE "Organization"
+  ADD COLUMN "taxRate" INTEGER NOT NULL DEFAULT 10,
+  ADD COLUMN "defaultCouponDiscountRate" INTEGER NOT NULL DEFAULT 10,
+  ADD COLUMN "referralReferrerDiscountRate" INTEGER NOT NULL DEFAULT 15,
+  ADD COLUMN "referralReferredDiscountRate" INTEGER NOT NULL DEFAULT 20;
