@@ -1,0 +1,468 @@
+{
+  "schema_version": "coupon_text_layer_v2.0",
+  "purpose": "Salon de Lien coupon: replace only the specified variable text regions without changing layout, surrounding design, or fixed text.",
+  "coordinate_system": {
+    "origin": "top_left",
+    "unit": "px",
+    "image_width": 1055,
+    "image_height": 1491,
+    "calibrated_source_image": "B1D80AC3-C1C9-4282-A867-BC775285D996.jpeg",
+    "prepared_clean_template": "coupon_template_clean_v2.png",
+    "do_not_resize_before_rendering": true,
+    "if_template_size_differs": "Scale x/y/w/h by target_width/1055 and target_height/1491; scale font_size by min(scale_x, scale_y). Prefer preparing and rendering at exactly 1055x1491."
+  },
+  "production_rules": {
+    "render_engine": "Use a deterministic renderer such as Pillow/ImageMagick/SVG. Do not use an image-generation model to edit pixels.",
+    "recommended_pipeline": [
+      "1. Use coupon_template_clean_v2.png as the fixed base template.",
+      "2. Read values from JSON/CSV.",
+      "3. Draw only the fields listed in fields.",
+      "4. Clip every text layer to its bbox.",
+      "5. Validate that pixels outside the editable union mask are unchanged."
+    ],
+    "output_format": "PNG",
+    "jpeg_policy": "Never save intermediate files as JPEG. Convert to JPEG only at final export if absolutely necessary.",
+    "font_policy": "Production must use the exact original fonts assigned to each font_role. If a production font file is missing, stop with an error instead of silently substituting.",
+    "overflow_policy": "Start from max_font_size. If the rendered visual bbox exceeds the field bbox, decrease font_size by 1 px until it fits, not below min_font_size. If still too large, stop with an error.",
+    "customer_name_policy": "The fixed Japanese suffix '様だけの' is not moved or redrawn. The customer_name field is right-aligned so the gap before '様だけの' remains stable even when the name length changes.",
+    "target_menu_policy": "Bullets and dotted lines are part of the template. Do not erase or redraw them. Draw menu item text inside the line_boxes only."
+  },
+  "font_roles": {
+    "latin_name_serif": {
+      "production_font_file": "fonts/latin_name_serif.ttf",
+      "test_fallback_font_file": "/usr/share/fonts/truetype/noto/NotoSerif-Regular.ttf",
+      "notes": "Used for customer_name only. Replace production_font_file with the exact original Latin serif font."
+    },
+    "discount_high_contrast_serif": {
+      "production_font_file": "fonts/discount_high_contrast_serif.otf",
+      "test_fallback_font_file": "/usr/share/fonts/truetype/noto/NotoSerifDisplay-Regular.ttf",
+      "notes": "Used for discount_number, %, and OFF. Replace with the exact original high-contrast display serif."
+    },
+    "japanese_serif": {
+      "production_font_file": "fonts/japanese_serif.ttc",
+      "test_fallback_font_file": "/usr/share/fonts/opentype/noto/NotoSerifCJK-Regular.ttc",
+      "notes": "Used for target menu lines and expiry date."
+    },
+    "code_serif": {
+      "production_font_file": "fonts/code_serif.ttf",
+      "test_fallback_font_file": "/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf",
+      "notes": "Used for coupon code."
+    }
+  },
+  "colors": {
+    "brown_name": "#6A5940",
+    "brown_body": "#6A5A43",
+    "brown_code": "#634F39",
+    "discount_pink": "#C9766D"
+  },
+  "source_cleanup_for_generating_clean_template": {
+    "enabled": true,
+    "source_image_has_old_variable_text": true,
+    "prepared_clean_template": "coupon_template_clean_v2.png",
+    "cleanup_note": "This section is only for making a clean base from the uploaded clean JPEG. In production, prefer the included coupon_template_clean_v2.png or an original PSD/AI/Figma export with variable text hidden.",
+    "rectangular_inpaint": {
+      "opencv_algorithm": "INPAINT_NS",
+      "radius_px": 15,
+      "regions": [
+        {
+          "id": "customer_name_old_text",
+          "bbox": {
+            "x": 166,
+            "y": 326,
+            "w": 132,
+            "h": 40
+          }
+        },
+        {
+          "id": "discount_group_old_text",
+          "bbox": {
+            "x": 225,
+            "y": 535,
+            "w": 355,
+            "h": 176
+          }
+        },
+        {
+          "id": "expiry_date_old_text",
+          "bbox": {
+            "x": 390,
+            "y": 870,
+            "w": 240,
+            "h": 36
+          }
+        },
+        {
+          "id": "coupon_code_old_text",
+          "bbox": {
+            "x": 688,
+            "y": 908,
+            "w": 298,
+            "h": 30
+          }
+        }
+      ]
+    },
+    "post_cleanup_feather_fill": [
+      {
+        "id": "customer_name_background_smoothing",
+        "bbox": {
+          "x": 166,
+          "y": 326,
+          "w": 132,
+          "h": 40
+        },
+        "feather_px": 6,
+        "sample_rects": [
+          {
+            "x": 166,
+            "y": 308,
+            "w": 132,
+            "h": 13
+          },
+          {
+            "x": 166,
+            "y": 368,
+            "w": 132,
+            "h": 16
+          },
+          {
+            "x": 116,
+            "y": 326,
+            "w": 45,
+            "h": 40
+          }
+        ],
+        "random_seed": 123
+      }
+    ],
+    "cleanup_changed_pixels_must_be_inside_rectangular_inpaint_union": true
+  },
+  "editable_regions": {
+    "customer_name": {
+      "x": 166,
+      "y": 323,
+      "w": 126,
+      "h": 45
+    },
+    "discount_number": {
+      "x": 215,
+      "y": 520,
+      "w": 202,
+      "h": 188
+    },
+    "discount_percent": {
+      "x": 414,
+      "y": 562,
+      "w": 75,
+      "h": 72
+    },
+    "discount_off": {
+      "x": 418,
+      "y": 632,
+      "w": 154,
+      "h": 78
+    },
+    "target_menu_lines": {
+      "x": 84,
+      "y": 846,
+      "w": 245,
+      "h": 170
+    },
+    "expiry_date": {
+      "x": 386,
+      "y": 866,
+      "w": 250,
+      "h": 44
+    },
+    "coupon_code": {
+      "x": 684,
+      "y": 903,
+      "w": 310,
+      "h": 42
+    },
+    "coupon_barcode": {
+      "x": 690,
+      "y": 901,
+      "w": 296,
+      "h": 40
+    }
+  },
+  "barcode_regions": {
+    "coupon_code": {
+      "input_key": "coupon_code",
+      "bbox": {
+        "x": 690,
+        "y": 901,
+        "w": 296,
+        "h": 40
+      },
+      "format": "jan13",
+      "quiet_zone_modules": 11,
+      "fill": "#2F2A25",
+      "background_fill": "#FFFFFF",
+      "clip_to_bbox": true,
+      "notes": "Draw the coupon code as a JAN-13 one-dimensional barcode inside the blank usage-code rectangle. Coupon codes must be 13 numeric digits with a valid JAN/EAN check digit. Do not redraw the fixed label or guidance text."
+    }
+  },
+  "fields": {
+    "customer_name": {
+      "type": "single_text",
+      "input_key": "customer_name",
+      "original_text": "Hikaru",
+      "bbox": {
+        "x": 166,
+        "y": 323,
+        "w": 126,
+        "h": 45
+      },
+      "original_visual_bbox": {
+        "x": 176,
+        "y": 333,
+        "w": 115,
+        "h": 27
+      },
+      "anchor": "right_middle",
+      "align": "right",
+      "vertical_align": "middle",
+      "font_role": "latin_name_serif",
+      "max_font_size": 34,
+      "min_font_size": 22,
+      "letter_spacing": 0,
+      "fill": "#6A5940",
+      "clip_to_bbox": true,
+      "notes": "Right edge is fixed near x=292 so the suffix '様だけの' remains visually attached."
+    },
+    "discount_number": {
+      "type": "single_text",
+      "input_key": "discount_number",
+      "original_text": "10",
+      "bbox": {
+        "x": 215,
+        "y": 520,
+        "w": 202,
+        "h": 188
+      },
+      "original_visual_bbox": {
+        "x": 236,
+        "y": 552,
+        "w": 168,
+        "h": 141
+      },
+      "anchor": "center",
+      "align": "center",
+      "vertical_align": "middle",
+      "font_role": "discount_high_contrast_serif",
+      "max_font_size": 190,
+      "min_font_size": 120,
+      "letter_spacing": -2,
+      "fill": "#C9766D",
+      "clip_to_bbox": true,
+      "notes": "Large discount number only. Percent sign and OFF are fixed separate fields."
+    },
+    "discount_percent": {
+      "type": "single_text",
+      "input_key": "discount_percent_symbol",
+      "original_text": "%",
+      "default_text": "%",
+      "bbox": {
+        "x": 414,
+        "y": 562,
+        "w": 75,
+        "h": 72
+      },
+      "original_visual_bbox": {
+        "x": 418,
+        "y": 570,
+        "w": 56,
+        "h": 54
+      },
+      "anchor": "center",
+      "align": "center",
+      "vertical_align": "middle",
+      "font_role": "discount_high_contrast_serif",
+      "max_font_size": 76,
+      "min_font_size": 50,
+      "letter_spacing": 0,
+      "fill": "#C9766D",
+      "clip_to_bbox": true
+    },
+    "discount_off": {
+      "type": "single_text",
+      "input_key": "discount_off_text",
+      "original_text": "OFF",
+      "default_text": "OFF",
+      "bbox": {
+        "x": 418,
+        "y": 632,
+        "w": 154,
+        "h": 78
+      },
+      "original_visual_bbox": {
+        "x": 423,
+        "y": 641,
+        "w": 136,
+        "h": 54
+      },
+      "anchor": "center",
+      "align": "center",
+      "vertical_align": "middle",
+      "font_role": "discount_high_contrast_serif",
+      "max_font_size": 74,
+      "min_font_size": 48,
+      "letter_spacing": -1,
+      "fill": "#C9766D",
+      "clip_to_bbox": true
+    },
+    "target_menu_lines": {
+      "type": "multiline_list",
+      "input_key": "target_menu_lines",
+      "bbox": {
+        "x": 84,
+        "y": 846,
+        "w": 245,
+        "h": 170
+      },
+      "max_lines": 5,
+      "line_boxes": [
+        {
+          "x": 84,
+          "y": 846,
+          "w": 245,
+          "h": 30,
+          "baseline_hint_y": 870
+        },
+        {
+          "x": 84,
+          "y": 881,
+          "w": 245,
+          "h": 30,
+          "baseline_hint_y": 905
+        },
+        {
+          "x": 84,
+          "y": 916,
+          "w": 245,
+          "h": 30,
+          "baseline_hint_y": 940
+        },
+        {
+          "x": 84,
+          "y": 951,
+          "w": 245,
+          "h": 30,
+          "baseline_hint_y": 975
+        },
+        {
+          "x": 84,
+          "y": 986,
+          "w": 245,
+          "h": 30,
+          "baseline_hint_y": 1010
+        }
+      ],
+      "original_dotted_line_y": [
+        877,
+        913,
+        949,
+        984
+      ],
+      "bullet_centers_y": [
+        864,
+        898,
+        933,
+        967,
+        1002
+      ],
+      "anchor": "left_middle",
+      "align": "left",
+      "vertical_align": "middle",
+      "font_role": "japanese_serif",
+      "max_font_size": 22,
+      "min_font_size": 15,
+      "letter_spacing": 0,
+      "fill": "#6A5A43",
+      "clip_to_bbox": true,
+      "notes": "Do not remove bullets or dotted guide lines; draw each item within its line_box."
+    },
+    "expiry_date": {
+      "type": "single_text",
+      "input_key": "expiry_date",
+      "original_text": "20XX / XX / XX（日）",
+      "bbox": {
+        "x": 386,
+        "y": 866,
+        "w": 250,
+        "h": 44
+      },
+      "original_visual_bbox": {
+        "x": 399,
+        "y": 878,
+        "w": 216,
+        "h": 21
+      },
+      "anchor": "center",
+      "align": "center",
+      "vertical_align": "middle",
+      "font_role": "japanese_serif",
+      "max_font_size": 22,
+      "min_font_size": 16,
+      "letter_spacing": 0,
+      "fill": "#6A5A43",
+      "clip_to_bbox": true,
+      "format_hint": "YYYY / MM / DD（曜）"
+    },
+    "coupon_code": {
+      "type": "single_text",
+      "input_key": "coupon_code",
+      "original_text": "XXXX-XXXX-XXXX-XXXX",
+      "bbox": {
+        "x": 684,
+        "y": 903,
+        "w": 310,
+        "h": 42
+      },
+      "original_visual_bbox": {
+        "x": 694,
+        "y": 914,
+        "w": 284,
+        "h": 16
+      },
+      "anchor": "center",
+      "align": "center",
+      "vertical_align": "middle",
+      "font_role": "code_serif",
+      "max_font_size": 23,
+      "min_font_size": 16,
+      "letter_spacing": 0,
+      "fill": "#634F39",
+      "clip_to_bbox": true,
+      "format_hint": "13-digit JAN code"
+    }
+  },
+  "test_values": {
+    "customer_name": "Airi",
+    "discount_number": "20",
+    "discount_percent_symbol": "%",
+    "discount_off_text": "OFF",
+    "target_menu_lines": [
+      "カット",
+      "前髪カット",
+      "顔まわりカット",
+      "メンテナンス",
+      "シャンプー"
+    ],
+    "expiry_date": "2026 / 04 / 30（木）",
+    "coupon_code": "AB12-CD34-EF56-GH78"
+  },
+  "validation": {
+    "check_image_size": [
+      1055,
+      1491
+    ],
+    "check_fields_inside_canvas": true,
+    "check_text_bbox_inside_field_bbox": true,
+    "check_pixel_changes_only_inside_editable_union_mask": true,
+    "editable_union_mask_padding_px": 3,
+    "fail_on_overflow": true
+  }
+}
