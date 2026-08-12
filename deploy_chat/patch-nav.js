@@ -3,7 +3,6 @@ const path = require('path')
 
 const roots = ['/app/.next/server', '/app/.next/static']
 const routes = [
-  { from: '/admin/appointments', to: '/admin/chat', label: 'チャット' },
   { from: '/u/appointments', to: '/u/chat', label: 'チャット相談' },
 ]
 const totals = Object.fromEntries(routes.map(route => [route.to, 0]))
@@ -42,7 +41,7 @@ for (const file of changedFiles.filter(file => file.startsWith('/app/.next/stati
   for (const root of ['/app/.next']) replaceReferences(root, oldName, newName)
 }
 console.log(JSON.stringify(totals))
-if (!totals['/admin/chat'] || !totals['/u/chat']) process.exit(1)
+if (!totals['/u/chat']) process.exit(1)
 
 function replaceReferences(dir, oldName, newName) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {

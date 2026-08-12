@@ -21,7 +21,7 @@ function patch(file) {
   const before = source
   source = source.replace(/key:\s*["']points["'],\s*href:\s*["']\/admin\/customers\?section=points["'],\s*label:\s*["']ポイント["']/g, () => {
     tabCount += 1
-    return 'key:"points",href:"/admin/chat",label:"チャット"'
+    return 'key:"points",href:"/admin/customers/messages/chat",label:"チャット"'
   })
   source = source.replaceAll('顧客・ポイント・配信', '顧客・チャット・配信')
   source = source.replaceAll('顧客・ポイント / 配信', '顧客・チャット・配信 / 配信')
