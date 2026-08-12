@@ -1,1 +1,969 @@
-"use strict";exports.id=7295,exports.ids=[7295],exports.modules={57295:(e,t,r)=>{r.d(t,{PZ:()=>l,b:()=>f,R:()=>E,k9:()=>B,BE:()=>I,k0:()=>b,CI:()=>A,nl:()=>N,uR:()=>O,nR:()=>$,TM:()=>C,Z_:()=>T,n3:()=>_,j3:()=>x,Pl:()=>q,cm:()=>M,_c:()=>L,v2:()=>p,dK:()=>v,cQ:()=>k});var i=r(84770),a=r(53524),n=r(13538);function o(e=new Date,t=40){let r=new Date(e);return r.setDate(r.getDate()+t),r}let d=[{tier:1,points:1e3,weight:100,probabilityLabel:"1%"},{tier:2,points:200,weight:900,probabilityLabel:"9%"},{tier:3,points:80,weight:9e3,probabilityLabel:"90%"}];function s(e,t=d){return t.find(t=>t.points===e)?.tier??3}let u={referrer:15,referredCustomer:20},c={feedbackSubmitted:"feedback_submitted",appointmentCheckoutCompleted:"appointment_checkout_completed"},l=[c.feedbackSubmitted,c.appointmentCheckoutCompleted],f={product_review_submitted:{label:"商品レビュー回答",eventType:"product_review_submitted",points:30,validDays:40},product_review_used_submitted:{label:"商品使用感レビュー回答",eventType:"product_review_used_submitted",points:20,validDays:40},feedback_submitted:{label:"来店後フィードバック回答",eventType:"feedback_submitted",points:30,validDays:40},appointment_checkout_completed:{label:"オンライン予約会計完了",eventType:"appointment_checkout_completed",points:100,validDays:40}};async function w(e,t){let r=await e.customer.findUnique({where:{id:t},select:{organization:{select:{pointDefaultValidDays:!0,pointMinimumRedeem:!0,pointMaxRedemptionPercent:!0,reviewPrizeFirstPoints:!0,reviewPrizeFirstRate:!0,reviewPrizeSecondPoints:!0,reviewPrizeSecondRate:!0,reviewPrizeThirdPoints:!0,reviewPrizeThirdRate:!0}}}});if(!r)throw Error("顧客が見つかりません。");return r.organization}function p(e){return"お客様アプリ"===e||!!e?.startsWith("gmail:")}async function m(e){return n._.customerPointAccount.upsert({where:{customerId:e},update:{},create:{customerId:e}})}async function h(e,t){let r=await e.customerPointAccount.upsert({where:{customerId:t},update:{},create:{customerId:t}});return await e.$queryRaw(a.Prisma.sql`SELECT "id" FROM "CustomerPointAccount" WHERE "id" = ${r.id} FOR UPDATE`),e.customerPointAccount.findUniqueOrThrow({where:{id:r.id}})}async function y(e,t){let r=f[t],i=await e.pointRule.findFirst({where:{key:t,active:!0}});if(i)return i;if(!r)throw Error(`ポイントルールが見つかりません: ${t}`);return r}async function P({customerId:e,amount:t,sourceType:r,sourceId:i,reason:a,note:d,createdByStaffId:s,type:u="earn"}){if(!Number.isInteger(t)||t<=0)throw Error("付与ポイントは1pt以上の整数で指定してください。");return n._.$transaction(async n=>{if(i){let e=await n.pointTransaction.findFirst({where:{sourceType:r,sourceId:i,type:u},select:{id:!0,amount:!0}});if(e)return{awardedPoints:0,balanceAfter:null,transactionId:e.id,duplicate:!0}}let[c,l]=await Promise.all([h(n,e),w(n,e)]),f=o(new Date,l.pointDefaultValidDays),p=c.availablePoints+t,m=await n.pointTransaction.create({data:{customerId:e,accountId:c.id,type:u,amount:t,balanceAfter:p,sourceType:r,sourceId:i??null,reason:a,note:d??null,expiresAt:f,createdByStaffId:s??null}});return await n.pointLot.create({data:{customerId:e,earnTransactionId:m.id,originalAmount:t,remainingAmount:t,expiresAt:f}}),await n.customerPointAccount.update({where:{id:c.id},data:{availablePoints:{increment:t},lifetimeEarned:{increment:t}}}),{awardedPoints:t,balanceAfter:p,transactionId:m.id,duplicate:!1}})}async function A(e,t,r,a){var n;let u=await w(e,t),c=[{tier:1,points:(n={firstPoints:u.reviewPrizeFirstPoints,firstRate:u.reviewPrizeFirstRate,secondPoints:u.reviewPrizeSecondPoints,secondRate:u.reviewPrizeSecondRate,thirdPoints:u.reviewPrizeThirdPoints,thirdRate:u.reviewPrizeThirdRate}).firstPoints,weight:100*n.firstRate,probabilityLabel:`${n.firstRate}%`},{tier:2,points:n.secondPoints,weight:100*n.secondRate,probabilityLabel:`${n.secondRate}%`},{tier:3,points:n.thirdPoints,weight:100*n.thirdRate,probabilityLabel:`${n.thirdRate}%`}],l=await e.pointTransaction.findFirst({where:{sourceType:"product_review",sourceId:r,type:"earn"},select:{id:!0,amount:!0,expiresAt:!0}});if(l)return{awardedPoints:l.amount,prizeTier:s(l.amount,c),prizes:c,transactionId:l.id,expiresAt:l.expiresAt,duplicate:!0};let f=function(e,t=d){if(!Number.isInteger(e)||e<0||e>=1e4)throw Error("抽選値が正しくありません。");let r=0;for(let i of t)if(e<(r+=i.weight))return i.points;return t[t.length-1]?.points??0}((0,i.randomInt)(1e4),c),p=await h(e,t),m=o(new Date,u.pointDefaultValidDays),y=p.availablePoints+f,P=await e.pointTransaction.create({data:{customerId:t,accountId:p.id,type:"earn",amount:f,balanceAfter:y,sourceType:"product_review",sourceId:r,reason:`商品アンケート抽選 ${s(f,c)}等`,expiresAt:m}});return await e.pointLot.create({data:{customerId:t,earnTransactionId:P.id,originalAmount:f,remainingAmount:f,expiresAt:m}}),await e.customerPointAccount.update({where:{id:p.id},data:{availablePoints:{increment:f},lifetimeEarned:{increment:f}}}),{awardedPoints:f,prizeTier:s(f,c),prizes:c,transactionId:P.id,expiresAt:m,duplicate:!1}}async function I(e,t,r,i=new Date){let a="appointment_checkout",n=await e.pointTransaction.findFirst({where:{sourceType:a,sourceId:r,type:"earn"},select:{id:!0}});if(n)return{awardedPoints:0,transactionId:n.id,duplicate:!0};let d=await y(e,c.appointmentCheckoutCompleted),s=await h(e,t),u=o(i,d.validDays),l=s.availablePoints+d.points,f=await e.pointTransaction.create({data:{customerId:t,accountId:s.id,type:"earn",amount:d.points,balanceAfter:l,sourceType:a,sourceId:r,reason:"オンライン予約・会計完了特典",expiresAt:u}});return await e.pointLot.create({data:{customerId:t,earnTransactionId:f.id,originalAmount:d.points,remainingAmount:d.points,expiresAt:u}}),await e.customerPointAccount.update({where:{id:s.id},data:{availablePoints:{increment:d.points},lifetimeEarned:{increment:d.points}}}),{awardedPoints:d.points,transactionId:f.id,duplicate:!1,expiresAt:u}}async function b(e,t,r){let i=await y(e,c.feedbackSubmitted),a=await e.pointTransaction.findFirst({where:{sourceType:"feedback",sourceId:r,type:"earn"},select:{id:!0}});if(a)return{awardedPoints:0,transactionId:a.id,duplicate:!0};let n=await h(e,t),d=o(new Date,i.validDays),s=n.availablePoints+i.points,u=await e.pointTransaction.create({data:{customerId:t,accountId:n.id,type:"earn",amount:i.points,balanceAfter:s,sourceType:"feedback",sourceId:r,reason:"来店後フィードバック回答",expiresAt:d}});return await e.pointLot.create({data:{customerId:t,earnTransactionId:u.id,originalAmount:i.points,remainingAmount:i.points,expiresAt:d}}),await e.customerPointAccount.update({where:{id:n.id},data:{availablePoints:{increment:i.points},lifetimeEarned:{increment:i.points}}}),{awardedPoints:i.points,transactionId:u.id,duplicate:!1}}async function g(e,t,r=new Date){return e.pointLot.findMany({where:{customerId:t,remainingAmount:{gt:0},expiresAt:{gte:r}},orderBy:[{expiresAt:"asc"},{createdAt:"asc"}]})}async function R(e,t,r){let i=await g(e,t),a=r,n=[];for(let t of i){if(a<=0)break;let r=Math.min(t.remainingAmount,a);await e.pointLot.update({where:{id:t.id},data:{remainingAmount:{decrement:r}}}),n.push({pointLotId:t.id,amount:r}),a-=r}if(a>0)throw Error("利用できる有効ポイントが不足しています。");return n}async function D(e,{customerId:t,points:r,checkoutAmount:a,visitId:n,couponIssueId:o,checkoutSourceId:d,note:s}){if(!Number.isInteger(r)||r<=0)throw Error("利用ポイントは1pt以上の整数で指定してください。");if(!Number.isInteger(a)||a<=0)throw Error("会計金額を入力してください。");let u=await w(e,t);if(r<u.pointMinimumRedeem)throw Error(`ポイントは${u.pointMinimumRedeem}ptから利用できます。`);if(r>Math.floor(u.pointMaxRedemptionPercent/100*a))throw Error(`1回の会計で使えるポイントは会計金額の${u.pointMaxRedemptionPercent}%までです。`);let c=await h(e,t);if(r>c.availablePoints)throw Error("保有ポイントを超えて利用できません。");let l=await R(e,t,r),f=c.availablePoints-r,p=await e.pointTransaction.create({data:{customerId:t,accountId:c.id,type:"redeem",amount:-r,balanceAfter:f,sourceType:"checkout",sourceId:d??n??o??`checkout-${(0,i.randomBytes)(8).toString("hex")}`,reason:"会計時ポイント利用",note:s??null}});return await e.pointRedemptionAllocation.createMany({data:l.map(e=>({redeemTransactionId:p.id,pointLotId:e.pointLotId,amount:e.amount}))}),await e.customerPointAccount.update({where:{id:c.id},data:{availablePoints:{decrement:r},lifetimeRedeemed:{increment:r}}}),{usedPoints:r,balanceAfter:f,discountAmount:r,transactionId:p.id}}async function v(e){return await T(e.customerId),n._.$transaction(t=>D(t,e))}async function E({customerId:e,amount:t,reason:r,note:a,createdByStaffId:o}){if(!Number.isInteger(t)||0===t)throw Error("調整ポイントは0以外の整数で指定してください。");if(t>0)return P({customerId:e,amount:t,sourceType:"manual",sourceId:`manual-${(0,i.randomBytes)(12).toString("hex")}`,reason:r,note:a,createdByStaffId:o,type:"adjust"});let d=Math.abs(t);return await T(e),n._.$transaction(async n=>{let s=await h(n,e);if(d>s.availablePoints)throw Error("保有ポイントを超えて減算できません。");await R(n,e,d);let u=s.availablePoints-d,c=await n.pointTransaction.create({data:{customerId:e,accountId:s.id,type:"adjust",amount:t,balanceAfter:u,sourceType:"manual",sourceId:`manual-${(0,i.randomBytes)(12).toString("hex")}`,reason:r,note:a??null,createdByStaffId:o}});return await n.customerPointAccount.update({where:{id:s.id},data:{availablePoints:{decrement:d}}}),{adjustedPoints:t,balanceAfter:u,transactionId:c.id}})}async function T(e,t=new Date){return n._.$transaction(async r=>{let i=await r.customerPointAccount.findUnique({where:{customerId:e}});if(!i)return{expiredPoints:0};let a=await r.pointLot.findMany({where:{customerId:e,remainingAmount:{gt:0},expiresAt:{lt:t}},orderBy:[{expiresAt:"asc"},{createdAt:"asc"}]}),n=0,o=i.availablePoints;for(let t of a){let a=t.remainingAmount;if(await r.pointTransaction.findFirst({where:{sourceType:"manual",sourceId:t.id,type:"expire"},select:{id:!0}})){await r.pointLot.update({where:{id:t.id},data:{remainingAmount:0}});continue}o-=a,await r.pointTransaction.create({data:{customerId:e,accountId:i.id,type:"expire",amount:-a,balanceAfter:o,sourceType:"manual",sourceId:t.id,reason:"ポイント有効期限切れ",expiresAt:t.expiresAt}}),await r.pointLot.update({where:{id:t.id},data:{remainingAmount:0}}),n+=a}return n>0&&await r.customerPointAccount.update({where:{id:i.id},data:{availablePoints:{decrement:n},lifetimeExpired:{increment:n}}}),{expiredPoints:n}})}async function C(e){let t=await n._.pointLot.findMany({where:{remainingAmount:{gt:0},expiresAt:{lt:new Date},...e?{customer:{organizationId:e}}:{}},distinct:["customerId"],select:{customerId:!0}}),r=0;for(let e of t)r+=(await T(e.customerId)).expiredPoints;return{expiredPoints:r,customerCount:t.length}}async function _(e){await T(e);let t=await m(e),r=function(e,t){let r=new Date(e);return r.setDate(r.getDate()+30),r}(new Date,0),i=await n._.pointLot.findMany({where:{customerId:e,remainingAmount:{gt:0},expiresAt:{lte:r}},orderBy:{expiresAt:"asc"},select:{remainingAmount:!0,expiresAt:!0}});return{customerId:e,availablePoints:t.availablePoints,pendingPoints:t.pendingPoints,lifetimeEarned:t.lifetimeEarned,lifetimeRedeemed:t.lifetimeRedeemed,lifetimeExpired:t.lifetimeExpired,expiringSoon:i.map(e=>({points:e.remainingAmount,expiresAt:e.expiresAt}))}}async function x(e){return n._.pointTransaction.findMany({where:{customerId:e},orderBy:{createdAt:"desc"},take:100,select:{id:!0,type:!0,amount:!0,balanceAfter:!0,sourceType:!0,sourceId:!0,reason:!0,note:!0,expiresAt:!0,createdByStaffId:!0,createdAt:!0}})}async function $(e,t){for(let r=0;r<20;r+=1){let a=`LIEN-${(0,i.randomBytes)(4).toString("base64url").replace(/[^A-Z0-9]/gi,"").toUpperCase().slice(0,6)}`,o=(0,i.createHash)("sha256").update(a).digest("hex");try{let r=await n._.referral.create({data:{referrerCustomerId:e,code:a,tokenHash:o,status:"issued"}}),i=`/referral/${encodeURIComponent(a)}`,d=t?`${t.replace(/\/$/,"")}${i}`:i;return{referral:r,code:a,referralUrl:d,expiresAt:null}}catch(e){if(19===r)throw e}}throw Error("紹介コードを発行できませんでした。")}async function k({code:e,customerId:t,organizationId:r}){let i=e.trim().toUpperCase();return n._.$transaction(async e=>{let n=await e.referral.findUnique({where:{code:i},select:{id:!0,referrerCustomerId:!0,referredCustomerId:!0,status:!0,expiresAt:!0,referrerCustomer:{select:{organizationId:!0}}}});if(!n||!["issued","registered"].includes(n.status))throw Error("この紹介クーポンは利用できません。");await e.$queryRaw(a.Prisma.sql`SELECT "id" FROM "Referral" WHERE "id" = ${n.id} FOR UPDATE`),await e.$queryRaw(a.Prisma.sql`SELECT "id" FROM "Customer" WHERE "id" = ${t} FOR UPDATE`);let[o,d]=await Promise.all([e.referral.findUniqueOrThrow({where:{id:n.id},select:{id:!0,referrerCustomerId:!0,referredCustomerId:!0,status:!0,expiresAt:!0}}),e.customer.findFirst({where:{id:t,organizationId:r,deletedAt:null},select:{id:!0,referredByCustomerId:!0}})]);if(!d)throw Error("お客様情報を確認できませんでした。");if(n.referrerCustomer.organizationId!==r)throw Error("この紹介クーポンは別の店舗で発行されています。");if(o.referrerCustomerId===t)throw Error("ご自身の紹介クーポンは登録できません。");if("registered"===o.status&&o.referredCustomerId===t)return{referralId:o.id,code:i,alreadyRegistered:!0};if("issued"!==o.status||o.referredCustomerId)throw Error("この紹介クーポンはすでに利用されています。");let[s,u,c]=await Promise.all([e.referral.findFirst({where:{referredCustomerId:t,status:{in:["registered","first_visit_completed","rewarded"]}},select:{id:!0}}),e.visit.count({where:{customerId:t}}),e.serviceSale.count({where:{customerId:t}})]);if(d.referredByCustomerId||s)throw Error("友達紹介クーポンはすでに登録されています。");if(u>0||c>0)throw Error("友達紹介クーポンは初回来店前のお客様のみ登録できます。");let l=new Date;return await e.customer.update({where:{id:t},data:{referredByCustomerId:o.referrerCustomerId}}),await e.referral.update({where:{id:o.id},data:{referredCustomerId:t,status:"registered",registeredAt:l}}),{referralId:o.id,code:i,alreadyRegistered:!1}})}async function F(e,t){let r=await e.organization.findUnique({where:{id:t},select:{referralReferrerDiscountRate:!0,referralReferredDiscountRate:!0}});return r?{referrer:r.referralReferrerDiscountRate,referredCustomer:r.referralReferredDiscountRate}:u}async function U(e,t){let r=await e.customer.findUnique({where:{id:t},select:{organizationId:!0}});return r?F(e,r.organizationId):u}async function L(e){return F(n._,e)}async function M(e){return U(n._,e)}function S(e,t,r){let i="referrer"===t,a=i?r.referrer:r.referredCustomer;return{referralId:e,kind:t,rate:a,label:i?`友達紹介（紹介者）${a}%OFF`:`友達紹介（紹介された方）${a}%OFF`}}async function z(e,t){let r=await U(e,t),i=await e.referral.findFirst({where:{referredCustomerId:t,status:"registered",referredDiscountUsedAt:null},orderBy:{registeredAt:"asc"},select:{id:!0}});if(i)return S(i.id,"referred_customer",r);let a=await e.referral.findFirst({where:{referrerCustomerId:t,status:"rewarded",referrerDiscountIssuedAt:{not:null},referrerDiscountUsedAt:null},orderBy:{referrerDiscountIssuedAt:"asc"},select:{id:!0}});return a?S(a.id,"referrer",r):null}async function q(e){return z(n._,e)}async function B(e,t,r,i=new Date){var n;let o=await z(e,t);if(!o)return{discount:null,amount:0};await e.$queryRaw(a.Prisma.sql`SELECT "id" FROM "Referral" WHERE "id" = ${o.referralId} FOR UPDATE`);let d=await e.referral.findUniqueOrThrow({where:{id:o.referralId},select:{id:!0,referrerCustomerId:!0,referredCustomerId:!0,status:!0,referrerDiscountIssuedAt:!0,referrerDiscountUsedAt:!0,referredDiscountUsedAt:!0}}),s="referred_customer"===o.kind&&d.referredCustomerId===t&&"registered"===d.status&&!d.referredDiscountUsedAt,u="referrer"===o.kind&&d.referrerCustomerId===t&&"rewarded"===d.status&&!!d.referrerDiscountIssuedAt&&!d.referrerDiscountUsedAt;if(!s&&!u)return{discount:null,amount:0};let c=(n=o.rate,!Number.isSafeInteger(r)||r<=0||!Number.isInteger(n)||n<=0||n>=100?0:Math.floor(r*n/100));return c<=0?{discount:null,amount:0}:(await e.referral.update({where:{id:d.id},data:"referrer"===o.kind?{referrerDiscountUsedAt:i}:{referredDiscountUsedAt:i}}),{discount:o,amount:c})}async function O(e,t,r=new Date){let i=await U(e,t),n=await e.referral.findFirst({where:{referredCustomerId:t,status:{in:["registered","first_visit_completed","rewarded"]}},orderBy:{createdAt:"asc"}});if(!n)return{awardedPoints:0,referrerAwardedPoints:0,referredAwardedPoints:0,skipped:!0};await e.$queryRaw(a.Prisma.sql`SELECT "id" FROM "Referral" WHERE "id" = ${n.id} FOR UPDATE`);let o=await e.referral.findUniqueOrThrow({where:{id:n.id}});return"rewarded"===o.status?{awardedPoints:0,referrerAwardedPoints:0,referredAwardedPoints:0,referrerDiscountRate:i.referrer,referredDiscountRate:i.referredCustomer,referralId:o.id,duplicate:!0,skipped:!0}:o.referrerCustomerId===t?(await e.referral.update({where:{id:o.id},data:{status:"cancelled"}}),{awardedPoints:0,referrerAwardedPoints:0,referredAwardedPoints:0,skipped:!0}):0!==await e.serviceSale.count({where:{customerId:t}})&&o.referredDiscountUsedAt?(await e.referral.update({where:{id:o.id},data:{status:"rewarded",firstVisitCompletedAt:o.firstVisitCompletedAt??r,rewardedAt:r,referrerDiscountIssuedAt:o.referrerDiscountIssuedAt??r,referredDiscountUsedAt:o.referredDiscountUsedAt}}),{awardedPoints:0,referrerAwardedPoints:0,referredAwardedPoints:0,referrerDiscountRate:i.referrer,referredDiscountRate:i.referredCustomer,referralId:o.id,duplicate:!1,skipped:!1}):{awardedPoints:0,referrerAwardedPoints:0,referredAwardedPoints:0,skipped:!0}}async function N(e){return n._.$transaction(t=>O(t,e))}}};
+"use strict";
+((exports.id = 7295),
+  (exports.ids = [7295]),
+  (exports.modules = {
+    57295: (e, t, r) => {
+      r.d(t, {
+        PZ: () => l,
+        b: () => f,
+        R: () => E,
+        k9: () => B,
+        BE: () => I,
+        k0: () => b,
+        CI: () => A,
+        nl: () => N,
+        uR: () => O,
+        nR: () => $,
+        TM: () => C,
+        Z_: () => T,
+        n3: () => _,
+        j3: () => x,
+        Pl: () => q,
+        cm: () => M,
+        _c: () => L,
+        v2: () => p,
+        dK: () => v,
+        cQ: () => k,
+      });
+      var i = r(84770),
+        a = r(53524),
+        n = r(13538);
+      function o(e = new Date(), t = 40) {
+        let r = new Date(e);
+        return (r.setDate(r.getDate() + t), r);
+      }
+      let d = [
+        { tier: 1, points: 1e3, weight: 100, probabilityLabel: "1%" },
+        { tier: 2, points: 200, weight: 900, probabilityLabel: "9%" },
+        { tier: 3, points: 80, weight: 9e3, probabilityLabel: "90%" },
+      ];
+      function s(e, t = d) {
+        return t.find((t) => t.points === e)?.tier ?? 3;
+      }
+      let u = { referrer: 15, referredCustomer: 20 },
+        c = {
+          feedbackSubmitted: "feedback_submitted",
+          appointmentCheckoutCompleted: "appointment_checkout_completed",
+        },
+        l = [c.feedbackSubmitted, c.appointmentCheckoutCompleted],
+        f = {
+          product_review_submitted: {
+            label: "商品レビュー回答",
+            eventType: "product_review_submitted",
+            points: 30,
+            validDays: 40,
+          },
+          product_review_used_submitted: {
+            label: "商品使用感レビュー回答",
+            eventType: "product_review_used_submitted",
+            points: 20,
+            validDays: 40,
+          },
+          feedback_submitted: {
+            label: "来店後フィードバック回答",
+            eventType: "feedback_submitted",
+            points: 30,
+            validDays: 40,
+          },
+          appointment_checkout_completed: {
+            label: "オンライン予約会計完了",
+            eventType: "appointment_checkout_completed",
+            points: 100,
+            validDays: 40,
+          },
+        };
+      async function w(e, t) {
+        let r = await e.customer.findUnique({
+          where: { id: t },
+          select: {
+            organization: {
+              select: {
+                pointDefaultValidDays: !0,
+                pointMinimumRedeem: !0,
+                pointMaxRedemptionPercent: !0,
+                reviewPrizeFirstPoints: !0,
+                reviewPrizeFirstRate: !0,
+                reviewPrizeSecondPoints: !0,
+                reviewPrizeSecondRate: !0,
+                reviewPrizeThirdPoints: !0,
+                reviewPrizeThirdRate: !0,
+              },
+            },
+          },
+        });
+        if (!r) throw Error("顧客が見つかりません。");
+        return r.organization;
+      }
+      function p(e) {
+        return "お客様アプリ" === e || !!e?.startsWith("gmail:");
+      }
+      async function m(e) {
+        return n._.customerPointAccount.upsert({
+          where: { customerId: e },
+          update: {},
+          create: { customerId: e },
+        });
+      }
+      async function h(e, t) {
+        let r = await e.customerPointAccount.upsert({
+          where: { customerId: t },
+          update: {},
+          create: { customerId: t },
+        });
+        return (
+          await e.$queryRaw(
+            a.Prisma
+              .sql`SELECT "id" FROM "CustomerPointAccount" WHERE "id" = ${r.id} FOR UPDATE`,
+          ),
+          e.customerPointAccount.findUniqueOrThrow({ where: { id: r.id } })
+        );
+      }
+      async function y(e, t) {
+        let r = f[t],
+          i = await e.pointRule.findFirst({ where: { key: t, active: !0 } });
+        if (i) return i;
+        if (!r) throw Error(`ポイントルールが見つかりません: ${t}`);
+        return r;
+      }
+      async function P({
+        customerId: e,
+        amount: t,
+        sourceType: r,
+        sourceId: i,
+        reason: a,
+        note: d,
+        createdByStaffId: s,
+        type: u = "earn",
+      }) {
+        if (!Number.isInteger(t) || t <= 0)
+          throw Error("付与ポイントは1pt以上の整数で指定してください。");
+        return n._.$transaction(async (n) => {
+          if (i) {
+            let e = await n.pointTransaction.findFirst({
+              where: { sourceType: r, sourceId: i, type: u },
+              select: { id: !0, amount: !0 },
+            });
+            if (e)
+              return {
+                awardedPoints: 0,
+                balanceAfter: null,
+                transactionId: e.id,
+                duplicate: !0,
+              };
+          }
+          let [c, l] = await Promise.all([h(n, e), w(n, e)]),
+            f = o(new Date(), l.pointDefaultValidDays),
+            p = c.availablePoints + t,
+            m = await n.pointTransaction.create({
+              data: {
+                customerId: e,
+                accountId: c.id,
+                type: u,
+                amount: t,
+                balanceAfter: p,
+                sourceType: r,
+                sourceId: i ?? null,
+                reason: a,
+                note: d ?? null,
+                expiresAt: f,
+                createdByStaffId: s ?? null,
+              },
+            });
+          return (
+            await n.pointLot.create({
+              data: {
+                customerId: e,
+                earnTransactionId: m.id,
+                originalAmount: t,
+                remainingAmount: t,
+                expiresAt: f,
+              },
+            }),
+            await n.customerPointAccount.update({
+              where: { id: c.id },
+              data: {
+                availablePoints: { increment: t },
+                lifetimeEarned: { increment: t },
+              },
+            }),
+            {
+              awardedPoints: t,
+              balanceAfter: p,
+              transactionId: m.id,
+              duplicate: !1,
+            }
+          );
+        });
+      }
+      async function A(e, t, r, a) {
+        var n;
+        let u = await w(e, t),
+          c = [
+            {
+              tier: 1,
+              points: (n = {
+                firstPoints: u.reviewPrizeFirstPoints,
+                firstRate: u.reviewPrizeFirstRate,
+                secondPoints: u.reviewPrizeSecondPoints,
+                secondRate: u.reviewPrizeSecondRate,
+                thirdPoints: u.reviewPrizeThirdPoints,
+                thirdRate: u.reviewPrizeThirdRate,
+              }).firstPoints,
+              weight: 100 * n.firstRate,
+              probabilityLabel: `${n.firstRate}%`,
+            },
+            {
+              tier: 2,
+              points: n.secondPoints,
+              weight: 100 * n.secondRate,
+              probabilityLabel: `${n.secondRate}%`,
+            },
+            {
+              tier: 3,
+              points: n.thirdPoints,
+              weight: 100 * n.thirdRate,
+              probabilityLabel: `${n.thirdRate}%`,
+            },
+          ],
+          l = await e.pointTransaction.findFirst({
+            where: { sourceType: "product_review", sourceId: r, type: "earn" },
+            select: { id: !0, amount: !0, expiresAt: !0 },
+          });
+        if (l)
+          return {
+            awardedPoints: l.amount,
+            prizeTier: s(l.amount, c),
+            prizes: c,
+            transactionId: l.id,
+            expiresAt: l.expiresAt,
+            duplicate: !0,
+          };
+        let f = (function (e, t = d) {
+            if (!Number.isInteger(e) || e < 0 || e >= 1e4)
+              throw Error("抽選値が正しくありません。");
+            let r = 0;
+            for (let i of t) if (e < (r += i.weight)) return i.points;
+            return t[t.length - 1]?.points ?? 0;
+          })((0, i.randomInt)(1e4), c),
+          p = await h(e, t),
+          m = o(new Date(), u.pointDefaultValidDays),
+          y = p.availablePoints + f,
+          P = await e.pointTransaction.create({
+            data: {
+              customerId: t,
+              accountId: p.id,
+              type: "earn",
+              amount: f,
+              balanceAfter: y,
+              sourceType: "product_review",
+              sourceId: r,
+              reason: `商品アンケート抽選 ${s(f, c)}等`,
+              expiresAt: m,
+            },
+          });
+        return (
+          await e.pointLot.create({
+            data: {
+              customerId: t,
+              earnTransactionId: P.id,
+              originalAmount: f,
+              remainingAmount: f,
+              expiresAt: m,
+            },
+          }),
+          await e.customerPointAccount.update({
+            where: { id: p.id },
+            data: {
+              availablePoints: { increment: f },
+              lifetimeEarned: { increment: f },
+            },
+          }),
+          {
+            awardedPoints: f,
+            prizeTier: s(f, c),
+            prizes: c,
+            transactionId: P.id,
+            expiresAt: m,
+            duplicate: !1,
+          }
+        );
+      }
+      async function I(e, t, r, i = new Date()) {
+        let a = "appointment_checkout",
+          n = await e.pointTransaction.findFirst({
+            where: { sourceType: a, sourceId: r, type: "earn" },
+            select: { id: !0 },
+          });
+        if (n) return { awardedPoints: 0, transactionId: n.id, duplicate: !0 };
+        let d = await y(e, c.appointmentCheckoutCompleted),
+          s = await h(e, t),
+          u = o(i, d.validDays),
+          l = s.availablePoints + d.points,
+          f = await e.pointTransaction.create({
+            data: {
+              customerId: t,
+              accountId: s.id,
+              type: "earn",
+              amount: d.points,
+              balanceAfter: l,
+              sourceType: a,
+              sourceId: r,
+              reason: "オンライン予約・会計完了特典",
+              expiresAt: u,
+            },
+          });
+        return (
+          await e.pointLot.create({
+            data: {
+              customerId: t,
+              earnTransactionId: f.id,
+              originalAmount: d.points,
+              remainingAmount: d.points,
+              expiresAt: u,
+            },
+          }),
+          await e.customerPointAccount.update({
+            where: { id: s.id },
+            data: {
+              availablePoints: { increment: d.points },
+              lifetimeEarned: { increment: d.points },
+            },
+          }),
+          {
+            awardedPoints: d.points,
+            transactionId: f.id,
+            duplicate: !1,
+            expiresAt: u,
+          }
+        );
+      }
+      async function b(e, t, r) {
+        let i = await y(e, c.feedbackSubmitted),
+          a = await e.pointTransaction.findFirst({
+            where: { sourceType: "feedback", sourceId: r, type: "earn" },
+            select: { id: !0 },
+          });
+        if (a) return { awardedPoints: 0, transactionId: a.id, duplicate: !0 };
+        let n = await h(e, t),
+          d = o(new Date(), i.validDays),
+          s = n.availablePoints + i.points,
+          u = await e.pointTransaction.create({
+            data: {
+              customerId: t,
+              accountId: n.id,
+              type: "earn",
+              amount: i.points,
+              balanceAfter: s,
+              sourceType: "feedback",
+              sourceId: r,
+              reason: "来店後フィードバック回答",
+              expiresAt: d,
+            },
+          });
+        return (
+          await e.pointLot.create({
+            data: {
+              customerId: t,
+              earnTransactionId: u.id,
+              originalAmount: i.points,
+              remainingAmount: i.points,
+              expiresAt: d,
+            },
+          }),
+          await e.customerPointAccount.update({
+            where: { id: n.id },
+            data: {
+              availablePoints: { increment: i.points },
+              lifetimeEarned: { increment: i.points },
+            },
+          }),
+          { awardedPoints: i.points, transactionId: u.id, duplicate: !1 }
+        );
+      }
+      async function g(e, t, r = new Date()) {
+        return e.pointLot.findMany({
+          where: {
+            customerId: t,
+            remainingAmount: { gt: 0 },
+            expiresAt: { gte: r },
+          },
+          orderBy: [{ expiresAt: "asc" }, { createdAt: "asc" }],
+        });
+      }
+      async function R(e, t, r) {
+        let i = await g(e, t),
+          a = r,
+          n = [];
+        for (let t of i) {
+          if (a <= 0) break;
+          let r = Math.min(t.remainingAmount, a);
+          (await e.pointLot.update({
+            where: { id: t.id },
+            data: { remainingAmount: { decrement: r } },
+          }),
+            n.push({ pointLotId: t.id, amount: r }),
+            (a -= r));
+        }
+        if (a > 0) throw Error("利用できる有効ポイントが不足しています。");
+        return n;
+      }
+      async function D(
+        e,
+        {
+          customerId: t,
+          points: r,
+          checkoutAmount: a,
+          visitId: n,
+          couponIssueId: o,
+          checkoutSourceId: d,
+          note: s,
+        },
+      ) {
+        if (!Number.isInteger(r) || r <= 0)
+          throw Error("利用ポイントは1pt以上の整数で指定してください。");
+        if (!Number.isInteger(a) || a <= 0)
+          throw Error("会計金額を入力してください。");
+        let u = await w(e, t);
+        if (r < u.pointMinimumRedeem)
+          throw Error(`ポイントは${u.pointMinimumRedeem}ptから利用できます。`);
+        if (r > Math.floor((u.pointMaxRedemptionPercent / 100) * a))
+          throw Error(
+            `1回の会計で使えるポイントは会計金額の${u.pointMaxRedemptionPercent}%までです。`,
+          );
+        let c = await h(e, t);
+        if (r > c.availablePoints)
+          throw Error("保有ポイントを超えて利用できません。");
+        let l = await R(e, t, r),
+          f = c.availablePoints - r,
+          p = await e.pointTransaction.create({
+            data: {
+              customerId: t,
+              accountId: c.id,
+              type: "redeem",
+              amount: -r,
+              balanceAfter: f,
+              sourceType: "checkout",
+              sourceId:
+                d ??
+                n ??
+                o ??
+                `checkout-${(0, i.randomBytes)(8).toString("hex")}`,
+              reason: "会計時ポイント利用",
+              note: s ?? null,
+            },
+          });
+        return (
+          await e.pointRedemptionAllocation.createMany({
+            data: l.map((e) => ({
+              redeemTransactionId: p.id,
+              pointLotId: e.pointLotId,
+              amount: e.amount,
+            })),
+          }),
+          await e.customerPointAccount.update({
+            where: { id: c.id },
+            data: {
+              availablePoints: { decrement: r },
+              lifetimeRedeemed: { increment: r },
+            },
+          }),
+          {
+            usedPoints: r,
+            balanceAfter: f,
+            discountAmount: r,
+            transactionId: p.id,
+          }
+        );
+      }
+      async function v(e) {
+        return (await T(e.customerId), n._.$transaction((t) => D(t, e)));
+      }
+      async function E({
+        customerId: e,
+        amount: t,
+        reason: r,
+        note: a,
+        createdByStaffId: o,
+      }) {
+        if (!Number.isInteger(t) || 0 === t)
+          throw Error("調整ポイントは0以外の整数で指定してください。");
+        if (t > 0)
+          return P({
+            customerId: e,
+            amount: t,
+            sourceType: "manual",
+            sourceId: `manual-${(0, i.randomBytes)(12).toString("hex")}`,
+            reason: r,
+            note: a,
+            createdByStaffId: o,
+            type: "adjust",
+          });
+        let d = Math.abs(t);
+        return (
+          await T(e),
+          n._.$transaction(async (n) => {
+            let s = await h(n, e);
+            if (d > s.availablePoints)
+              throw Error("保有ポイントを超えて減算できません。");
+            await R(n, e, d);
+            let u = s.availablePoints - d,
+              c = await n.pointTransaction.create({
+                data: {
+                  customerId: e,
+                  accountId: s.id,
+                  type: "adjust",
+                  amount: t,
+                  balanceAfter: u,
+                  sourceType: "manual",
+                  sourceId: `manual-${(0, i.randomBytes)(12).toString("hex")}`,
+                  reason: r,
+                  note: a ?? null,
+                  createdByStaffId: o,
+                },
+              });
+            return (
+              await n.customerPointAccount.update({
+                where: { id: s.id },
+                data: { availablePoints: { decrement: d } },
+              }),
+              { adjustedPoints: t, balanceAfter: u, transactionId: c.id }
+            );
+          })
+        );
+      }
+      async function T(e, t = new Date()) {
+        return n._.$transaction(async (r) => {
+          let i = await r.customerPointAccount.findUnique({
+            where: { customerId: e },
+          });
+          if (!i) return { expiredPoints: 0 };
+          let a = await r.pointLot.findMany({
+              where: {
+                customerId: e,
+                remainingAmount: { gt: 0 },
+                expiresAt: { lt: t },
+              },
+              orderBy: [{ expiresAt: "asc" }, { createdAt: "asc" }],
+            }),
+            n = 0,
+            o = i.availablePoints;
+          for (let t of a) {
+            let a = t.remainingAmount;
+            if (
+              await r.pointTransaction.findFirst({
+                where: { sourceType: "manual", sourceId: t.id, type: "expire" },
+                select: { id: !0 },
+              })
+            ) {
+              await r.pointLot.update({
+                where: { id: t.id },
+                data: { remainingAmount: 0 },
+              });
+              continue;
+            }
+            ((o -= a),
+              await r.pointTransaction.create({
+                data: {
+                  customerId: e,
+                  accountId: i.id,
+                  type: "expire",
+                  amount: -a,
+                  balanceAfter: o,
+                  sourceType: "manual",
+                  sourceId: t.id,
+                  reason: "ポイント有効期限切れ",
+                  expiresAt: t.expiresAt,
+                },
+              }),
+              await r.pointLot.update({
+                where: { id: t.id },
+                data: { remainingAmount: 0 },
+              }),
+              (n += a));
+          }
+          return (
+            n > 0 &&
+              (await r.customerPointAccount.update({
+                where: { id: i.id },
+                data: {
+                  availablePoints: { decrement: n },
+                  lifetimeExpired: { increment: n },
+                },
+              })),
+            { expiredPoints: n }
+          );
+        });
+      }
+      async function C(e) {
+        let t = await n._.pointLot.findMany({
+            where: {
+              remainingAmount: { gt: 0 },
+              expiresAt: { lt: new Date() },
+              ...(e ? { customer: { organizationId: e } } : {}),
+            },
+            distinct: ["customerId"],
+            select: { customerId: !0 },
+          }),
+          r = 0;
+        for (let e of t) r += (await T(e.customerId)).expiredPoints;
+        return { expiredPoints: r, customerCount: t.length };
+      }
+      async function _(e) {
+        await T(e);
+        let t = await m(e),
+          r = (function (e, t) {
+            let r = new Date(e);
+            return (r.setDate(r.getDate() + 30), r);
+          })(new Date(), 0),
+          i = await n._.pointLot.findMany({
+            where: {
+              customerId: e,
+              remainingAmount: { gt: 0 },
+              expiresAt: { lte: r },
+            },
+            orderBy: { expiresAt: "asc" },
+            select: { remainingAmount: !0, expiresAt: !0 },
+          });
+        return {
+          customerId: e,
+          availablePoints: t.availablePoints,
+          pendingPoints: t.pendingPoints,
+          lifetimeEarned: t.lifetimeEarned,
+          lifetimeRedeemed: t.lifetimeRedeemed,
+          lifetimeExpired: t.lifetimeExpired,
+          expiringSoon: i.map((e) => ({
+            points: e.remainingAmount,
+            expiresAt: e.expiresAt,
+          })),
+        };
+      }
+      async function x(e) {
+        return n._.pointTransaction.findMany({
+          where: { customerId: e },
+          orderBy: { createdAt: "desc" },
+          take: 100,
+          select: {
+            id: !0,
+            type: !0,
+            amount: !0,
+            balanceAfter: !0,
+            sourceType: !0,
+            sourceId: !0,
+            reason: !0,
+            note: !0,
+            expiresAt: !0,
+            createdByStaffId: !0,
+            createdAt: !0,
+          },
+        });
+      }
+      async function $(e, t) {
+        for (let r = 0; r < 20; r += 1) {
+          let a = `LIEN-${(0, i.randomBytes)(4)
+              .toString("base64url")
+              .replace(/[^A-Z0-9]/gi, "")
+              .toUpperCase()
+              .slice(0, 6)}`,
+            o = (0, i.createHash)("sha256").update(a).digest("hex");
+          try {
+            let r = await n._.referral.create({
+                data: {
+                  referrerCustomerId: e,
+                  code: a,
+                  tokenHash: o,
+                  status: "issued",
+                },
+              }),
+              i = `/referral/${encodeURIComponent(a)}`,
+              d = t ? `${t.replace(/\/$/, "")}${i}` : i;
+            return { referral: r, code: a, referralUrl: d, expiresAt: null };
+          } catch (e) {
+            if (19 === r) throw e;
+          }
+        }
+        throw Error("紹介コードを発行できませんでした。");
+      }
+      async function k({ code: e, customerId: t, organizationId: r }) {
+        let i = e.trim().toUpperCase();
+        return n._.$transaction(async (e) => {
+          let n = await e.referral.findUnique({
+            where: { code: i },
+            select: {
+              id: !0,
+              referrerCustomerId: !0,
+              referredCustomerId: !0,
+              status: !0,
+              expiresAt: !0,
+              referrerCustomer: { select: { organizationId: !0 } },
+            },
+          });
+          if (!n || !["issued", "registered"].includes(n.status))
+            throw Error("この紹介クーポンは利用できません。");
+          (await e.$queryRaw(
+            a.Prisma
+              .sql`SELECT "id" FROM "Referral" WHERE "id" = ${n.id} FOR UPDATE`,
+          ),
+            await e.$queryRaw(
+              a.Prisma
+                .sql`SELECT "id" FROM "Customer" WHERE "id" = ${t} FOR UPDATE`,
+            ));
+          let [o, d] = await Promise.all([
+            e.referral.findUniqueOrThrow({
+              where: { id: n.id },
+              select: {
+                id: !0,
+                referrerCustomerId: !0,
+                referredCustomerId: !0,
+                status: !0,
+                expiresAt: !0,
+              },
+            }),
+            e.customer.findFirst({
+              where: { id: t, organizationId: r, deletedAt: null },
+              select: { id: !0, referredByCustomerId: !0 },
+            }),
+          ]);
+          if (!d) throw Error("お客様情報を確認できませんでした。");
+          if (n.referrerCustomer.organizationId !== r)
+            throw Error("この紹介クーポンは別の店舗で発行されています。");
+          if (o.referrerCustomerId === t)
+            throw Error("ご自身の紹介クーポンは登録できません。");
+          if ("registered" === o.status && o.referredCustomerId === t)
+            return { referralId: o.id, code: i, alreadyRegistered: !0 };
+          if ("issued" !== o.status || o.referredCustomerId)
+            throw Error("この紹介クーポンはすでに利用されています。");
+          let [s, u, c] = await Promise.all([
+            e.referral.findFirst({
+              where: {
+                referredCustomerId: t,
+                status: {
+                  in: ["registered", "first_visit_completed", "rewarded"],
+                },
+              },
+              select: { id: !0 },
+            }),
+            e.visit.count({ where: { customerId: t } }),
+            e.serviceSale.count({ where: { customerId: t } }),
+          ]);
+          if (d.referredByCustomerId || s)
+            throw Error("友達紹介クーポンはすでに登録されています。");
+          if (u > 0 || c > 0)
+            throw Error(
+              "友達紹介クーポンは初回来店前のお客様のみ登録できます。",
+            );
+          let l = new Date();
+          return (
+            await e.customer.update({
+              where: { id: t },
+              data: { referredByCustomerId: o.referrerCustomerId },
+            }),
+            await e.referral.update({
+              where: { id: o.id },
+              data: {
+                referredCustomerId: t,
+                status: "registered",
+                registeredAt: l,
+              },
+            }),
+            { referralId: o.id, code: i, alreadyRegistered: !1 }
+          );
+        });
+      }
+      async function F(e, t) {
+        let r = await e.organization.findUnique({
+          where: { id: t },
+          select: {
+            referralReferrerDiscountRate: !0,
+            referralReferredDiscountRate: !0,
+          },
+        });
+        return r
+          ? {
+              referrer: r.referralReferrerDiscountRate,
+              referredCustomer: r.referralReferredDiscountRate,
+            }
+          : u;
+      }
+      async function U(e, t) {
+        let r = await e.customer.findUnique({
+          where: { id: t },
+          select: { organizationId: !0 },
+        });
+        return r ? F(e, r.organizationId) : u;
+      }
+      async function L(e) {
+        return F(n._, e);
+      }
+      async function M(e) {
+        return U(n._, e);
+      }
+      function S(e, t, r) {
+        let i = "referrer" === t,
+          a = i ? r.referrer : r.referredCustomer;
+        return {
+          referralId: e,
+          kind: t,
+          rate: a,
+          label: i
+            ? `友達紹介（紹介者）${a}%OFF`
+            : `友達紹介（紹介された方）${a}%OFF`,
+        };
+      }
+      async function z(e, t) {
+        let r = await U(e, t),
+          i = await e.referral.findFirst({
+            where: {
+              referredCustomerId: t,
+              status: "registered",
+              referredDiscountUsedAt: null,
+            },
+            orderBy: { registeredAt: "asc" },
+            select: { id: !0 },
+          });
+        if (i) return S(i.id, "referred_customer", r);
+        let a = await e.referral.findFirst({
+          where: {
+            referrerCustomerId: t,
+            status: "rewarded",
+            referrerDiscountIssuedAt: { not: null },
+            referrerDiscountUsedAt: null,
+          },
+          orderBy: { referrerDiscountIssuedAt: "asc" },
+          select: { id: !0 },
+        });
+        return a ? S(a.id, "referrer", r) : null;
+      }
+      async function q(e) {
+        return z(n._, e);
+      }
+      async function B(e, t, r, i = new Date()) {
+        var n;
+        let o = await z(e, t);
+        if (!o) return { discount: null, amount: 0 };
+        await e.$queryRaw(
+          a.Prisma
+            .sql`SELECT "id" FROM "Referral" WHERE "id" = ${o.referralId} FOR UPDATE`,
+        );
+        let d = await e.referral.findUniqueOrThrow({
+            where: { id: o.referralId },
+            select: {
+              id: !0,
+              referrerCustomerId: !0,
+              referredCustomerId: !0,
+              status: !0,
+              referrerDiscountIssuedAt: !0,
+              referrerDiscountUsedAt: !0,
+              referredDiscountUsedAt: !0,
+            },
+          }),
+          s =
+            "referred_customer" === o.kind &&
+            d.referredCustomerId === t &&
+            "registered" === d.status &&
+            !d.referredDiscountUsedAt,
+          u =
+            "referrer" === o.kind &&
+            d.referrerCustomerId === t &&
+            "rewarded" === d.status &&
+            !!d.referrerDiscountIssuedAt &&
+            !d.referrerDiscountUsedAt;
+        if (!s && !u) return { discount: null, amount: 0 };
+        let c =
+          ((n = o.rate),
+          !Number.isSafeInteger(r) ||
+          r <= 0 ||
+          !Number.isInteger(n) ||
+          n <= 0 ||
+          n >= 100
+            ? 0
+            : Math.floor((r * n) / 100));
+        return c <= 0
+          ? { discount: null, amount: 0 }
+          : (await e.referral.update({
+              where: { id: d.id },
+              data:
+                "referrer" === o.kind
+                  ? { referrerDiscountUsedAt: i }
+                  : { referredDiscountUsedAt: i },
+            }),
+            { discount: o, amount: c });
+      }
+      async function O(e, t, r = new Date()) {
+        let i = await U(e, t),
+          n = await e.referral.findFirst({
+            where: {
+              referredCustomerId: t,
+              status: {
+                in: ["registered", "first_visit_completed", "rewarded"],
+              },
+            },
+            orderBy: { createdAt: "asc" },
+          });
+        if (!n)
+          return {
+            awardedPoints: 0,
+            referrerAwardedPoints: 0,
+            referredAwardedPoints: 0,
+            skipped: !0,
+          };
+        await e.$queryRaw(
+          a.Prisma
+            .sql`SELECT "id" FROM "Referral" WHERE "id" = ${n.id} FOR UPDATE`,
+        );
+        let o = await e.referral.findUniqueOrThrow({ where: { id: n.id } });
+        return "rewarded" === o.status
+          ? {
+              awardedPoints: 0,
+              referrerAwardedPoints: 0,
+              referredAwardedPoints: 0,
+              referrerDiscountRate: i.referrer,
+              referredDiscountRate: i.referredCustomer,
+              referralId: o.id,
+              duplicate: !0,
+              skipped: !0,
+            }
+          : o.referrerCustomerId === t
+            ? (await e.referral.update({
+                where: { id: o.id },
+                data: { status: "cancelled" },
+              }),
+              {
+                awardedPoints: 0,
+                referrerAwardedPoints: 0,
+                referredAwardedPoints: 0,
+                skipped: !0,
+              })
+            : 0 !== (await e.serviceSale.count({ where: { customerId: t } })) &&
+                o.referredDiscountUsedAt
+              ? (await e.referral.update({
+                  where: { id: o.id },
+                  data: {
+                    status: "rewarded",
+                    firstVisitCompletedAt: o.firstVisitCompletedAt ?? r,
+                    rewardedAt: r,
+                    referrerDiscountIssuedAt: o.referrerDiscountIssuedAt ?? r,
+                    referredDiscountUsedAt: o.referredDiscountUsedAt,
+                  },
+                }),
+                {
+                  awardedPoints: 0,
+                  referrerAwardedPoints: 0,
+                  referredAwardedPoints: 0,
+                  referrerDiscountRate: i.referrer,
+                  referredDiscountRate: i.referredCustomer,
+                  referralId: o.id,
+                  duplicate: !1,
+                  skipped: !1,
+                })
+              : {
+                  awardedPoints: 0,
+                  referrerAwardedPoints: 0,
+                  referredAwardedPoints: 0,
+                  skipped: !0,
+                };
+      }
+      async function N(e) {
+        return n._.$transaction((t) => O(t, e));
+      }
+    },
+  }));
