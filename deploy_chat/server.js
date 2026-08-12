@@ -219,6 +219,35 @@ async function unreadChatCount(req, audience) {
 async function ensureLienEnhancementTables() {
   await prisma.$executeRawUnsafe('CREATE TABLE IF NOT EXISTS "StaffProfileSetting" ("id" TEXT PRIMARY KEY, "organizationId" TEXT NOT NULL, "userId" TEXT NOT NULL, "introduction" TEXT NOT NULL DEFAULT \'\', "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE("organizationId", "userId"))')
   await prisma.$executeRawUnsafe('CREATE TABLE IF NOT EXISTS "StaffNotificationState" ("userId" TEXT PRIMARY KEY, "organizationId" TEXT NOT NULL, "appointmentsReadAt" TIMESTAMP(3), "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP)')
+  await prisma.$executeRawUnsafe('CREATE TABLE IF NOT EXISTS "BookingCapacityOverride" ("id" TEXT PRIMARY KEY, "organizationId" TEXT NOT NULL, "date" TEXT NOT NULL, "slotStart" INTEGER NOT NULL, "remaining" INTEGER NOT NULL, "updatedByUserId" TEXT, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE("organizationId", "date", "slotStart"))')
+  await prisma.$executeRawUnsafe('CREATE TABLE IF NOT EXISTS "CustomerRealName" ("customerId" TEXT PRIMARY KEY, "organizationId" TEXT NOT NULL, "realName" TEXT NOT NULL, "updatedByUserId" TEXT, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP)')
+}
+
+async function capacityOverride(req, res) {
+  const session = await chatSession(req, 'staff')
+  if (!session) return json(res, 401, { error: 'ログインが必要です。' })
+  await ensureLienEnhancementTables()
+  if (req.method === 'GET') {
+    const date = new URL(req.url, 'http://localhost').searchParams.get('date') || ''
+    const rows = await prisma.$queryRawUnsafe('SELECT "slotStart","remaining" FROM "BookingCapacityOverride" WHERE "organizationId"=$1 AND "date"=$2 ORDER BY "slotStart"', session.organizationId, date)
+    return json(res, 200, { overrides: rows })
+  }
+  const data = await body(req), date = String(data.date || ''), slotStart = Number(data.slotStart), remaining = Number(data.remaining)
+  if (!/^20\d{2}-\d{2}-\d{2}$/.test(date) || !Number.isInteger(slotStart) || slotStart < 0 || slotStart > 1440 || !Number.isInteger(remaining) || remaining < 0 || remaining > 99) return json(res, 400, { error: '受付数を確認してください。' })
+  await prisma.$executeRawUnsafe('INSERT INTO "BookingCapacityOverride" ("id","organizationId","date","slotStart","remaining","updatedByUserId","updatedAt") VALUES ($1,$2,$3,$4,$5,$6,CURRENT_TIMESTAMP) ON CONFLICT ("organizationId","date","slotStart") DO UPDATE SET "remaining"=EXCLUDED."remaining","updatedByUserId"=EXCLUDED."updatedByUserId","updatedAt"=CURRENT_TIMESTAMP', crypto.randomUUID(), session.organizationId, date, slotStart, remaining, session.userId)
+  return json(res, 200, { success: true })
+}
+
+async function customerRealName(req, res) {
+  const session = await chatSession(req, 'staff')
+  if (!session) { res.statusCode = 302; res.setHeader('Location', '/admin/login'); return res.end() }
+  await ensureLienEnhancementTables()
+  let raw = ''; for await (const chunk of req) raw += chunk
+  const form = new URLSearchParams(raw), customerId = String(form.get('customerId') || ''), realName = String(form.get('realName') || '').trim().slice(0, 100)
+  const found = await prisma.$queryRawUnsafe('SELECT "id" FROM "Customer" WHERE "id"=$1 AND "organizationId"=$2 AND "deletedAt" IS NULL LIMIT 1', customerId, session.organizationId)
+  if (!found[0] || !realName) { res.statusCode = 303; res.setHeader('Location', `/admin/customers/${encodeURIComponent(customerId)}?realName=invalid`); return res.end() }
+  await prisma.$executeRawUnsafe('INSERT INTO "CustomerRealName" ("customerId","organizationId","realName","updatedByUserId","updatedAt") VALUES ($1,$2,$3,$4,CURRENT_TIMESTAMP) ON CONFLICT ("customerId") DO UPDATE SET "realName"=EXCLUDED."realName","updatedByUserId"=EXCLUDED."updatedByUserId","updatedAt"=CURRENT_TIMESTAMP', customerId, session.organizationId, realName, session.userId)
+  res.statusCode = 303; res.setHeader('Location', `/admin/customers/${encodeURIComponent(customerId)}?realName=saved`); res.end()
 }
 
 async function staffIntroductionForm(req, res) {
@@ -298,6 +327,8 @@ app.prepare().then(() => {
       if (url.pathname === '/api/lien-staff-introduction' && req.method === 'POST') return await staffIntroductionForm(req, res)
       if (url.pathname === '/api/lien-appointment-cancel' && req.method === 'POST') return await cancelAppointment(req, res)
       if (url.pathname === '/api/lien-staff-notifications') return await staffNotifications(req, res, url.searchParams.get('read') === '1')
+      if (url.pathname === '/api/lien-capacity') return await capacityOverride(req, res)
+      if (url.pathname === '/api/lien-customer-real-name' && req.method === 'POST') return await customerRealName(req, res)
       if (url.pathname === '/admin/notifications') {
         const session = await chatSession(req, 'staff')
         if (!session) { res.statusCode = 302; res.setHeader('Location', '/admin/login'); return res.end() }

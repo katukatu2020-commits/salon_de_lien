@@ -5,8 +5,8 @@ phases:
       - aws ecr get-login-password --region ap-northeast-1 | docker login --username AWS --password-stdin 009293460979.dkr.ecr.ap-northeast-1.amazonaws.com
   build:
     commands:
-      - docker build -f Dockerfile.customer-tabs-stable -t salon-de-lien-staging-app:gmail-coupon-menu-20260812-20 .
-      - docker tag salon-de-lien-staging-app:gmail-coupon-menu-20260812-20 009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app:gmail-coupon-menu-20260812-20
+      - docker build -f Dockerfile.customer-tabs-stable -t salon-de-lien-staging-app:capacity-realname-alternatives-20260812-22 .
+      - docker tag salon-de-lien-staging-app:capacity-realname-alternatives-20260812-22 009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app:capacity-realname-alternatives-20260812-22
   post_build:
     commands:
-      - docker push 009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app:gmail-coupon-menu-20260812-20
+      - docker push 009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app:capacity-realname-alternatives-20260812-22
