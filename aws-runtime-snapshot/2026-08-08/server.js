@@ -185,8 +185,8 @@ app.prepare().then(() => {
         if (!session) { res.statusCode = 302; res.setHeader('Location', audience === 'customer' ? '/u/login' : '/admin/login'); return res.end() }
         res.setHeader('Content-Type', 'text/html; charset=utf-8'); res.setHeader('Cache-Control', 'no-store'); return res.end(chatHtml(audience, session))
       }
-      if (url.pathname === '/u/appointments') return await handleWithChatLink(handle, req, res, 'customer')
-      if (url.pathname.startsWith('/admin/') && !url.pathname.startsWith('/admin/login')) return await handleWithChatLink(handle, req, res, 'staff')
+      if (url.pathname === '/u/appointments') return handle(req, res)
+      if (url.pathname.startsWith('/admin/') && !url.pathname.startsWith('/admin/login')) return handle(req, res)
       return handle(req, res)
     } catch (err) { console.error('chat server error', err); if (!res.headersSent) json(res, 500, { error: 'チャット処理に失敗しました。' }); else res.end() }
   })
