@@ -142,14 +142,23 @@ async function handleWithChatLink(handle, req, res, audience) {
   req.headers['accept-encoding'] = 'identity'
   const count = await unreadChatCount(req, audience).catch(() => 0)
   const originalWrite = res.write.bind(res), originalEnd = res.end.bind(res)
+  const href = audience === 'customer' ? '/u/chat' : '/admin/chat'
+  const label = audience === 'customer' ? 'スタッフへチャット相談' : '顧客チャット通知'
+  const badge = count ? `<span style="margin-left:8px;background:#c3483f;color:white;border-radius:999px;padding:2px 7px;font-size:11px">${count}</span>` : ''
+  const link = `<a href="${href}" aria-label="${label}" style="position:fixed;right:18px;bottom:${audience === 'customer' ? '82px' : '22px'};z-index:9999;display:flex;align-items:center;min-height:48px;padding:0 18px;border-radius:999px;background:#8f4f42;color:#fff;text-decoration:none;font:700 13px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;box-shadow:0 8px 24px #4c302a55">💬 ${label}${badge}</a>`
+  let injected = false
+  res.write = (chunk, encoding, callback) => {
+    const shouldInject = !injected && String(res.getHeader('content-type') || '').includes('text/html')
+    if (shouldInject) res.removeHeader('content-length')
+    const result = originalWrite(chunk, encoding)
+    if (shouldInject) { injected = true; originalWrite(link) }
+    if (typeof callback === 'function') process.nextTick(callback)
+    return result
+  }
   res.end = (chunk, encoding, callback) => {
     if (typeof encoding === 'function') { callback = encoding; encoding = undefined }
     const type = String(res.getHeader('content-type') || '')
-    if (type.includes('text/html')) {
-      const href = audience === 'customer' ? '/u/chat' : '/admin/chat'
-      const label = audience === 'customer' ? 'スタッフへチャット相談' : '顧客チャット通知'
-      const badge = count ? `<span style="margin-left:8px;background:#c3483f;color:white;border-radius:999px;padding:2px 7px;font-size:11px">${count}</span>` : ''
-      const link = `<a href="${href}" aria-label="${label}" style="position:fixed;right:18px;bottom:${audience === 'customer' ? '82px' : '22px'};z-index:9999;display:flex;align-items:center;min-height:48px;padding:0 18px;border-radius:999px;background:#8f4f42;color:#fff;text-decoration:none;font:700 13px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;box-shadow:0 8px 24px #4c302a55">💬 ${label}${badge}</a>`
+    if (type.includes('text/html') && !injected) {
       res.removeHeader('content-length')
       if (chunk) originalWrite(chunk, encoding)
       originalWrite(link)
