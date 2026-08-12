@@ -73,6 +73,67 @@ function canAccessThread(session, thread) {
 function json(res, status, value) {
   res.statusCode = status; res.setHeader('Content-Type', 'application/json; charset=utf-8'); res.setHeader('Cache-Control', 'no-store'); res.end(JSON.stringify(value))
 }
+function htmlEscape(value) {
+  return String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
+}
+function jsonArray(value) {
+  if (Array.isArray(value)) return value.map(String).filter(Boolean)
+  if (!value) return []
+  try { const parsed = typeof value === 'string' ? JSON.parse(value) : value; return Array.isArray(parsed) ? parsed.map(String).filter(Boolean) : [] } catch { return [] }
+}
+function customerIcon(name, className = '') {
+  const paths = {
+    home: '<path d="M3 10.5 12 3l9 7.5"></path><path d="M5 9.5V21h14V9.5"></path><path d="M9 21v-7h6v7"></path>',
+    calendar: '<rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M16 3v4M8 3v4M3 10h18"></path>',
+    repeat: '<path d="m17 1 4 4-4 4"></path><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><path d="m7 23-4-4 4-4"></path><path d="M21 13v2a4 4 0 0 1-4 4H3"></path>',
+    user: '<circle cx="12" cy="8" r="4"></circle><path d="M4 21a8 8 0 0 1 16 0"></path>',
+    ticket: '<path d="M2 9a3 3 0 0 0 0 6v4h20v-4a3 3 0 0 0 0-6V5H2z"></path><path d="M13 5v2M13 11v2M13 17v2"></path>',
+    news: '<path d="m3 11 18-5v12L3 13z"></path><path d="M11.6 15.4 13 21H7l-1.7-7"></path>',
+    stamp: '<path d="M7 13h10l2 5H5z"></path><path d="M9 13V8a3 3 0 0 1 6 0v5"></path><path d="M5 21h14"></path>',
+    scissors: '<circle cx="6" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><path d="m8.5 8.5 11 11M8.5 15.5 20 4"></path>',
+    crown: '<path d="m3 7 4 4 5-7 5 7 4-4-2 12H5z"></path><path d="M5 22h14"></path>',
+    heart: '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.8-7.5 1.1-1.1a5.5 5.5 0 0 0-.1-7.8z"></path>',
+    mail: '<rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="m3 7 9 6 9-6"></path>',
+    menu: '<path d="M4 6h16M4 12h16M4 18h16"></path>',
+    bell: '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path><path d="M10 21h4"></path>',
+    chevron: '<path d="m9 18 6-6-6-6"></path>',
+    arrow: '<path d="m15 18-6-6 6-6"></path>',
+    clock: '<circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path>',
+    points: '<rect x="3" y="5" width="18" height="14" rx="3"></rect><path d="M8 10h8M8 14h5"></path>',
+  }
+  return `<svg class="icon ${htmlEscape(className)}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name] || paths.heart}</svg>`
+}
+function yen(value) { return `${Number(value || 0).toLocaleString('ja-JP')}円` }
+function jpDate(value, withTime = false) {
+  if (!value) return '未登録'
+  return new Intl.DateTimeFormat('ja-JP', { timeZone: 'Asia/Tokyo', year: 'numeric', month: 'long', day: 'numeric', weekday: 'short', ...(withTime ? { hour: '2-digit', minute: '2-digit' } : {}) }).format(new Date(value))
+}
+function customerAppCss() {
+  return `:root{--rose:#d85d79;--rose-dark:#bc4966;--rose-soft:#fceaf0;--ink:#332d2a;--muted:#81756f;--line:#eaded9;--paper:#fffdfb;--cream:#faf6f2}*{box-sizing:border-box}html{background:#efe9e5}body{margin:0;color:var(--ink);background:#efe9e5;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;-webkit-font-smoothing:antialiased}a{color:inherit;text-decoration:none}button,input,select,textarea{font:inherit}.app{position:relative;width:100%;max-width:480px;min-height:100dvh;margin:0 auto;background:var(--paper);box-shadow:0 0 42px #55423918}.topbar{position:sticky;top:0;z-index:30;display:grid;grid-template-columns:48px 1fr 48px;align-items:center;height:68px;padding:0 12px;background:#fffdfbf2;border-bottom:1px solid var(--line);backdrop-filter:blur(12px)}.brand{text-align:center;line-height:1}.brand-script{font:italic 23px Georgia,"Times New Roman",serif;color:#715f58;letter-spacing:.02em}.brand-sub{display:block;margin-top:5px;font-size:8px;letter-spacing:.22em;color:#b7a39b;text-transform:uppercase}.icon-button{position:relative;display:grid;width:42px;height:42px;place-items:center;border:0;background:transparent;color:#75655e;border-radius:50%}.icon{width:22px;height:22px}.badge{position:absolute;top:4px;right:2px;display:grid;min-width:18px;height:18px;padding:0 5px;place-items:center;border:2px solid white;border-radius:99px;background:#d83f57;color:white;font-size:10px;font-weight:800}.content{padding-bottom:86px}.welcome{padding:14px 18px 12px}.welcome strong{display:block;font-family:"Yu Mincho","Hiragino Mincho ProN",serif;font-size:16px;letter-spacing:.03em}.welcome span{display:block;margin-top:5px;color:var(--muted);font-size:11px}.hero{position:relative;height:192px;overflow:hidden;background:#ddd}.hero img{width:100%;height:100%;object-fit:cover;filter:saturate(.82) contrast(.96)}.hero:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#33211999 0,#4028212e 62%,transparent)}.hero-copy{position:absolute;z-index:1;left:20px;bottom:24px;color:white;font-family:"Yu Mincho","Hiragino Mincho ProN",serif;font-size:23px;line-height:1.55;letter-spacing:.12em;text-shadow:0 2px 12px #3a2219}.quick-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:12px}.quick-card{display:flex;min-height:112px;flex-direction:column;align-items:center;justify-content:center;border:1px solid #eee1dc;border-radius:10px;background:#fff;box-shadow:0 3px 10px #8b67500c;transition:.18s}.quick-card:active{transform:scale(.97);background:var(--rose-soft)}.quick-card .icon{width:30px;height:30px;color:#d16b82}.quick-card strong{margin-top:9px;font-size:11px;text-align:center}.quick-card small{margin-top:4px;color:#b8a8a1;font:7px Georgia,serif;letter-spacing:.1em}.section{padding:18px}.section+.section{border-top:8px solid var(--cream)}.section-head{display:flex;align-items:end;justify-content:space-between;margin-bottom:14px}.section-head h1,.section-head h2{margin:0;font-family:"Yu Mincho","Hiragino Mincho ProN",serif;font-size:20px;letter-spacing:.04em}.section-head p{margin:4px 0 0;color:var(--muted);font-size:11px}.section-head a{color:var(--rose-dark);font-size:11px;font-weight:700}.status-card{display:block;border:1px solid #f0d8df;border-radius:14px;background:linear-gradient(135deg,#fff 0,#fff4f7 100%);padding:16px}.status-card .label{color:var(--rose-dark);font-size:11px;font-weight:700}.status-card strong{display:block;margin-top:7px;font-size:15px}.status-card p{margin:5px 0 0;color:var(--muted);font-size:11px}.metrics{display:grid;grid-template-columns:1fr 1fr;gap:9px}.metric{border:1px solid var(--line);border-radius:12px;padding:14px;background:#fff}.metric span{color:var(--muted);font-size:10px}.metric strong{display:block;margin-top:6px;font-family:Georgia,"Yu Mincho",serif;font-size:21px}.notice{display:flex;align-items:center;gap:12px;border:1px solid #eed8df;border-radius:12px;background:#fff8fa;padding:13px}.notice .icon{color:var(--rose)}.notice div{min-width:0;flex:1}.notice strong{font-size:12px}.notice p{overflow:hidden;margin:4px 0 0;color:var(--muted);font-size:10px;text-overflow:ellipsis;white-space:nowrap}.bottom-nav{position:fixed;z-index:40;right:0;bottom:0;left:0;margin:auto;display:grid;width:100%;max-width:480px;grid-template-columns:repeat(5,1fr);padding:7px 4px calc(7px + env(safe-area-inset-bottom));border-top:1px solid #e6d9d4;background:#fffdfbf5;box-shadow:0 -8px 22px #6d493c0d;backdrop-filter:blur(14px)}.bottom-link{display:flex;min-width:0;flex-direction:column;align-items:center;gap:3px;color:#a3948d;font-size:9px;font-weight:700}.bottom-link .icon{width:20px;height:20px}.bottom-link.active{color:var(--rose)}.page-title{padding:18px;border-bottom:1px solid var(--line);text-align:center}.page-title h1{margin:0;font-family:"Yu Mincho","Hiragino Mincho ProN",serif;font-size:17px}.tabs{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;border-bottom:1px solid var(--line);background:white}.tab{padding:12px 5px;border-bottom:3px solid transparent;color:var(--muted);text-align:center;font-size:10px;font-weight:700}.tab.active{border-color:var(--rose);color:var(--rose-dark);background:#fff9fa}.ranking-intro{margin:16px 18px;padding:18px;border-radius:13px;background:linear-gradient(135deg,#fffaf0,#fff);text-align:center}.ranking-intro .laurel{color:#c9a044;font-family:Georgia,serif;font-size:13px}.ranking-intro h2{margin:5px 0;font-family:"Yu Mincho",serif;color:#9d7430;font-size:18px}.ranking-intro p{margin:0;color:var(--muted);font-size:10px}.product-list{padding:0 18px 22px}.product-row{display:grid;grid-template-columns:38px 68px 1fr 20px;align-items:center;gap:10px;min-height:106px;border-bottom:1px solid var(--line)}.rank{font:700 17px Georgia,serif;color:#8f8079;text-align:center}.rank.top{display:grid;width:29px;height:29px;place-items:center;border-radius:50%;background:#d9ae43;color:white}.product-art{position:relative;display:grid;width:58px;height:78px;place-items:end center;border-radius:20px 20px 9px 9px;background:linear-gradient(160deg,#765b85,#bea9c9 55%,#f2eafa);box-shadow:inset -8px 0 14px #ffffff45,0 5px 12px #6b536327;color:white;font:700 9px Georgia,serif;padding-bottom:10px}.product-art.jar{height:58px;border-radius:9px 9px 20px 20px}.product-meta h3{margin:0;font-size:12px;line-height:1.55}.product-meta p{display:-webkit-box;overflow:hidden;margin:5px 0 0;color:var(--muted);font-size:9px;line-height:1.5;-webkit-box-orient:vertical;-webkit-line-clamp:2}.tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}.tag{border:1px solid #ead5dc;border-radius:3px;padding:2px 5px;color:#a05568;font-size:8px}.detail-visual{display:flex;justify-content:center;padding:28px 18px 14px}.detail-visual .product-art{width:110px;height:155px;font-size:13px}.detail-card{padding:12px 22px 30px}.detail-card h1{margin:0;font-family:"Yu Mincho",serif;font-size:19px;line-height:1.5}.price{margin-top:10px;font-size:12px}.description{margin-top:18px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:16px 0;color:#5f5550;font-size:12px;line-height:1.9}.recommend{margin-top:18px}.recommend h2{font-size:13px}.recommend ul{padding-left:18px;color:var(--muted);font-size:11px;line-height:1.8}.primary,.secondary{display:flex;min-height:48px;align-items:center;justify-content:center;border-radius:6px;font-size:12px;font-weight:700}.primary{margin-top:16px;background:var(--rose);color:white}.secondary{margin-top:8px;border:1px solid #e6d1d7;background:#fff;color:var(--rose-dark)}.coupon-list{display:grid;gap:12px;padding:16px 18px}.coupon{position:relative;overflow:hidden;border:1px solid #f0d3dc;border-radius:13px;background:linear-gradient(135deg,#fff3f6,#fff);padding:16px;text-align:center}.coupon:before,.coupon:after{content:"";position:absolute;top:50%;width:16px;height:16px;border-radius:50%;background:var(--paper);transform:translateY(-50%)}.coupon:before{left:-8px}.coupon:after{right:-8px}.coupon small{color:var(--rose-dark);font-weight:800}.coupon h2{margin:7px 0 4px;font-family:"Yu Mincho",serif;font-size:17px}.coupon .benefit{color:#c34f6c;font:700 22px Georgia,serif}.coupon p{margin:5px 0;color:var(--muted);font-size:10px}.coupon a{display:block;margin-top:11px;border-radius:5px;background:var(--rose);padding:10px;color:white;font-size:11px;font-weight:700}.stamp-card{margin:18px;border:1px solid #ead0d8;border-radius:14px;background:linear-gradient(135deg,#fff4f7,#f7cad6);padding:18px}.stamp-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin-top:16px}.stamp-dot{display:grid;aspect-ratio:1;place-items:center;border:2px solid #fff;border-radius:50%;background:#fff;color:#cbbbc0;font-size:10px}.stamp-dot.on{background:#d66782;color:white;box-shadow:0 3px 8px #a4445f2d}.menu-list{padding:8px 18px 24px}.menu-row{display:flex;min-height:62px;align-items:center;gap:13px;border-bottom:1px solid var(--line)}.menu-row>.icon{color:var(--rose);width:21px}.menu-row strong{flex:1;font-size:12px}.menu-row .chev{color:#b5a6a0;width:17px}@media(min-width:700px){body{padding:24px 0}.app{min-height:calc(100dvh - 48px);border-radius:24px;overflow:hidden}.bottom-nav{bottom:24px;border-radius:0 0 24px 24px}.topbar{border-radius:24px 24px 0 0}}`
+}
+function customerBottomNav(active) {
+  const items = [['home','ホーム','/u/home'],['calendar','予約','/u/appointments'],['clock','履歴','/u/history'],['mail','メッセージ','/u/appointments?view=chat'],['menu','メニュー','/u/menu']]
+  return `<nav class="bottom-nav" aria-label="メインメニュー">${items.map(([icon,label,href]) => `<a class="bottom-link ${active === label ? 'active' : ''}" href="${href}">${customerIcon(icon)}<span>${label}</span></a>`).join('')}</nav>`
+}
+function customerShell({ title, active = '', unread = 0, back = '', body }) {
+  const left = back ? `<a class="icon-button" href="${back}" aria-label="戻る">${customerIcon('arrow')}</a>` : `<a class="icon-button" href="/u/menu" aria-label="メニュー">${customerIcon('menu')}</a>`
+  return `<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#fffdfb"><title>${htmlEscape(title)} | Salon de Lien</title><style>${customerAppCss()}</style></head><body><div class="app"><header class="topbar">${left}<a class="brand" href="/u/home"><span class="brand-script">Salon de Lien</span><span class="brand-sub">Beauty Membership</span></a><a class="icon-button" href="/u/news" aria-label="お知らせ">${customerIcon('bell')}${unread ? `<span class="badge">${unread > 99 ? '99+' : unread}</span>` : ''}</a></header><main class="content">${body}</main>${customerBottomNav(active)}</div></body></html>`
+}
+async function customerAppData(session) {
+  const now = new Date()
+  const [customers, visits, appointments, pointAccounts, broadcasts, chatCounts] = await Promise.all([
+    prisma.$queryRawUnsafe('SELECT "id","name","gender","profileImageUrl" FROM "Customer" WHERE "id"=$1 AND "organizationId"=$2 AND "deletedAt" IS NULL LIMIT 1', session.customerId, session.organizationId),
+    prisma.$queryRawUnsafe('SELECT "visitedAt","performedStyle","stylistName" FROM "Visit" WHERE "customerId"=$1 ORDER BY "visitedAt" DESC LIMIT 1', session.customerId),
+    prisma.$queryRawUnsafe('SELECT "id","scheduledAt","menu","staffName" FROM "Appointment" WHERE "customerId"=$1 AND "scheduledAt">=$2 AND "status" NOT IN (\'キャンセル\',\'無断キャンセル\',\'来店済み\') ORDER BY "scheduledAt" ASC LIMIT 1', session.customerId, now),
+    prisma.$queryRawUnsafe('SELECT "availablePoints" FROM "CustomerPointAccount" WHERE "customerId"=$1 LIMIT 1', session.customerId),
+    prisma.$queryRawUnsafe('SELECT r."readAt",b."title",b."body",b."couponEnabled",r."deliveredAt" FROM "CustomerBroadcastRecipient" r JOIN "CustomerBroadcast" b ON b."id"=r."broadcastId" WHERE r."customerId"=$1 AND b."status"=\'sent\' ORDER BY r."deliveredAt" DESC LIMIT 20', session.customerId),
+    prisma.$queryRawUnsafe('SELECT COUNT(*)::int AS count FROM "ChatMessage" m JOIN "ChatThread" t ON t."id"=m."threadId" WHERE t."customerId"=$1 AND t."organizationId"=$2 AND m."senderType"=\'staff\' AND (t."customerLastReadAt" IS NULL OR m."createdAt">t."customerLastReadAt")', session.customerId, session.organizationId),
+  ])
+  return { customer: customers[0], visit: visits[0], appointment: appointments[0], points: pointAccounts[0]?.availablePoints || 0, broadcasts, unread: broadcasts.filter(v => !v.readAt).length + (chatCounts[0]?.count || 0) }
+}
+function sendCustomerHtml(res, html) {
+  res.statusCode = 200; res.setHeader('Content-Type', 'text/html; charset=utf-8'); res.setHeader('Cache-Control', 'private, no-store'); res.setHeader('X-Content-Type-Options', 'nosniff'); res.end(html)
+}
 async function body(req) {
   let raw = ''; for await (const chunk of req) { raw += chunk; if (raw.length > 20000) throw Error('too_large') }
   return raw ? JSON.parse(raw) : {}
@@ -250,6 +311,86 @@ async function customerRealName(req, res) {
   res.statusCode = 303; res.setHeader('Location', `/admin/customers/${encodeURIComponent(customerId)}?realName=saved`); res.end()
 }
 
+async function customerHomePage(res, session) {
+  const data = await customerAppData(session)
+  if (!data.customer) { res.statusCode = 404; return res.end('Not found') }
+  const name = htmlEscape(data.customer.name)
+  const quick = [
+    ['calendar','予約する','RESERVE','/u/appointments'],
+    ['repeat','前回と同じ予約','QUICK RESERVE','/u/appointments?repeat=last'],
+    ['user','マイページ','MY PAGE','/u/profile'],
+    ['ticket','クーポン','COUPON','/u/coupons'],
+    ['news','お知らせ','NEWS','/u/news'],
+    ['stamp','スタンプカード','STAMP CARD','/u/stamps'],
+    ['scissors','ヘアスタイル','STYLE','/u/community'],
+    ['crown','私に合うアイテム','ITEM RANKING','/u/catalog'],
+    ['heart','お客様の声','IMPRESSION','/u/reviews'],
+  ]
+  const body = `<section class="welcome"><strong>${name} 様</strong><span>いつもご来店ありがとうございます</span></section><section class="hero"><img src="/brand/salon-interior-illustrated.png" alt="Salon de Lien 店内"><div class="hero-copy">あたらしい、<br>美しさを大切に。</div></section><section class="quick-grid" aria-label="サービス一覧">${quick.map(([icon,label,en,href]) => `<a class="quick-card" href="${href}">${customerIcon(icon)}<strong>${label}</strong><small>${en}</small></a>`).join('')}</section>${data.appointment ? `<section class="section"><div class="section-head"><div><h2>次回のご予約</h2><p>ご来店をお待ちしております</p></div><a href="/u/appointments">詳細</a></div><a class="status-card" href="/u/appointments"><span class="label">UPCOMING RESERVATION</span><strong>${htmlEscape(jpDate(data.appointment.scheduledAt, true))}</strong><p>${htmlEscape(data.appointment.menu || 'メニュー相談')} / ${htmlEscape(data.appointment.staffName || '担当フリー')}</p></a></section>` : ''}<section class="section"><div class="section-head"><div><h2>会員情報</h2><p>Salon de Lien メンバーシップ</p></div></div><div class="metrics"><a class="metric" href="/u/points"><span>利用可能ポイント</span><strong>${Number(data.points).toLocaleString('ja-JP')}<small> pt</small></strong></a><a class="metric" href="/u/history"><span>前回来店</span><strong style="font-size:14px">${htmlEscape(jpDate(data.visit?.visitedAt))}</strong></a></div>${data.broadcasts[0] ? `<a class="notice" href="/u/news">${customerIcon('news')}<div><strong>${htmlEscape(data.broadcasts[0].title)}</strong><p>${htmlEscape(data.broadcasts[0].body)}</p></div>${customerIcon('chevron')}</a>` : ''}</section>`
+  sendCustomerHtml(res, customerShell({ title: 'ホーム', active: 'ホーム', unread: data.unread, body }))
+}
+
+async function customerCatalogPage(res, session, productId) {
+  const data = await customerAppData(session)
+  const products = await prisma.$queryRawUnsafe('SELECT p."id",p."manufacturerName",p."name",p."category",p."retailPrice",p."concernTags",p."description",p."alternativeRecommendation",COALESCE(SUM(sl."quantity"),0)::int AS "soldCount" FROM "Product" p LEFT JOIN "ProductSaleLine" sl ON sl."productId"=p."id" WHERE p."organizationId"=$1 AND p."active"=true AND p."salesSuspended"=false GROUP BY p."id" ORDER BY "soldCount" DESC,p."updatedAt" DESC LIMIT 40', session.organizationId)
+  if (productId) {
+    const product = products.find(p => p.id === productId)
+    if (!product) { res.statusCode = 404; return res.end('Not found') }
+    const tags = jsonArray(product.concernTags)
+    const alternatives = products.filter(p => p.id !== product.id && jsonArray(p.concernTags).some(t => tags.includes(t))).sort((a,b) => jsonArray(b.concernTags).filter(t => tags.includes(t)).length - jsonArray(a.concernTags).filter(t => tags.includes(t)).length).slice(0,3)
+    const body = `<div class="page-title"><h1>アイテム詳細</h1></div><div class="detail-visual"><div class="product-art">${htmlEscape(product.manufacturerName.slice(0,8))}</div></div><article class="detail-card"><h1>${htmlEscape(product.name)}</h1><div class="tags">${[product.category,...tags].filter(Boolean).map(t => `<span class="tag">${htmlEscape(t)}</span>`).join('')}</div><p class="price">${yen(product.retailPrice)}（税込）</p><div class="description">${htmlEscape(product.description || 'サロンで髪の状態を確認し、使い方と使用量をご案内します。')}</div><section class="recommend"><h2>こんなお悩みにおすすめ</h2><ul>${(tags.length ? tags : ['毎日のホームケア','髪のまとまり']).map(t => `<li>${htmlEscape(t)}が気になる方</li>`).join('')}</ul></section>${alternatives.length ? `<section class="recommend"><h2>合わない場合の代替アイテム</h2><ul>${alternatives.map(p => `<li><a href="/u/catalog/${encodeURIComponent(p.id)}">${htmlEscape(p.name)}</a></li>`).join('')}</ul></section>` : ''}<a class="primary" href="/u/appointments">次回来店時に取り置きを相談</a><a class="secondary" href="/u/appointments?view=chat">スタッフにチャットで相談</a></article>`
+    return sendCustomerHtml(res, customerShell({ title: product.name, unread: data.unread, back: '/u/catalog', body }))
+  }
+  const category = ['総合','ヘアケア','スタイリング','年代別']
+  const body = `<div class="page-title"><h1>私に合うアイテムランキング</h1></div><section class="ranking-intro"><div class="laurel">❧ 今月の ❧</div><h2>お客様愛用ランキング</h2><p>実際の購入データと髪のお悩みタグからご紹介</p></section><nav class="tabs">${category.map((v,i) => `<span class="tab ${i === 0 ? 'active' : ''}">${v}</span>`).join('')}</nav><section class="product-list">${products.length ? products.map((p,i) => { const tags = jsonArray(p.concernTags).slice(0,2); return `<a class="product-row" href="/u/catalog/${encodeURIComponent(p.id)}"><span class="rank ${i < 3 ? 'top' : ''}">${i+1}</span><span class="product-art ${i % 3 === 1 ? 'jar' : ''}">${htmlEscape(p.manufacturerName.slice(0,5))}</span><span class="product-meta"><h3>${htmlEscape(p.name)}</h3><p>${htmlEscape(p.description || `${p.category || 'ヘアケア'}のためのサロン専売アイテム`)}</p><span class="tags">${tags.map(t => `<span class="tag">${htmlEscape(t)}</span>`).join('')}</span></span>${customerIcon('chevron')}</a>` }).join('') : '<p style="padding:30px;text-align:center;color:#81756f">販売中の商品はありません</p>'}</section>`
+  sendCustomerHtml(res, customerShell({ title: 'アイテムランキング', unread: data.unread, back: '/u/home', body }))
+}
+
+async function customerCouponsPage(res, session) {
+  const data = await customerAppData(session), now = new Date()
+  const [coupons, issues] = await Promise.all([
+    prisma.$queryRawUnsafe('SELECT "id","title","description","targetMenu","discountType","discountValue","validUntil","couponCode" FROM "Coupon" WHERE "customerId"=$1 AND "status"=\'issued\' AND "validUntil">=$2 ORDER BY "validUntil" ASC LIMIT 30', session.customerId, now),
+    prisma.$queryRawUnsafe('SELECT "id",\'限定クーポン\' AS title,"discountRate","targetMenusJson","expiresAt" AS "validUntil","couponCode" FROM "CouponIssue" WHERE "customerId"=$1 AND "status"=\'issued\' AND "expiresAt">=$2 ORDER BY "expiresAt" ASC LIMIT 30', session.customerId, now),
+  ])
+  const rows = [...coupons.map(c => ({...c, benefit: `${c.discountValue}${String(c.discountType).includes('%') ? '%OFF' : ''}`, menu: c.targetMenu})), ...issues.map(c => ({...c, benefit: `${c.discountRate}%OFF`, menu: jsonArray(c.targetMenusJson).join('・')}))]
+  const body = `<div class="page-title"><h1>クーポン一覧</h1></div><nav class="tabs"><span class="tab active">すべて</span><span class="tab">おすすめ</span><span class="tab">期間限定</span><span class="tab">紹介特典</span></nav><section class="coupon-list">${rows.length ? rows.map((c,i) => `<article class="coupon"><small>${i === 0 ? 'おすすめ' : 'Salon de Lien Member'}</small><h2>${htmlEscape(c.title)}</h2><div class="benefit">${htmlEscape(c.benefit || 'SPECIAL')}</div><p>${htmlEscape(c.menu || c.description || '対象メニューはスタッフへご確認ください')}</p><p>有効期限：${htmlEscape(jpDate(c.validUntil))}</p><a href="/u/appointments">このクーポンを使う</a></article>`).join('') : '<article class="coupon"><h2>利用できるクーポンはありません</h2><p>新しいクーポンが届くと、お知らせにも表示されます。</p><a href="/u/home">ホームへ戻る</a></article>'}</section>`
+  sendCustomerHtml(res, customerShell({ title: 'クーポン', unread: data.unread, back: '/u/home', body }))
+}
+
+async function customerStampsPage(res, session) {
+  const data = await customerAppData(session)
+  const countRows = await prisma.$queryRawUnsafe('SELECT COUNT(*)::int AS count FROM "Visit" WHERE "customerId"=$1', session.customerId)
+  const total = countRows[0]?.count || 0, stamps = total % 10
+  const body = `<div class="page-title"><h1>スタンプカード</h1></div><nav class="tabs"><span class="tab active">ヘア</span><span class="tab">フェイシャル</span></nav><section class="stamp-card"><div class="section-head"><div><h2>ヘアスタンプカード</h2><p>ご来店1回につき1スタンプ</p></div><strong>${stamps} / 10個</strong></div><div class="stamp-grid">${Array.from({length:10},(_,i) => `<span class="stamp-dot ${i < stamps ? 'on' : ''}">${i < stamps ? '✓' : i+1}</span>`).join('')}</div></section><section class="section"><div class="section-head"><div><h2>特典内容</h2><p>次回ご来店時にご利用いただけます</p></div></div><div class="coupon"><small>NEXT REWARD</small><h2>10個達成特典</h2><div class="benefit">CARE SERVICE</div><p>トリートメントサービスなど、現在の髪に合う特典をご案内します。</p><a href="/u/appointments">次回予約へ</a></div></section>`
+  sendCustomerHtml(res, customerShell({ title: 'スタンプカード', unread: data.unread, back: '/u/home', body }))
+}
+
+async function customerNewsPage(res, session) {
+  const data = await customerAppData(session)
+  await prisma.$executeRawUnsafe('UPDATE "CustomerBroadcastRecipient" SET "readAt"=COALESCE("readAt",CURRENT_TIMESTAMP) WHERE "customerId"=$1', session.customerId)
+  const body = `<div class="page-title"><h1>お知らせ</h1></div><section class="menu-list">${data.broadcasts.length ? data.broadcasts.map(row => `<article class="menu-row" style="align-items:flex-start;padding:14px 0">${customerIcon('news')}<div style="flex:1"><strong>${htmlEscape(row.title)}</strong><p style="margin:6px 0;color:#81756f;font-size:11px;line-height:1.7">${htmlEscape(row.body)}</p><small style="color:#aa9b94">${htmlEscape(jpDate(row.deliveredAt))}</small></div></article>`).join('') : '<p style="padding:36px;text-align:center;color:#81756f">お知らせはまだありません</p>'}</section>`
+  sendCustomerHtml(res, customerShell({ title: 'お知らせ', unread: 0, back: '/u/home', body }))
+}
+
+async function customerMenuPage(res, session) {
+  const data = await customerAppData(session)
+  const rows = [['user','会員情報の確認・変更','/u/profile'],['clock','来店履歴','/u/history'],['points','ポイント','/u/points'],['ticket','クーポン','/u/coupons'],['stamp','スタンプカード','/u/stamps'],['crown','アイテムランキング','/u/catalog'],['scissors','ヘアスタイル','/u/community'],['heart','商品アンケート','/u/reviews'],['mail','チャット相談','/u/appointments?view=chat'],['news','お知らせ','/u/news']]
+  const body = `<section class="welcome"><strong>${htmlEscape(data.customer?.name)} 様</strong><span>会員メニュー</span></section><section class="menu-list">${rows.map(([icon,label,href]) => `<a class="menu-row" href="${href}">${customerIcon(icon)}<strong>${label}</strong>${customerIcon('chevron','chev')}</a>`).join('')}<form action="/api/customer-auth/logout" method="post"><button class="secondary" style="width:100%;margin-top:18px" type="submit">ログアウト</button></form></section>`
+  sendCustomerHtml(res, customerShell({ title: 'メニュー', active: 'メニュー', unread: data.unread, body }))
+}
+
+async function customerBrandedPage(req, res, url) {
+  const session = await chatSession(req, 'customer')
+  if (!session) { res.statusCode = 302; res.setHeader('Location', '/u/login'); return res.end() }
+  if (url.pathname === '/u/home') return customerHomePage(res, session)
+  if (url.pathname === '/u/catalog') return customerCatalogPage(res, session)
+  if (url.pathname.startsWith('/u/catalog/')) return customerCatalogPage(res, session, decodeURIComponent(url.pathname.slice('/u/catalog/'.length)))
+  if (url.pathname === '/u/coupons') return customerCouponsPage(res, session)
+  if (url.pathname === '/u/stamps') return customerStampsPage(res, session)
+  if (url.pathname === '/u/news') return customerNewsPage(res, session)
+  if (url.pathname === '/u/menu') return customerMenuPage(res, session)
+}
+
 async function staffIntroductionForm(req, res) {
   const session = await chatSession(req, 'staff')
   if (!session) { res.statusCode = 302; res.setHeader('Location', '/admin/login'); return res.end() }
@@ -329,6 +470,8 @@ app.prepare().then(() => {
       if (url.pathname === '/api/lien-staff-notifications') return await staffNotifications(req, res, url.searchParams.get('read') === '1')
       if (url.pathname === '/api/lien-capacity') return await capacityOverride(req, res)
       if (url.pathname === '/api/lien-customer-real-name' && req.method === 'POST') return await customerRealName(req, res)
+      if (req.method === 'GET' && ['/u/home','/u/catalog','/u/coupons','/u/stamps','/u/news','/u/menu'].includes(url.pathname)) return await customerBrandedPage(req, res, url)
+      if (req.method === 'GET' && url.pathname.startsWith('/u/catalog/')) return await customerBrandedPage(req, res, url)
       if (url.pathname === '/admin/notifications') {
         const session = await chatSession(req, 'staff')
         if (!session) { res.statusCode = 302; res.setHeader('Location', '/admin/login'); return res.end() }

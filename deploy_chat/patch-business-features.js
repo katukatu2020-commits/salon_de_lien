@@ -40,6 +40,99 @@ edit(appointmentPage, s => {
   return s.replace(anchor, replacement)
 })
 
+// Calendar UI: show confirmed daily sales next to each day's appointment count.
+edit(appointmentPage, s => {
+  const promiseAnchor = '[q, Z, _, z, V] = await Promise.all(['
+  if (!s.includes(promiseAnchor)) throw new Error('calendar query anchor missing')
+  s = s.replace(promiseAnchor, '[q, Z, _, z, V, dailySalesRows] = await Promise.all([')
+  const queryAnchor = `              v._.contactLog.findMany({
+                where: {
+                  customer: {
+                    organizationId: x.organizationId,
+                    deletedAt: null,
+                  },
+                },
+                include: {
+                  customer: { select: { id: !0, name: !0 } },
+                },
+                orderBy: { createdAt: "desc" },
+                take: 200,
+              }),
+            ]),`
+  const queryReplacement = `              v._.contactLog.findMany({
+                where: {
+                  customer: {
+                    organizationId: x.organizationId,
+                    deletedAt: null,
+                  },
+                },
+                include: {
+                  customer: { select: { id: !0, name: !0 } },
+                },
+                orderBy: { createdAt: "desc" },
+                take: 200,
+              }),
+              v._.serviceSale.findMany({
+                where: {
+                  paidAt: { gte: D, lt: I },
+                  customer: { organizationId: x.organizationId, deletedAt: null },
+                },
+                select: { paidAt: !0, amount: !0 },
+              }),
+            ]),`
+  if (!s.includes(queryAnchor)) throw new Error('calendar sales query insertion anchor missing')
+  s = s.replace(queryAnchor, queryReplacement)
+  const mapAnchor = `          for (let e of q) {
+            let t = $(e.scheduledAt);
+            F.set(t, [...(F.get(t) ?? []), e]);
+          }
+          let L =`
+  const mapReplacement = `          for (let e of q) {
+            let t = $(e.scheduledAt);
+            F.set(t, [...(F.get(t) ?? []), e]);
+          }
+          let dailySales = new Map();
+          for (let sale of dailySalesRows) {
+            let dateKey = $(sale.paidAt);
+            dailySales.set(dateKey, (dailySales.get(dateKey) ?? 0) + sale.amount);
+          }
+          let L =`
+  if (!s.includes(mapAnchor)) throw new Error('calendar sales map anchor missing')
+  s = s.replace(mapAnchor, mapReplacement)
+  const countAnchor = `                                    r
+                                      ? n.jsx("span", {
+                                          className:
+                                            "rounded-full bg-[color:var(--lien-primary-soft)] px-2 py-0.5 text-[10px] font-bold text-[color:var(--lien-primary-dark)]",
+                                          children: "今日",
+                                        })
+                                      : t.length > 0
+                                        ? (0, n.jsxs)("span", {
+                                            className:
+                                              "text-[10px] font-semibold text-[color:var(--lien-muted)]",
+                                            children: [t.length, "件"],
+                                          })
+                                        : null,`
+  const countReplacement = `                                    (0, n.jsxs)("div", {
+                                      className: "flex flex-col items-end gap-0.5 text-right",
+                                      children: [
+                                        r ? n.jsx("span", { className: "rounded-full bg-[color:var(--lien-primary-soft)] px-2 py-0.5 text-[9px] font-bold text-[color:var(--lien-primary-dark)]", children: "今日" }) : null,
+                                        t.length > 0 || (dailySales.get(e.key) ?? 0) > 0 ? (0, n.jsxs)("span", { className: "text-[10px] font-semibold tabular-nums text-[color:var(--lien-muted)]", children: [t.length, "件 ・ ¥", (dailySales.get(e.key) ?? 0).toLocaleString("ja-JP")] }) : null,
+                                      ],
+                                    }),`
+  if (!s.includes(countAnchor)) throw new Error('calendar desktop count anchor missing')
+  s = s.replace(countAnchor, countReplacement)
+  const mobileAnchor = `                                t.length > 0
+                                  ? n.jsx("span", {
+                                      className: \`absolute bottom-1 h-1 w-1 rounded-full \${r ? "bg-white" : "bg-[#8f4f42]"}\`,
+                                    })
+                                  : null,`
+  const mobileReplacement = `                                t.length > 0 || (dailySales.get(e.key) ?? 0) > 0
+                                  ? (0, n.jsxs)("span", { className: \`absolute bottom-0.5 whitespace-nowrap text-[7px] font-bold tabular-nums \${r ? "text-white" : "text-[#8f4f42]"}\`, children: [t.length, "件 ¥", Math.round((dailySales.get(e.key) ?? 0) / 1000), "k"] })
+                                  : null,`
+  if (!s.includes(mobileAnchor)) throw new Error('calendar mobile count anchor missing')
+  return s.replace(mobileAnchor, mobileReplacement)
+})
+
 // Customer chart: show and edit a distinct real name while retaining the booking name.
 const customerChunk = path.join(root, 'server/chunks/3244.js')
 edit(customerChunk, s => {
