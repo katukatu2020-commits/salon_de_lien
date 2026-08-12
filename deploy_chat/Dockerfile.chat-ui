@@ -1,0 +1,7 @@
+FROM 009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app:staff-customer-chat-nav-20260812-03
+USER root
+COPY server.js /app/server.js
+RUN chown nextjs:nodejs /app/server.js
+USER nextjs
+WORKDIR /app
+CMD ["node", "server.js"]
