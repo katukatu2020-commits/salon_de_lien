@@ -158,17 +158,50 @@ async function chatForm(req, res) {
   let raw = ''; for await (const chunk of req) { raw += chunk; if (raw.length > 20000) throw Error('too_large') }
   const form = new URLSearchParams(raw)
   const threadId = String(form.get('threadId') || '')
+  const customerId = String(form.get('customerId') || '')
   const text = String(form.get('body') || '').trim()
-  const rows = await prisma.$queryRawUnsafe('SELECT * FROM "ChatThread" WHERE "id"=$1 AND "organizationId"=$2 LIMIT 1', threadId, session.organizationId)
-  const thread = rows[0]
+  let rows = threadId ? await prisma.$queryRawUnsafe('SELECT * FROM "ChatThread" WHERE "id"=$1 AND "organizationId"=$2 LIMIT 1', threadId, session.organizationId) : []
+  let thread = rows[0]
+  if (!thread && customerId && text && text.length <= 2000) {
+    const customers = await prisma.$queryRawUnsafe('SELECT "id" FROM "Customer" WHERE "id"=$1 AND "organizationId"=$2 AND "deletedAt" IS NULL LIMIT 1', customerId, session.organizationId)
+    if (customers[0]) {
+      const matchedStaff = staff.find(s => String(session.displayName || '').replace(/\s/g, '').includes(s.name.replace(/\s/g, ''))) || staff[0]
+      await prisma.$executeRawUnsafe('INSERT INTO "ChatThread" ("id","organizationId","customerId","staffKey","staffName","staffLastReadAt","updatedAt") VALUES ($1,$2,$3,$4,$5,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP) ON CONFLICT ("customerId","staffKey") DO UPDATE SET "status"=\'open\', "updatedAt"=CURRENT_TIMESTAMP', crypto.randomUUID(), session.organizationId, customerId, matchedStaff.key, matchedStaff.name)
+      rows = await prisma.$queryRawUnsafe('SELECT * FROM "ChatThread" WHERE "customerId"=$1 AND "staffKey"=$2 LIMIT 1', customerId, matchedStaff.key)
+      thread = rows[0]
+    }
+  }
   if (!thread || !canAccessThread(session, thread) || !text || text.length > 2000) {
-    res.statusCode = 303; res.setHeader('Location', `/admin/customers/messages/chat?threadId=${encodeURIComponent(threadId)}`); return res.end()
+    res.statusCode = 303; res.setHeader('Location', `/admin/customers/messages/chat?${threadId ? `threadId=${encodeURIComponent(threadId)}` : `customerId=${encodeURIComponent(customerId)}`}`); return res.end()
   }
   await prisma.$transaction([
     prisma.$executeRawUnsafe('INSERT INTO "ChatMessage" ("id","threadId","senderType","senderUserId","body") VALUES ($1,$2,\'staff\',$3,$4)', crypto.randomUUID(), thread.id, session.userId, text),
     prisma.$executeRawUnsafe('UPDATE "ChatThread" SET "updatedAt"=CURRENT_TIMESTAMP, "staffLastReadAt"=CURRENT_TIMESTAMP WHERE "id"=$1', thread.id),
   ])
   res.statusCode = 303; res.setHeader('Location', `/admin/customers/messages/chat?threadId=${encodeURIComponent(thread.id)}`); return res.end()
+}
+
+async function customerChatForm(req, res) {
+  const session = await chatSession(req, 'customer')
+  if (!session) { res.statusCode = 302; res.setHeader('Location', '/u/login'); return res.end() }
+  let raw = ''; for await (const chunk of req) { raw += chunk; if (raw.length > 20000) throw Error('too_large') }
+  const form = new URLSearchParams(raw)
+  const text = String(form.get('body') || '').trim()
+  const staffKey = String(form.get('staffKey') || '')
+  let threadId = String(form.get('threadId') || '')
+  if (!text || text.length > 2000) { res.statusCode = 303; res.setHeader('Location', '/u/appointments?view=chat'); return res.end() }
+  let rows = threadId ? await prisma.$queryRawUnsafe('SELECT * FROM "ChatThread" WHERE "id"=$1 AND "customerId"=$2 AND "organizationId"=$3 LIMIT 1', threadId, session.customerId, session.organizationId) : []
+  if (!rows[0]) {
+    const target = staff.find(s => s.key === staffKey) || staff[0]
+    await prisma.$executeRawUnsafe('INSERT INTO "ChatThread" ("id","organizationId","customerId","staffKey","staffName","customerLastReadAt","updatedAt") VALUES ($1,$2,$3,$4,$5,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP) ON CONFLICT ("customerId","staffKey") DO UPDATE SET "status"=\'open\', "updatedAt"=CURRENT_TIMESTAMP', crypto.randomUUID(), session.organizationId, session.customerId, target.key, target.name)
+    rows = await prisma.$queryRawUnsafe('SELECT * FROM "ChatThread" WHERE "customerId"=$1 AND "staffKey"=$2 LIMIT 1', session.customerId, target.key)
+  }
+  const thread = rows[0]
+  await prisma.$transaction([
+    prisma.$executeRawUnsafe('INSERT INTO "ChatMessage" ("id","threadId","senderType","senderUserId","body") VALUES ($1,$2,\'customer\',$3,$4)', crypto.randomUUID(), thread.id, session.userId, text),
+    prisma.$executeRawUnsafe('UPDATE "ChatThread" SET "updatedAt"=CURRENT_TIMESTAMP, "customerLastReadAt"=CURRENT_TIMESTAMP WHERE "id"=$1', thread.id),
+  ])
+  res.statusCode = 303; res.setHeader('Location', `/u/appointments?view=chat&threadId=${encodeURIComponent(thread.id)}`); return res.end()
 }
 
 async function unreadChatCount(req, audience) {
@@ -213,19 +246,16 @@ app.prepare().then(() => {
       const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`)
       if (url.pathname === '/api/lien-chat') return await chatApi(req, res, url)
       if (url.pathname === '/api/lien-chat-form' && req.method === 'POST') return await chatForm(req, res)
+      if (url.pathname === '/api/lien-chat-customer-form' && req.method === 'POST') return await customerChatForm(req, res)
       if (url.pathname === '/admin/chat') { res.statusCode = 308; res.setHeader('Location', '/admin/customers/messages/chat'); return res.end() }
       if (url.pathname === '/admin/customers/messages/chat') {
         const threadId = url.searchParams.get('threadId')
+        const customerId = url.searchParams.get('customerId')
         res.statusCode = 307
-        res.setHeader('Location', `/admin/customers/messages?chat=1${threadId ? `&threadId=${encodeURIComponent(threadId)}` : ''}`)
+        res.setHeader('Location', `/admin/customers/messages?chat=1${threadId ? `&threadId=${encodeURIComponent(threadId)}` : ''}${customerId ? `&customerId=${encodeURIComponent(customerId)}` : ''}`)
         return res.end()
       }
-      if (url.pathname === '/u/chat') {
-        const audience = url.pathname.startsWith('/u/') ? 'customer' : 'staff'
-        const session = await chatSession(req, audience)
-        if (!session) { res.statusCode = 302; res.setHeader('Location', audience === 'customer' ? '/u/login' : '/admin/login'); return res.end() }
-        res.setHeader('Content-Type', 'text/html; charset=utf-8'); res.setHeader('Cache-Control', 'no-store'); return res.end(chatHtml(audience, session))
-      }
+      if (url.pathname === '/u/chat' || url.pathname === '/u/messages') { res.statusCode = 307; res.setHeader('Location', '/u/appointments?view=chat'); return res.end() }
       if (url.pathname === '/u/appointments') return handle(req, res)
       if (url.pathname.startsWith('/admin/') && !url.pathname.startsWith('/admin/login')) return handle(req, res)
       return handle(req, res)

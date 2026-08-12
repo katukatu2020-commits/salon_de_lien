@@ -1,12 +1,10 @@
 const fs = require('fs')
 const path = require('path')
 
-const roots = ['/app/.next/server', '/app/.next/static']
-const routes = [
-  { from: '/u/appointments', to: '/u/chat', label: 'チャット相談' },
-]
-const totals = Object.fromEntries(routes.map(route => [route.to, 0]))
-const changedFiles = []
+const appRoot = process.env.APP_ROOT || '/app'
+const roots = [`${appRoot}/.next/server`, `${appRoot}/.next/static`]
+let count = 0
+const changedStaticFiles = []
 
 function walk(dir) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -18,30 +16,27 @@ function walk(dir) {
 
 function patch(file) {
   let source = fs.readFileSync(file, 'utf8')
-  let changed = false
-  for (const route of routes) {
-    if (!source.includes(route.from)) continue
-    const escaped = route.from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-    const pattern = new RegExp(`(\\{\\s*href:\\s*["']${escaped}["'][\\s\\S]{0,500}?icon:\\s*([^,}\\n]+)[\\s\\S]{0,100}?\\})`)
-    const match = source.match(pattern)
-    if (!match) continue
-    const item = `{href:"${route.to}",label:"${route.label}",icon:${match[2].trim()}}`
-    source = source.replace(pattern, `$1,${item}`)
-    totals[route.to] += 1
-    changed = true
+  const before = source
+  source = source.replaceAll('href:"/u/appointments",label:"予約"', 'href:"/u/appointments",label:"予約・チャット相談"')
+  source = source.replace(/(href:\s*["']\/u\/appointments["'][\s\S]{0,240}?label:\s*)["'][^"']+["']/g, (_all, prefix) => {
+    count += 1
+    return `${prefix}"予約・チャット相談"`
+  })
+  if (source !== before) {
+    fs.writeFileSync(file, source)
+    count += 1
+    if (file.startsWith(`${appRoot}/.next/static/`)) changedStaticFiles.push(file)
   }
-  if (changed) { fs.writeFileSync(file, source); changedFiles.push(file) }
 }
 
 for (const root of roots) walk(root)
-for (const file of changedFiles.filter(file => file.startsWith('/app/.next/static/'))) {
-  const renamed = file.replace(/\.js$/, '.chatnav.js')
+for (const file of changedStaticFiles) {
+  const renamed = file.replace(/\.js$/, '.unified-reservation-chat.js')
   fs.renameSync(file, renamed)
-  const oldName = path.basename(file), newName = path.basename(renamed)
-  for (const root of ['/app/.next']) replaceReferences(root, oldName, newName)
+  replaceReferences(`${appRoot}/.next`, path.basename(file), path.basename(renamed))
 }
-console.log(JSON.stringify(totals))
-if (!totals['/u/chat']) process.exit(1)
+console.log(JSON.stringify({ unifiedCustomerNavigation: count }))
+if (!count) process.exit(1)
 
 function replaceReferences(dir, oldName, newName) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
