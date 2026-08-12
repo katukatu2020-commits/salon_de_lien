@@ -142,8 +142,14 @@ async function handleWithChatLink(handle, req, res, audience) {
   req.headers['accept-encoding'] = 'identity'
   const count = await unreadChatCount(req, audience).catch(() => 0)
   const chunks = [], originalEnd = res.end.bind(res)
-  res.write = chunk => { if (chunk) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)); return true }
-  res.end = chunk => {
+  res.write = (chunk, encoding, callback) => {
+    if (typeof encoding === 'function') callback = encoding
+    if (chunk) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk, typeof encoding === 'string' ? encoding : undefined))
+    if (callback) process.nextTick(callback)
+    return true
+  }
+  res.end = (chunk, encoding, callback) => {
+    if (typeof encoding === 'function') { callback = encoding; encoding = undefined }
     if (chunk) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
     let output = Buffer.concat(chunks)
     const type = String(res.getHeader('content-type') || '')
@@ -155,7 +161,7 @@ async function handleWithChatLink(handle, req, res, audience) {
       output = Buffer.from(output.toString('utf8').replace('</body>', `${link}</body>`))
       res.removeHeader('content-length'); res.setHeader('content-length', String(output.length))
     }
-    return originalEnd(output)
+    return originalEnd(output, callback)
   }
   await handle(req, res)
 }
