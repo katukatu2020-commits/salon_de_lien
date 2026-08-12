@@ -1,0 +1,39 @@
+const fs = require('fs')
+const path = require('path')
+
+const root = process.env.NEXT_ROOT || '/app/.next'
+const files = [path.join(root, 'server/app/admin/appointments/page.js')]
+const staticDir = path.join(root, 'static/chunks/app/admin/appointments')
+if (fs.existsSync(staticDir)) for (const name of fs.readdirSync(staticDir)) if (name.endsWith('.js')) files.push(path.join(staticDir, name))
+
+const css = `n.jsx("style",{children:\`.lien-reference-shift{--shift-navy:#082f4d;--shift-grid:#c9c4ba;--shift-pink:#f8dddd}.lien-reference-shift .shift-shell{border-radius:4px!important;border-color:#aaa49a!important;box-shadow:none!important;background:#f7f5ed!important}.lien-reference-shift .shift-canvas{min-width:1180px}.lien-reference-shift .shift-top{background:#ddd9cc!important;border-color:#aaa49a!important}.lien-reference-shift .shift-staff-cell{background:#f6f3e8!important;padding:10px 12px!important;align-items:flex-start!important}.lien-reference-shift .shift-staff-link{width:100%;padding:0!important}.lien-reference-shift .shift-staff-name{display:block!important;border-radius:3px!important;background:var(--shift-navy)!important;color:white!important;padding:10px 8px!important;text-align:center!important;font-size:14px!important;letter-spacing:.02em;box-shadow:inset 0 0 0 1px #05233a}.lien-reference-shift .shift-staff-capacity{display:block!important;margin-top:5px!important;text-align:center!important;font-size:11px!important;color:#665f56!important}.lien-reference-shift .shift-staff-icons{display:flex;gap:4px;justify-content:center;margin-top:8px}.lien-reference-shift .shift-staff-icons span{display:grid;height:18px;min-width:18px;place-items:center;border-radius:3px;background:#a82e46;color:#fff;font-size:10px;font-weight:800}.lien-reference-shift .shift-staff-icons span:nth-child(3n){background:#1681a2}.lien-reference-shift .shift-staff-icons span:nth-child(4n){background:#2f846d}.lien-reference-shift .shift-lane{background-color:#fffdf7!important;background-image:linear-gradient(to right,rgba(124,118,107,.12) 1px,transparent 1px),linear-gradient(to bottom,rgba(124,118,107,.09) 1px,transparent 1px)!important;background-size:55px 100%,100% 32px!important}.lien-reference-shift .shift-off{background:#c7c6c3!important;background-image:none!important;opacity:.72}.lien-reference-shift .shift-booking{border-radius:5px!important;border:1px solid #dca7a9!important;background:var(--shift-pink)!important;color:#5c3435!important;box-shadow:none!important;padding:6px 7px!important}.lien-reference-shift .shift-booking:hover{z-index:30!important;box-shadow:0 3px 8px #65433a35!important}.lien-reference-shift .shift-summary-input{border:0!important;border-right:1px solid #aaa49a!important;background:#f7f5ed!important;font-size:12px!important}.lien-reference-shift .shift-summary-input:focus{background:#fff5d9!important;outline:2px solid #8e382f!important;outline-offset:-2px}.lien-reference-shift .shift-time-label{font-family:Georgia,serif;font-size:14px!important;font-weight:700!important}.lien-reference-shift .shift-now{background:#b52525!important}.lien-reference-shift .shift-header-copy{display:none}@media(max-width:720px){.lien-reference-shift .shift-canvas{min-width:1080px}}\`})`
+
+const styledCss = css.replace('.shift-header-copy{display:none}', '.shift-header-copy{border:1px solid #aaa49a;background:#f6f3e8;padding:12px 14px}.lien-reference-shift .shift-header-copy h2{font-family:Georgia,"Yu Mincho",serif;font-size:24px!important}')
+
+let patched = 0
+for (const file of files) {
+  let s = fs.readFileSync(file, 'utf8')
+  if (!s.includes('日別シフト表') || !s.includes('salon-capacity-overrides:')) continue
+  const before = s
+  s = s.replace('[q, Z] = (0, i.useState)(960),\n            _ = q < 420 ? 92 : q < 760 ? 124 : 176,\n            z = Math.max(1, q - _),', '[q, Z] = (0, i.useState)(1180),\n            _ = q < 720 ? 150 : 190,\n            z = Math.max(930, Math.max(1180, q) - _),')
+  s = s.replace('className: "grid gap-4",\n            children: [', 'className: "lien-reference-shift grid gap-4",\n            children: [' + styledCss + ',')
+  s = s.replace('className:\n                  "flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between",', 'className:\n                  "shift-header-copy flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between",')
+  s = s.replace('"w-full overflow-hidden rounded-2xl border border-[color:var(--lien-border)] bg-white shadow-sm"', '"shift-shell w-full overflow-x-auto border bg-white"')
+  s = s.replace('className: "w-full",', 'className: "shift-canvas w-full",')
+  s = s.replace('"grid border-b border-[color:var(--lien-border)] bg-[#fbf8f3]"', '"shift-top grid border-b border-[color:var(--lien-border)] bg-[#ddd9cc]"')
+  s = s.replace('className: `absolute top-3 whitespace-nowrap text-[10px] font-semibold tabular-nums text-[color:var(--lien-ink)] sm:text-xs', 'className: `shift-time-label absolute top-3 whitespace-nowrap text-[10px] font-semibold tabular-nums text-[color:var(--lien-ink)] sm:text-xs')
+  s = s.replace('className: `grid place-items-center border-r border-[color:var(--lien-border)] text-[9px] font-bold tabular-nums sm:text-[11px]', 'className: `shift-summary-input grid place-items-center border-r border-[color:var(--lien-border)] text-[9px] font-bold tabular-nums sm:text-[11px]')
+  s = s.replace('"z-20 flex min-w-0 items-center border-r border-[color:var(--lien-border)] bg-white px-1.5 py-3 sm:px-3"', '"shift-staff-cell z-20 flex min-w-0 items-center border-r border-[color:var(--lien-border)] bg-white px-1.5 py-3 sm:px-3"')
+  s = s.replace('"group min-w-0 rounded-xl px-1 py-1.5 transition hover:bg-[color:var(--lien-surface-soft)] sm:px-2"', '"shift-staff-link group min-w-0 rounded-xl px-1 py-1.5 transition sm:px-2"')
+  s = s.replace('"block truncate text-[11px] font-semibold text-[color:var(--lien-ink)] group-hover:text-[color:var(--lien-primary)] sm:text-sm"', '"shift-staff-name block truncate text-[11px] font-semibold text-[color:var(--lien-ink)] sm:text-sm"')
+  s = s.replace('"mt-1 block truncate text-[9px] text-[color:var(--lien-muted)] sm:text-[10px]"', '"shift-staff-capacity mt-1 block truncate text-[9px] text-[color:var(--lien-muted)] sm:text-[10px]"')
+  s = s.replace('                                      e.maxConcurrentAppointments,\n                                    ],\n                                  }),\n                                ],', '                                      e.maxConcurrentAppointments,\n                                    ],\n                                  }),\n                                  (0,n.jsxs)("span",{className:"shift-staff-icons",children:[n.jsx("span",{children:"C"}),n.jsx("span",{children:"L"}),n.jsx("span",{children:"P"}),n.jsx("span",{children:"SP"})]}),\n                                ],')
+  s = s.replace('"relative min-w-0 overflow-hidden bg-white"', '"shift-lane relative min-w-0 overflow-hidden bg-white"')
+  s = s.replace('"pointer-events-none absolute inset-y-0 left-0 bg-[repeating-linear-gradient(135deg,#f5f1ec_0,#f5f1ec_6px,#fbf8f3_6px,#fbf8f3_12px)]"', '"shift-off pointer-events-none absolute inset-y-0 left-0"')
+  s = s.replace('"pointer-events-none absolute inset-y-0 right-0 bg-[repeating-linear-gradient(135deg,#f5f1ec_0,#f5f1ec_6px,#fbf8f3_6px,#fbf8f3_12px)]"', '"shift-off pointer-events-none absolute inset-y-0 right-0"')
+  s = s.replace('"pointer-events-none absolute inset-y-0 z-20 w-0.5 bg-[#c24842]"', '"shift-now pointer-events-none absolute inset-y-0 z-20 w-0.5"')
+  s = s.replace('className: `group absolute z-10 overflow-hidden rounded-xl border px-2 py-1.5 text-left', 'className: `shift-booking group absolute z-10 overflow-hidden rounded-xl border px-2 py-1.5 text-left')
+  if (s !== before) { fs.writeFileSync(file, s); patched++ }
+}
+if (!patched) throw new Error('shift timeline module was not found')
+console.log(`patched shift UI in ${patched} bundle(s)`)
