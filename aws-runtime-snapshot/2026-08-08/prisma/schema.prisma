@@ -46,6 +46,7 @@ model Organization {
   customerRegistrationInvites CustomerRegistrationInvite[]
   visitCommunityPosts         VisitCommunityPost[]
   customerBroadcasts          CustomerBroadcast[]
+  chatThreads                 ChatThread[]
 }
 
 model AppUser {
@@ -160,9 +161,43 @@ model Customer {
   visitPhotos           VisitPhoto[]
   communityPosts        VisitCommunityPost[]
   broadcastRecipients  CustomerBroadcastRecipient[]
+  chatThreads          ChatThread[]
 
   @@index([organizationId, deletedAt])
   @@index([referredByCustomerId])
+}
+
+model ChatThread {
+  id                 String    @id
+  organizationId     String
+  customerId         String
+  staffKey            String
+  staffName           String
+  status              String    @default("open")
+  customerLastReadAt  DateTime?
+  staffLastReadAt     DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customer     Customer     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  messages     ChatMessage[]
+
+  @@unique([customerId, staffKey])
+  @@index([organizationId, staffKey, updatedAt])
+}
+
+model ChatMessage {
+  id           String   @id
+  threadId     String
+  senderType   String
+  senderUserId String?
+  body         String
+  createdAt    DateTime @default(now())
+
+  thread ChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  @@index([threadId, createdAt])
 }
 
 model CustomerPhoneIdentity {
