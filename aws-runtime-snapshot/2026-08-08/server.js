@@ -141,27 +141,21 @@ async function unreadChatCount(req, audience) {
 async function handleWithChatLink(handle, req, res, audience) {
   req.headers['accept-encoding'] = 'identity'
   const count = await unreadChatCount(req, audience).catch(() => 0)
-  const chunks = [], originalEnd = res.end.bind(res)
-  res.write = (chunk, encoding, callback) => {
-    if (typeof encoding === 'function') callback = encoding
-    if (chunk) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk, typeof encoding === 'string' ? encoding : undefined))
-    if (callback) process.nextTick(callback)
-    return true
-  }
+  const originalWrite = res.write.bind(res), originalEnd = res.end.bind(res)
   res.end = (chunk, encoding, callback) => {
     if (typeof encoding === 'function') { callback = encoding; encoding = undefined }
-    if (chunk) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
-    let output = Buffer.concat(chunks)
     const type = String(res.getHeader('content-type') || '')
     if (type.includes('text/html')) {
       const href = audience === 'customer' ? '/u/chat' : '/admin/chat'
       const label = audience === 'customer' ? 'スタッフへチャット相談' : '顧客チャット通知'
       const badge = count ? `<span style="margin-left:8px;background:#c3483f;color:white;border-radius:999px;padding:2px 7px;font-size:11px">${count}</span>` : ''
       const link = `<a href="${href}" aria-label="${label}" style="position:fixed;right:18px;bottom:${audience === 'customer' ? '82px' : '22px'};z-index:9999;display:flex;align-items:center;min-height:48px;padding:0 18px;border-radius:999px;background:#8f4f42;color:#fff;text-decoration:none;font:700 13px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;box-shadow:0 8px 24px #4c302a55">💬 ${label}${badge}</a>`
-      output = Buffer.from(output.toString('utf8').replace('</body>', `${link}</body>`))
-      res.removeHeader('content-length'); res.setHeader('content-length', String(output.length))
+      res.removeHeader('content-length')
+      if (chunk) originalWrite(chunk, encoding)
+      originalWrite(link)
+      return originalEnd(callback)
     }
-    return originalEnd(output, callback)
+    return originalEnd(chunk, encoding, callback)
   }
   await handle(req, res)
 }
