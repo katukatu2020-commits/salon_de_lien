@@ -152,6 +152,25 @@ function chatHtml(audience, session) {
   return html
 }
 
+async function chatForm(req, res) {
+  const session = await chatSession(req, 'staff')
+  if (!session) { res.statusCode = 302; res.setHeader('Location', '/admin/login'); return res.end() }
+  let raw = ''; for await (const chunk of req) { raw += chunk; if (raw.length > 20000) throw Error('too_large') }
+  const form = new URLSearchParams(raw)
+  const threadId = String(form.get('threadId') || '')
+  const text = String(form.get('body') || '').trim()
+  const rows = await prisma.$queryRawUnsafe('SELECT * FROM "ChatThread" WHERE "id"=$1 AND "organizationId"=$2 LIMIT 1', threadId, session.organizationId)
+  const thread = rows[0]
+  if (!thread || !canAccessThread(session, thread) || !text || text.length > 2000) {
+    res.statusCode = 303; res.setHeader('Location', `/admin/customers/messages/chat?threadId=${encodeURIComponent(threadId)}`); return res.end()
+  }
+  await prisma.$transaction([
+    prisma.$executeRawUnsafe('INSERT INTO "ChatMessage" ("id","threadId","senderType","senderUserId","body") VALUES ($1,$2,\'staff\',$3,$4)', crypto.randomUUID(), thread.id, session.userId, text),
+    prisma.$executeRawUnsafe('UPDATE "ChatThread" SET "updatedAt"=CURRENT_TIMESTAMP, "staffLastReadAt"=CURRENT_TIMESTAMP WHERE "id"=$1', thread.id),
+  ])
+  res.statusCode = 303; res.setHeader('Location', `/admin/customers/messages/chat?threadId=${encodeURIComponent(thread.id)}`); return res.end()
+}
+
 async function unreadChatCount(req, audience) {
   const session = await chatSession(req, audience)
   if (!session) return 0
@@ -193,8 +212,15 @@ app.prepare().then(() => {
     try {
       const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`)
       if (url.pathname === '/api/lien-chat') return await chatApi(req, res, url)
+      if (url.pathname === '/api/lien-chat-form' && req.method === 'POST') return await chatForm(req, res)
       if (url.pathname === '/admin/chat') { res.statusCode = 308; res.setHeader('Location', '/admin/customers/messages/chat'); return res.end() }
-      if (url.pathname === '/u/chat' || url.pathname === '/admin/customers/messages/chat') {
+      if (url.pathname === '/admin/customers/messages/chat') {
+        const threadId = url.searchParams.get('threadId')
+        res.statusCode = 307
+        res.setHeader('Location', `/admin/customers/messages?chat=1${threadId ? `&threadId=${encodeURIComponent(threadId)}` : ''}`)
+        return res.end()
+      }
+      if (url.pathname === '/u/chat') {
         const audience = url.pathname.startsWith('/u/') ? 'customer' : 'staff'
         const session = await chatSession(req, audience)
         if (!session) { res.statusCode = 302; res.setHeader('Location', audience === 'customer' ? '/u/login' : '/admin/login'); return res.end() }

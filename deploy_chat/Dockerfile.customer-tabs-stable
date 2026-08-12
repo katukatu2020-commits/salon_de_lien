@@ -3,7 +3,8 @@ USER root
 COPY server.js /app/server.js
 COPY patch-nav.js /tmp/patch-nav.js
 COPY patch-customer-tabs.js /tmp/patch-customer-tabs.js
-RUN node /tmp/patch-nav.js && node /tmp/patch-customer-tabs.js && chown nextjs:nodejs /app/server.js && mkdir -p /app/.next/cache && chown -R nextjs:nodejs /app/.next/cache
+COPY patch-next-chat-route.js /tmp/patch-next-chat-route.js
+RUN node /tmp/patch-nav.js && node /tmp/patch-customer-tabs.js && node /tmp/patch-next-chat-route.js && chown nextjs:nodejs /app/server.js && mkdir -p /app/.next/cache && chown -R nextjs:nodejs /app/.next/cache
 USER nextjs
 WORKDIR /app
 CMD ["node", "server.js"]
