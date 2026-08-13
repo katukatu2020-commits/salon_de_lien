@@ -1,0 +1,15 @@
+FROM 009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app:temporary-coupon-code-entry-off-20260813-49
+USER root
+WORKDIR /app
+COPY . /tmp/release-44/
+COPY treasure-closed-v2.png /app/public/rewards/treasure-closed-v2.png
+COPY treasure-open-v2.png /app/public/rewards/treasure-open-v2.png
+RUN node /tmp/release-44/patch-commercial-reward-notifications-capacity.js \
+  && node /tmp/release-44/verify-release-44.js \
+  && node --check /app/.next/server/chunks/8404.js \
+  && node --check /app/.next/server/chunks/1597.js \
+  && node --check /app/server.js \
+  && node --check /app/.next/server/app/api/customer/appointments/availability/route.js \
+  && node --check /app/.next/server/app/api/customer/appointments/route.js
+USER nextjs
+WORKDIR /app
