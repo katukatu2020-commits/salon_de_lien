@@ -1,0 +1,9 @@
+FROM 009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app:temporary-sms-referral-off-20260813-47
+USER root
+WORKDIR /app
+COPY . /tmp/release-40/
+RUN node /tmp/release-40/patch-points-static-cache-bust.js \
+  && CUSTOMER_SMS_VERIFICATION_ENABLED=false CUSTOMER_REFERRAL_REWARDS_ENABLED=false node /tmp/release-40/verify-release-40.js \
+  && node --check /app/.next/static/chunks/app/u/\(account\)/points/page-d5be485caa1e3acb-sms-off-v39.js
+USER nextjs
+WORKDIR /app

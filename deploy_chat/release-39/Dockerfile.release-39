@@ -1,0 +1,13 @@
+FROM 009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app:admin-mobile-responsive-20260813-46
+USER root
+WORKDIR /app
+COPY . /tmp/release-39/
+RUN node /tmp/release-39/patch-temporary-sms-referral-off.js \
+  && CUSTOMER_SMS_VERIFICATION_ENABLED=false CUSTOMER_REFERRAL_REWARDS_ENABLED=false node /tmp/release-39/verify-release-39.js \
+  && node --check /app/.next/server/chunks/2241.js \
+  && node --check /app/.next/server/chunks/1608.js \
+  && node --check /app/.next/server/chunks/7295.js \
+  && node --check /app/.next/server/chunks/805.js \
+  && node --check /app/server.js
+USER nextjs
+WORKDIR /app
