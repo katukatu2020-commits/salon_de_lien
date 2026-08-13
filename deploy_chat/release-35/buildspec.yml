@@ -1,0 +1,16 @@
+version: 0.2
+phases:
+  pre_build:
+    commands:
+      - aws ecr get-login-password --region ap-northeast-1 | docker login --username AWS --password-stdin 009293460979.dkr.ecr.ap-northeast-1.amazonaws.com
+  build:
+    commands:
+      - docker build -f Dockerfile.release-35 -t salon-de-lien-staging-app:customer-points-modal-20260813-42 .
+      - docker tag salon-de-lien-staging-app:customer-points-modal-20260813-42 009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app:customer-points-modal-20260813-42
+  post_build:
+    commands:
+      - docker push 009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app:customer-points-modal-20260813-42
+      - printf '{"image":"009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app:customer-points-modal-20260813-42"}' > image.json
+artifacts:
+  files:
+    - image.json
