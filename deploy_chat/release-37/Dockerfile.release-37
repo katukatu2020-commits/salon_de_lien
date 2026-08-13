@@ -1,0 +1,17 @@
+FROM 009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app:customer-shell-chat-fixed-20260813-43
+USER root
+COPY . /tmp/release-37/
+RUN node /tmp/release-37/test-price-extraction.js \
+  && node /tmp/release-37/patch-gmail-price-completeness.js \
+  && mkdir -p /app/maintenance \
+  && cp /tmp/release-37/backfill-appointment-prices.js /app/maintenance/backfill-appointment-prices.js \
+  && node --check /app/.next/server/chunks/3447.js \
+  && node --check /app/.next/server/app/admin/appointments/page.js \
+  && node --check /app/maintenance/backfill-appointment-prices.js \
+  && node /tmp/release-37/verify-release-37.js \
+  && mkdir -p /app/.next/cache \
+  && chown -R nextjs:nodejs /app/.next/cache /app/maintenance
+USER nextjs
+WORKDIR /app
+CMD ["node", "server.js"]
+

@@ -1,0 +1,16 @@
+version: 0.2
+phases:
+  pre_build:
+    commands:
+      - aws ecr get-login-password --region ap-northeast-1 | docker login --username AWS --password-stdin 009293460979.dkr.ecr.ap-northeast-1.amazonaws.com
+  build:
+    commands:
+      - docker build -f Dockerfile.release-37 -t salon-de-lien-staging-app:gmail-price-completeness-20260813-44 .
+      - docker tag salon-de-lien-staging-app:gmail-price-completeness-20260813-44 009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app:gmail-price-completeness-20260813-44
+  post_build:
+    commands:
+      - docker push 009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app:gmail-price-completeness-20260813-44
+      - printf '{"image":"009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app:gmail-price-completeness-20260813-44"}' > image.json
+artifacts:
+  files:
+    - image.json
