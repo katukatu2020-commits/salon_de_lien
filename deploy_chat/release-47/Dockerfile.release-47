@@ -1,0 +1,11 @@
+FROM 009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app:public-contact-domain-20260813-58
+
+USER root
+WORKDIR /app
+COPY patch-mail-sender-credentials.js /tmp/patch-mail-sender-credentials.js
+COPY verify-mail-sender-credentials.js /tmp/verify-mail-sender-credentials.js
+RUN node /tmp/patch-mail-sender-credentials.js \
+ && node /tmp/verify-mail-sender-credentials.js \
+ && node --check /app/.next/server/chunks/9845.js \
+ && rm /tmp/patch-mail-sender-credentials.js /tmp/verify-mail-sender-credentials.js
+USER nextjs
