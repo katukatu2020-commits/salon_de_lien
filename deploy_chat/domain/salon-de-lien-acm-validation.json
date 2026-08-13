@@ -1,0 +1,18 @@
+{
+  "Comment": "Validate salon-de-lien.com certificate for CloudFront",
+  "Changes": [
+    {
+      "Action": "UPSERT",
+      "ResourceRecordSet": {
+        "Name": "_026d4cbe1d9b62cb14b987984cd1ab2f.salon-de-lien.com.",
+        "Type": "CNAME",
+        "TTL": 300,
+        "ResourceRecords": [
+          {
+            "Value": "_7b099605ee3ab96e41cbb894742ee6e5.jkddzztszm.acm-validations.aws."
+          }
+        ]
+      }
+    }
+  ]
+}
