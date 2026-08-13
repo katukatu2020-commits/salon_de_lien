@@ -1,0 +1,12 @@
+version: 0.2
+phases:
+  pre_build:
+    commands:
+      - aws ecr get-login-password --region ap-northeast-1 | docker login --username AWS --password-stdin 009293460979.dkr.ecr.ap-northeast-1.amazonaws.com
+  build:
+    commands:
+      - docker build -f Dockerfile.sms-compliance -t salon-de-lien-staging-app:sms-compliance-20260813-36 .
+      - docker tag salon-de-lien-staging-app:sms-compliance-20260813-36 009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app:sms-compliance-20260813-36
+  post_build:
+    commands:
+      - docker push 009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app:sms-compliance-20260813-36
