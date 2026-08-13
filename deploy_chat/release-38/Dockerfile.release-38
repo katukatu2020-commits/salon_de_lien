@@ -1,0 +1,23 @@
+FROM node:20-bookworm-slim
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends ca-certificates openssl \
+  && rm -rf /var/lib/apt/lists/* \
+  && groupadd --system --gid 1001 nodejs \
+  && useradd --system --uid 1001 --gid nodejs nextjs
+WORKDIR /app
+ADD salon-app-base44.tar.gz /app/
+COPY . /tmp/release-38/
+COPY lien-entrypoint /usr/local/bin/lien-entrypoint
+RUN node /tmp/release-38/patch-admin-mobile-responsive.js \
+  && node /tmp/release-38/verify-release-38.js \
+  && find /app/.next/server/chunks -maxdepth 1 -type f -name '*.js' -exec node --check {} \; \
+  && node --check /app/.next/server/app/admin/customers/messages/page.js \
+  && mkdir -p /app/.next/cache \
+  && chown -R nextjs:nodejs /app/.next/cache \
+  && chmod 0755 /usr/local/bin/lien-entrypoint
+USER nextjs
+WORKDIR /app
+ENTRYPOINT ["lien-entrypoint"]
+CMD ["node", "server.js"]
