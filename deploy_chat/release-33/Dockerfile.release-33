@@ -1,0 +1,29 @@
+FROM 009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app:customer-premium-calendar-sales-20260812-24
+USER root
+COPY . /tmp/release-33/
+RUN node /tmp/release-33/patch-customer-brand-shell.js \
+  && node /tmp/release-33/patch-customer-interactions.js \
+  && node /tmp/release-33/patch-sms-compliance.js \
+  && node /tmp/release-33/patch-product-staff-profile-desktop.js \
+  && node /tmp/release-33/patch-cancel-customer-list.js \
+  && cp /tmp/release-33/sms-compliance-migration.sql /app/sms-compliance-migration.sql \
+  && mkdir -p /app/maintenance \
+  && cp /tmp/release-33/run-customer-cleanup.js /app/maintenance/run-customer-cleanup.js \
+  && mkdir -p /app/prisma/migrations/20260813093000_add_sms_compliance \
+  && cp /app/sms-compliance-migration.sql /app/prisma/migrations/20260813093000_add_sms_compliance/migration.sql \
+  && node --check /app/server.js \
+  && node --check /app/.next/server/chunks/9845.js \
+  && node --check /app/.next/server/chunks/3491.js \
+  && node --check /app/.next/server/app/admin/products/page.js \
+  && node --check '/app/.next/server/app/admin/appointments/[appointmentId]/page.js' \
+  && node --check '/app/.next/server/app/u/(account)/appointments/page.js' \
+  && node --check /app/maintenance/run-customer-cleanup.js \
+  && find '/app/.next/static/chunks/app/u/(account)/appointments' -name '*.js' -exec node --check '{}' \; \
+  && node /tmp/release-33/verify-sms-compliance.js \
+  && node /tmp/release-33/verify-release-32.js \
+  && node /tmp/release-33/verify-release-33.js \
+  && mkdir -p /app/.next/cache \
+  && chown -R nextjs:nodejs /app/.next/cache
+USER nextjs
+WORKDIR /app
+CMD ["node", "server.js"]
