@@ -1,0 +1,16 @@
+version: 0.2
+phases:
+  pre_build:
+    commands:
+      - aws ecr get-login-password --region ap-northeast-1 | docker login --username AWS --password-stdin 009293460979.dkr.ecr.ap-northeast-1.amazonaws.com
+  build:
+    commands:
+      - docker build -f Dockerfile.release-36 -t salon-de-lien-staging-app:customer-shell-chat-fixed-20260813-43 .
+      - docker tag salon-de-lien-staging-app:customer-shell-chat-fixed-20260813-43 009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app:customer-shell-chat-fixed-20260813-43
+  post_build:
+    commands:
+      - docker push 009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app:customer-shell-chat-fixed-20260813-43
+      - printf '{"image":"009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app:customer-shell-chat-fixed-20260813-43"}' > image.json
+artifacts:
+  files:
+    - image.json
