@@ -1,0 +1,10 @@
+FROM 009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app:temporary-sms-referral-off-cache-fix-20260813-48
+USER root
+WORKDIR /app
+COPY . /tmp/release-41/
+RUN node /tmp/release-41/patch-temporary-coupon-code-entry-off.js \
+  && CUSTOMER_COUPON_CODE_ENTRY_ENABLED=false node /tmp/release-41/verify-release-41.js \
+  && node --check /app/.next/server/app/u/\(account\)/points/page.js \
+  && node --check /app/.next/server/app/api/customer/coupons/use/route.js
+USER nextjs
+WORKDIR /app
