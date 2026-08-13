@@ -1,4 +1,4 @@
-FROM 009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app:review-chat-free-navigation-20260813-54
+FROM 009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app:public-review-pages-20260813-57
 
 USER root
 WORKDIR /app

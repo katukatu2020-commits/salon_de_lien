@@ -6,11 +6,11 @@ phases:
       - aws ecr get-login-password --region ap-northeast-1 | docker login --username AWS --password-stdin 009293460979.dkr.ecr.ap-northeast-1.amazonaws.com
   build:
     commands:
-      - docker build -f Dockerfile.release-46 -t 009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app:public-review-pages-20260813-57 .
+      - docker build -f Dockerfile.release-46 -t 009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app:public-contact-domain-20260813-58 .
   post_build:
     commands:
-      - docker push 009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app:public-review-pages-20260813-57
-      - printf '[{"name":"Web","imageUri":"009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app:public-review-pages-20260813-57"}]' > imagedefinitions.json
+      - docker push 009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app:public-contact-domain-20260813-58
+      - printf '[{"name":"Web","imageUri":"009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app:public-contact-domain-20260813-58"}]' > imagedefinitions.json
 
 artifacts:
   files:
