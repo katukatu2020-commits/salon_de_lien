@@ -1,0 +1,11 @@
+FROM 009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app:customer-ui-unified-20260813-29
+USER root
+COPY patch-customer-interactions.js /tmp/
+RUN node /tmp/patch-customer-interactions.js \
+  && node --check /app/server.js \
+  && node --check '/app/.next/server/app/u/(account)/appointments/page.js' \
+  && mkdir -p /app/.next/cache \
+  && chown -R nextjs:nodejs /app/.next/cache
+USER nextjs
+WORKDIR /app
+CMD ["node", "server.js"]
