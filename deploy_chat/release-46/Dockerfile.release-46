@@ -1,0 +1,13 @@
+FROM 009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app:review-chat-free-navigation-20260813-54
+
+USER root
+WORKDIR /app
+COPY public-site.js /app/public-site.js
+COPY patch-public-review-pages.js /tmp/patch-public-review-pages.js
+COPY verify-public-review-pages.js /tmp/verify-public-review-pages.js
+RUN node /tmp/patch-public-review-pages.js \
+ && node /tmp/verify-public-review-pages.js \
+ && node --check /app/public-site.js \
+ && node --check /app/server.js \
+ && rm /tmp/patch-public-review-pages.js /tmp/verify-public-review-pages.js
+USER nextjs
