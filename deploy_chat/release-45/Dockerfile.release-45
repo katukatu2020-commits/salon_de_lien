@@ -1,0 +1,10 @@
+FROM 009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app:review-chat-free-navigation-20260813-53
+
+USER root
+WORKDIR /app
+COPY patch-review-chat-free-navigation.js /tmp/patch-review-chat-free-navigation.js
+COPY verify-release-45.js /tmp/verify-release-45.js
+RUN node /tmp/patch-review-chat-free-navigation.js \
+ && node /tmp/verify-release-45.js \
+ && rm /tmp/patch-review-chat-free-navigation.js /tmp/verify-release-45.js
+USER nextjs
