@@ -1,0 +1,879 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>実機画面で見る Salon de Lien の使い方</title>
+  <style>
+    @page { size: 16in 9in; margin: 0; }
+    :root {
+      --bg: #FBF7F0;
+      --surface: #FFFFFF;
+      --soft: #F6EFE6;
+      --ink: #2F2A25;
+      --muted: #7C7168;
+      --primary: #8F4F42;
+      --primary-dark: #5B332C;
+      --accent: #D8B56D;
+      --sage: #8AA58A;
+      --border: #E8DED2;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Noto Sans JP", "Yu Gothic UI", system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .slide {
+      position: relative;
+      width: 1440px;
+      height: 810px;
+      overflow: hidden;
+      padding: 42px 46px;
+      page-break-after: always;
+      background:
+        radial-gradient(circle at 90% 8%, rgba(216,181,109,.22), transparent 220px),
+        linear-gradient(135deg, #FBF7F0 0%, #F7EFE6 100%);
+    }
+    .slide::after {
+      content: "";
+      position: absolute;
+      inset: 22px;
+      border: 1px solid rgba(143,79,66,.18);
+      border-radius: 28px;
+      pointer-events: none;
+    }
+    .slide-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--primary);
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: .03em;
+    }
+    h1 {
+      margin: 0;
+      color: var(--ink);
+      font-size: 36px;
+      line-height: 1.22;
+      letter-spacing: .01em;
+    }
+    .page-no {
+      display: grid;
+      place-items: center;
+      width: 46px;
+      height: 46px;
+      border-radius: 999px;
+      background: var(--primary);
+      color: white;
+      font-size: 18px;
+      font-weight: 700;
+      z-index: 2;
+    }
+    .slide-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.12fr) 420px;
+      gap: 26px;
+      height: 650px;
+    }
+    .visual-stack {
+      display: grid;
+      min-width: 0;
+      gap: 16px;
+    }
+    .two-shot .visual-stack {
+      grid-template-columns: 1fr 1fr;
+    }
+    .screen {
+      position: relative;
+      display: grid;
+      place-items: center;
+      min-width: 0;
+      height: 100%;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      background: white;
+      box-shadow: 0 18px 50px rgba(47,42,37,.10);
+    }
+    .screen.compact {
+      height: 100%;
+    }
+    .screen-phone {
+      width: 390px;
+      justify-self: center;
+      border-radius: 34px;
+    }
+    .shot {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      object-position: top center;
+      background: white;
+    }
+    .shot.wide {
+      object-fit: contain;
+    }
+    .phone {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top center;
+    }
+    .story-panel {
+      display: grid;
+      gap: 12px;
+      align-content: start;
+      min-width: 0;
+      height: 100%;
+      padding: 20px;
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      background: rgba(255,255,255,.92);
+      box-shadow: 0 14px 36px rgba(47,42,37,.08);
+    }
+    .story-section {
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .story-section:last-child {
+      border-bottom: none;
+    }
+    .story-section h2 {
+      margin: 0 0 8px;
+      color: var(--primary-dark);
+      font-size: 16px;
+      line-height: 1.3;
+    }
+    ol {
+      margin: 0;
+      padding-left: 22px;
+      font-size: 14px;
+      line-height: 1.62;
+    }
+    .story-section p,
+    .note {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--muted);
+    }
+    .talk {
+      padding: 13px;
+      border: 1px solid rgba(143,79,66,.18);
+      border-radius: 18px;
+      background: #fff7f3;
+    }
+    .next {
+      padding: 13px;
+      border: 1px solid rgba(138,165,138,.35);
+      border-radius: 18px;
+      background: #f1f7ef;
+    }
+    .callout {
+      position: absolute;
+      z-index: 4;
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      background: var(--primary);
+      color: white;
+      font-weight: 700;
+      box-shadow: 0 10px 24px rgba(143,79,66,.28);
+    }
+    .cover {
+      display: grid;
+      grid-template-columns: .78fr 1fr;
+      gap: 42px;
+      align-items: center;
+      padding: 60px;
+    }
+    .cover h1 {
+      font-size: 58px;
+      line-height: 1.14;
+    }
+    .cover-copy p:not(.eyebrow) {
+      margin: 20px 0 0;
+      color: var(--muted);
+      font-size: 22px;
+      line-height: 1.7;
+    }
+    .cover-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 32px;
+    }
+    .cover-meta span {
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: white;
+      padding: 10px 16px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--primary-dark);
+    }
+    .cover-shot {
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 34px;
+      background: white;
+      box-shadow: 0 20px 60px rgba(47,42,37,.14);
+    }
+    .cover-shot img {
+      display: block;
+      width: 100%;
+    }
+    .overview-body {
+      display: grid;
+      grid-template-columns: 440px 1fr;
+      gap: 34px;
+      align-items: start;
+    }
+    .overview-copy {
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      background: white;
+      padding: 30px;
+      box-shadow: 0 14px 40px rgba(47,42,37,.08);
+    }
+    .overview-copy p {
+      margin: 0 0 18px;
+      color: var(--muted);
+      font-size: 22px;
+      line-height: 1.72;
+    }
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+    .flow-item, .summary-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-height: 72px;
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      background: white;
+      padding: 16px;
+      box-shadow: 0 10px 28px rgba(47,42,37,.07);
+    }
+    .flow-item span, .summary-card span {
+      display: grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      border-radius: 999px;
+      background: var(--primary);
+      color: white;
+      font-weight: 700;
+    }
+    .flow-item strong, .summary-card strong {
+      font-size: 20px;
+    }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+      margin-top: 44px;
+    }
+    .summary-card {
+      min-height: 120px;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: center;
+    }
+    .closing {
+      position: absolute;
+      left: 70px;
+      right: 70px;
+      bottom: 72px;
+      margin: 0;
+      border-radius: 30px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      padding: 22px 28px;
+      font-size: 28px;
+      font-weight: 700;
+      text-align: center;
+    }
+    @media print {
+      body { background: white; }
+      .slide { break-after: page; }
+    }
+  </style>
+</head>
+<body>
+  <section class="slide cover">
+    <div class="cover-copy">
+      <p class="eyebrow">Salon de Lien 操作説明資料</p>
+      <h1>実機画面で見る Salon de Lien の使い方</h1>
+      <p>既存客の再来店・店販・レビュー・紹介を、接客の流れに組み込む操作デモ</p>
+      <div class="cover-meta">
+        <span>対象: オーナー・スタッフ向け</span>
+        <span>HTML + PDF版</span>
+      </div>
+    </div>
+    <div class="cover-shot">
+      <img src="screenshots/01_admin_customers_desktop.png" alt="管理画面" />
+    </div>
+    <span class="page-no">1</span>
+  </section>
+<section class="slide overview">
+    <div class="slide-head">
+      <div>
+        <p class="eyebrow">全体像</p>
+        <h1>この資料で見る接客の流れ</h1>
+      </div>
+      <span class="page-no">2</span>
+    </div>
+    <div class="overview-body">
+      <div class="overview-copy">
+        <p>参照PDFで説明した「既存客を動かす美容室CRM」を、実際の接客画面でどう操作するかに落とし込みます。</p>
+        <p>顧客詳細を起点に、商品提案、レビュー依頼、ポイント、クーポン、紹介、レポートまでを一連の流れとして確認します。</p>
+      </div>
+      <div class="flow">
+        <div class="flow-item"><span>1</span><strong>受付</strong></div><div class="flow-item"><span>2</span><strong>カウンセリング</strong></div><div class="flow-item"><span>3</span><strong>施術</strong></div><div class="flow-item"><span>4</span><strong>商品提案</strong></div><div class="flow-item"><span>5</span><strong>会計</strong></div><div class="flow-item"><span>6</span><strong>レビュー</strong></div><div class="flow-item"><span>7</span><strong>ポイント</strong></div><div class="flow-item"><span>8</span><strong>紹介</strong></div><div class="flow-item"><span>9</span><strong>レポート</strong></div><div class="flow-item"><span>10</span><strong>メーカー集計</strong></div>
+      </div>
+    </div>
+  </section>
+<section class="slide">
+    <div class="slide-head">
+      <div>
+        <p class="eyebrow">朝</p>
+        <h1>今日のCRM視点を見る</h1>
+      </div>
+      <span class="page-no">3</span>
+    </div>
+    <div class="slide-grid ">
+      <div class="visual-stack"><div class="screen ">
+        <img class="shot" src="screenshots/01_admin_customers_desktop.png" alt="管理画面 / 顧客一覧" />
+        <span class="callout" style="left:17%;top:20%">1</span><span class="callout" style="left:36%;top:35%">2</span><span class="callout" style="left:72%;top:58%">3</span>
+      </div></div>
+      <aside class="story-panel">
+        <div class="story-section">
+          <h2>操作手順</h2>
+          <ol><li>管理画面を開く</li><li>今日のCRM視点を見る</li><li>再来店候補・レビュー未回答・ポイント失効間近を確認する</li><li>山田 美咲さんを選ぶ</li></ol>
+        </div>
+        <div class="story-section talk">
+          <h2>接客トーク例</h2>
+          <p>今日は山田さんが来店予定。前回カラー後のパサつきが気になっていたので、商品感想と次回ケアを確認します。</p>
+        </div>
+        <div class="story-section">
+          <h2>この操作で残るデータ</h2>
+          <p>顧客一覧、未対応アクション、来店予定、ポイント、商品提案状況。</p>
+        </div>
+        <div class="story-section next">
+          <h2>次につながること</h2>
+          <p>優先して声をかける既存客を決め、顧客詳細へ進みます。</p>
+        </div>
+        
+      </aside>
+    </div>
+  </section>
+<section class="slide">
+    <div class="slide-head">
+      <div>
+        <p class="eyebrow">受付</p>
+        <h1>顧客検索からカルテを開く</h1>
+      </div>
+      <span class="page-no">4</span>
+    </div>
+    <div class="slide-grid ">
+      <div class="visual-stack"><div class="screen ">
+        <img class="shot" src="screenshots/03_customer_search_desktop.png" alt="顧客検索" />
+        <span class="callout" style="left:37%;top:13%">1</span><span class="callout" style="left:24%;top:55%">2</span>
+      </div></div>
+      <aside class="story-panel">
+        <div class="story-section">
+          <h2>操作手順</h2>
+          <ol><li>検索欄に「山田」と入力</li><li>顧客一覧から山田 美咲さんを選択</li><li>顧客詳細を開く</li></ol>
+        </div>
+        <div class="story-section talk">
+          <h2>接客トーク例</h2>
+          <p>山田さん、前回から1か月半くらいですね。前回の内容を確認しながら今日のご提案をしますね。</p>
+        </div>
+        <div class="story-section">
+          <h2>この操作で残るデータ</h2>
+          <p>検索条件、顧客プロフィール、来店候補の確認。</p>
+        </div>
+        <div class="story-section next">
+          <h2>次につながること</h2>
+          <p>来店前の状態把握とカウンセリングへ進みます。</p>
+        </div>
+        
+      </aside>
+    </div>
+  </section>
+<section class="slide">
+    <div class="slide-head">
+      <div>
+        <p class="eyebrow">顧客詳細</p>
+        <h1>次に何をするかを見る</h1>
+      </div>
+      <span class="page-no">5</span>
+    </div>
+    <div class="slide-grid ">
+      <div class="visual-stack"><div class="screen ">
+        <img class="shot" src="screenshots/04_customer_detail_desktop.png" alt="顧客詳細" />
+        
+      </div></div>
+      <aside class="story-panel">
+        <div class="story-section">
+          <h2>操作手順</h2>
+          <ol><li>最終来店日を見る</li><li>保有ポイントを見る</li><li>前回メニューを見る</li><li>未対応アクションを見る</li><li>おすすめアクションを確認する</li></ol>
+        </div>
+        <div class="story-section talk">
+          <h2>接客トーク例</h2>
+          <p>山田さんは前回カラーとトリートメント。今日は仕上がり確認と、乾燥対策のホームケアを提案します。</p>
+        </div>
+        <div class="story-section">
+          <h2>この操作で残るデータ</h2>
+          <p>顧客プロフィール、来店履歴、ポイント口座、次アクション候補。</p>
+        </div>
+        <div class="story-section next">
+          <h2>次につながること</h2>
+          <p>写真・履歴・メニューを見ながら接客内容を決めます。</p>
+        </div>
+        
+      </aside>
+    </div>
+  </section>
+<section class="slide">
+    <div class="slide-head">
+      <div>
+        <p class="eyebrow">カウンセリング</p>
+        <h1>写真・履歴・メニューを見ながら接客する</h1>
+      </div>
+      <span class="page-no">6</span>
+    </div>
+    <div class="slide-grid ">
+      <div class="visual-stack"><div class="screen ">
+        <img class="shot" src="screenshots/04_customer_detail_desktop.png" alt="顧客詳細" />
+        
+      </div></div>
+      <aside class="story-panel">
+        <div class="story-section">
+          <h2>操作手順</h2>
+          <ol><li>写真タブを開く</li><li>前回仕上がりを見る</li><li>履歴タブで悩みを確認</li><li>今回メニューを提案する</li></ol>
+        </div>
+        <div class="story-section talk">
+          <h2>接客トーク例</h2>
+          <p>前回より毛先に少し乾燥が出ているので、今日はまとまりを重視して整えますね。</p>
+        </div>
+        <div class="story-section">
+          <h2>この操作で残るデータ</h2>
+          <p>写真、前回来店、悩み、施術メモ、次回提案理由。</p>
+        </div>
+        <div class="story-section next">
+          <h2>次につながること</h2>
+          <p>今日のメニュー提案を記録します。</p>
+        </div>
+        
+      </aside>
+    </div>
+  </section>
+<section class="slide">
+    <div class="slide-head">
+      <div>
+        <p class="eyebrow">施術前</p>
+        <h1>メニュー提案を記録する</h1>
+      </div>
+      <span class="page-no">7</span>
+    </div>
+    <div class="slide-grid ">
+      <div class="visual-stack"><div class="screen ">
+        <img class="shot" src="screenshots/05_customer_detail_products_desktop.png" alt="商品提案・レビュー依頼" />
+        
+      </div></div>
+      <aside class="story-panel">
+        <div class="story-section">
+          <h2>操作手順</h2>
+          <ol><li>今日のメニューを選ぶ</li><li>提案理由を入力</li><li>次回目安を入力</li><li>保存する</li></ol>
+        </div>
+        <div class="story-section talk">
+          <h2>接客トーク例</h2>
+          <p>45日くらいでケアするときれいに保てるので、次回も同じ流れで見ていきましょう。</p>
+        </div>
+        <div class="story-section">
+          <h2>この操作で残るデータ</h2>
+          <p>提案メニュー、提案理由、次回目安、スタッフメモ。</p>
+        </div>
+        <div class="story-section next">
+          <h2>次につながること</h2>
+          <p>施術中または仕上げ時の商品提案につながります。</p>
+        </div>
+        
+      </aside>
+    </div>
+  </section>
+<section class="slide">
+    <div class="slide-head">
+      <div>
+        <p class="eyebrow">仕上げ</p>
+        <h1>商品提案を記録する</h1>
+      </div>
+      <span class="page-no">8</span>
+    </div>
+    <div class="slide-grid ">
+      <div class="visual-stack"><div class="screen ">
+        <img class="shot" src="screenshots/05_customer_detail_products_desktop.png" alt="商品提案・レビュー依頼" />
+        
+      </div></div>
+      <aside class="story-panel">
+        <div class="story-section">
+          <h2>操作手順</h2>
+          <ol><li>商品を選択</li><li>提案理由を入力</li><li>悩みタグを選ぶ</li><li>状態を「サンプルを渡した」にする</li><li>反応を「興味あり」にする</li><li>保存する</li></ol>
+        </div>
+        <div class="story-section talk">
+          <h2>接客トーク例</h2>
+          <p>ドライヤー前に毛先中心につけると、広がりが落ち着きやすいです。サンプルをお渡しするので使ってみてください。</p>
+        </div>
+        <div class="story-section">
+          <h2>この操作で残るデータ</h2>
+          <p>ProductProposal、商品、悩みタグ、状態、反応、メモ。</p>
+        </div>
+        <div class="story-section next">
+          <h2>次につながること</h2>
+          <p>この商品提案に紐づくレビュー依頼を発行できます。</p>
+        </div>
+        
+      </aside>
+    </div>
+  </section>
+<section class="slide">
+    <div class="slide-head">
+      <div>
+        <p class="eyebrow">レビュー依頼</p>
+        <h1>商品レビュー依頼QRを発行する</h1>
+      </div>
+      <span class="page-no">9</span>
+    </div>
+    <div class="slide-grid ">
+      <div class="visual-stack"><div class="screen ">
+        <img class="shot" src="screenshots/05_customer_detail_products_desktop.png" alt="商品提案・レビュー依頼" />
+        
+      </div></div>
+      <aside class="story-panel">
+        <div class="story-section">
+          <h2>操作手順</h2>
+          <ol><li>商品提案カードからレビュー依頼を押す</li><li>QRまたはURLを表示</li><li>お客様に案内する</li><li>必要ならURLをコピーする</li></ol>
+        </div>
+        <div class="story-section talk">
+          <h2>接客トーク例</h2>
+          <p>使ってみた頃にこのQRから感想を教えてください。回答いただくとポイントも付きます。お名前はメーカーには共有されません。</p>
+        </div>
+        <div class="story-section">
+          <h2>この操作で残るデータ</h2>
+          <p>ProductReviewRequest、期限付きトークン、レビュー依頼状況。</p>
+        </div>
+        <div class="story-section next">
+          <h2>次につながること</h2>
+          <p>後日、お客様が商品レビューに回答します。</p>
+        </div>
+        
+      </aside>
+    </div>
+  </section>
+<section class="slide">
+    <div class="slide-head">
+      <div>
+        <p class="eyebrow">会計</p>
+        <h1>会計時にポイントを案内する</h1>
+      </div>
+      <span class="page-no">10</span>
+    </div>
+    <div class="slide-grid ">
+      <div class="visual-stack"><div class="screen ">
+        <img class="shot" src="screenshots/05_customer_detail_products_desktop.png" alt="商品提案・レビュー依頼" />
+        
+      </div></div>
+      <aside class="story-panel">
+        <div class="story-section">
+          <h2>操作手順</h2>
+          <ol><li>保有ポイントを確認</li><li>利用可能ポイントを確認</li><li>今回使うポイントを入力</li><li>会計時ポイント利用を記録する</li></ol>
+        </div>
+        <div class="story-section talk">
+          <h2>接客トーク例</h2>
+          <p>山田さん、今480ポイントあります。今日400ポイント使われますか？</p>
+        </div>
+        <div class="story-section">
+          <h2>この操作で残るデータ</h2>
+          <p>PointTransaction、PointLot消費、利用後残高。</p>
+        </div>
+        <div class="story-section next">
+          <h2>次につながること</h2>
+          <p>ポイント利用履歴が台帳に残り、次回接客でも確認できます。</p>
+        </div>
+        
+      </aside>
+    </div>
+  </section>
+<section class="slide">
+    <div class="slide-head">
+      <div>
+        <p class="eyebrow">次回来店</p>
+        <h1>次回クーポンを作成する</h1>
+      </div>
+      <span class="page-no">11</span>
+    </div>
+    <div class="slide-grid two-shot">
+      <div class="visual-stack"><div class="screen ">
+        <img class="shot wide" src="screenshots/07_coupon_new_desktop.png" alt="次回クーポン作成" />
+        
+      </div><div class="screen compact">
+        <img class="shot" src="screenshots/08_coupon_print_desktop.png" alt="A4クーポン印刷" />
+      </div></div>
+      <aside class="story-panel">
+        <div class="story-section">
+          <h2>操作手順</h2>
+          <ol><li>顧客名を確認</li><li>対象メニューを選ぶ</li><li>割引率を設定</li><li>有効期限を設定</li><li>印刷プレビューを確認</li><li>印刷または共有する</li></ol>
+        </div>
+        <div class="story-section talk">
+          <h2>接客トーク例</h2>
+          <p>45日くらいでケアするときれいに保てるので、次回トリートメントに使える限定クーポンをお渡ししますね。</p>
+        </div>
+        <div class="story-section">
+          <h2>この操作で残るデータ</h2>
+          <p>CouponIssue、識別コード、発行日、有効期限、印刷履歴。</p>
+        </div>
+        <div class="story-section next">
+          <h2>次につながること</h2>
+          <p>次回来店の理由を紙またはお客様ページで渡します。</p>
+        </div>
+        
+      </aside>
+    </div>
+  </section>
+<section class="slide">
+    <div class="slide-head">
+      <div>
+        <p class="eyebrow">お客様ページ</p>
+        <h1>ホームケア・提案共有を案内する</h1>
+      </div>
+      <span class="page-no">12</span>
+    </div>
+    <div class="slide-grid ">
+      <div class="visual-stack"><div class="screen screen-phone">
+        <img class="phone" src="screenshots/09_customer_portal_mobile.png" alt="お客様ページ" />
+        
+      </div></div>
+      <aside class="story-panel">
+        <div class="story-section">
+          <h2>操作手順</h2>
+          <ol><li>お客様ページを開く</li><li>ホームケア内容を確認</li><li>提案共有ページを案内</li><li>LINE等で共有する</li></ol>
+        </div>
+        <div class="story-section talk">
+          <h2>接客トーク例</h2>
+          <p>今日お話しした乾かし方とサンプルの使い方をまとめています。家で見返せます。</p>
+        </div>
+        <div class="story-section">
+          <h2>この操作で残るデータ</h2>
+          <p>お客様ページ、ホームケア、限定クーポン、ポイント表示。</p>
+        </div>
+        <div class="story-section next">
+          <h2>次につながること</h2>
+          <p>お客様が後日、レビューやフィードバックへ進めます。</p>
+        </div>
+        
+      </aside>
+    </div>
+  </section>
+<section class="slide">
+    <div class="slide-head">
+      <div>
+        <p class="eyebrow">後日</p>
+        <h1>お客様が商品レビューに回答する</h1>
+      </div>
+      <span class="page-no">13</span>
+    </div>
+    <div class="slide-grid ">
+      <div class="visual-stack"><div class="screen screen-phone">
+        <img class="phone" src="screenshots/10_product_review_mobile.png" alt="商品レビュー回答" />
+        
+      </div></div>
+      <aside class="story-panel">
+        <div class="story-section">
+          <h2>操作手順</h2>
+          <ol><li>QRからレビュー画面を開く</li><li>使ったかどうかを選ぶ</li><li>満足度を選ぶ</li><li>良かった点・気になった点を選ぶ</li><li>同意して送信する</li></ol>
+        </div>
+        <div class="story-section talk">
+          <h2>接客トーク例</h2>
+          <p>商品名はお客様が選びません。サロン側が記録した商品提案に紐づくため、正確な商品レビューになります。</p>
+        </div>
+        <div class="story-section">
+          <h2>この操作で残るデータ</h2>
+          <p>ProductReview、匿名共有同意、商品別の評価・コメント。</p>
+        </div>
+        <div class="story-section next">
+          <h2>次につながること</h2>
+          <p>回答内容はポイント付与とメーカー向け匿名集計へつながります。</p>
+        </div>
+        
+      </aside>
+    </div>
+  </section>
+<section class="slide">
+    <div class="slide-head">
+      <div>
+        <p class="eyebrow">ポイント付与</p>
+        <h1>回答でポイントが付く</h1>
+      </div>
+      <span class="page-no">14</span>
+    </div>
+    <div class="slide-grid ">
+      <div class="visual-stack"><div class="screen screen-phone">
+        <img class="phone" src="screenshots/11_review_thanks_mobile.png" alt="レビュー回答後トップ" />
+        
+      </div></div>
+      <aside class="story-panel">
+        <div class="story-section">
+          <h2>操作手順</h2>
+          <ol><li>回答完了</li><li>50pt付与を確認</li><li>お客様トップに戻る</li><li>次回来店時に利用する</li></ol>
+        </div>
+        <div class="story-section talk">
+          <h2>接客トーク例</h2>
+          <p>レビュー評価の良し悪しではなく、回答へのお礼としてポイントを付与します。</p>
+        </div>
+        <div class="story-section">
+          <h2>この操作で残るデータ</h2>
+          <p>PointTransaction、ProductReview、ProductReviewRequest answered。</p>
+        </div>
+        <div class="story-section next">
+          <h2>次につながること</h2>
+          <p>次回来店時の会計利用や再来店理由になります。</p>
+        </div>
+        
+      </aside>
+    </div>
+  </section>
+<section class="slide">
+    <div class="slide-head">
+      <div>
+        <p class="eyebrow">紹介</p>
+        <h1>フィードバック・紹介につなげる</h1>
+      </div>
+      <span class="page-no">15</span>
+    </div>
+    <div class="slide-grid two-shot">
+      <div class="visual-stack"><div class="screen screen-phone">
+        <img class="phone" src="screenshots/12_feedback_mobile.png" alt="来店後フィードバック" />
+        
+      </div><div class="screen compact">
+        <img class="shot" src="screenshots/13_referral_mobile.png" alt="紹介ページ" />
+      </div></div>
+      <aside class="story-panel">
+        <div class="story-section">
+          <h2>操作手順</h2>
+          <ol><li>接客後のフィードバックを依頼</li><li>回答で30pt付与</li><li>満足度が高いお客様に紹介コードを案内</li><li>紹介された方の初回来店後に紹介元へポイント付与</li></ol>
+        </div>
+        <div class="story-section talk">
+          <h2>接客トーク例</h2>
+          <p>もし周りで美容室を探している方がいたら、この紹介リンクを送っていただけます。</p>
+        </div>
+        <div class="story-section">
+          <h2>この操作で残るデータ</h2>
+          <p>ContactLog、Referral、紹介ステータス、紹介ポイント候補。</p>
+        </div>
+        <div class="story-section next">
+          <h2>次につながること</h2>
+          <p>既存客から新規相談が生まれます。</p>
+        </div>
+        
+      </aside>
+    </div>
+  </section>
+<section class="slide">
+    <div class="slide-head">
+      <div>
+        <p class="eyebrow">オーナー</p>
+        <h1>販促CRMレポートを見る</h1>
+      </div>
+      <span class="page-no">16</span>
+    </div>
+    <div class="slide-grid ">
+      <div class="visual-stack"><div class="screen ">
+        <img class="shot" src="screenshots/14_offers_report_desktop.png" alt="販促CRMレポート" />
+        
+      </div></div>
+      <aside class="story-panel">
+        <div class="story-section">
+          <h2>操作手順</h2>
+          <ol><li>レポートを開く</li><li>クーポン・レビュー・ポイント・紹介の状況を見る</li><li>未対応タスクを確認する</li><li>次に動かすお客様を決める</li></ol>
+        </div>
+        <div class="story-section talk">
+          <h2>接客トーク例</h2>
+          <p>売上だけでなく、既存客施策が回っているかを毎週確認します。</p>
+        </div>
+        <div class="story-section">
+          <h2>この操作で残るデータ</h2>
+          <p>クーポン発行数、レビュー回答数、ポイント付与数、紹介成立数、未対応タスク。</p>
+        </div>
+        <div class="story-section next">
+          <h2>次につながること</h2>
+          <p>次に動かす既存客を選び、顧客詳細へ戻ります。</p>
+        </div>
+        
+      </aside>
+    </div>
+  </section>
+<section class="slide">
+    <div class="slide-head">
+      <div>
+        <p class="eyebrow">メーカー集計</p>
+        <h1>メーカー向け商品集計を見る</h1>
+      </div>
+      <span class="page-no">17</span>
+    </div>
+    <div class="slide-grid ">
+      <div class="visual-stack"><div class="screen ">
+        <img class="shot" src="screenshots/15_manufacturer_report_desktop.png" alt="メーカー向け商品集計" />
+        
+      </div></div>
+      <aside class="story-panel">
+        <div class="story-section">
+          <h2>操作手順</h2>
+          <ol><li>メーカーを選ぶ</li><li>期間を選ぶ</li><li>商品別の提案数・レビュー数を見る</li><li>良かった点・気になった点を見る</li><li>匿名コメントを確認する</li></ol>
+        </div>
+        <div class="story-section talk">
+          <h2>接客トーク例</h2>
+          <p>顧客個人情報を出さず、美容室現場の商品反応をメーカーに返せます。</p>
+        </div>
+        <div class="story-section">
+          <h2>この操作で残るデータ</h2>
+          <p>商品別の匿名・集計データ。顧客名、電話番号、メール、customerId、スタッフ名、来店日時の個票は出ません。</p>
+        </div>
+        <div class="story-section next">
+          <h2>次につながること</h2>
+          <p>商品改善やメーカー連携の提案材料になります。</p>
+        </div>
+        
+      </aside>
+    </div>
+  </section>
+<section class="slide summary">
+      <div class="slide-head">
+        <div>
+          <p class="eyebrow">まとめ</p>
+          <h1>Salon de Lien は、接客の流れの中で既存客を動かす</h1>
+        </div>
+        <span class="page-no">18</span>
+      </div>
+      <div class="summary-grid">
+        <div class="summary-card"><span>1</span><strong>顧客詳細で状態を把握</strong></div><div class="summary-card"><span>2</span><strong>商品提案で店販につなげる</strong></div><div class="summary-card"><span>3</span><strong>レビュー依頼で声を集める</strong></div><div class="summary-card"><span>4</span><strong>ポイントで再来店の理由を作る</strong></div><div class="summary-card"><span>5</span><strong>クーポンで次回予約につなげる</strong></div><div class="summary-card"><span>6</span><strong>紹介で新規客を生む</strong></div><div class="summary-card"><span>7</span><strong>レポートで未対応を見える化</strong></div><div class="summary-card"><span>8</span><strong>メーカー集計で商品反応を収益化</strong></div>
+      </div>
+      <p class="closing">顧客を登録するシステムではなく、既存客との関係を動かすCRMです。</p>
+    </section>
+</body>
+</html>

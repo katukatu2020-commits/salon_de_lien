@@ -1,12 +1,18 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { CalendarDays, HeartHandshake, Home, MessageCircle, Scissors, Sparkles } from "lucide-react";
+import { BrandVisual, customerCareVisualVariant } from "@/components/lien/brand-visual";
 import { prisma } from "@/lib/prisma";
+import { legacyCustomerIdPortalAllowed } from "@/lib/auth/customer-portal";
 
 type CarePlanPageProps = {
   params: {
     id: string;
   };
+  searchParams?: {
+    inApp?: string;
+  };
+  portalToken?: string;
 };
 
 function formatDate(date?: Date | null) {
@@ -25,23 +31,6 @@ function addMonths(date: Date, months: number) {
   const nextDate = new Date(date);
   nextDate.setMonth(nextDate.getMonth() + months);
   return nextDate;
-}
-
-function pageUrl(path: string) {
-  const baseUrl =
-    process.env.NEXT_PUBLIC_APP_URL ??
-    process.env.APP_URL ??
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "");
-
-  return baseUrl ? `${baseUrl.replace(/\/$/, "")}${path}` : path;
-}
-
-function feedbackShareUrl(customerId: string) {
-  return pageUrl(`/feedback/${customerId}`);
-}
-
-function referralShareUrl(customerId: string, customerName: string) {
-  return pageUrl(`/intake?referrer=${encodeURIComponent(customerId)}&referrerName=${encodeURIComponent(customerName)}`);
 }
 
 function careTips({
@@ -69,7 +58,11 @@ function careTips({
   return { title, tips };
 }
 
-export default async function CarePlanPage({ params }: CarePlanPageProps) {
+export default async function CarePlanPage({ params, searchParams, portalToken }: CarePlanPageProps) {
+  if (!portalToken && !legacyCustomerIdPortalAllowed()) {
+    notFound();
+  }
+
   const customer = await prisma.customer.findFirst({
     where: {
       id: params.id,
@@ -107,13 +100,18 @@ export default async function CarePlanPage({ params }: CarePlanPageProps) {
     notFound();
   }
 
+  if (!portalToken && searchParams?.inApp !== "1") {
+    redirect(`/u/${customer.id}/care`);
+  }
+
   const latestVisit = customer.visits[0] ?? null;
   const latestSale = customer.serviceSales[0] ?? null;
   const latestSuggestion = customer.styleSuggestions[0] ?? null;
   const upcomingAppointment = customer.appointments[0] ?? null;
   const nextVisitDate = upcomingAppointment?.scheduledAt ?? addMonths(latestSale?.paidAt ?? latestVisit?.visitedAt ?? new Date(), 2);
-  const feedbackUrl = feedbackShareUrl(customer.id);
-  const referralUrl = referralShareUrl(customer.id, customer.name);
+  const portalBase = `/u/${portalToken ?? customer.id}`;
+  const feedbackUrl = `${portalBase}/feedback`;
+  const referralUrl = `${portalBase}/intake`;
   const tips = careTips({
     latestSaleTitle: latestSale?.title,
     preferredStyle: customer.preference?.preferredStyle,
@@ -124,13 +122,21 @@ export default async function CarePlanPage({ params }: CarePlanPageProps) {
   return (
     <main className="min-h-screen bg-[#f8f5ef] text-stone-900">
       <section className="mx-auto grid w-full max-w-4xl gap-5 px-4 py-6 sm:px-6 lg:px-8">
-        <div className="rounded-lg border border-stone-200 bg-white p-5 shadow-sm">
-          <p className="text-sm font-semibold text-teal-800">Salon de Lien</p>
-          <h1 className="mt-2 text-3xl font-semibold text-stone-950">{customer.name}様のホームケアメモ</h1>
-          <p className="mt-3 text-sm leading-7 text-stone-600">
-            今日の仕上がりを家でも保ちやすくするための、乾かし方・次回目安・相談リンクをまとめています。
-          </p>
-          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+        <div className="overflow-hidden rounded-[26px] border border-stone-200 bg-white shadow-sm">
+          <BrandVisual
+            variant={customerCareVisualVariant(customer.gender)}
+            className="h-52"
+            imageClassName="object-[58%_50%]"
+            sizes="(max-width: 896px) 100vw, 896px"
+            priority
+          />
+          <div className="p-5 sm:p-6">
+            <p className="text-sm font-semibold text-teal-800">Salon de Lien</p>
+            <h1 className="mt-2 text-3xl font-semibold text-stone-950">{customer.name}様のホームケアメモ</h1>
+            <p className="mt-3 text-sm leading-7 text-stone-600">
+              今日の仕上がりを家でも保ちやすくするための、乾かし方・次回目安・相談リンクをまとめています。
+            </p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
             <div className="rounded-md border border-stone-200 bg-[#fbf8f3] p-3">
               <p className="flex items-center gap-2 text-xs font-semibold text-stone-500">
                 <Scissors className="h-4 w-4" />
@@ -151,6 +157,7 @@ export default async function CarePlanPage({ params }: CarePlanPageProps) {
                 次回の目安
               </p>
               <p className="mt-2 text-sm font-semibold text-stone-950">{formatDate(nextVisitDate)}</p>
+            </div>
             </div>
           </div>
         </div>

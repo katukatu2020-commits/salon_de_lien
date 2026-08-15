@@ -74,17 +74,19 @@ function UploadButton({ disabled }: { disabled?: boolean }) {
 
 function AiPhotoGroupCard({
   customerId,
+  portalToken,
   group,
   initialImageUrls
 }: {
   customerId: string;
+  portalToken?: string;
   group: PhotoGroup;
   initialImageUrls: string[];
 }) {
   const router = useRouter();
   const normalizedInitialImageUrls = useMemo(() => uniqueUrls(initialImageUrls), [initialImageUrls]);
   const [state, formAction] = useFormState(
-    uploadAiReferencePhotoAction.bind(null, customerId, group.key),
+    uploadAiReferencePhotoAction.bind(null, customerId, group.key, portalToken ?? null),
     initialUploadState
   );
   const [imageUrls, setImageUrls] = useState(normalizedInitialImageUrls);
@@ -127,6 +129,7 @@ function AiPhotoGroupCard({
         formData.set("customerId", customerId);
         formData.set("group", group.key);
         formData.set("imageUrl", imageUrl);
+        if (portalToken) formData.set("portalToken", portalToken);
 
         await removeAiReferencePhotoAction(formData);
         setImageUrls((current) => current.filter((url) => url !== imageUrl));
@@ -222,12 +225,14 @@ function AiPhotoGroupCard({
 
 export function CustomerAppAiPhotoUploader({
   customerId,
+  portalToken,
   frontImageUrls,
   sideImageUrls,
   backImageUrls,
   consent
 }: {
   customerId: string;
+  portalToken?: string;
   frontImageUrls: string[];
   sideImageUrls: string[];
   backImageUrls: string[];
@@ -259,6 +264,7 @@ export function CustomerAppAiPhotoUploader({
           formData.set("aiPhotoConsent", "on");
         }
 
+        if (portalToken) formData.set("portalToken", portalToken);
         await updateCustomerAiPhotoConsent(customerId, formData);
         setLocalConsent(nextConsent);
         setConsentMessage(nextConsent ? "写真利用に同意しました。" : "写真利用の同意を解除しました。");
@@ -332,6 +338,7 @@ export function CustomerAppAiPhotoUploader({
           <AiPhotoGroupCard
             key={group.key}
             customerId={customerId}
+            portalToken={portalToken}
             group={group}
             initialImageUrls={imageMap[group.key]}
           />

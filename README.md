@@ -119,6 +119,19 @@ npm run dev
 
 ## npm scripts
 
+## 限定クーポンチラシ v2
+
+- ベース画像: `public/coupon-template/coupon_template_clean_v2.png`
+- 座標定義: `src/lib/coupons/coupon_red_fields_layout_v2.json`
+- 編集画面: `/customers/[id]/coupon`
+- 印刷画面: `/customers/[id]/coupon/print/[couponIssueId]`
+- 動的文字はJSONの `fields` にある `bbox` / `align` / `vertical_align` / `font_role` / `max_font_size` / `min_font_size` / `fill` だけを使って描画します。
+- 印刷PNGは `sharp` + SVG text layer でdeterministicに生成し、各text layerはbboxでclipします。
+- 生成後、editable mask外のピクセル差分が0であることを検証します。
+- 画像へのAI編集、白マスク、半透明マスクは使いません。
+- production fontは `public/coupon-template/fonts/` 配下へJSONの `production_font_file` と同じ名前で配置してください。未配置の場合は自動代替せず生成を停止します。
+- 識別コードは `SDL-YYYYMMDD-XXXXXX` 形式で `CouponIssue.couponCode` に保存します。
+
 ```bash
 npm run dev
 npm run build
@@ -350,3 +363,14 @@ FAL_STYLE_MODEL="photomaker"
 `fal-identity-master-openai-edit` sends only identity master images that pass quality and identity checks to OpenAI hair edit. If OpenAI hair edit fails, identity master images are not automatically saved as final outputs.
 
 The legacy values `fal-photomaker` and `fal-photomaker-openai-edit` are kept for backward compatibility and are normalized internally to the new identity master providers.
+# Gmail予約メールのAPI連携
+
+予約カレンダーはGmail APIの読み取り専用OAuthを使い、送信者表示名が「【かんざし結】受付」、送信元が `kanzashi@pacificporter.jp`、件名が「新規のご予約が確定しました」で始まるメールだけを読み取ります。予約に必要な項目を抽出した後、メール本文、Gmailのパスワードは保存しません。同じGmailメッセージはメッセージIDで判定するため、再同期しても二重登録されません。
+
+1. Google CloudでGmail APIを有効にし、デスクトップアプリ用OAuthクライアントを作成します。
+2. `.env.local` に `GMAIL_RESERVATION_EMAIL`、`GMAIL_OAUTH_CLIENT_ID`、`GMAIL_OAUTH_CLIENT_SECRET` を設定します。
+3. `npm run setup:gmail-oauth` を実行し、予約受付用Googleアカウントで読み取りを許可します。
+4. OAuth完了後にアプリを再起動します。
+5. 同期状態は `/admin/appointments` で確認できます。ローカル運用では新着メールを1分ごとに確認します。
+
+Chromeブラウザ拡張はOAuthが使えない場合の旧ローカル補助手段として残していますが、通常運用ではGmail APIを使用します。

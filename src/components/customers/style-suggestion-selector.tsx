@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState, useTransition } from "react";
@@ -252,6 +252,7 @@ export function StyleSuggestionSelector({
   const [isDeletingImage, startImageDeleteTransition] = useTransition();
   const [imageDeleteMessage, setImageDeleteMessage] = useState("");
   const [isMessageCopied, setIsMessageCopied] = useState(false);
+  const [isPortalLinkPending, setIsPortalLinkPending] = useState(false);
   const selectableSuggestions = useMemo(() => buildVisibleSuggestions(suggestions), [suggestions]);
   const archivedSuggestions = useMemo(
     () =>
@@ -285,7 +286,7 @@ export function StyleSuggestionSelector({
 
   function selectSuggestion(nextId: string) {
     setSelectedId(nextId);
-    router.replace(`/customers/${customerId}?suggestionId=${nextId}`, { scroll: false });
+    router.replace(`/admin/customers/${customerId}?suggestionId=${nextId}`, { scroll: false });
   }
 
   function deleteGeneratedImage(imageUrl: string) {
@@ -310,7 +311,7 @@ export function StyleSuggestionSelector({
         setImageDeleteMessage(result.message);
 
         if (result.ok) {
-          router.replace(`/customers/${customerId}?suggestionId=${selectedSuggestion?.id ?? ""}`, { scroll: false });
+          router.replace(`/admin/customers/${customerId}?suggestionId=${selectedSuggestion?.id ?? ""}`, { scroll: false });
           router.refresh();
         }
       })().catch(() => {
@@ -319,17 +320,44 @@ export function StyleSuggestionSelector({
     });
   }
 
-  function copyCustomerMessage() {
+  async function issueProposalPortalUrl() {
+    if (!selectedSuggestion) throw new Error("提案が選択されていません。");
+    const response = await fetch(`/api/admin/customers/${encodeURIComponent(customerId)}/portal-access`, {
+      method: "POST"
+    });
+    const payload = (await response.json()) as { portalUrl?: string; error?: string };
+    if (!response.ok || !payload.portalUrl) {
+      throw new Error(payload.error ?? "お客様URLを発行できませんでした。");
+    }
+    return `${payload.portalUrl.replace(/\/$/, "")}/proposals/${selectedSuggestion.id}`;
+  }
+
+  async function copyCustomerMessage() {
     if (!selectedSuggestion) {
       return;
     }
 
-    const message = buildCustomerProposalMessage(selectedSuggestion, `${window.location.origin}/proposals/${selectedSuggestion.id}`);
-    setIsMessageCopied(false);
-    void navigator.clipboard.writeText(message).then(() => {
+    setIsPortalLinkPending(true);
+    try {
+      const proposalUrl = await issueProposalPortalUrl();
+      const message = buildCustomerProposalMessage(selectedSuggestion, proposalUrl);
+      await navigator.clipboard.writeText(message);
       setIsMessageCopied(true);
       window.setTimeout(() => setIsMessageCopied(false), 1800);
-    });
+    } finally {
+      setIsPortalLinkPending(false);
+    }
+  }
+
+  async function openProposalPage() {
+    if (isPortalLinkPending) return;
+    setIsPortalLinkPending(true);
+    try {
+      const proposalUrl = await issueProposalPortalUrl();
+      window.open(proposalUrl, "_blank", "noopener,noreferrer");
+    } finally {
+      setIsPortalLinkPending(false);
+    }
   }
 
   if (!selectedSuggestion) {
@@ -351,7 +379,7 @@ export function StyleSuggestionSelector({
       ? "正面・横・斜め後ろ写真を1枚ずつ登録すると、髪型シミュレーションを生成できます。"
       : undefined;
   const addImageAction = addStyleSuggestionImageUrl.bind(null, customerId, selectedSuggestion.id);
-  const proposalSharePath = `/proposals/${selectedSuggestion.id}`;
+  const proposalSharePath = `{{PORTAL_URL}}/proposals/${selectedSuggestion.id}`;
   const acceptAction = updateStyleSuggestionAccepted.bind(
     null,
     customerId,
@@ -502,21 +530,22 @@ export function StyleSuggestionSelector({
             <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
-                onClick={copyCustomerMessage}
+                onClick={() => void copyCustomerMessage()}
+                disabled={isPortalLinkPending}
                 className="inline-flex h-9 items-center gap-2 rounded-md border border-teal-200 bg-white px-3 text-xs font-semibold text-teal-900 hover:bg-teal-100"
               >
                 <Copy className="h-3.5 w-3.5" />
                 {isMessageCopied ? "コピー済み" : "送信用文面をコピー"}
               </button>
-              <a
-                href={proposalSharePath}
-                target="_blank"
-                rel="noreferrer"
+              <button
+                type="button"
+                onClick={() => void openProposalPage()}
+                disabled={isPortalLinkPending}
                 className="inline-flex h-9 items-center gap-2 rounded-md border border-teal-200 bg-white px-3 text-xs font-semibold text-teal-900 hover:bg-teal-100"
               >
                 <ExternalLink className="h-3.5 w-3.5" />
                 共有ページ
-              </a>
+              </button>
             </div>
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -631,3 +660,4 @@ export function StyleSuggestionSelector({
     </div>
   );
 }
+

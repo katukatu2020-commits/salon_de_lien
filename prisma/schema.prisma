@@ -7,11 +7,113 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum AppRole {
+  ADMIN
+  STAFF
+  CUSTOMER
+  MANUFACTURER
+}
+
+model Organization {
+  id                             String   @id
+  slug                           String   @unique
+  name                           String
+  iconImageUrl                   String?
+  taxRate                        Int      @default(10)
+  defaultCouponDiscountRate      Int      @default(10)
+  referralReferrerDiscountRate   Int      @default(15)
+  referralReferredDiscountRate   Int      @default(20)
+  pointDefaultValidDays          Int      @default(40)
+  pointMinimumRedeem             Int      @default(1)
+  pointMaxRedemptionPercent      Int      @default(50)
+  reviewPrizeFirstPoints         Int      @default(1000)
+  reviewPrizeFirstRate           Int      @default(1)
+  reviewPrizeSecondPoints        Int      @default(200)
+  reviewPrizeSecondRate          Int      @default(9)
+  reviewPrizeThirdPoints         Int      @default(80)
+  reviewPrizeThirdRate           Int      @default(90)
+  couponDefaultValidDays         Int      @default(14)
+  couponMaxValidDays             Int      @default(20)
+  couponMinimumDiscountRate      Int      @default(5)
+  couponMaximumDiscountRate      Int      @default(30)
+  createdAt                      DateTime @default(now())
+  updatedAt                      DateTime @updatedAt
+
+  customers                   Customer[]
+  products                    Product[]
+  users                       AppUser[]
+  staffBookingSettings        StaffBookingSetting[]
+  bookingCapacityOverrides    BookingCapacityOverride[]
+  customerRegistrationInvites CustomerRegistrationInvite[]
+  visitCommunityPosts         VisitCommunityPost[]
+  customerBroadcasts          CustomerBroadcast[]
+}
+
+model AppUser {
+  id               String   @id @default(cuid())
+  organizationId   String?
+  customerId       String?  @unique
+  email            String   @unique
+  loginId          String?  @unique
+  displayName      String?
+  passwordHash     String?
+  role             AppRole
+  manufacturerName String?
+  active           Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  organization        Organization?           @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  customer            Customer?               @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  passwordResetTokens PasswordResetToken[]
+  communityLikes      VisitCommunityLike[]
+  communityComments   VisitCommunityComment[]
+  customerBroadcasts  CustomerBroadcast[]
+
+  @@index([organizationId, role])
+  @@index([manufacturerName])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  appUserId String
+  tokenHash String    @unique
+  audience  String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  appUser AppUser @relation(fields: [appUserId], references: [id], onDelete: Cascade)
+
+  @@index([appUserId, createdAt])
+  @@index([expiresAt, usedAt])
+}
+
+model CustomerRegistrationInvite {
+  id             String    @id @default(cuid())
+  organizationId String
+  customerId     String?   @unique
+  email          String
+  tokenHash      String    @unique
+  contextJson    Json?
+  expiresAt      DateTime
+  usedAt         DateTime?
+  createdAt      DateTime  @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customer     Customer?    @relation(fields: [customerId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, email, createdAt])
+  @@index([expiresAt, usedAt])
+}
+
 model Customer {
-  id                    String                 @id @default(cuid())
+  id                    String                      @id @default(cuid())
+  organizationId        String                      @default("org_salon_de_lien")
   name                  String
   gender                String?
   birthYear             Int?
+  birthDate             DateTime?
   phone                 String?
   profileImageUrl       String?
   aiFrontImageUrl       String?
@@ -20,11 +122,14 @@ model Customer {
   aiFrontImageUrlsJson  String?
   aiSideImageUrlsJson   String?
   aiBackImageUrlsJson   String?
-  aiPhotoConsent        Boolean                @default(false)
+  aiPhotoConsent        Boolean                     @default(false)
   memo                  String?
+  servicePreference     String?
+  staffAssignmentType   String?
+  assignedStaffName     String?
   deletedAt             DateTime?
-  createdAt             DateTime               @default(now())
-  updatedAt             DateTime               @updatedAt
+  createdAt             DateTime                    @default(now())
+  updatedAt             DateTime                    @updatedAt
   hairProfile           HairProfile?
   preference            Preference?
   visits                Visit[]
@@ -34,6 +139,81 @@ model Customer {
   appointments          Appointment[]
   serviceSales          ServiceSale[]
   proposalResponses     ProposalResponse[]
+  customerOffers        CustomerOffer[]
+  productSuggestions    ProductSuggestion[]
+  productProposals      ProductProposal[]
+  partnerCoupons        PartnerCoupon[]
+  coupons               Coupon[]
+  couponIssues          CouponIssue[]
+  consents              Consent[]
+  referredByCustomerId  String?
+  pointAccount          CustomerPointAccount?
+  pointTransactions     PointTransaction[]
+  pointLots             PointLot[]
+  pendingPointRewards   PendingPointReward[]
+  referralsMade         Referral[]                  @relation("ReferralReferrer")
+  referralsReceived     Referral[]                  @relation("ReferralReferred")
+  organization          Organization                @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  appUsers              AppUser[]
+  portalAccesses        CustomerPortalAccess[]
+  phoneIdentity         CustomerPhoneIdentity?
+  registrationInvite    CustomerRegistrationInvite?
+  visitPhotos           VisitPhoto[]
+  communityPosts        VisitCommunityPost[]
+  broadcastRecipients  CustomerBroadcastRecipient[]
+
+  @@index([organizationId, deletedAt])
+  @@index([referredByCustomerId])
+}
+
+model CustomerPhoneIdentity {
+  id             String   @id @default(cuid())
+  organizationId String
+  customerId     String   @unique
+  phoneE164      String
+  verifiedAt     DateTime
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, phoneE164])
+  @@index([phoneE164])
+}
+
+model SmsVerificationChallenge {
+  id                    String    @id @default(cuid())
+  organizationId        String
+  phoneE164             String
+  codeHash              String
+  registrationTokenHash String?
+  requestIpHash         String?
+  expiresAt             DateTime
+  verifiedAt            DateTime?
+  consumedAt            DateTime?
+  attempts              Int       @default(0)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([organizationId, phoneE164, createdAt])
+  @@index([requestIpHash, createdAt])
+  @@index([expiresAt, consumedAt])
+}
+
+model CustomerPortalAccess {
+  id         String    @id @default(cuid())
+  customerId String
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  lastUsedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId, expiresAt])
+  @@index([expiresAt, revokedAt])
 }
 
 model HairProfile {
@@ -42,6 +222,7 @@ model HairProfile {
   hairThickness      String?
   hairVolume         String?
   hairTexture        String?
+  hairCurl           String?
   scalpCondition     String?
   faceShape          String?
   forehead           String?
@@ -78,19 +259,98 @@ model Visit {
   customer              Customer               @relation(fields: [customerId], references: [id], onDelete: Cascade)
   styleSuggestions      StyleSuggestion[]
   courseRecommendations CourseRecommendation[]
+  coupons               Coupon[]
+  productProposals      ProductProposal[]
+  photos                VisitPhoto[]
+  communityPost         VisitCommunityPost?
 
   @@index([customerId, visitedAt])
 }
 
+model VisitCommunityPost {
+  id                   String    @id @default(cuid())
+  organizationId       String
+  customerId           String
+  visitId              String    @unique
+  published            Boolean   @default(true)
+  publishedAt          DateTime  @default(now())
+  aiCommentDueAt       DateTime?
+  aiCommentedAt        DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  organization Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customer     Customer                @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  visit        Visit                   @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  likes        VisitCommunityLike[]
+  comments     VisitCommunityComment[]
+
+  @@index([organizationId, published, publishedAt])
+  @@index([organizationId, published, aiCommentDueAt, aiCommentedAt])
+  @@index([customerId, publishedAt])
+}
+
+model VisitCommunityLike {
+  id        String   @id @default(cuid())
+  postId    String
+  appUserId String
+  createdAt DateTime @default(now())
+
+  post    VisitCommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  appUser AppUser            @relation(fields: [appUserId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, appUserId])
+  @@index([appUserId, createdAt])
+}
+
+model VisitCommunityComment {
+  id                String    @id @default(cuid())
+  postId            String
+  appUserId         String?
+  authorDisplayName String
+  authorRole        AppRole
+  isStylistComment  Boolean   @default(false)
+  isAiAssistant     Boolean   @default(false)
+  body              String
+  deletedAt         DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  post    VisitCommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  appUser AppUser?           @relation(fields: [appUserId], references: [id], onDelete: SetNull)
+
+  @@index([postId, deletedAt, createdAt])
+  @@index([postId, isAiAssistant, deletedAt])
+  @@index([appUserId, createdAt])
+}
+
+model VisitPhoto {
+  id               String   @id @default(cuid())
+  customerId       String
+  visitId          String
+  storageReference String   @unique
+  caption          String?
+  uploadedByUserId String?
+  uploadedByName   String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  visit    Visit    @relation(fields: [visitId], references: [id], onDelete: Cascade)
+
+  @@index([customerId, createdAt])
+  @@index([visitId, createdAt])
+}
+
 model StyleSuggestion {
-  id                 String   @id @default(cuid())
+  id                 String             @id @default(cuid())
   customerId         String
   visitId            String?
   suggestedStyleName String
   reason             String?
   caution            String?
   stylingAdvice      String?
-  imageUrls          String[] @default([])
+  imageUrls          String[]           @default([])
   imageUrlsJson      String?
   menuSuggestion     String?
   estimatedMinutes   Int?
@@ -98,14 +358,15 @@ model StyleSuggestion {
   label              String?
   faceAnalysis       String?
   imagePrompt        String?
-  accepted           Boolean  @default(false)
+  accepted           Boolean            @default(false)
   archivedAt         DateTime?
-  createdAt          DateTime @default(now())
-  customer           Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  visit              Visit?   @relation(fields: [visitId], references: [id], onDelete: SetNull)
+  createdAt          DateTime           @default(now())
+  customer           Customer           @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  visit              Visit?             @relation(fields: [visitId], references: [id], onDelete: SetNull)
   proposalResponses  ProposalResponse[]
 
   @@index([customerId, createdAt])
+  @@index([customerId, archivedAt, createdAt])
 }
 
 model CourseRecommendation {
@@ -129,7 +390,7 @@ model CourseRecommendation {
 }
 
 model ContactLog {
-  id                String   @id @default(cuid())
+  id                String    @id @default(cuid())
   customerId        String
   channel           String
   purpose           String?
@@ -137,7 +398,7 @@ model ContactLog {
   outcome           String?
   nextAction        String?
   scheduledFollowUp DateTime?
-  createdAt         DateTime @default(now())
+  createdAt         DateTime  @default(now())
 
   customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
 
@@ -149,19 +410,55 @@ model Appointment {
   id              String   @id @default(cuid())
   customerId      String
   scheduledAt     DateTime
+  durationMinutes Int?
   menu            String?
+  staffName       String?
   estimatedPrice  Int?
   status          String   @default("仮予約")
   source          String?
+  bookingProvider String?
   note            String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customer     Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
   serviceSales ServiceSale[]
 
   @@index([customerId, scheduledAt])
   @@index([scheduledAt])
+  @@index([bookingProvider, scheduledAt])
+}
+
+model StaffBookingSetting {
+  id                        String   @id @default(cuid())
+  organizationId            String
+  staffKey                   String
+  staffName                  String
+  maxConcurrentAppointments Int      @default(1)
+  workStartMinutes          Int      @default(600)
+  workEndMinutes            Int      @default(1140)
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, staffKey])
+  @@index([organizationId, staffName])
+}
+
+model BookingCapacityOverride {
+  id               String   @id @default(cuid())
+  organizationId   String
+  dateKey           String
+  slotStartMinutes Int
+  capacity          Int
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, dateKey, slotStartMinutes])
+  @@index([organizationId, dateKey])
 }
 
 model ServiceSale {
@@ -176,16 +473,485 @@ model ServiceSale {
   note          String?
   createdAt     DateTime @default(now())
 
-  customer    Customer     @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  appointment Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  customer     Customer          @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  appointment  Appointment?      @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  productLines ProductSaleLine[]
 
   @@index([customerId, paidAt])
   @@index([appointmentId])
   @@index([paidAt])
 }
 
+model CustomerOffer {
+  id              String    @id @default(cuid())
+  customerId      String
+  title           String
+  offerType       String    @default("salon")
+  description     String?
+  benefit         String?
+  couponCode      String?
+  expectedRevenue Int?
+  status          String    @default("draft")
+  reactionStatus  String?
+  reactionNote    String?
+  validFrom       DateTime?
+  validUntil      DateTime?
+  publishedAt     DateTime?
+  redeemedAt      DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  customer           Customer            @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  productSuggestions ProductSuggestion[]
+  partnerCoupons     PartnerCoupon[]
+
+  @@index([customerId, createdAt])
+  @@index([status, validUntil])
+}
+
+model ProductSuggestion {
+  id             String    @id @default(cuid())
+  customerId     String
+  offerId        String?
+  productName    String
+  category       String?
+  makerName      String?
+  reason         String?
+  estimatedPrice Int?
+  status         String    @default("proposed")
+  reactionStatus String?
+  reactionNote   String?
+  purchasedAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  customer Customer       @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  offer    CustomerOffer? @relation(fields: [offerId], references: [id], onDelete: SetNull)
+
+  @@index([customerId, createdAt])
+  @@index([offerId])
+  @@index([status])
+}
+
+model Product {
+  id               String   @id @default(cuid())
+  organizationId   String   @default("org_salon_de_lien")
+  manufacturerName String
+  name             String
+  category         String?
+  retailPrice      Int
+  stockQuantity    Int      @default(0)
+  concernTags      Json?
+  description      String?
+  alternativeRecommendation String?
+  active           Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  organization Organization      @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  proposals    ProductProposal[]
+  saleLines    ProductSaleLine[]
+
+  @@unique([organizationId, manufacturerName, name])
+  @@index([organizationId, active])
+  @@index([manufacturerName])
+  @@index([active])
+  @@index([category])
+}
+
+model ProductSaleLine {
+  id                       String   @id @default(cuid())
+  serviceSaleId            String
+  productId                String
+  productNameSnapshot      String
+  manufacturerNameSnapshot String
+  unitPrice                Int
+  quantity                 Int
+  lineTotal                Int
+  createdAt                DateTime @default(now())
+
+  serviceSale ServiceSale @relation(fields: [serviceSaleId], references: [id], onDelete: Cascade)
+  product     Product     @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@unique([serviceSaleId, productId])
+  @@index([productId, createdAt])
+  @@index([serviceSaleId])
+}
+
+model ProductProposal {
+  id             String   @id @default(cuid())
+  customerId     String
+  productId      String
+  visitId        String?
+  staffId        String?
+  proposalReason String?
+  concernTags    Json?
+  status         String   @default("proposed")
+  reaction       String?
+  purchased      Boolean  @default(false)
+  note           String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  customer       Customer               @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  product        Product                @relation(fields: [productId], references: [id], onDelete: Restrict)
+  visit          Visit?                 @relation(fields: [visitId], references: [id], onDelete: SetNull)
+  reviewRequests ProductReviewRequest[]
+  reviews        ProductReview[]
+
+  @@index([customerId, createdAt])
+  @@index([productId, createdAt])
+  @@index([visitId])
+  @@index([status])
+  @@index([reaction])
+}
+
+model ProductReviewRequest {
+  id                String    @id @default(cuid())
+  productProposalId String
+  tokenHash         String    @unique
+  expiresAt         DateTime
+  requestedAt       DateTime  @default(now())
+  answeredAt        DateTime?
+  status            String    @default("active")
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  productProposal ProductProposal @relation(fields: [productProposalId], references: [id], onDelete: Cascade)
+  review          ProductReview?
+
+  @@index([productProposalId, requestedAt])
+  @@index([status, expiresAt])
+}
+
+model ProductReview {
+  id                  String   @id @default(cuid())
+  productProposalId   String
+  reviewRequestId     String   @unique
+  usedStatus          String
+  rating              Int?
+  goodPoints          Json?
+  badPoints           Json?
+  repeatIntent        String?
+  freeComment         String?
+  allowAnonymousShare Boolean  @default(false)
+  allowAnonymousQuote Boolean  @default(false)
+  submittedAt         DateTime @default(now())
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  productProposal ProductProposal      @relation(fields: [productProposalId], references: [id], onDelete: Cascade)
+  reviewRequest   ProductReviewRequest @relation(fields: [reviewRequestId], references: [id], onDelete: Cascade)
+  consents        Consent[]
+
+  @@index([productProposalId, submittedAt])
+  @@index([usedStatus])
+  @@index([allowAnonymousShare])
+}
+
+model Consent {
+  id              String   @id @default(cuid())
+  customerId      String?
+  productReviewId String?
+  consentType     String
+  granted         Boolean  @default(true)
+  source          String?
+  createdAt       DateTime @default(now())
+
+  customer      Customer?      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  productReview ProductReview? @relation(fields: [productReviewId], references: [id], onDelete: Cascade)
+
+  @@index([customerId, consentType])
+  @@index([productReviewId])
+  @@index([consentType, createdAt])
+}
+
+model CustomerPointAccount {
+  id               String   @id @default(cuid())
+  customerId       String   @unique
+  availablePoints  Int      @default(0)
+  pendingPoints    Int      @default(0)
+  lifetimeEarned   Int      @default(0)
+  lifetimeRedeemed Int      @default(0)
+  lifetimeExpired  Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  customer     Customer           @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  transactions PointTransaction[]
+
+  @@index([availablePoints])
+}
+
+model PendingPointReward {
+  id               String    @id @default(cuid())
+  customerId       String
+  sourceType       String
+  sourceId         String
+  amount           Int
+  status           String    @default("pending")
+  eligibleAfter    DateTime
+  expiresAt        DateTime
+  claimedAt        DateTime?
+  claimContextType String?
+  claimContextId   String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceType, sourceId])
+  @@index([customerId, status, expiresAt])
+  @@index([status, eligibleAfter, expiresAt])
+}
+
+model PointTransaction {
+  id               String    @id @default(cuid())
+  customerId       String
+  accountId        String
+  type             String
+  amount           Int
+  balanceAfter     Int
+  sourceType       String
+  sourceId         String?
+  reason           String
+  note             String?
+  expiresAt        DateTime?
+  createdByStaffId String?
+  createdAt        DateTime  @default(now())
+
+  customer              Customer                    @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  account               CustomerPointAccount        @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  earnedLots            PointLot[]                  @relation("PointLotEarnTransaction")
+  redemptionAllocations PointRedemptionAllocation[] @relation("PointRedeemTransaction")
+
+  @@unique([sourceType, sourceId, type])
+  @@index([customerId, createdAt])
+  @@index([accountId, createdAt])
+  @@index([type, createdAt])
+  @@index([sourceType, sourceId])
+}
+
+model PointLot {
+  id                String   @id @default(cuid())
+  customerId        String
+  earnTransactionId String
+  originalAmount    Int
+  remainingAmount   Int
+  expiresAt         DateTime
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  customer              Customer                    @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  earnTransaction       PointTransaction            @relation("PointLotEarnTransaction", fields: [earnTransactionId], references: [id], onDelete: Cascade)
+  redemptionAllocations PointRedemptionAllocation[]
+
+  @@index([customerId, expiresAt])
+  @@index([earnTransactionId])
+  @@index([remainingAmount])
+}
+
+model PointRedemptionAllocation {
+  id                  String   @id @default(cuid())
+  redeemTransactionId String
+  pointLotId          String
+  amount              Int
+  createdAt           DateTime @default(now())
+
+  redeemTransaction PointTransaction @relation("PointRedeemTransaction", fields: [redeemTransactionId], references: [id], onDelete: Cascade)
+  pointLot          PointLot         @relation(fields: [pointLotId], references: [id], onDelete: Cascade)
+
+  @@index([redeemTransactionId])
+  @@index([pointLotId])
+}
+
+model PointRule {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  label     String
+  eventType String
+  points    Int
+  validDays Int      @default(40)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([eventType])
+  @@index([active])
+}
+
+model Referral {
+  id                       String    @id @default(cuid())
+  referrerCustomerId       String
+  referredCustomerId       String?
+  tokenHash                String    @unique
+  code                     String    @unique
+  status                   String    @default("issued")
+  issuedAt                 DateTime  @default(now())
+  registeredAt             DateTime?
+  firstVisitCompletedAt    DateTime?
+  rewardedAt               DateTime?
+  referrerDiscountIssuedAt DateTime?
+  referrerDiscountUsedAt   DateTime?
+  referredDiscountUsedAt   DateTime?
+  expiresAt                DateTime?
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
+
+  referrerCustomer Customer  @relation("ReferralReferrer", fields: [referrerCustomerId], references: [id], onDelete: Cascade)
+  referredCustomer Customer? @relation("ReferralReferred", fields: [referredCustomerId], references: [id], onDelete: SetNull)
+
+  @@index([referrerCustomerId, createdAt])
+  @@index([referredCustomerId])
+  @@index([status, expiresAt])
+}
+
+model PartnerCoupon {
+  id             String    @id @default(cuid())
+  customerId     String
+  offerId        String?
+  partnerName    String
+  industry       String?
+  title          String
+  description    String?
+  benefit        String?
+  couponCode     String?
+  url            String?
+  status         String    @default("draft")
+  reactionStatus String?
+  reactionNote   String?
+  validUntil     DateTime?
+  redeemedAt     DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  customer Customer       @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  offer    CustomerOffer? @relation(fields: [offerId], references: [id], onDelete: SetNull)
+
+  @@index([customerId, createdAt])
+  @@index([offerId])
+  @@index([status, validUntil])
+}
+
+model Coupon {
+  id                   String    @id @default(cuid())
+  customerId           String
+  visitId              String?
+  title                String
+  description          String?
+  couponType           String    @default("salon")
+  targetMenu           String
+  discountType         String
+  discountValue        String
+  validFrom            DateTime
+  validUntil           DateTime
+  status               String    @default("issued")
+  issuedReason         String?
+  staffMemo            String?
+  printText            String?
+  aiGeneratedText      String?
+  couponCode           String    @unique
+  couponCodeHash       String?
+  printDesignTitle     String?
+  printSubtitle        String?
+  illustrationImageUrl String?
+  illustrationPrompt   String?
+  issuedAt             DateTime  @default(now())
+  usedAt               DateTime?
+  printedAt            DateTime?
+  printCount           Int       @default(0)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  visit    Visit?   @relation(fields: [visitId], references: [id], onDelete: SetNull)
+
+  @@index([customerId, createdAt])
+  @@index([visitId])
+  @@index([status, validUntil])
+  @@index([couponType])
+  @@index([targetMenu])
+}
+
+model CouponIssue {
+  id                String    @id @default(cuid())
+  customerId        String
+  staffUserId       String?
+  styleSuggestionId String?
+  couponCode        String    @unique
+  customerName      String
+  discountRate      Int
+  targetMenusJson   Json
+  issuedAt          DateTime
+  expiresAt         DateTime
+  salonMessage      String?
+  footerAddress     String?
+  footerHours       String?
+  footerReservation String?
+  footerPayments    String?
+  templateVersion   String    @default("coupon-v2")
+  status            String    @default("issued")
+  printedAt         DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  customer            Customer                     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  broadcastRecipients CustomerBroadcastRecipient[]
+
+  @@index([customerId, createdAt])
+  @@index([couponCode])
+}
+
+model CustomerBroadcast {
+  id                   String    @id @default(cuid())
+  organizationId       String
+  createdByStaffId     String?
+  title                String
+  body                 String
+  status               String    @default("sent")
+  audienceGender       String?
+  audienceMinAge       Int?
+  audienceMaxAge       Int?
+  audienceMatchedCount Int       @default(0)
+  couponEnabled        Boolean   @default(false)
+  couponTitle          String?
+  couponDescription    String?
+  couponTargetMenu     String?
+  couponDiscountRate   Int?
+  couponValidDays      Int?
+  sentAt               DateTime  @default(now())
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  organization   Organization                 @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdByStaff AppUser?                     @relation(fields: [createdByStaffId], references: [id], onDelete: SetNull)
+  recipients     CustomerBroadcastRecipient[]
+
+  @@index([organizationId, sentAt])
+  @@index([status, sentAt])
+  @@index([createdByStaffId, sentAt])
+}
+
+model CustomerBroadcastRecipient {
+  id            String    @id @default(cuid())
+  broadcastId   String
+  customerId    String
+  couponIssueId String?
+  deliveredAt   DateTime  @default(now())
+  readAt        DateTime?
+  createdAt     DateTime  @default(now())
+
+  broadcast CustomerBroadcast @relation(fields: [broadcastId], references: [id], onDelete: Cascade)
+  customer  Customer          @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  couponIssue CouponIssue?     @relation(fields: [couponIssueId], references: [id], onDelete: SetNull)
+
+  @@unique([broadcastId, customerId])
+  @@index([customerId, deliveredAt])
+  @@index([couponIssueId])
+}
+
 model ProposalResponse {
-  id            String   @id @default(cuid())
+  id            String    @id @default(cuid())
   suggestionId  String
   customerId    String
   intent        String
@@ -193,8 +959,8 @@ model ProposalResponse {
   message       String?
   contactName   String?
   contactPhone  String?
-  status        String   @default("未対応")
-  createdAt     DateTime @default(now())
+  status        String    @default("未対応")
+  createdAt     DateTime  @default(now())
 
   suggestion StyleSuggestion @relation(fields: [suggestionId], references: [id], onDelete: Cascade)
   customer   Customer        @relation(fields: [customerId], references: [id], onDelete: Cascade)

@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "Salon de Lien 予約連携",
+  "version": "1.0.5",
+  "description": "ログイン中のGmailから、かんざし結の予約メールだけをSalon de Lienへ取り込みます。",
+  "permissions": ["alarms", "storage", "tabs"],
+  "host_permissions": [
+    "https://mail.google.com/*",
+    "http://100.82.182.81/*",
+    "http://127.0.0.1/*",
+    "http://localhost/*"
+  ],
+  "background": {
+    "service_worker": "service-worker.js"
+  },
+  "action": {
+    "default_title": "Salon de Lien 予約連携",
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://mail.google.com/*",
+        "http://100.82.182.81/*",
+        "http://127.0.0.1/*",
+        "http://localhost/*"
+      ],
+      "js": ["content-script.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

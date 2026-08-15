@@ -1,7 +1,9 @@
-import { notFound } from "next/navigation";
+﻿import { notFound } from "next/navigation";
 import { CalendarDays, CheckCircle2, Clock3, MessageCircle, Scissors, Sparkles } from "lucide-react";
+import { redirect } from "next/navigation";
 import { createProposalResponse } from "@/lib/actions";
 import { prisma } from "@/lib/prisma";
+import { legacyCustomerIdPortalAllowed } from "@/lib/auth/customer-portal";
 
 const ANGLES = ["斜め正面", "横", "斜め後ろ"] as const;
 const CONCERNS = ["似合うか相談したい", "料金を確認したい", "所要時間が気になる", "朝のセットが不安"];
@@ -13,6 +15,10 @@ type ProposalPageProps = {
   params: {
     id: string;
   };
+  searchParams?: {
+    inApp?: string;
+  };
+  portalToken?: string;
 };
 
 type StyleImageEntry = {
@@ -111,7 +117,11 @@ function numberSum(values: Array<number | null | undefined>) {
   return values.reduce<number>((total, value) => total + (value ?? 0), 0);
 }
 
-export default async function ProposalPage({ params }: ProposalPageProps) {
+export default async function ProposalPage({ params, searchParams, portalToken }: ProposalPageProps) {
+  if (!portalToken && !legacyCustomerIdPortalAllowed()) {
+    notFound();
+  }
+
   const suggestion = await prisma.styleSuggestion.findUnique({
     where: { id: params.id },
     include: {
@@ -139,10 +149,14 @@ export default async function ProposalPage({ params }: ProposalPageProps) {
     notFound();
   }
 
+  if (!portalToken && searchParams?.inApp !== "1") {
+    redirect(`/u/${suggestion.customer.id}/proposals/${suggestion.id}`);
+  }
+
   const latestVisit = suggestion.customer.visits[0] ?? null;
   const nextVisitDate = latestVisit ? addMonths(latestVisit.visitedAt, 2) : null;
   const latestResponse = suggestion.proposalResponses[0] ?? null;
-  const responseAction = createProposalResponse.bind(null, suggestion.id);
+  const responseAction = createProposalResponse.bind(null, suggestion.id, portalToken ?? null);
   const imageEntries = parseImageEntries(suggestion.imageUrls, suggestion.imageUrlsJson);
   const displayImages = ANGLES.map((angle, index) => ({
     angle,
@@ -161,7 +175,7 @@ export default async function ProposalPage({ params }: ProposalPageProps) {
             <span className="rounded border border-teal-200 bg-white px-3 py-1 text-xs font-semibold text-teal-900">
               {displaySuggestionLabel(suggestion.label)}
             </span>
-            <a href={`/app/${suggestion.customer.id}`} className="rounded border border-stone-200 bg-white px-3 py-1.5 text-xs font-semibold text-stone-800 shadow-sm hover:bg-stone-50">
+            <a href={`/u/${portalToken ?? suggestion.customer.id}`} className="rounded border border-stone-200 bg-white px-3 py-1.5 text-xs font-semibold text-stone-800 shadow-sm hover:bg-stone-50">
               アプリ
             </a>
             <a href="#reply" className="rounded bg-teal-900 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-teal-950">
@@ -382,3 +396,4 @@ export default async function ProposalPage({ params }: ProposalPageProps) {
     </main>
   );
 }
+

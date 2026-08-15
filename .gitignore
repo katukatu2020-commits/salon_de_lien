@@ -8,5 +8,16 @@ dist
 coverage
 *.tsbuildinfo
 .vercel
+cdk.out/
 tmp/
 identity-results-preview/
+backups/
+next-production.log
+tools/gmail-browser-bridge/config.local.js
+.gmail-oauth-*.log
+.gmail-oauth-authorization-url.txt
+*.log
+.tmp-*
+.next-stale-*/
+Salon_de_Lien_*.zip
+coupon_font_tiny_runtime_setup_v3/

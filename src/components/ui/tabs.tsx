@@ -17,7 +17,7 @@ const TabsList = forwardRef<
   <TabsPrimitive.List
     ref={ref}
     className={cn(
-      "inline-flex min-h-11 w-full items-center gap-1 overflow-x-auto rounded-md border border-stone-200 bg-stone-100 p-1 text-stone-600",
+      "grid min-h-12 w-full grid-cols-2 items-center gap-1 rounded-[22px] border border-[color:var(--lien-border)] bg-[color:var(--lien-surface-soft)] p-1.5 text-[color:var(--lien-muted)] shadow-lien-sm sm:grid-cols-4 md:inline-flex md:overflow-x-auto md:rounded-full",
       className
     )}
     {...props}
@@ -32,7 +32,7 @@ const TabsTrigger = forwardRef<
   <TabsPrimitive.Trigger
     ref={ref}
     className={cn(
-      "inline-flex h-9 shrink-0 items-center justify-center rounded px-3 text-sm font-semibold transition-colors hover:bg-white/70 hover:text-stone-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-white data-[state=active]:text-teal-800 data-[state=active]:shadow-sm",
+      "lien-segment inline-flex h-11 w-full shrink-0 items-center justify-center rounded-full px-3 text-sm font-semibold transition hover:bg-white/80 hover:text-[color:var(--lien-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ead0c7] disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-[color:var(--lien-primary)] data-[state=active]:text-white data-[state=active]:shadow-sm md:w-auto",
       className
     )}
     {...props}
@@ -46,7 +46,10 @@ const TabsContent = forwardRef<
 >(({ className, ...props }, ref) => (
   <TabsPrimitive.Content
     ref={ref}
-    className={cn("mt-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600", className)}
+    className={cn(
+      "mt-0 data-[state=inactive]:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ead0c7]",
+      className
+    )}
     {...props}
   />
 ));

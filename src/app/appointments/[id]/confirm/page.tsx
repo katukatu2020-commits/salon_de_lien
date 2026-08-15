@@ -1,18 +1,21 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { CalendarDays, CheckCircle2, Clock3, MessageCircle, Scissors } from "lucide-react";
 import { createAppointmentConfirmationResponse } from "@/lib/actions";
 import { prisma } from "@/lib/prisma";
+import { legacyCustomerIdPortalAllowed } from "@/lib/auth/customer-portal";
 
 type AppointmentConfirmPageProps = {
   params: {
     id: string;
   };
   searchParams?: {
+    inApp?: string;
     submitted?: string;
+    portalToken?: string;
   };
 };
 
-const attendanceOptions = ["予定通り来店します", "日時変更を相談したい", "事前に相談したいことがある"];
+const attendanceOptions = ["予定通り来店します", "日時変更を相談したい", "予約をキャンセルしたい", "事前に相談したいことがある"];
 const contactPreferenceOptions = ["LINEで返信希望", "電話で確認希望", "SMSで確認希望"];
 const concernOptions = ["髪型・仕上がりを相談したい", "料金や所要時間を確認したい", "カラー・薬剤の不安がある", "特に不安はない"];
 const priceExpectationOptions = ["料金目安を先に知りたい", "必要なら追加ケアも相談したい", "予算内で調整したい", "当日相談で大丈夫"];
@@ -33,6 +36,11 @@ function formatDateTime(date?: Date | null) {
 }
 
 export default async function AppointmentConfirmPage({ params, searchParams }: AppointmentConfirmPageProps) {
+  const portalToken = searchParams?.portalToken;
+  if (!portalToken && !legacyCustomerIdPortalAllowed()) {
+    notFound();
+  }
+
   const appointment = await prisma.appointment.findFirst({
     where: {
       id: params.id,
@@ -68,7 +76,11 @@ export default async function AppointmentConfirmPage({ params, searchParams }: A
     notFound();
   }
 
-  const confirmationAction = createAppointmentConfirmationResponse.bind(null, appointment.id);
+  if (!portalToken && searchParams?.inApp !== "1") {
+    redirect(`/u/${appointment.customer.id}/appointments/confirm/${appointment.id}`);
+  }
+
+  const confirmationAction = createAppointmentConfirmationResponse.bind(null, appointment.id, portalToken ?? null);
   const latestConfirmation = appointment.customer.contactLogs[0] ?? null;
   const latestSuggestion = appointment.customer.styleSuggestions[0] ?? null;
   const submitted = searchParams?.submitted === "1";
@@ -123,7 +135,7 @@ export default async function AppointmentConfirmPage({ params, searchParams }: A
               <MessageCircle className="h-5 w-5 text-teal-800" />
               来店前にお知らせください
             </h2>
-            <div className="mt-4 grid gap-2 md:grid-cols-3">
+            <div className="mt-4 grid gap-2 sm:grid-cols-2">
               {attendanceOptions.map((item) => (
                 <label key={item} className="flex cursor-pointer items-center gap-2 rounded-md border border-stone-200 bg-[#fbf8f3] px-3 py-3 text-sm font-semibold text-stone-800">
                   <input name="attendance" type="radio" value={item} required className="h-4 w-4 border-stone-300 text-teal-800" />

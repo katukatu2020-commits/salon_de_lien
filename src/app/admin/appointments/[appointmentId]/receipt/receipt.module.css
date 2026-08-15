@@ -1,0 +1,193 @@
+.screen {
+  min-height: 100vh;
+  background: #f6efe6;
+  padding: 24px 16px 48px;
+}
+
+.toolbar {
+  display: flex;
+  width: min(100%, 760px);
+  margin: 0 auto 20px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.receipt {
+  page: receipt;
+  width: 80mm;
+  min-height: 120mm;
+  margin: 0 auto;
+  padding: 6mm 5mm 7mm;
+  overflow: hidden;
+  background: #fff;
+  color: #111;
+  box-shadow: 0 18px 50px rgba(47, 42, 37, 0.16);
+  font-family: "Noto Sans JP", "Yu Gothic", "Hiragino Kaku Gothic ProN", system-ui, sans-serif;
+  font-size: 10.5px;
+  line-height: 1.45;
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+
+.brand {
+  text-align: center;
+}
+
+.brandName {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 20px;
+  line-height: 1.1;
+  letter-spacing: 0.04em;
+}
+
+.brandSub {
+  margin-top: 3px;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+}
+
+.title {
+  margin: 5mm 0 1mm;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+}
+
+.meta {
+  display: grid;
+  gap: 1.2mm;
+  margin: 4mm 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.metaRow,
+.line,
+.summaryLine {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 4mm;
+}
+
+.metaRow span:first-child,
+.line span:first-child,
+.summaryLine span:first-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.metaRow span:last-child,
+.line span:last-child,
+.summaryLine span:last-child {
+  flex: 0 0 auto;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.divider {
+  margin: 3mm 0;
+  border: 0;
+  border-top: 1px dashed #555;
+}
+
+.lines {
+  display: grid;
+  gap: 2.2mm;
+}
+
+.lineDetail {
+  display: block;
+  margin-top: 0.4mm;
+  color: #555;
+  font-size: 9px;
+}
+
+.summary {
+  display: grid;
+  gap: 1.7mm;
+}
+
+.discount {
+  color: #333;
+}
+
+.total {
+  align-items: baseline;
+  border-top: 2px solid #111;
+  margin-top: 1.5mm;
+  padding-top: 2.5mm;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.total strong {
+  font-size: 22px;
+  letter-spacing: 0;
+}
+
+.tax {
+  margin-top: 1.5mm;
+  text-align: right;
+  color: #444;
+  font-size: 9px;
+}
+
+.message {
+  margin-top: 5mm;
+  text-align: center;
+  font-size: 9.5px;
+  line-height: 1.6;
+}
+
+.store {
+  margin-top: 5mm;
+  border-top: 1px solid #111;
+  padding-top: 3mm;
+  text-align: center;
+  font-size: 8.5px;
+  line-height: 1.65;
+}
+
+@media (max-width: 420px) {
+  .screen {
+    padding: 16px 8px 32px;
+  }
+
+  .toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .receipt {
+    width: min(80mm, 100%);
+  }
+}
+
+@media print {
+  @page receipt {
+    size: auto;
+    margin: 0;
+  }
+
+  .screen {
+    min-height: 0;
+    padding: 0;
+    background: #fff;
+  }
+
+  .toolbar {
+    display: none !important;
+  }
+
+  .receipt {
+    width: 80mm;
+    min-height: 0;
+    margin: 0;
+    padding: 5mm 4mm 6mm;
+    box-shadow: none;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}

@@ -1,27 +1,40 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
-  BadgeDollarSign,
-  Camera,
-  CalendarClock,
+  ChevronLeft,
   ChevronRight,
   ClipboardList,
-  Plus,
   Search,
   Sparkles,
+  UserRound,
   UsersRound
 } from "lucide-react";
 import { CopyTextButton } from "@/components/copy-text-button";
+import { CustomerPortalMessageCopyButton } from "@/components/customers/customer-portal-link-button";
+import { CustomerPointsOverview } from "@/components/customers/customer-points-overview";
+import { CustomerWorkspaceTabs } from "@/components/customers/customer-workspace-tabs";
+import { LienCard, MetricCard, PageHeader } from "@/components/lien/lien-ui";
+import { BrandVisual } from "@/components/lien/brand-visual";
+import { StoreSettingsPanel } from "@/components/settings/store-settings-panel";
 import { createContactLog, markProposalResponseHandledWithContactLog } from "@/lib/actions";
 import { prisma } from "@/lib/prisma";
+import { customerAttendantSummary } from "@/lib/salon/staff";
+import { requireBackofficeSession } from "@/lib/auth/authorization";
+import { resolveCustomerPhotoReferences } from "@/lib/storage/customer-photo";
+import { customerAgeLabel } from "@/lib/customer-age";
 
 type CustomersPageProps = {
   searchParams: {
     q?: string;
+    section?: string;
     view?: string;
+    page?: string;
   };
 };
 
-const allowedViews = new Set(["visits", "styles", "calendar", "messages", "analytics", "settings"]);
+const CUSTOMER_PAGE_SIZE = 50;
+
+const allowedViews = new Set(["visits", "styles", "messages", "analytics", "settings"]);
 
 type CommercialTone = "red" | "amber" | "green" | "stone";
 
@@ -142,12 +155,8 @@ function feedbackRating(message?: string | null) {
 }
 
 function feedbackShareUrl(customerId: string) {
-  const baseUrl =
-    process.env.NEXT_PUBLIC_APP_URL ??
-    process.env.APP_URL ??
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "");
-
-  return baseUrl ? `${baseUrl.replace(/\/$/, "")}/feedback/${customerId}` : `/feedback/${customerId}`;
+  void customerId;
+  return "{{PORTAL_URL}}/feedback";
 }
 
 function googleReviewShareUrl() {
@@ -156,21 +165,13 @@ function googleReviewShareUrl() {
 }
 
 function carePlanShareUrl(customerId: string) {
-  const baseUrl =
-    process.env.NEXT_PUBLIC_APP_URL ??
-    process.env.APP_URL ??
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "");
-
-  return baseUrl ? `${baseUrl.replace(/\/$/, "")}/care/${customerId}` : `/care/${customerId}`;
+  void customerId;
+  return "{{PORTAL_URL}}/care";
 }
 
-function appointmentConfirmationUrl(appointmentId: string) {
-  const baseUrl =
-    process.env.NEXT_PUBLIC_APP_URL ??
-    process.env.APP_URL ??
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "");
-
-  return baseUrl ? `${baseUrl.replace(/\/$/, "")}/appointments/${appointmentId}/confirm` : `/appointments/${appointmentId}/confirm`;
+function appointmentConfirmationUrl(customerId: string, appointmentId: string) {
+  void customerId;
+  return `{{PORTAL_URL}}/appointments/confirm/${appointmentId}`;
 }
 
 function intakeShareUrl() {
@@ -179,7 +180,7 @@ function intakeShareUrl() {
     process.env.APP_URL ??
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "");
 
-  return baseUrl ? `${baseUrl.replace(/\/$/, "")}/intake` : "/intake";
+  return baseUrl ? `${baseUrl.replace(/\/$/, "")}/u/register` : "/u/register";
 }
 
 function intakeSourceUrl(source: string) {
@@ -1100,20 +1101,65 @@ function courseProposalMessage({
 }
 
 export default async function CustomersPage({ searchParams }: CustomersPageProps) {
+  const session = await requireBackofficeSession(["ADMIN", "STAFF"]);
+  if (searchParams.section === "points") {
+    return <CustomerPointsOverview />;
+  }
+
+  if (searchParams.view === "calendar") {
+    redirect("/admin/appointments");
+  }
+
   const keyword = searchParams.q?.trim() ?? "";
   const view = allowedViews.has(searchParams.view ?? "") ? searchParams.view ?? "" : "";
   const googleReviewUrl = googleReviewShareUrl();
+
+  if (view === "settings") {
+    const [organization, latestGmailAppointment] = await Promise.all([
+      session.organizationId
+        ? prisma.organization.findUnique({
+            where: { id: session.organizationId },
+            select: { name: true, iconImageUrl: true }
+          })
+        : null,
+      prisma.appointment.findFirst({
+        where: {
+          source: { startsWith: "gmail:" },
+          customer: session.organizationId ? { organizationId: session.organizationId } : undefined
+        },
+        orderBy: { updatedAt: "desc" },
+        select: { updatedAt: true }
+      })
+    ]);
+    const resolvedIconImageUrl = organization?.iconImageUrl
+      ? (await resolveCustomerPhotoReferences([organization.iconImageUrl]))[0] ?? null
+      : null;
+
+    return (
+      <div className="mx-auto w-full max-w-5xl">
+        <StoreSettingsPanel
+          storeName={organization?.name ?? "Salon de Lien"}
+          gmailEmail={process.env.GMAIL_RESERVATION_EMAIL?.trim() || null}
+          latestGmailImportedAt={latestGmailAppointment?.updatedAt ?? null}
+          googleReviewUrl={googleReviewUrl}
+          iconImageUrl={resolvedIconImageUrl}
+        />
+      </div>
+    );
+  }
+
   const customers = await prisma.customer.findMany({
     where: keyword
       ? {
           deletedAt: null,
+          organizationId: session.organizationId ?? undefined,
           OR: [
             { name: { contains: keyword, mode: "insensitive" } },
             { phone: { contains: keyword, mode: "insensitive" } },
             { memo: { contains: keyword, mode: "insensitive" } }
           ]
         }
-      : { deletedAt: null },
+      : { deletedAt: null, organizationId: session.organizationId ?? undefined },
     include: {
       visits: {
         orderBy: { visitedAt: "desc" },
@@ -1297,7 +1343,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
       customer.styleSuggestions.find((suggestion) => suggestion.imageUrls.length > 0 || Boolean(suggestion.imageUrlsJson)) ??
       customer.styleSuggestions[0] ??
       null;
-    const proposalShareUrl = proposalSuggestion ? `/proposals/${proposalSuggestion.id}` : null;
+    const proposalShareUrl = proposalSuggestion ? `{{PORTAL_URL}}/proposals/${proposalSuggestion.id}` : null;
     const openCourses = customer.courseRecommendations.filter((course) => !course.accepted);
     const topOpenCourse = openCourses[0];
     const openCourseValue = priceSum(openCourses.map((course) => course.estimatedPrice));
@@ -1610,8 +1656,8 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
       latestProposalIntent: latestProposalResponse?.intent
     });
     const href = proposalSuggestion
-      ? `/customers/${customer.id}?suggestionId=${proposalSuggestion.id}`
-      : `/customers/${customer.id}`;
+      ? `/admin/customers/${customer.id}?suggestionId=${proposalSuggestion.id}`
+      : `/admin/customers/${customer.id}`;
 
     return {
       customer,
@@ -1660,7 +1706,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
       needsFeedbackHomeCareProposal,
       scheduledFollowUpLog,
       upcomingAppointment,
-      appointmentConfirmationUrl: upcomingAppointment ? appointmentConfirmationUrl(upcomingAppointment.id) : null,
+      appointmentConfirmationUrl: upcomingAppointment ? appointmentConfirmationUrl(customer.id, upcomingAppointment.id) : null,
       upcomingAppointmentHours,
       latestLostAppointment,
       latestLostAppointmentDays,
@@ -2703,161 +2749,161 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
     {
       label: "新規リード",
       count: newLeadRows.length,
-      href: "/customers?view=messages",
+      href: "/admin/customers?view=messages",
       action: "公開相談フォームの未返信を返す",
       className: "border-red-200 bg-red-50 text-red-800"
     },
     {
       label: "未対応返信",
       count: openProposalResponseRows.length,
-      href: "/customers?view=messages",
+      href: "/admin/customers?view=messages",
       action: `返信文面をコピーして送信済みにする / 候補 ${responseRevenueValue.toLocaleString("ja-JP")}円`,
       className: "border-red-200 bg-red-50 text-red-800"
     },
     {
       label: "予定フォロー",
       count: scheduledFollowUpRows.length,
-      href: "/customers?view=messages",
+      href: "/admin/customers?view=messages",
       action: "返信待ち・次回候補日を送る",
       className: "border-amber-200 bg-amber-50 text-amber-900"
     },
     {
       label: "空き枠候補",
       count: waitlistRows.length,
-      href: "/customers?view=messages",
+      href: "/admin/customers?view=messages",
       action: "キャンセル枠を希望者へ提案",
       className: "border-emerald-200 bg-emerald-50 text-emerald-800"
     },
     {
       label: "キャンセル回収",
       count: lostAppointmentRecoveryRows.length,
-      href: "/customers?view=messages",
+      href: "/admin/customers?view=messages",
       action: "再予約候補を送り直す",
       className: "border-red-200 bg-white text-red-800"
     },
     {
       label: "VIP復帰",
       count: vipReactivationRows.length,
-      href: "/customers?view=messages",
+      href: "/admin/customers?view=messages",
       action: "優良顧客へ復帰提案を送る",
       className: "border-fuchsia-200 bg-white text-fuchsia-900"
     },
     {
       label: "写真付き相談",
       count: photoReadyLeadRows.length,
-      href: "/customers?view=messages",
+      href: "/admin/customers?view=messages",
       action: "事前写真から似合わせ準備",
       className: "border-teal-200 bg-white text-teal-900"
     },
     {
       label: "単価アップ",
       count: courseProposalRows.length,
-      href: "/customers?view=messages",
+      href: "/admin/customers?view=messages",
       action: "追加メニュー候補を送る",
       className: "border-amber-200 bg-white text-amber-900"
     },
     {
       label: "紹介お礼",
       count: referralThankYouRows.length + referralAchievementRows.length,
-      href: "/customers?view=messages",
+      href: "/admin/customers?view=messages",
       action: "紹介者へお礼・成果報告を送る",
       className: "border-emerald-200 bg-white text-emerald-800"
     },
     {
       label: "直前確認",
       count: urgentAppointmentRows.length,
-      href: "/customers?view=messages",
+      href: "/admin/customers?view=messages",
       action: "2時間以内の予約を確認",
       className: "border-red-200 bg-red-50 text-red-800"
     },
     {
       label: "当日ブリーフ",
       count: todayAppointmentBriefRows.length,
-      href: "/customers?view=calendar",
+      href: "/admin/appointments",
       action: "本日の予約売上と提案を確認",
       className: "border-sky-200 bg-white text-sky-900"
     },
     {
       label: "予約確認",
       count: appointmentConfirmationRows.length,
-      href: "/customers?view=messages",
+      href: "/admin/customers?view=messages",
       action: "48時間以内の予約を確認",
       className: "border-amber-200 bg-white text-amber-900"
     },
     {
       label: "予約リスク",
       count: highRiskAppointmentRows.length,
-      href: "/customers?view=calendar",
+      href: "/admin/appointments",
       action: "空席化しやすい予約を優先確認",
       className: "border-red-200 bg-white text-red-800"
     },
     {
       label: "規約未確認",
       count: policyUnconfirmedAppointmentRows.length,
-      href: "/customers?view=calendar",
+      href: "/admin/appointments",
       action: "変更・キャンセル時の連絡確認",
       className: "border-amber-200 bg-white text-amber-900"
     },
     {
       label: "レビュー依頼",
       count: reviewRequestRows.length,
-      href: "/customers?view=messages",
+      href: "/admin/customers?view=messages",
       action: "来店後フォローを送る",
       className: "border-emerald-200 bg-emerald-50 text-emerald-800"
     },
     {
       label: "ホームケア",
       count: homeCareProposalRows.length,
-      href: "/customers?view=messages",
+      href: "/admin/customers?view=messages",
       action: "仕上がり維持の提案を送る",
       className: "border-teal-200 bg-white text-teal-900"
     },
     {
       label: "ケアメモ",
       count: carePlanShareRows.length,
-      href: "/customers?view=messages",
+      href: "/admin/customers?view=messages",
       action: "ホームケアメモURLを送る",
       className: "border-sky-200 bg-white text-sky-900"
     },
     {
       label: "来店後ケア",
       count: feedbackHomeCareRows.length,
-      href: "/customers?view=messages",
+      href: "/admin/customers?view=messages",
       action: "家での扱いにくさをケア提案へつなぐ",
       className: "border-indigo-200 bg-white text-indigo-900"
     },
     {
       label: "次回予約",
       count: nextRebookingRows.length,
-      href: "/customers?view=messages",
+      href: "/admin/customers?view=messages",
       action: "会計後・周期に合わせて次回候補を送る",
       className: "border-indigo-200 bg-white text-indigo-900"
     },
     {
       label: "継続プラン",
       count: maintenancePackageRows.length,
-      href: "/customers?view=messages",
+      href: "/admin/customers?view=messages",
       action: "3回分のメンテナンス候補を提案",
       className: "border-violet-200 bg-white text-violet-900"
     },
     {
       label: "手直し対応",
       count: feedbackRecoveryRows.length,
-      href: "/customers?view=messages",
+      href: "/admin/customers?view=messages",
       action: "低評価・相談希望を先に拾う",
       className: "border-red-200 bg-red-50 text-red-800"
     },
     {
       label: "口コミ候補",
       count: feedbackReviewCandidateRows.length,
-      href: "/customers?view=messages",
+      href: "/admin/customers?view=messages",
       action: "高評価を口コミと次回予約へつなぐ",
       className: "border-emerald-200 bg-white text-emerald-800"
     },
     {
       label: "失客防止",
       count: retentionRiskRows.length,
-      href: "/customers?view=analytics",
+      href: "/admin/customers?view=analytics",
       action: "再来店理由を作る",
       className: "border-stone-200 bg-white text-stone-800"
     }
@@ -2877,7 +2923,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
       title: "予約・相談の返事を止めない",
       count: newLeadRows.length + openProposalResponseRows.length + scheduledFollowUpRows.length,
       value: customerResponseValue,
-      href: "/customers?view=messages",
+      href: "/admin/customers?view=messages",
       action: "未返信リード、提案返信、予定フォローを上から処理",
       details: [
         `新規 ${newLeadRows.length}件`,
@@ -2892,7 +2938,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
       title: "空席化しやすい予約を先に確認",
       count: urgentAppointmentRows.length + appointmentConfirmationRows.length + highRiskAppointmentRows.length + policyUnconfirmedAppointmentRows.length,
       value: reservationProtectionValue,
-      href: "/customers?view=calendar",
+      href: "/admin/appointments",
       action: "直前確認、前日確認、高リスク予約、規約未確認を確認",
       details: [
         `直前 ${urgentAppointmentRows.length}件`,
@@ -2913,7 +2959,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
         maintenancePackageRows.length +
         vipReactivationRows.length,
       value: growthActionValue,
-      href: "/customers?view=messages",
+      href: "/admin/customers?view=messages",
       action: "追加メニュー、ホームケア、次回予約、継続プランを提案",
       details: [
         `単価アップ ${courseProposalRows.length}件`,
@@ -2932,69 +2978,90 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
       help: `追客対象 ${followTargetCount}名 / AI準備済み ${aiReadyCount}名`,
       icon: UsersRound,
       className: "border-stone-200 bg-white text-stone-900"
-    },
-    {
-      label: "売上候補",
-      value: `${dailyRevenueActionValue.toLocaleString("ja-JP")}円`,
-      help: `返信 ${responseRevenueValue.toLocaleString("ja-JP")}円 / 未採用 ${totalOpenCourseValue.toLocaleString("ja-JP")}円`,
-      icon: BadgeDollarSign,
-      className: "border-teal-200 bg-white text-teal-950"
-    },
-    {
-      label: "予約リスク",
-      value: `${urgentAppointmentRows.length + highRiskAppointmentRows.length}`,
-      help: `直前 ${urgentAppointmentRows.length}件 / 高リスク ${highRiskAppointmentRows.length}件 / 保全 ${protectedRevenueValue.toLocaleString("ja-JP")}円`,
-      icon: CalendarClock,
-      className: "border-red-200 bg-red-50 text-red-900"
-    },
-    {
-      label: "接客品質",
-      value: feedbackRatings.length > 0 ? `${averageFeedbackRating}/5` : "-",
-      help: `レビュー候補 ${feedbackReviewCandidateRows.length}件 / 手直し ${feedbackRecoveryRows.length}件`,
-      icon: Sparkles,
-      className: "border-emerald-200 bg-white text-emerald-900"
     }
   ];
-  const publicIntakeUrl = intakeShareUrl();
+  const totalCustomerPages = Math.max(1, Math.ceil(commercialRows.length / CUSTOMER_PAGE_SIZE));
+  const requestedCustomerPage = Number.parseInt(searchParams.page ?? "1", 10);
+  const currentCustomerPage = Math.min(
+    totalCustomerPages,
+    Number.isFinite(requestedCustomerPage) && requestedCustomerPage > 0 ? requestedCustomerPage : 1
+  );
+  const customerPageStart = (currentCustomerPage - 1) * CUSTOMER_PAGE_SIZE;
+  const visibleCommercialRows = commercialRows.slice(customerPageStart, customerPageStart + CUSTOMER_PAGE_SIZE);
+
+  function customerPageHref(page: number) {
+    const params = new URLSearchParams();
+    if (keyword) params.set("q", keyword);
+    if (view) params.set("view", view);
+    if (page > 1) params.set("page", String(page));
+    const query = params.toString();
+    return `/admin/customers${query ? `?${query}` : ""}#customer-list`;
+  }
 
   return (
-    <div className="mx-auto grid w-full max-w-5xl gap-5">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-stone-950">顧客</h1>
-          <p className="mt-1 text-sm text-stone-600">検索して、必要なカルテだけを開きます。</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <CopyTextButton text={publicIntakeUrl} label="受付URLをコピー" />
-          <Link
-            href="/customers/new"
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-teal-800 px-5 text-sm font-semibold text-white shadow-sm hover:bg-teal-900"
-          >
-            <Plus className="h-4 w-4" />
-            新規顧客
-          </Link>
-        </div>
-      </div>
+    <div className="mx-auto grid w-full max-w-7xl gap-6">
+      <CustomerWorkspaceTabs active="customers" />
 
-      <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
+      <PageHeader
+        eyebrow="Customer CRM"
+        title="顧客との関係を動かす"
+        description="検索してカルテを開くだけでなく、再来店候補、レビュー未回答、ポイント、商品提案の次アクションをまとめて確認します。"
+        visual={
+          <BrandVisual
+            variant="customerCrm"
+            className="h-full min-h-40"
+            imageClassName="object-[26%_58%]"
+            sizes="(max-width: 1023px) 100vw, 352px"
+            priority
+          />
+        }
+      />
+
+      <section className="rounded-[24px] border border-[color:var(--lien-border)] bg-white p-5 shadow-lien-sm md:hidden">
+        <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--lien-primary-dark)]">
+          <Sparkles className="h-4 w-4 shrink-0 text-[color:var(--lien-primary)]" />
+          今日のCRM視点
+        </div>
+        <p className="mt-2 text-sm leading-6 text-[color:var(--lien-muted)]">
+          再来店候補、レビュー未回答、ポイント失効、商品提案の次アクションをここから確認します。
+        </p>
+      </section>
+
+      <LienCard className="p-4">
         <form className="flex flex-col gap-3 sm:flex-row">
           <label className="relative min-w-0 flex-1">
-            <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-stone-400" />
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[color:var(--lien-muted)]" />
             <input
               name="q"
               defaultValue={keyword}
               placeholder="顧客名・電話・メモで検索"
-              className="h-11 w-full rounded-md border border-stone-200 bg-white px-11 text-sm shadow-sm outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
+              className="h-12 w-full rounded-full border border-[color:var(--lien-border)] bg-white pl-11 pr-4 text-sm text-[color:var(--lien-ink)] shadow-sm outline-none transition placeholder:text-[#A69A90] focus:border-[color:var(--lien-primary)] focus:ring-4 focus:ring-[#E9C9BE]/40"
             />
           </label>
           <button
             type="submit"
-            className="h-11 rounded-md border border-stone-200 bg-stone-50 px-5 text-sm font-semibold text-stone-800 shadow-sm hover:bg-stone-100"
+            className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-[color:var(--lien-border)] bg-white px-5 text-sm font-semibold text-[color:var(--lien-ink)] shadow-sm transition hover:bg-[color:var(--lien-surface-soft)]"
           >
             検索
           </button>
         </form>
-      </section>
+      </LienCard>
+
+      <div className="grid max-w-sm gap-3">
+        {businessSummaryCards.slice(0, 4).map((card, index) => {
+          const tone = (["premium", "highlight", "warning", "success"] as const)[index] ?? "default";
+          return (
+            <MetricCard
+              key={card.label}
+              icon={card.icon}
+              label={card.label}
+              value={card.value}
+              helper={card.help}
+              tone={tone}
+            />
+          );
+        })}
+      </div>
 
       {view === "analytics" ? (
       <>
@@ -3010,7 +3077,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
               返信を返す、予約を守る、売上を足す。店側が朝に判断することだけを先頭に集約しています。
             </p>
           </div>
-          <div className="min-w-[160px] rounded-md border border-stone-200 bg-[#fbf8f3] px-4 py-3 text-right">
+          <div className="w-full min-w-0 rounded-md border border-stone-200 bg-[#fbf8f3] px-4 py-3 text-left sm:w-auto sm:min-w-[160px] sm:text-right">
             <p className="text-xs font-semibold text-stone-500">本日の進捗</p>
             <p className="mt-1 text-2xl font-semibold text-stone-950">{operationProgressLabel}</p>
             <p className="mt-1 text-xs text-stone-500">
@@ -3229,7 +3296,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
                         <p className="mt-2 whitespace-pre-wrap text-xs leading-5 text-stone-700">{briefMessage}</p>
                       </div>
                       <div className="mt-3 flex flex-wrap items-center gap-2">
-                        <CopyTextButton text={briefMessage} label="メモコピー" />
+                        <CustomerPortalMessageCopyButton customerId={row.customer.id} text={briefMessage} label="メモコピー" />
                         <span className="rounded border border-sky-100 bg-sky-50 px-2 py-1 text-[11px] font-semibold text-sky-900">
                           合計見込み {totalBriefValue.toLocaleString("ja-JP")}円
                         </span>
@@ -3497,7 +3564,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
                             お礼送信済み
                           </button>
                         </form>
-                        <Link href={`/customers/${log.customerId}`} className="inline-flex h-9 items-center rounded-md border border-emerald-200 bg-emerald-50 px-3 text-xs font-semibold text-emerald-900 hover:bg-emerald-100">
+                        <Link href={`/admin/customers/${log.customerId}`} className="inline-flex h-9 items-center rounded-md border border-emerald-200 bg-emerald-50 px-3 text-xs font-semibold text-emerald-900 hover:bg-emerald-100">
                           詳細を開く
                         </Link>
                       </div>
@@ -3564,7 +3631,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
                             成果お礼送信済み
                           </button>
                         </form>
-                        <Link href={`/customers/${row.log.customerId}`} className="inline-flex h-9 items-center rounded-md border border-teal-200 bg-teal-50 px-3 text-xs font-semibold text-teal-900 hover:bg-teal-100">
+                        <Link href={`/admin/customers/${row.log.customerId}`} className="inline-flex h-9 items-center rounded-md border border-teal-200 bg-teal-50 px-3 text-xs font-semibold text-teal-900 hover:bg-teal-100">
                           紹介者を開く
                         </Link>
                         {row.referredRow ? (
@@ -3774,8 +3841,8 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
                         <p className="mt-2 whitespace-pre-wrap text-xs leading-5 text-stone-700">{message}</p>
                       </div>
                       <div className="mt-3 flex flex-wrap items-center gap-2">
-                        <CopyTextButton text={message} label="文面コピー" />
-                        <CopyTextButton text={row.carePlanUrl} label="ケアメモURL" />
+                        <CustomerPortalMessageCopyButton customerId={row.customer.id} text={message} label="文面コピー" />
+                        <CustomerPortalMessageCopyButton customerId={row.customer.id} text={row.carePlanUrl} label="ケアメモURL" />
                         <form action={createContactLog.bind(null, row.customer.id)}>
                           <input type="hidden" name="channel" value="LINE" />
                           <input type="hidden" name="purpose" value="VIP復帰提案" />
@@ -3855,7 +3922,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
                         <p className="mt-2 whitespace-pre-wrap text-xs leading-5 text-stone-700">{message}</p>
                       </div>
                       <div className="mt-3 flex flex-wrap items-center gap-2">
-                        <CopyTextButton text={message} label="文面コピー" />
+                        <CustomerPortalMessageCopyButton customerId={row.customer.id} text={message} label="文面コピー" />
                         <form action={createContactLog.bind(null, row.customer.id)}>
                           <input type="hidden" name="channel" value="LINE" />
                           <input type="hidden" name="purpose" value="追加メニュー提案" />
@@ -3925,7 +3992,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
                         <p className="mt-2 whitespace-pre-wrap text-xs leading-5 text-stone-700">{message}</p>
                       </div>
                       <div className="mt-3 flex flex-wrap items-center gap-2">
-                        <CopyTextButton text={message} label="文面コピー" />
+                        <CustomerPortalMessageCopyButton customerId={row.customer.id} text={message} label="文面コピー" />
                         <form action={createContactLog.bind(null, row.customer.id)}>
                           <input type="hidden" name="channel" value="LINE" />
                           <input type="hidden" name="purpose" value="来店後ホームケア提案" />
@@ -3980,7 +4047,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
                         <p className="mt-2 whitespace-pre-wrap text-xs leading-5 text-stone-700">{message}</p>
                       </div>
                       <div className="mt-3 flex flex-wrap items-center gap-2">
-                        <CopyTextButton text={message} label="文面コピー" />
+                        <CustomerPortalMessageCopyButton customerId={row.customer.id} text={message} label="文面コピー" />
                         <form action={createContactLog.bind(null, row.customer.id)}>
                           <input type="hidden" name="channel" value="LINE" />
                           <input type="hidden" name="purpose" value="来店後フォロー" />
@@ -4227,7 +4294,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
                           </button>
                         </form>
                         <Link
-                          href={`/customers/${row.customer.id}?suggestionId=${response.suggestion.id}`}
+                          href={`/admin/customers/${row.customer.id}?suggestionId=${response.suggestion.id}`}
                           className="inline-flex h-9 items-center rounded-md border border-red-200 bg-red-50 px-3 text-xs font-semibold text-red-800 hover:bg-red-100"
                         >
                           詳細を開く
@@ -4286,7 +4353,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
                       ) : null}
                       <p className="mt-3 whitespace-pre-wrap text-xs leading-5 text-stone-700">{message}</p>
                       <div className="mt-3 flex flex-wrap items-center gap-2">
-                        <CopyTextButton text={message} label="文面コピー" />
+                        <CustomerPortalMessageCopyButton customerId={row.customer.id} text={message} label="文面コピー" />
                         <form action={createContactLog.bind(null, row.customer.id)}>
                           <input type="hidden" name="channel" value="LINE" />
                           <input type="hidden" name="purpose" value="予約直前確認" />
@@ -4356,7 +4423,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
                       ) : null}
                       <p className="mt-3 whitespace-pre-wrap text-xs leading-5 text-stone-700">{message}</p>
                       <div className="mt-3 flex flex-wrap items-center gap-2">
-                        <CopyTextButton text={message} label="文面コピー" />
+                        <CustomerPortalMessageCopyButton customerId={row.customer.id} text={message} label="文面コピー" />
                         <form action={createContactLog.bind(null, row.customer.id)}>
                           <input type="hidden" name="channel" value="LINE" />
                           <input type="hidden" name="purpose" value="予約確認" />
@@ -4420,8 +4487,8 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
                         <p className="mt-2 whitespace-pre-wrap text-xs leading-5 text-stone-700">{message}</p>
                       </div>
                       <div className="mt-3 flex flex-wrap items-center gap-2">
-                        <CopyTextButton text={message} label="文面コピー" />
-                        <CopyTextButton text={row.carePlanUrl} label="URLコピー" />
+                        <CustomerPortalMessageCopyButton customerId={row.customer.id} text={message} label="文面コピー" />
+                        <CustomerPortalMessageCopyButton customerId={row.customer.id} text={row.carePlanUrl} label="URLコピー" />
                         <form action={createContactLog.bind(null, row.customer.id)}>
                           <input type="hidden" name="channel" value="LINE" />
                           <input type="hidden" name="purpose" value="ホームケアメモ共有" />
@@ -4489,7 +4556,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
                         <p className="mt-2 whitespace-pre-wrap text-xs leading-5 text-stone-700">{message}</p>
                       </div>
                       <div className="mt-3 flex flex-wrap items-center gap-2">
-                        <CopyTextButton text={message} label="文面コピー" />
+                        <CustomerPortalMessageCopyButton customerId={row.customer.id} text={message} label="文面コピー" />
                         <form action={createContactLog.bind(null, row.customer.id)}>
                           <input type="hidden" name="channel" value="LINE" />
                           <input type="hidden" name="purpose" value="ホームケア提案" />
@@ -4678,7 +4745,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
                       </div>
                       <p className="mt-3 whitespace-pre-wrap text-xs leading-5 text-stone-700">{message}</p>
                       <div className="mt-3 flex flex-wrap items-center gap-2">
-                        <CopyTextButton text={message} label="文面コピー" />
+                        <CustomerPortalMessageCopyButton customerId={row.customer.id} text={message} label="文面コピー" />
                         <form action={createContactLog.bind(null, row.customer.id)}>
                           <input type="hidden" name="channel" value="LINE" />
                           <input type="hidden" name="purpose" value="来店後フォロー" />
@@ -5414,28 +5481,74 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
         </section>
       ) : null}
 
-      <section className="overflow-hidden rounded-lg border border-stone-200 bg-white shadow-sm">
+      <section id="customer-list" className="scroll-mt-24 overflow-hidden rounded-lg border border-stone-200 bg-white shadow-sm">
         <div className="flex items-center justify-between border-b border-stone-100 px-5 py-4">
           <div className="flex items-center gap-2">
             <UsersRound className="h-5 w-5 text-teal-800" />
             <h2 className="font-semibold text-stone-950">顧客リスト</h2>
           </div>
-          <span className="text-sm text-stone-500">{customers.length}件</span>
+          <span className="text-sm text-stone-500">
+            {commercialRows.length}件中 {commercialRows.length === 0 ? 0 : customerPageStart + 1}〜{Math.min(customerPageStart + CUSTOMER_PAGE_SIZE, commercialRows.length)}件
+          </span>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-stone-100 text-sm [&_td:nth-child(2)]:hidden [&_td:nth-child(3)]:hidden [&_td:nth-child(4)]:hidden [&_td:nth-child(7)]:hidden [&_td:nth-child(9)]:hidden [&_td:nth-child(10)]:hidden [&_td:nth-child(11)]:hidden [&_td:nth-child(12)]:hidden [&_th:nth-child(2)]:hidden [&_th:nth-child(3)]:hidden [&_th:nth-child(4)]:hidden [&_th:nth-child(7)]:hidden [&_th:nth-child(9)]:hidden [&_th:nth-child(10)]:hidden [&_th:nth-child(11)]:hidden [&_th:nth-child(12)]:hidden">
+        <div className="grid gap-3 p-4 md:hidden">
+          {visibleCommercialRows.map((row) => (
+            <Link
+              key={row.customer.id}
+              href={row.href}
+              className="lien-action-card block rounded-[22px] border bg-white p-4 pr-12"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate text-base font-semibold text-[color:var(--lien-ink)]">{row.customer.name}</p>
+                  <p className="mt-1 text-xs font-semibold text-[color:var(--lien-primary)]">{customerCode(row.customer.id)}</p>
+                  <p className="mt-2 flex items-center gap-1.5 text-xs text-[color:var(--lien-muted)]">
+                    <UserRound className="h-3.5 w-3.5 shrink-0" />
+                    {customerAttendantSummary(row.customer)}
+                  </p>
+                  <p className="mt-1 text-xs font-medium text-[color:var(--lien-muted)]">
+                    {row.customer.gender ?? "性別未登録"} / {customerAgeLabel(row.customer)}
+                  </p>
+                </div>
+                <span className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${statusClass(row.status.tone)}`}>
+                  {row.status.label}
+                </span>
+              </div>
+              <p className="mt-3 text-sm leading-6 text-[color:var(--lien-muted)]">{row.status.action}</p>
+              <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
+                <div className="rounded-2xl bg-[color:var(--lien-surface-soft)] p-3">
+                  <p className="font-semibold text-[color:var(--lien-muted)]">最終来店</p>
+                  <p className="mt-1 font-semibold text-[color:var(--lien-ink)]">
+                    {row.latestVisitDays === null ? "履歴なし" : `${row.latestVisitDays}日前`}
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-[color:var(--lien-surface-soft)] p-3">
+                  <p className="font-semibold text-[color:var(--lien-muted)]">予約</p>
+                  <p className="mt-1 font-semibold text-[color:var(--lien-ink)]">
+                    {row.upcomingAppointment ? formatDate(row.upcomingAppointment.scheduledAt) : "未設定"}
+                  </p>
+                </div>
+              </div>
+            </Link>
+          ))}
+          {customers.length === 0 ? (
+            <div className="rounded-[22px] border border-dashed border-[color:var(--lien-border)] bg-[color:var(--lien-surface-soft)] p-5 text-center text-sm text-[color:var(--lien-muted)]">
+              顧客が見つかりません。検索条件を変えてください。
+            </div>
+          ) : null}
+        </div>
+
+        <div className="hidden max-w-full overflow-x-auto md:block">
+          <table className="min-w-full divide-y divide-stone-100 text-sm [&_td:nth-child(3)]:hidden [&_td:nth-child(4)]:hidden [&_td:nth-child(7)]:hidden [&_td:nth-child(8)]:hidden [&_td:nth-child(9)]:hidden [&_th:nth-child(3)]:hidden [&_th:nth-child(4)]:hidden [&_th:nth-child(7)]:hidden [&_th:nth-child(8)]:hidden [&_th:nth-child(9)]:hidden">
             <thead className="bg-[#fbf8f3] text-left text-xs font-semibold text-stone-500">
               <tr>
                 <th className="px-5 py-3">顧客</th>
-                <th className="px-5 py-3">性別 / 生年</th>
+                <th className="px-5 py-3">性別 / 年齢</th>
                 <th className="px-5 py-3">電話番号</th>
                 <th className="px-5 py-3">最終来店</th>
                 <th className="px-5 py-3">商用ステータス</th>
                 <th className="px-5 py-3">追客 / 予約</th>
-                <th className="px-5 py-3">提案反応</th>
-                <th className="px-5 py-3">提案資産</th>
-                <th className="px-5 py-3">未採用メニュー</th>
                 <th className="px-5 py-3">売上実績</th>
                 <th className="px-5 py-3">NG条件</th>
                 <th className="px-5 py-3">メモ</th>
@@ -5443,16 +5556,20 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
               </tr>
             </thead>
             <tbody className="divide-y divide-stone-100">
-              {commercialRows.map((row) => (
+              {visibleCommercialRows.map((row) => (
                 <tr key={row.customer.id} className="hover:bg-[#fbf8f3]">
                   <td className="whitespace-nowrap px-5 py-4">
-                    <Link href={row.href} className="font-semibold text-stone-950 hover:text-teal-800">
+                    <Link href={row.href} className="inline-flex min-h-9 items-center rounded-full px-3 font-semibold text-stone-950 transition hover:bg-[color:var(--lien-surface-soft)] hover:text-[color:var(--lien-primary-dark)]">
                       {row.customer.name}
                     </Link>
                     <div className="mt-1 text-xs font-medium text-teal-800">{customerCode(row.customer.id)}</div>
+                    <div className="mt-2 flex items-center gap-1.5 text-xs text-stone-500">
+                      <UserRound className="h-3.5 w-3.5 shrink-0" />
+                      {customerAttendantSummary(row.customer)}
+                    </div>
                   </td>
                   <td className="whitespace-nowrap px-5 py-4 text-stone-700">
-                    {row.customer.gender ?? "-"} / {row.customer.birthYear ?? "-"}
+                    {row.customer.gender ?? "-"} / {customerAgeLabel(row.customer)}
                   </td>
                   <td className="whitespace-nowrap px-5 py-4 text-stone-700">{row.customer.phone ?? "-"}</td>
                   <td className="whitespace-nowrap px-5 py-4 text-stone-700">
@@ -5476,33 +5593,6 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
                     </div>
                   </td>
                   <td className="whitespace-nowrap px-5 py-4 text-stone-700">
-                    <div className="font-semibold text-stone-950">{row.latestProposalResponse?.intent ?? "未返信"}</div>
-                    <div className="mt-1 text-xs text-stone-500">
-                      {row.latestProposalResponse ? formatDate(row.latestProposalResponse.createdAt) : "共有ページ反応なし"}
-                    </div>
-                  </td>
-                  <td className="whitespace-nowrap px-5 py-4 text-stone-700">
-                    <div className="flex items-center gap-2 text-xs">
-                      <Camera className="h-4 w-4 text-stone-400" />
-                      正面{row.frontCount} / 横{row.sideCount} / 後ろ{row.backCount}
-                    </div>
-                    <div className="mt-2 flex items-center gap-2 text-xs">
-                      <Sparkles className="h-4 w-4 text-stone-400" />
-                      画像提案 {row.generatedImageCount}件
-                    </div>
-                    {row.proposalSuggestion ? (
-                      <div className="mt-1 max-w-[190px] truncate text-xs text-teal-800">
-                        {row.proposalSuggestion.suggestedStyleName}
-                      </div>
-                    ) : null}
-                  </td>
-                  <td className="whitespace-nowrap px-5 py-4 text-stone-700">
-                    <div className="font-semibold text-stone-950">{row.openCourseValue.toLocaleString("ja-JP")}円</div>
-                    <div className="mt-1 max-w-[180px] truncate text-xs text-stone-500">
-                      {row.topOpenCourse?.title ?? "未採用メニューなし"}
-                    </div>
-                  </td>
-                  <td className="whitespace-nowrap px-5 py-4 text-stone-700">
                     <div className="font-semibold text-stone-950">{row.totalCustomerRevenue.toLocaleString("ja-JP")}円</div>
                     <div className="mt-1 max-w-[180px] truncate text-xs text-stone-500">
                       {row.latestSale ? `${formatDate(row.latestSale.paidAt)} / ${row.latestSale.title}` : "売上未記録"}
@@ -5521,7 +5611,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
                   <td className="px-5 py-4 text-right">
                     <Link
                       href={row.href}
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-stone-200 text-stone-600 hover:bg-stone-50 hover:text-teal-800"
+                      className="lien-icon-button min-h-9 min-w-9 text-stone-600"
                       aria-label={`${row.customer.name}の詳細`}
                     >
                       <ChevronRight className="h-4 w-4" />
@@ -5531,15 +5621,32 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
               ))}
               {customers.length === 0 ? (
                 <tr>
-                  <td colSpan={13} className="px-5 py-12 text-center text-sm text-stone-500">
-                    顧客が見つかりません。検索条件を変えるか、新規顧客を登録してください。
+                  <td colSpan={10} className="px-5 py-12 text-center text-sm text-stone-500">
+                    顧客が見つかりません。検索条件を変えてください。
                   </td>
                 </tr>
               ) : null}
             </tbody>
           </table>
         </div>
+
+        {totalCustomerPages > 1 ? (
+          <nav className="flex items-center justify-between gap-3 border-t border-stone-100 px-4 py-4 sm:px-5" aria-label="顧客リストのページ切替">
+            {currentCustomerPage > 1 ? (
+              <Link href={customerPageHref(currentCustomerPage - 1)} className="inline-flex min-h-10 items-center gap-2 rounded-full border border-[color:var(--lien-border)] bg-white px-4 text-sm font-semibold text-[color:var(--lien-ink)] shadow-sm hover:bg-[color:var(--lien-surface-soft)]">
+                <ChevronLeft className="h-4 w-4" />前の50人
+              </Link>
+            ) : <span />}
+            <span className="text-xs font-semibold tabular-nums text-[color:var(--lien-muted)]">{currentCustomerPage} / {totalCustomerPages}ページ</span>
+            {currentCustomerPage < totalCustomerPages ? (
+              <Link href={customerPageHref(currentCustomerPage + 1)} className="inline-flex min-h-10 items-center gap-2 rounded-full bg-[color:var(--lien-primary)] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[color:var(--lien-primary-dark)]">
+                次の50人<ChevronRight className="h-4 w-4" />
+              </Link>
+            ) : <span />}
+          </nav>
+        ) : null}
       </section>
     </div>
   );
 }
+

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -64,8 +64,8 @@ export function StyleSuggestionGenerator({
           setMessage(result.message);
 
           const nextUrl = result.selectedSuggestionId
-            ? `/customers/${customerId}?suggestionId=${result.selectedSuggestionId}`
-            : `/customers/${customerId}`;
+            ? `/admin/customers/${customerId}?suggestionId=${result.selectedSuggestionId}`
+            : `/admin/customers/${customerId}`;
           router.replace(nextUrl, { scroll: false });
           router.refresh();
           return;
@@ -125,3 +125,4 @@ export function StyleSuggestionGenerator({
     </div>
   );
 }
+

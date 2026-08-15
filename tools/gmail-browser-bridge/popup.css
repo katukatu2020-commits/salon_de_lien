@@ -1,0 +1,21 @@
+:root { color-scheme: light; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; color: #2f2a25; background: #fbf7f0; }
+* { box-sizing: border-box; }
+body { width: 320px; margin: 0; background: #fbf7f0; }
+main { padding: 18px; }
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand > span { display: grid; width: 38px; height: 38px; place-items: center; border-radius: 50%; background: #8f4f42; color: white; font-family: Georgia, serif; font-size: 20px; }
+.brand div { display: grid; gap: 2px; }
+.brand strong { font-size: 14px; }
+.brand small { color: #7c7168; font-size: 11px; }
+section { margin: 16px 0; padding: 15px; border: 1px solid #e8ded2; border-radius: 16px; background: white; box-shadow: 0 10px 30px rgba(47,42,37,.07); }
+.status-row { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+#indicator { width: 9px; height: 9px; border-radius: 50%; background: #8aa58a; box-shadow: 0 0 0 4px rgba(138,165,138,.16); }
+#detail { min-height: 36px; margin: 9px 0 13px; color: #7c7168; font-size: 12px; line-height: 1.5; }
+dl { display: grid; grid-template-columns: repeat(3, 1fr); margin: 0; gap: 6px; }
+dl div { padding: 8px; border-radius: 10px; background: #f6efe6; text-align: center; }
+dt { color: #7c7168; font-size: 10px; }
+dd { margin: 3px 0 0; font-size: 13px; font-weight: 700; }
+button { width: 100%; min-height: 42px; border: 0; border-radius: 999px; background: #8f4f42; color: white; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+button:disabled { cursor: wait; opacity: .55; }
+button.secondary { margin-top: 8px; border: 1px solid #e8ded2; background: white; color: #5b332c; }
+.privacy { margin: 13px 2px 0; color: #7c7168; font-size: 10px; line-height: 1.5; }

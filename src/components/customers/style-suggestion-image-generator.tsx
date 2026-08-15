@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -70,7 +70,7 @@ export function StyleSuggestionImageGenerator({
           setProgress(100);
           setStatus("success");
           setMessage(result.message);
-          router.replace(`/customers/${customerId}?suggestionId=${result.selectedSuggestionId ?? styleSuggestionId}`, {
+          router.replace(`/admin/customers/${customerId}?suggestionId=${result.selectedSuggestionId ?? styleSuggestionId}`, {
             scroll: false
           });
           router.refresh();
@@ -133,3 +133,4 @@ export function StyleSuggestionImageGenerator({
     </div>
   );
 }
+

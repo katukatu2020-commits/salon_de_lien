@@ -21,7 +21,7 @@ export default function IntakeThanksPage() {
             ))}
           </div>
           <Link
-            href="/intake"
+            href="/u/register"
             className="mt-5 inline-flex h-10 items-center justify-center rounded-md border border-teal-200 bg-teal-50 px-4 text-sm font-semibold text-teal-900 hover:bg-teal-100"
           >
             相談フォームに戻る

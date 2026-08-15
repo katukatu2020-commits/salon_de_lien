@@ -5,6 +5,7 @@ import {
   type StyleSuggestionContext
 } from "@/lib/ai/style-advisor";
 import { prisma } from "@/lib/prisma";
+import { resolveCustomerPhotoReference } from "@/lib/storage/customer-photo";
 
 export async function buildStyleSuggestionContext(customerId: string): Promise<StyleSuggestionContext> {
   const customer = await prisma.customer.findFirst({
@@ -36,6 +37,8 @@ export async function buildStyleSuggestionContext(customerId: string): Promise<S
     orderBy: { createdAt: "desc" }
   });
 
+  const profileImageUrl = await resolveCustomerPhotoReference(customer.profileImageUrl);
+
   return {
     customer: {
       id: customer.id,
@@ -43,7 +46,7 @@ export async function buildStyleSuggestionContext(customerId: string): Promise<S
       gender: customer.gender,
       birthYear: customer.birthYear,
       phone: customer.phone,
-      profileImageUrl: customer.profileImageUrl,
+      profileImageUrl,
       memo: customer.memo
     },
     hairProfile: customer.hairProfile,
