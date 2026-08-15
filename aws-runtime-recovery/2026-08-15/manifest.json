@@ -1,0 +1,34 @@
+{
+  "capturedAt": "2026-08-15T18:00:00+09:00",
+  "awsAccountId": "009293460979",
+  "region": "ap-northeast-1",
+  "stackName": "SalonDeLien-staging",
+  "environment": "staging",
+  "canonicalUrl": "https://salon-de-lien.com",
+  "ecs": {
+    "cluster": "salon-de-lien-staging-cluster",
+    "service": "salon-de-lien-staging-web",
+    "taskDefinitionRevision": 248,
+    "desiredCount": 1,
+    "runningCount": 1
+  },
+  "image": {
+    "repository": "009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app",
+    "tag": "admin-theme-modal-20260815-153",
+    "digest": "sha256:2a1fe98b4422c0005b404d0d96df2bbd12e684eac18e4cdd8b42864f8bc5f72e"
+  },
+  "cloudFront": {
+    "distributionId": "E23LI5IQDBD82Z",
+    "distributionDomainName": "d3gkuttpx35s9q.cloudfront.net",
+    "alias": "salon-de-lien.com",
+    "certificateRegion": "us-east-1"
+  },
+  "database": {
+    "identifier": "salon-de-lien-staging-db",
+    "engine": "postgres",
+    "engineVersion": "16.13",
+    "databaseName": "salon_de_lien",
+    "modelCount": 63
+  },
+  "sourceRecoveryBranch": "recovery/aws-canonical-20260815"
+}

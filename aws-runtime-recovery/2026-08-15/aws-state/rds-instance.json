@@ -1,0 +1,124 @@
+﻿{
+    "DBInstanceIdentifier": "salon-de-lien-staging-db",
+    "DBInstanceClass": "db.t4g.micro",
+    "Engine": "postgres",
+    "DBInstanceStatus": "available",
+    "MasterUsername": "salon_app",
+    "DBName": "salon_de_lien",
+    "Endpoint": {
+        "Address": "salon-de-lien-staging-db.clwk6me003mk.ap-northeast-1.rds.amazonaws.com",
+        "Port": 5432,
+        "HostedZoneId": "Z24O6O9L7SGTNB"
+    },
+    "AllocatedStorage": 20,
+    "InstanceCreateTime": "2026-08-04T15:32:49.783000+00:00",
+    "PreferredBackupWindow": "13:33-14:03",
+    "BackupRetentionPeriod": 7,
+    "DBSecurityGroups": [],
+    "VpcSecurityGroups": [
+        {
+            "VpcSecurityGroupId": "sg-0229c7775a9257bf7",
+            "Status": "active"
+        }
+    ],
+    "DBParameterGroups": [
+        {
+            "DBParameterGroupName": "default.postgres16",
+            "ParameterApplyStatus": "in-sync"
+        }
+    ],
+    "AvailabilityZone": "ap-northeast-1a",
+    "DBSubnetGroup": {
+        "DBSubnetGroupName": "salondelien-staging-databasesubnetgroup7d60f180-yamwgcnpjvrf",
+        "DBSubnetGroupDescription": "Subnet group for Database database",
+        "VpcId": "vpc-0517fde80f540654e",
+        "SubnetGroupStatus": "Complete",
+        "Subnets": [
+            {
+                "SubnetIdentifier": "subnet-0bd715997a84db3c2",
+                "SubnetAvailabilityZone": {
+                    "Name": "ap-northeast-1a"
+                },
+                "SubnetOutpost": {},
+                "SubnetStatus": "Active"
+            },
+            {
+                "SubnetIdentifier": "subnet-0265099aa73805425",
+                "SubnetAvailabilityZone": {
+                    "Name": "ap-northeast-1c"
+                },
+                "SubnetOutpost": {},
+                "SubnetStatus": "Active"
+            }
+        ]
+    },
+    "PreferredMaintenanceWindow": "mon:15:44-mon:16:14",
+    "UpgradeRolloutOrder": "second",
+    "PendingModifiedValues": {},
+    "LatestRestorableTime": "2026-08-15T13:10:19+00:00",
+    "MultiAZ": false,
+    "EngineVersion": "16.13",
+    "AutoMinorVersionUpgrade": true,
+    "ReadReplicaDBInstanceIdentifiers": [],
+    "LicenseModel": "postgresql-license",
+    "StorageThroughput": 0,
+    "OptionGroupMemberships": [
+        {
+            "OptionGroupName": "default:postgres-16",
+            "Status": "in-sync"
+        }
+    ],
+    "PubliclyAccessible": false,
+    "StorageType": "gp2",
+    "DbInstancePort": 0,
+    "StorageEncrypted": true,
+    "KmsKeyId": "arn:aws:kms:ap-northeast-1:009293460979:key/ef9b9d2d-1cc0-4da3-b6cd-172eb2b13786",
+    "DbiResourceId": "db-4FUZBENM3FJMOQGCDBS6UM4MOA",
+    "CACertificateIdentifier": "rds-ca-rsa2048-g1",
+    "DomainMemberships": [],
+    "CopyTagsToSnapshot": true,
+    "MonitoringInterval": 0,
+    "DBInstanceArn": "arn:aws:rds:ap-northeast-1:009293460979:db:salon-de-lien-staging-db",
+    "IAMDatabaseAuthenticationEnabled": false,
+    "DatabaseInsightsMode": "standard",
+    "PerformanceInsightsEnabled": false,
+    "EnabledCloudwatchLogsExports": [
+        "postgresql"
+    ],
+    "DeletionProtection": false,
+    "AssociatedRoles": [],
+    "MaxAllocatedStorage": 100,
+    "TagList": [
+        {
+            "Key": "aws:cloudformation:stack-name",
+            "Value": "SalonDeLien-staging"
+        },
+        {
+            "Key": "Environment",
+            "Value": "staging"
+        },
+        {
+            "Key": "aws:cloudformation:logical-id",
+            "Value": "DatabaseB269D8BB"
+        },
+        {
+            "Key": "aws:cloudformation:stack-id",
+            "Value": "arn:aws:cloudformation:ap-northeast-1:009293460979:stack/SalonDeLien-staging/26728ea0-9019-11f1-9ee7-0e7ef9cbfb47"
+        },
+        {
+            "Key": "Application",
+            "Value": "SalonDeLien"
+        }
+    ],
+    "CustomerOwnedIpEnabled": false,
+    "NetworkType": "IPV4",
+    "ActivityStreamStatus": "stopped",
+    "BackupTarget": "region",
+    "CertificateDetails": {
+        "CAIdentifier": "rds-ca-rsa2048-g1",
+        "ValidTill": "2027-08-04T15:31:34+00:00"
+    },
+    "DedicatedLogVolume": false,
+    "IsStorageConfigUpgradeAvailable": false,
+    "EngineLifecycleSupport": "open-source-rds-extended-support"
+}

@@ -1,0 +1,3 @@
+# Runtime recovery evidence is checksummed byte-for-byte. Do not rewrite line
+# endings when it is added or checked out on Windows.
+aws-runtime-recovery/** -text

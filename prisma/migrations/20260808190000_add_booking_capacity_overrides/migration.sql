@@ -1,22 +1,18 @@
--- Allow store staff to override the total reception capacity for each date and 30-minute slot.
-CREATE TABLE "BookingCapacityOverride" (
+-- This migration was created locally after the AWS runtime had already created
+-- the same table. Keep it idempotent so migrate deploy can safely reconcile both
+-- histories. Prisma exposes dateKey/slotStartMinutes/capacity through @map.
+CREATE TABLE IF NOT EXISTS "BookingCapacityOverride" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
-    "dateKey" TEXT NOT NULL,
-    "slotStartMinutes" INTEGER NOT NULL,
-    "capacity" INTEGER NOT NULL,
+    "date" TEXT NOT NULL,
+    "slotStart" INTEGER NOT NULL,
+    "remaining" INTEGER NOT NULL,
+    "updatedByUserId" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "BookingCapacityOverride_pkey" PRIMARY KEY ("id")
 );
 
-CREATE UNIQUE INDEX "BookingCapacityOverride_organizationId_dateKey_slotStartMinutes_key"
-ON "BookingCapacityOverride"("organizationId", "dateKey", "slotStartMinutes");
-
-CREATE INDEX "BookingCapacityOverride_organizationId_dateKey_idx"
-ON "BookingCapacityOverride"("organizationId", "dateKey");
-
-ALTER TABLE "BookingCapacityOverride"
-ADD CONSTRAINT "BookingCapacityOverride_organizationId_fkey"
-FOREIGN KEY ("organizationId") REFERENCES "Organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+CREATE UNIQUE INDEX IF NOT EXISTS "BookingCapacityOverride_organizationId_date_slotStart_key"
+ON "BookingCapacityOverride"("organizationId", "date", "slotStart");

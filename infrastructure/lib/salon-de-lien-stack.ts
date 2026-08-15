@@ -17,6 +17,7 @@ import * as iam from "aws-cdk-lib/aws-iam";
 import * as logs from "aws-cdk-lib/aws-logs";
 import * as rds from "aws-cdk-lib/aws-rds";
 import * as route53 from "aws-cdk-lib/aws-route53";
+import * as route53Targets from "aws-cdk-lib/aws-route53-targets";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
 import * as wafv2 from "aws-cdk-lib/aws-wafv2";
@@ -29,6 +30,7 @@ type SalonDeLienStackProps = StackProps & {
   domainName?: string;
   hostedZoneId?: string;
   hostedZoneName?: string;
+  cloudFrontCertificateArn?: string;
   costOptimized?: boolean;
 };
 
@@ -163,6 +165,25 @@ export class SalonDeLienStack extends Stack {
     smsVerificationSecret.applyRemovalPolicy(RemovalPolicy.RETAIN);
     database.secret?.applyRemovalPolicy(RemovalPolicy.RETAIN);
 
+    // These secrets predate the CDK source recovery and are intentionally
+    // imported by stable name. This avoids replacing live OAuth, inbound-mail,
+    // and platform-operator credentials during stack reconciliation.
+    const tenantGmailOAuthSecret = secretsmanager.Secret.fromSecretNameV2(
+      this,
+      "TenantGmailOAuthSecret",
+      `${prefix}/tenant-gmail-oauth`
+    );
+    const platformOperatorSecret = secretsmanager.Secret.fromSecretNameV2(
+      this,
+      "PlatformOperatorSecret",
+      `${prefix}/platform-operator`
+    );
+    const inboundEmailSecret = secretsmanager.Secret.fromSecretNameV2(
+      this,
+      "InboundEmailSecret",
+      `${prefix}/inbound-email`
+    );
+
     const cluster = new ecs.Cluster(this, "Cluster", {
       clusterName: `${prefix}-cluster`,
       vpc,
@@ -211,10 +232,22 @@ export class SalonDeLienStack extends Stack {
         OPENAI_MODEL: "gpt-4.1-mini",
         PASSWORD_RESET_MAIL_FROM_NAME: "Salon de Lien",
         CUSTOMER_REGISTRATION_TOKEN_MINUTES: "60",
+        STORE_REGISTRATION_TOKEN_MINUTES: "60",
         ALLOW_DEMO_DATA: "false",
         SMS_PROVIDER: "aws-sns",
         SMS_SENDER_ID: "SalonLien",
-        SMS_MAX_PRICE_USD: "0.20"
+        SMS_MAX_PRICE_USD: "0.20",
+        CUSTOMER_SMS_VERIFICATION_ENABLED: "false",
+        CUSTOMER_REFERRAL_REWARDS_ENABLED: "false",
+        CUSTOMER_COUPON_CODE_ENTRY_ENABLED: "false",
+        COMMUNITY_AI_COMMENT_ENABLED: "true",
+        COMMUNITY_AI_COMMENT_INTERVAL_SECONDS: "600",
+        BILLING_ONBOARDING_ENABLED: "true",
+        STRIPE_ALLOW_LIVE_BILLING: "false",
+        SUBSCRIPTION_TRIAL_DAYS: "30",
+        SALON_PLAN_TIER: "take",
+        INBOUND_EMAIL_DOMAIN: `inbound.${props.domainName ?? "invalid.example"}`,
+        PUBLIC_CONTACT_EMAIL: `support@${props.domainName ?? "invalid.example"}`
       },
       secrets: {
         DB_USER: ecs.Secret.fromSecretsManager(database.secret!, "username"),
@@ -228,9 +261,22 @@ export class SalonDeLienStack extends Stack {
         GMAIL_OAUTH_CLIENT_SECRET: ecs.Secret.fromSecretsManager(appSecret, "GMAIL_OAUTH_CLIENT_SECRET"),
         GMAIL_OAUTH_REFRESH_TOKEN: ecs.Secret.fromSecretsManager(appSecret, "GMAIL_OAUTH_REFRESH_TOKEN"),
         GMAIL_SYNC_CRON_SECRET: ecs.Secret.fromSecretsManager(appSecret, "GMAIL_SYNC_CRON_SECRET"),
+        GMAIL_SEND_EMAIL: ecs.Secret.fromSecretsManager(appSecret, "GMAIL_SEND_EMAIL"),
+        GMAIL_SEND_OAUTH_REFRESH_TOKEN: ecs.Secret.fromSecretsManager(appSecret, "GMAIL_SEND_OAUTH_REFRESH_TOKEN"),
         OPENAI_API_KEY: ecs.Secret.fromSecretsManager(appSecret, "OPENAI_API_KEY"),
+        STRIPE_SECRET_KEY: ecs.Secret.fromSecretsManager(appSecret, "STRIPE_SECRET_KEY"),
+        STRIPE_WEBHOOK_SECRET: ecs.Secret.fromSecretsManager(appSecret, "STRIPE_WEBHOOK_SECRET"),
+        STRIPE_PRICE_UME: ecs.Secret.fromSecretsManager(appSecret, "STRIPE_PRICE_UME"),
+        STRIPE_PRICE_TAKE: ecs.Secret.fromSecretsManager(appSecret, "STRIPE_PRICE_TAKE"),
+        STRIPE_PRICE_MATSU: ecs.Secret.fromSecretsManager(appSecret, "STRIPE_PRICE_MATSU"),
         CUSTOMER_AUTH_SECRET: ecs.Secret.fromSecretsManager(customerAuthSecret, "CUSTOMER_AUTH_SECRET"),
-        SMS_VERIFICATION_SECRET: ecs.Secret.fromSecretsManager(smsVerificationSecret, "SMS_VERIFICATION_SECRET")
+        SMS_VERIFICATION_SECRET: ecs.Secret.fromSecretsManager(smsVerificationSecret, "SMS_VERIFICATION_SECRET"),
+        TENANT_GMAIL_OAUTH_CLIENT_ID: ecs.Secret.fromSecretsManager(tenantGmailOAuthSecret, "TENANT_GMAIL_OAUTH_CLIENT_ID"),
+        TENANT_GMAIL_OAUTH_CLIENT_SECRET: ecs.Secret.fromSecretsManager(tenantGmailOAuthSecret, "TENANT_GMAIL_OAUTH_CLIENT_SECRET"),
+        PLATFORM_OPERATOR_EMAIL: ecs.Secret.fromSecretsManager(platformOperatorSecret, "PLATFORM_OPERATOR_EMAIL"),
+        PLATFORM_OPERATOR_PASSWORD_HASH: ecs.Secret.fromSecretsManager(platformOperatorSecret, "PLATFORM_OPERATOR_PASSWORD_HASH"),
+        PLATFORM_OPERATOR_AUTH_SECRET: ecs.Secret.fromSecretsManager(platformOperatorSecret, "PLATFORM_OPERATOR_AUTH_SECRET"),
+        INBOUND_EMAIL_HMAC_SECRET: ecs.Secret.fromSecretsManager(inboundEmailSecret, "INBOUND_EMAIL_HMAC_SECRET")
       },
       healthCheck: {
         command: [
@@ -266,8 +312,8 @@ export class SalonDeLienStack extends Stack {
             zoneName: props.hostedZoneName
           })
         : undefined;
-    const certificate =
-      props.domainName && hostedZone
+    const albCertificate =
+      !costOptimized && props.domainName && hostedZone
         ? new acm.Certificate(this, "Certificate", {
             domainName: props.domainName,
             validation: acm.CertificateValidation.fromDns(hostedZone)
@@ -292,11 +338,11 @@ export class SalonDeLienStack extends Stack {
       healthCheckGracePeriod: Duration.seconds(60),
       circuitBreaker: { rollback: true },
       enableExecuteCommand: true,
-      domainName: props.domainName,
-      domainZone: hostedZone,
-      certificate,
-      redirectHTTP: Boolean(certificate),
-      listenerPort: certificate ? 443 : 80
+      domainName: costOptimized ? undefined : props.domainName,
+      domainZone: costOptimized ? undefined : hostedZone,
+      certificate: albCertificate,
+      redirectHTTP: Boolean(albCertificate),
+      listenerPort: albCertificate ? 443 : 80
     });
 
     if (desiredCount === 0) {
@@ -364,11 +410,23 @@ export class SalonDeLienStack extends Stack {
       });
     }
 
+    const cloudFrontCertificate =
+      costOptimized && props.cloudFrontCertificateArn
+        ? acm.Certificate.fromCertificateArn(
+            this,
+            "CloudFrontCertificate",
+            props.cloudFrontCertificateArn
+          )
+        : undefined;
+
     const cloudFrontDistribution =
-      costOptimized && !certificate
+      costOptimized
         ? new cloudfront.Distribution(this, "HttpsDistribution", {
             comment: `${prefix} low-cost HTTPS entry point`,
             priceClass: cloudfront.PriceClass.PRICE_CLASS_200,
+            domainNames: props.domainName ? [props.domainName] : undefined,
+            certificate: cloudFrontCertificate,
+            minimumProtocolVersion: cloudfront.SecurityPolicyProtocol.TLS_V1_2_2021,
             defaultBehavior: {
               origin: new origins.LoadBalancerV2Origin(service.loadBalancer, {
                 protocolPolicy: cloudfront.OriginProtocolPolicy.HTTP_ONLY
@@ -387,6 +445,22 @@ export class SalonDeLienStack extends Stack {
         ? `https://${cloudFrontDistribution.distributionDomainName}`
         : `http://${service.loadBalancer.loadBalancerDnsName}`;
 
+    if (cloudFrontDistribution && hostedZone && props.domainName) {
+      const aliasTarget = route53.RecordTarget.fromAlias(
+        new route53Targets.CloudFrontTarget(cloudFrontDistribution)
+      );
+      new route53.ARecord(this, "CloudFrontAliasIpv4", {
+        zone: hostedZone,
+        recordName: props.domainName,
+        target: aliasTarget
+      });
+      new route53.AaaaRecord(this, "CloudFrontAliasIpv6", {
+        zone: hostedZone,
+        recordName: props.domainName,
+        target: aliasTarget
+      });
+    }
+
     new CfnOutput(this, "LoadBalancerUrl", {
       value: publicUrl
     });
@@ -394,6 +468,12 @@ export class SalonDeLienStack extends Stack {
       new CfnOutput(this, "CloudFrontDistributionId", {
         value: cloudFrontDistribution.distributionId
       });
+      new CfnOutput(this, "CloudFrontDomainName", {
+        value: cloudFrontDistribution.distributionDomainName
+      });
+    }
+    if (props.domainName) {
+      new CfnOutput(this, "CanonicalDomainName", { value: props.domainName });
     }
     new CfnOutput(this, "RepositoryUri", { value: repository.repositoryUri });
     new CfnOutput(this, "ClusterName", { value: cluster.clusterName });

@@ -1,0 +1,608 @@
+﻿{
+    "serviceArn": "arn:aws:ecs:ap-northeast-1:009293460979:service/salon-de-lien-staging-cluster/salon-de-lien-staging-web",
+    "serviceName": "salon-de-lien-staging-web",
+    "clusterArn": "arn:aws:ecs:ap-northeast-1:009293460979:cluster/salon-de-lien-staging-cluster",
+    "loadBalancers": [
+        {
+            "targetGroupArn": "arn:aws:elasticloadbalancing:ap-northeast-1:009293460979:targetgroup/SalonD-WebSe-YVFBXZXD8EFW/a55ebfd41dd0361a",
+            "containerName": "Web",
+            "containerPort": 3000
+        }
+    ],
+    "serviceRegistries": [],
+    "status": "ACTIVE",
+    "desiredCount": 1,
+    "runningCount": 1,
+    "pendingCount": 0,
+    "launchType": "FARGATE",
+    "platformVersion": "LATEST",
+    "platformFamily": "Linux",
+    "taskDefinition": "arn:aws:ecs:ap-northeast-1:009293460979:task-definition/salon-de-lien-staging-web:248",
+    "deploymentConfiguration": {
+        "deploymentCircuitBreaker": {
+            "enable": true,
+            "rollback": true,
+            "resetOnHealthyTask": true,
+            "thresholdConfiguration": {
+                "type": "BOUNDED_PERCENT",
+                "value": 50
+            }
+        },
+        "maximumPercent": 200,
+        "minimumHealthyPercent": 100,
+        "alarms": {
+            "alarmNames": [],
+            "rollback": false,
+            "enable": false
+        },
+        "strategy": "ROLLING",
+        "bakeTimeInMinutes": 0
+    },
+    "deployments": [
+        {
+            "id": "ecs-svc/9761857625528567836",
+            "status": "PRIMARY",
+            "taskDefinition": "arn:aws:ecs:ap-northeast-1:009293460979:task-definition/salon-de-lien-staging-web:248",
+            "desiredCount": 1,
+            "pendingCount": 0,
+            "runningCount": 1,
+            "failedTasks": 0,
+            "createdAt": "2026-08-15T17:20:34.831000+09:00",
+            "updatedAt": "2026-08-15T17:23:36.554000+09:00",
+            "launchType": "FARGATE",
+            "platformVersion": "1.4.0",
+            "platformFamily": "Linux",
+            "networkConfiguration": {
+                "awsvpcConfiguration": {
+                    "subnets": [
+                        "subnet-05269305cf29e2dac",
+                        "subnet-0b87d077e46135ac5"
+                    ],
+                    "securityGroups": [
+                        "sg-06e4fd317bedfefcd"
+                    ],
+                    "assignPublicIp": "ENABLED"
+                }
+            },
+            "rolloutState": "COMPLETED",
+            "rolloutStateReason": "ECS deployment ecs-svc/9761857625528567836 completed."
+        }
+    ],
+    "roleArn": "arn:aws:iam::009293460979:role/aws-service-role/ecs.amazonaws.com/AWSServiceRoleForECS",
+    "events": [
+        {
+            "id": "f87c7a80-dd98-4c95-acad-ddf61c33a8d1",
+            "createdAt": "2026-08-15T17:23:36.561000+09:00",
+            "message": "(service salon-de-lien-staging-web) has reached a steady state."
+        },
+        {
+            "id": "82cd0bc4-4081-419c-aca5-c96b1bc247df",
+            "createdAt": "2026-08-15T17:23:36.560000+09:00",
+            "message": "(service salon-de-lien-staging-web) (deployment ecs-svc/9761857625528567836) deployment completed."
+        },
+        {
+            "id": "9626ddf7-6a67-4638-92f6-911eab203c53",
+            "createdAt": "2026-08-15T17:22:34.380000+09:00",
+            "message": "(service salon-de-lien-staging-web, taskSet ecs-svc/6180568806845109219) has begun draining connections on 1 tasks."
+        },
+        {
+            "id": "cb944f40-39da-4928-be52-af52f05bf0ce",
+            "createdAt": "2026-08-15T17:22:34.375000+09:00",
+            "message": "(service salon-de-lien-staging-web) deregistered 1 targets in (target-group arn:aws:elasticloadbalancing:ap-northeast-1:009293460979:targetgroup/SalonD-WebSe-YVFBXZXD8EFW/a55ebfd41dd0361a)"
+        },
+        {
+            "id": "770f3d18-629f-4131-8e1f-13acbd6f8381",
+            "createdAt": "2026-08-15T17:22:24.658000+09:00",
+            "message": "(service salon-de-lien-staging-web) has stopped 1 running tasks: (task f811a276482747caae6e9fe0eeff13c5)."
+        },
+        {
+            "id": "a712498f-e380-4444-a224-f04ec343e4ee",
+            "createdAt": "2026-08-15T17:21:34.063000+09:00",
+            "message": "(service salon-de-lien-staging-web) registered 1 targets in (target-group arn:aws:elasticloadbalancing:ap-northeast-1:009293460979:targetgroup/SalonD-WebSe-YVFBXZXD8EFW/a55ebfd41dd0361a)"
+        },
+        {
+            "id": "e7ab4b73-28b4-4d59-8474-a3611e5f0758",
+            "createdAt": "2026-08-15T17:20:52.295000+09:00",
+            "message": "(service salon-de-lien-staging-web) has started 1 tasks: (task ce0ee8169c944b21983e8561aefe7f9e)."
+        },
+        {
+            "id": "258a6231-68a9-4859-b201-45a50684b5b9",
+            "createdAt": "2026-08-15T17:18:38.797000+09:00",
+            "message": "(service salon-de-lien-staging-web) has reached a steady state."
+        },
+        {
+            "id": "30cca84d-6819-45c9-960e-32b1cf077b32",
+            "createdAt": "2026-08-15T17:18:38.796000+09:00",
+            "message": "(service salon-de-lien-staging-web) (deployment ecs-svc/6180568806845109219) deployment completed."
+        },
+        {
+            "id": "c233d360-8b12-4c78-9d1e-a1ca174bfcdd",
+            "createdAt": "2026-08-15T17:17:35.919000+09:00",
+            "message": "(service salon-de-lien-staging-web, taskSet ecs-svc/3770608365586194487) has begun draining connections on 1 tasks."
+        },
+        {
+            "id": "97cfe302-df09-4978-8ee3-3917145b423b",
+            "createdAt": "2026-08-15T17:17:35.914000+09:00",
+            "message": "(service salon-de-lien-staging-web) deregistered 1 targets in (target-group arn:aws:elasticloadbalancing:ap-northeast-1:009293460979:targetgroup/SalonD-WebSe-YVFBXZXD8EFW/a55ebfd41dd0361a)"
+        },
+        {
+            "id": "8bbda23f-1f8e-4265-9c6a-02891d9aaddc",
+            "createdAt": "2026-08-15T17:17:26.382000+09:00",
+            "message": "(service salon-de-lien-staging-web) has stopped 1 running tasks: (task 7ed1bbb447e4442b92bba17c75a5dc5e)."
+        },
+        {
+            "id": "b53a9708-cbe3-46d0-bb24-3c432f6b4c56",
+            "createdAt": "2026-08-15T17:16:45.345000+09:00",
+            "message": "(service salon-de-lien-staging-web) registered 1 targets in (target-group arn:aws:elasticloadbalancing:ap-northeast-1:009293460979:targetgroup/SalonD-WebSe-YVFBXZXD8EFW/a55ebfd41dd0361a)"
+        },
+        {
+            "id": "00bff029-8c35-47f4-90f2-a4cb4ea4acfe",
+            "createdAt": "2026-08-15T17:15:54.120000+09:00",
+            "message": "(service salon-de-lien-staging-web) has started 1 tasks: (task f811a276482747caae6e9fe0eeff13c5)."
+        },
+        {
+            "id": "25abe738-966a-427a-8d44-ff1c4965088a",
+            "createdAt": "2026-08-15T17:12:47.921000+09:00",
+            "message": "(service salon-de-lien-staging-web) has reached a steady state."
+        },
+        {
+            "id": "10573864-dbb4-410a-a307-c83619920308",
+            "createdAt": "2026-08-15T17:12:47.920000+09:00",
+            "message": "(service salon-de-lien-staging-web) (deployment ecs-svc/3770608365586194487) deployment completed."
+        },
+        {
+            "id": "a5f80f2d-4f5b-4cd0-8ab1-7709a77e7cbf",
+            "createdAt": "2026-08-15T17:11:46.550000+09:00",
+            "message": "(service salon-de-lien-staging-web, taskSet ecs-svc/8419338600702705618) has begun draining connections on 1 tasks."
+        },
+        {
+            "id": "ca6fe59b-f5c4-4b0b-b994-6a9a46d20d76",
+            "createdAt": "2026-08-15T17:11:46.546000+09:00",
+            "message": "(service salon-de-lien-staging-web) deregistered 1 targets in (target-group arn:aws:elasticloadbalancing:ap-northeast-1:009293460979:targetgroup/SalonD-WebSe-YVFBXZXD8EFW/a55ebfd41dd0361a)"
+        },
+        {
+            "id": "3e8905af-1191-4797-82db-7bbbe471304e",
+            "createdAt": "2026-08-15T17:11:37.016000+09:00",
+            "message": "(service salon-de-lien-staging-web) has stopped 1 running tasks: (task 2be64515325d4e868a46b466a1c248b0)."
+        },
+        {
+            "id": "a0dc0bf8-fe6c-4015-92c8-ac86661e6069",
+            "createdAt": "2026-08-15T17:10:55.655000+09:00",
+            "message": "(service salon-de-lien-staging-web) registered 1 targets in (target-group arn:aws:elasticloadbalancing:ap-northeast-1:009293460979:targetgroup/SalonD-WebSe-YVFBXZXD8EFW/a55ebfd41dd0361a)"
+        },
+        {
+            "id": "4a889e04-a978-41aa-85d7-ea283f16ab0e",
+            "createdAt": "2026-08-15T17:10:05.544000+09:00",
+            "message": "(service salon-de-lien-staging-web) has started 1 tasks: (task 7ed1bbb447e4442b92bba17c75a5dc5e)."
+        },
+        {
+            "id": "972007ab-9f11-4aa1-a369-eeced776ef66",
+            "createdAt": "2026-08-15T17:05:46.662000+09:00",
+            "message": "(service salon-de-lien-staging-web) has reached a steady state."
+        },
+        {
+            "id": "de476d60-79db-422a-86c1-0a0afdfb591f",
+            "createdAt": "2026-08-15T17:05:46.661000+09:00",
+            "message": "(service salon-de-lien-staging-web) (deployment ecs-svc/8419338600702705618) deployment completed."
+        },
+        {
+            "id": "194bd1a6-f95c-47b6-952f-d57b7e66f680",
+            "createdAt": "2026-08-15T17:04:44.595000+09:00",
+            "message": "(service salon-de-lien-staging-web, taskSet ecs-svc/9637786536023938854) has begun draining connections on 1 tasks."
+        },
+        {
+            "id": "ca3cd289-a258-43ff-bd2a-706448c83fca",
+            "createdAt": "2026-08-15T17:04:44.591000+09:00",
+            "message": "(service salon-de-lien-staging-web) deregistered 1 targets in (target-group arn:aws:elasticloadbalancing:ap-northeast-1:009293460979:targetgroup/SalonD-WebSe-YVFBXZXD8EFW/a55ebfd41dd0361a)"
+        },
+        {
+            "id": "adddcfe3-48e8-4693-9b12-b898c53f17f4",
+            "createdAt": "2026-08-15T17:04:35.128000+09:00",
+            "message": "(service salon-de-lien-staging-web) has stopped 1 running tasks: (task f7bbaaf84f9b4b5da710bd6e67453c79)."
+        },
+        {
+            "id": "ed3ef650-d951-4aa3-8b7a-6674155ec189",
+            "createdAt": "2026-08-15T17:03:53.850000+09:00",
+            "message": "(service salon-de-lien-staging-web) registered 1 targets in (target-group arn:aws:elasticloadbalancing:ap-northeast-1:009293460979:targetgroup/SalonD-WebSe-YVFBXZXD8EFW/a55ebfd41dd0361a)"
+        },
+        {
+            "id": "15cc5769-a907-461d-9c50-8df358757507",
+            "createdAt": "2026-08-15T17:03:02.721000+09:00",
+            "message": "(service salon-de-lien-staging-web) has started 1 tasks: (task 2be64515325d4e868a46b466a1c248b0)."
+        },
+        {
+            "id": "e58cc979-2bb9-4164-a02c-f04d55f13b05",
+            "createdAt": "2026-08-15T17:00:28.285000+09:00",
+            "message": "(service salon-de-lien-staging-web) has reached a steady state."
+        },
+        {
+            "id": "8d983774-45f1-4f43-bc59-f46104ff113b",
+            "createdAt": "2026-08-15T17:00:28.284000+09:00",
+            "message": "(service salon-de-lien-staging-web) (deployment ecs-svc/9637786536023938854) deployment completed."
+        },
+        {
+            "id": "ec84f894-4329-48af-bb13-5c69e6a6af16",
+            "createdAt": "2026-08-15T16:59:35.904000+09:00",
+            "message": "(service salon-de-lien-staging-web, taskSet ecs-svc/3934933331366439643) has begun draining connections on 1 tasks."
+        },
+        {
+            "id": "b3bcf192-b5ac-4abc-93e3-b91db33c5fe8",
+            "createdAt": "2026-08-15T16:59:35.899000+09:00",
+            "message": "(service salon-de-lien-staging-web) deregistered 1 targets in (target-group arn:aws:elasticloadbalancing:ap-northeast-1:009293460979:targetgroup/SalonD-WebSe-YVFBXZXD8EFW/a55ebfd41dd0361a)"
+        },
+        {
+            "id": "6978f640-ac10-4a09-a72e-06693a1aa6e1",
+            "createdAt": "2026-08-15T16:59:25.370000+09:00",
+            "message": "(service salon-de-lien-staging-web) has stopped 1 running tasks: (task 2b511aecfba549248d05da2c166c95ac)."
+        },
+        {
+            "id": "7270a8d7-d309-4941-8de3-5cb4c9d71e85",
+            "createdAt": "2026-08-15T16:58:34.675000+09:00",
+            "message": "(service salon-de-lien-staging-web) registered 1 targets in (target-group arn:aws:elasticloadbalancing:ap-northeast-1:009293460979:targetgroup/SalonD-WebSe-YVFBXZXD8EFW/a55ebfd41dd0361a)"
+        },
+        {
+            "id": "665b3216-13ce-437e-95d2-252f92eb8d46",
+            "createdAt": "2026-08-15T16:57:53.658000+09:00",
+            "message": "(service salon-de-lien-staging-web) has started 1 tasks: (task f7bbaaf84f9b4b5da710bd6e67453c79)."
+        },
+        {
+            "id": "d62b9b7e-b835-4bcf-9a4d-16926b30e2e4",
+            "createdAt": "2026-08-15T16:55:18.720000+09:00",
+            "message": "(service salon-de-lien-staging-web) has reached a steady state."
+        },
+        {
+            "id": "43eaf208-6ddc-408f-a5c3-9f5cbf71b30e",
+            "createdAt": "2026-08-15T16:55:18.719000+09:00",
+            "message": "(service salon-de-lien-staging-web) (deployment ecs-svc/3934933331366439643) deployment completed."
+        },
+        {
+            "id": "68adc3ec-9225-4919-9d38-431b04c42a10",
+            "createdAt": "2026-08-15T16:54:16.833000+09:00",
+            "message": "(service salon-de-lien-staging-web, taskSet ecs-svc/2210099003069328365) has begun draining connections on 1 tasks."
+        },
+        {
+            "id": "9a732a4b-b9f0-40fa-8a16-840fab79f6f1",
+            "createdAt": "2026-08-15T16:54:16.829000+09:00",
+            "message": "(service salon-de-lien-staging-web) deregistered 1 targets in (target-group arn:aws:elasticloadbalancing:ap-northeast-1:009293460979:targetgroup/SalonD-WebSe-YVFBXZXD8EFW/a55ebfd41dd0361a)"
+        },
+        {
+            "id": "41a1573a-9423-4576-b15e-e4c318435803",
+            "createdAt": "2026-08-15T16:54:07.030000+09:00",
+            "message": "(service salon-de-lien-staging-web) has stopped 1 running tasks: (task a625eed93032458dba9d2ccfa350c5cd)."
+        },
+        {
+            "id": "d6b38137-fddf-405c-9b32-c56f7ea4ae22",
+            "createdAt": "2026-08-15T16:53:25.114000+09:00",
+            "message": "(service salon-de-lien-staging-web) registered 1 targets in (target-group arn:aws:elasticloadbalancing:ap-northeast-1:009293460979:targetgroup/SalonD-WebSe-YVFBXZXD8EFW/a55ebfd41dd0361a)"
+        },
+        {
+            "id": "2a1ba805-f902-43df-9d58-0cb6f8538264",
+            "createdAt": "2026-08-15T16:52:34.221000+09:00",
+            "message": "(service salon-de-lien-staging-web) has started 1 tasks: (task 2b511aecfba549248d05da2c166c95ac)."
+        },
+        {
+            "id": "bb84ee4d-312e-47e5-8a27-22ab0b541b36",
+            "createdAt": "2026-08-15T16:49:27.886000+09:00",
+            "message": "(service salon-de-lien-staging-web) has reached a steady state."
+        },
+        {
+            "id": "c16f383c-54a7-4a8c-a51c-69b1bb934135",
+            "createdAt": "2026-08-15T16:49:27.885000+09:00",
+            "message": "(service salon-de-lien-staging-web) (deployment ecs-svc/2210099003069328365) deployment completed."
+        },
+        {
+            "id": "eb9956cb-5f1f-4481-a603-9c5d5f5054f8",
+            "createdAt": "2026-08-15T16:48:26.611000+09:00",
+            "message": "(service salon-de-lien-staging-web, taskSet ecs-svc/2629950315393386924) has begun draining connections on 1 tasks."
+        },
+        {
+            "id": "ee1f2fa6-a757-4fac-aa93-041ea5a002f6",
+            "createdAt": "2026-08-15T16:48:26.606000+09:00",
+            "message": "(service salon-de-lien-staging-web) deregistered 1 targets in (target-group arn:aws:elasticloadbalancing:ap-northeast-1:009293460979:targetgroup/SalonD-WebSe-YVFBXZXD8EFW/a55ebfd41dd0361a)"
+        },
+        {
+            "id": "7f8d9a54-4ea3-4819-8fe5-eac4a6a4e0fb",
+            "createdAt": "2026-08-15T16:48:16.570000+09:00",
+            "message": "(service salon-de-lien-staging-web) has stopped 1 running tasks: (task b9aa03d7d5374f1c807676233e359ac8)."
+        },
+        {
+            "id": "408fd61c-78b5-4a6b-8eec-2688f9a1288b",
+            "createdAt": "2026-08-15T16:47:35.884000+09:00",
+            "message": "(service salon-de-lien-staging-web) registered 1 targets in (target-group arn:aws:elasticloadbalancing:ap-northeast-1:009293460979:targetgroup/SalonD-WebSe-YVFBXZXD8EFW/a55ebfd41dd0361a)"
+        },
+        {
+            "id": "7c8ad4f7-5932-49ff-aa5c-b92e3a3f7cac",
+            "createdAt": "2026-08-15T16:46:43.456000+09:00",
+            "message": "(service salon-de-lien-staging-web) has started 1 tasks: (task a625eed93032458dba9d2ccfa350c5cd)."
+        },
+        {
+            "id": "007ee7af-b717-4054-973d-3f7fa9ad6eaa",
+            "createdAt": "2026-08-15T16:39:42.353000+09:00",
+            "message": "(service salon-de-lien-staging-web) has reached a steady state."
+        },
+        {
+            "id": "eab31ceb-b5ae-4704-ad63-897fb8d2a7ad",
+            "createdAt": "2026-08-15T16:39:42.352000+09:00",
+            "message": "(service salon-de-lien-staging-web) (deployment ecs-svc/2629950315393386924) deployment completed."
+        },
+        {
+            "id": "88ea0378-cb83-47be-ad23-9a7f8a964eff",
+            "createdAt": "2026-08-15T16:38:50.295000+09:00",
+            "message": "(service salon-de-lien-staging-web, taskSet ecs-svc/6551860921685141438) has begun draining connections on 1 tasks."
+        },
+        {
+            "id": "345010b5-d5da-4848-ba0e-d2a93e610bcc",
+            "createdAt": "2026-08-15T16:38:50.289000+09:00",
+            "message": "(service salon-de-lien-staging-web) deregistered 1 targets in (target-group arn:aws:elasticloadbalancing:ap-northeast-1:009293460979:targetgroup/SalonD-WebSe-YVFBXZXD8EFW/a55ebfd41dd0361a)"
+        },
+        {
+            "id": "e2ab7a54-cf5c-4ea8-9f7f-9d8e914bc6f2",
+            "createdAt": "2026-08-15T16:38:40.152000+09:00",
+            "message": "(service salon-de-lien-staging-web) has stopped 1 running tasks: (task 02bbeb8f3aef4d919c2db6ee4aa05597)."
+        },
+        {
+            "id": "584675ad-8e0e-4814-9f5e-420187a12e26",
+            "createdAt": "2026-08-15T16:37:48.677000+09:00",
+            "message": "(service salon-de-lien-staging-web) registered 1 targets in (target-group arn:aws:elasticloadbalancing:ap-northeast-1:009293460979:targetgroup/SalonD-WebSe-YVFBXZXD8EFW/a55ebfd41dd0361a)"
+        },
+        {
+            "id": "403d9cb9-250b-4d5c-a2aa-7b7c284773ec",
+            "createdAt": "2026-08-15T16:37:08.918000+09:00",
+            "message": "(service salon-de-lien-staging-web) has started 1 tasks: (task b9aa03d7d5374f1c807676233e359ac8)."
+        },
+        {
+            "id": "ef8133fb-881d-4883-8e5c-81deec7adcf4",
+            "createdAt": "2026-08-15T16:31:38.635000+09:00",
+            "message": "(service salon-de-lien-staging-web) has reached a steady state."
+        },
+        {
+            "id": "7ce735d2-96b3-4de3-9a55-9386f1f3531e",
+            "createdAt": "2026-08-15T16:31:38.634000+09:00",
+            "message": "(service salon-de-lien-staging-web) (deployment ecs-svc/6551860921685141438) deployment completed."
+        },
+        {
+            "id": "12cafe83-4c3c-4ec3-9015-0d88791410f1",
+            "createdAt": "2026-08-15T16:30:46.266000+09:00",
+            "message": "(service salon-de-lien-staging-web, taskSet ecs-svc/7168686746145481460) has begun draining connections on 1 tasks."
+        },
+        {
+            "id": "6258285c-2e16-4e3b-9538-c660fdc596be",
+            "createdAt": "2026-08-15T16:30:46.262000+09:00",
+            "message": "(service salon-de-lien-staging-web) deregistered 1 targets in (target-group arn:aws:elasticloadbalancing:ap-northeast-1:009293460979:targetgroup/SalonD-WebSe-YVFBXZXD8EFW/a55ebfd41dd0361a)"
+        },
+        {
+            "id": "c8081504-2bce-4f0d-916f-deee864ced0d",
+            "createdAt": "2026-08-15T16:30:35.847000+09:00",
+            "message": "(service salon-de-lien-staging-web) has stopped 1 running tasks: (task 60b1f11ae09940498e06e4d84dfa35f3)."
+        },
+        {
+            "id": "618e8489-889d-4486-8b5a-bdf07d30cddc",
+            "createdAt": "2026-08-15T16:29:45.825000+09:00",
+            "message": "(service salon-de-lien-staging-web) registered 1 targets in (target-group arn:aws:elasticloadbalancing:ap-northeast-1:009293460979:targetgroup/SalonD-WebSe-YVFBXZXD8EFW/a55ebfd41dd0361a)"
+        },
+        {
+            "id": "2c0f0b00-a0c3-4b74-b6eb-fce42427a6c1",
+            "createdAt": "2026-08-15T16:29:04.310000+09:00",
+            "message": "(service salon-de-lien-staging-web) has started 1 tasks: (task 02bbeb8f3aef4d919c2db6ee4aa05597)."
+        },
+        {
+            "id": "6176da96-9d58-43f9-ae25-f0ce821d54de",
+            "createdAt": "2026-08-15T16:24:46.858000+09:00",
+            "message": "(service salon-de-lien-staging-web) has reached a steady state."
+        },
+        {
+            "id": "60501794-2818-4bf9-9f7d-b64a17c800f4",
+            "createdAt": "2026-08-15T16:24:46.857000+09:00",
+            "message": "(service salon-de-lien-staging-web) (deployment ecs-svc/7168686746145481460) deployment completed."
+        },
+        {
+            "id": "7c78bc72-6d73-49df-be3c-2f933776be01",
+            "createdAt": "2026-08-15T16:23:54.101000+09:00",
+            "message": "(service salon-de-lien-staging-web, taskSet ecs-svc/1625305260947693035) has begun draining connections on 1 tasks."
+        },
+        {
+            "id": "23e3a453-685a-4f90-a19e-b6aef395c611",
+            "createdAt": "2026-08-15T16:23:54.097000+09:00",
+            "message": "(service salon-de-lien-staging-web) deregistered 1 targets in (target-group arn:aws:elasticloadbalancing:ap-northeast-1:009293460979:targetgroup/SalonD-WebSe-YVFBXZXD8EFW/a55ebfd41dd0361a)"
+        },
+        {
+            "id": "9baccb99-2937-4fbc-9adb-75111ec558d4",
+            "createdAt": "2026-08-15T16:23:44.031000+09:00",
+            "message": "(service salon-de-lien-staging-web) has stopped 1 running tasks: (task 560d8b34b3244f28be03d2df3da9482f)."
+        },
+        {
+            "id": "336dae3a-c788-48cb-a10f-390232978339",
+            "createdAt": "2026-08-15T16:23:03.392000+09:00",
+            "message": "(service salon-de-lien-staging-web) registered 1 targets in (target-group arn:aws:elasticloadbalancing:ap-northeast-1:009293460979:targetgroup/SalonD-WebSe-YVFBXZXD8EFW/a55ebfd41dd0361a)"
+        },
+        {
+            "id": "5d68db1e-dc62-4bba-ba17-2d6e37643bc5",
+            "createdAt": "2026-08-15T16:22:12.123000+09:00",
+            "message": "(service salon-de-lien-staging-web) has started 1 tasks: (task 60b1f11ae09940498e06e4d84dfa35f3)."
+        },
+        {
+            "id": "20cfe7f0-8c0e-4b35-8e7d-9be3b6644a2a",
+            "createdAt": "2026-08-15T16:07:37.359000+09:00",
+            "message": "(service salon-de-lien-staging-web) has reached a steady state."
+        },
+        {
+            "id": "a8bdae8a-7c5d-4254-9832-43a5f142f35c",
+            "createdAt": "2026-08-15T16:07:37.358000+09:00",
+            "message": "(service salon-de-lien-staging-web) (deployment ecs-svc/1625305260947693035) deployment completed."
+        },
+        {
+            "id": "e61debdc-622a-40d4-9667-0fbf41e21c03",
+            "createdAt": "2026-08-15T16:06:44.480000+09:00",
+            "message": "(service salon-de-lien-staging-web, taskSet ecs-svc/3838022858146435584) has begun draining connections on 1 tasks."
+        },
+        {
+            "id": "1d11d12f-d304-42f5-a9ae-9d37616b68ea",
+            "createdAt": "2026-08-15T16:06:44.473000+09:00",
+            "message": "(service salon-de-lien-staging-web) deregistered 1 targets in (target-group arn:aws:elasticloadbalancing:ap-northeast-1:009293460979:targetgroup/SalonD-WebSe-YVFBXZXD8EFW/a55ebfd41dd0361a)"
+        },
+        {
+            "id": "7b798058-7d0e-4147-8fad-414a40b4aa22",
+            "createdAt": "2026-08-15T16:06:34.829000+09:00",
+            "message": "(service salon-de-lien-staging-web) has stopped 1 running tasks: (task a70c7f1997c944bcad735ced06d60010)."
+        },
+        {
+            "id": "8353fe8b-e3bd-4666-be8c-79cfc74e377c",
+            "createdAt": "2026-08-15T16:05:44.242000+09:00",
+            "message": "(service salon-de-lien-staging-web) registered 1 targets in (target-group arn:aws:elasticloadbalancing:ap-northeast-1:009293460979:targetgroup/SalonD-WebSe-YVFBXZXD8EFW/a55ebfd41dd0361a)"
+        },
+        {
+            "id": "c9b21aa7-582c-48d3-9c62-5c603388d71b",
+            "createdAt": "2026-08-15T16:05:02.962000+09:00",
+            "message": "(service salon-de-lien-staging-web) has started 1 tasks: (task 560d8b34b3244f28be03d2df3da9482f)."
+        },
+        {
+            "id": "84abe4f4-290b-4bf6-87d9-e204be2ab611",
+            "createdAt": "2026-08-15T15:56:07.700000+09:00",
+            "message": "(service salon-de-lien-staging-web) has reached a steady state."
+        },
+        {
+            "id": "a5317bce-7e0e-4acf-9f9b-024e28116654",
+            "createdAt": "2026-08-15T15:56:07.699000+09:00",
+            "message": "(service salon-de-lien-staging-web) (deployment ecs-svc/3838022858146435584) deployment completed."
+        },
+        {
+            "id": "c0ba3b2b-b47b-4ee6-b22f-0bf278e05e87",
+            "createdAt": "2026-08-15T15:55:14.945000+09:00",
+            "message": "(service salon-de-lien-staging-web, taskSet ecs-svc/5720261982016655814) has begun draining connections on 1 tasks."
+        },
+        {
+            "id": "ad741a4d-a3cd-47b9-8b11-9763597353a4",
+            "createdAt": "2026-08-15T15:55:14.939000+09:00",
+            "message": "(service salon-de-lien-staging-web) deregistered 1 targets in (target-group arn:aws:elasticloadbalancing:ap-northeast-1:009293460979:targetgroup/SalonD-WebSe-YVFBXZXD8EFW/a55ebfd41dd0361a)"
+        },
+        {
+            "id": "17bcefa5-359e-4a4f-8787-d941a95d0dd9",
+            "createdAt": "2026-08-15T15:55:05.096000+09:00",
+            "message": "(service salon-de-lien-staging-web) has stopped 1 running tasks: (task a5e3746b6fed444c8949e7db05bb6a09)."
+        },
+        {
+            "id": "76452d32-1604-48aa-b3fb-85fe6e58f40c",
+            "createdAt": "2026-08-15T15:54:14.242000+09:00",
+            "message": "(service salon-de-lien-staging-web) registered 1 targets in (target-group arn:aws:elasticloadbalancing:ap-northeast-1:009293460979:targetgroup/SalonD-WebSe-YVFBXZXD8EFW/a55ebfd41dd0361a)"
+        },
+        {
+            "id": "24e901f8-b653-4bb3-8e4e-0dc9633d528a",
+            "createdAt": "2026-08-15T15:53:32.843000+09:00",
+            "message": "(service salon-de-lien-staging-web) has started 1 tasks: (task a70c7f1997c944bcad735ced06d60010)."
+        },
+        {
+            "id": "8dfd8cc7-71f3-4568-83ad-70b54e867b74",
+            "createdAt": "2026-08-15T15:39:06.800000+09:00",
+            "message": "(service salon-de-lien-staging-web) has reached a steady state."
+        },
+        {
+            "id": "ae1f982b-3611-4579-8681-511f312c836a",
+            "createdAt": "2026-08-15T15:39:06.799000+09:00",
+            "message": "(service salon-de-lien-staging-web) (deployment ecs-svc/5720261982016655814) deployment completed."
+        },
+        {
+            "id": "af18d78c-8085-4da7-953e-59009ba9c5df",
+            "createdAt": "2026-08-15T15:38:05.306000+09:00",
+            "message": "(service salon-de-lien-staging-web, taskSet ecs-svc/0377339387632045263) has begun draining connections on 1 tasks."
+        },
+        {
+            "id": "0e376d55-2367-4372-9b74-af6eefbe8349",
+            "createdAt": "2026-08-15T15:38:05.301000+09:00",
+            "message": "(service salon-de-lien-staging-web) deregistered 1 targets in (target-group arn:aws:elasticloadbalancing:ap-northeast-1:009293460979:targetgroup/SalonD-WebSe-YVFBXZXD8EFW/a55ebfd41dd0361a)"
+        },
+        {
+            "id": "c2df6bf2-4064-4c35-93a9-282a794e4aa7",
+            "createdAt": "2026-08-15T15:37:55.183000+09:00",
+            "message": "(service salon-de-lien-staging-web) has stopped 1 running tasks: (task b689a722ed984259a6877e1501945774)."
+        },
+        {
+            "id": "765b9646-037c-420e-8667-4d3591784fd1",
+            "createdAt": "2026-08-15T15:37:13.441000+09:00",
+            "message": "(service salon-de-lien-staging-web) registered 1 targets in (target-group arn:aws:elasticloadbalancing:ap-northeast-1:009293460979:targetgroup/SalonD-WebSe-YVFBXZXD8EFW/a55ebfd41dd0361a)"
+        },
+        {
+            "id": "55a6350f-59de-4aca-aba7-45b7b2d61cbe",
+            "createdAt": "2026-08-15T15:36:23.445000+09:00",
+            "message": "(service salon-de-lien-staging-web) has started 1 tasks: (task a5e3746b6fed444c8949e7db05bb6a09)."
+        },
+        {
+            "id": "005c36ff-5d63-457e-82e7-512d7abdfb1a",
+            "createdAt": "2026-08-15T15:29:00.399000+09:00",
+            "message": "(service salon-de-lien-staging-web) has reached a steady state."
+        },
+        {
+            "id": "f35010ed-82c2-4f99-b439-41cb3c327033",
+            "createdAt": "2026-08-15T15:29:00.398000+09:00",
+            "message": "(service salon-de-lien-staging-web) (deployment ecs-svc/0377339387632045263) deployment completed."
+        },
+        {
+            "id": "813faca7-8204-41cf-96dc-01f7143a975a",
+            "createdAt": "2026-08-15T15:28:07.468000+09:00",
+            "message": "(service salon-de-lien-staging-web, taskSet ecs-svc/0287398475214024635) has begun draining connections on 1 tasks."
+        },
+        {
+            "id": "bfca3f4e-a397-455f-b5f5-2acf3eb2e08a",
+            "createdAt": "2026-08-15T15:28:07.463000+09:00",
+            "message": "(service salon-de-lien-staging-web) deregistered 1 targets in (target-group arn:aws:elasticloadbalancing:ap-northeast-1:009293460979:targetgroup/SalonD-WebSe-YVFBXZXD8EFW/a55ebfd41dd0361a)"
+        },
+        {
+            "id": "9521c9e9-3ff2-4570-a201-f122121870d9",
+            "createdAt": "2026-08-15T15:27:58.200000+09:00",
+            "message": "(service salon-de-lien-staging-web) has stopped 1 running tasks: (task a56b605933f74d97b33d88d164c5db91)."
+        },
+        {
+            "id": "90ff04bb-f086-41ae-92b3-b8f01eea9f04",
+            "createdAt": "2026-08-15T15:27:17.022000+09:00",
+            "message": "(service salon-de-lien-staging-web) registered 1 targets in (target-group arn:aws:elasticloadbalancing:ap-northeast-1:009293460979:targetgroup/SalonD-WebSe-YVFBXZXD8EFW/a55ebfd41dd0361a)"
+        },
+        {
+            "id": "5228142b-2c9c-4568-8a0b-c95faf95359d",
+            "createdAt": "2026-08-15T15:26:25.802000+09:00",
+            "message": "(service salon-de-lien-staging-web) has started 1 tasks: (task b689a722ed984259a6877e1501945774)."
+        },
+        {
+            "id": "d1d9c41c-fadb-46c6-8a94-f39f05eb9570",
+            "createdAt": "2026-08-15T15:18:20.917000+09:00",
+            "message": "(service salon-de-lien-staging-web) has reached a steady state."
+        },
+        {
+            "id": "3639bf72-e373-4628-85f8-b119881d5407",
+            "createdAt": "2026-08-15T15:18:20.916000+09:00",
+            "message": "(service salon-de-lien-staging-web) (deployment ecs-svc/0287398475214024635) deployment completed."
+        }
+    ],
+    "createdAt": "2026-08-05T00:36:37.117000+09:00",
+    "currentServiceRevisions": [
+        {
+            "arn": "arn:aws:ecs:ap-northeast-1:009293460979:service-revision/salon-de-lien-staging-cluster/salon-de-lien-staging-web/9761857625528567836",
+            "requestedTaskCount": 1,
+            "runningTaskCount": 1,
+            "pendingTaskCount": 0
+        }
+    ],
+    "placementConstraints": [],
+    "placementStrategy": [],
+    "networkConfiguration": {
+        "awsvpcConfiguration": {
+            "subnets": [
+                "subnet-05269305cf29e2dac",
+                "subnet-0b87d077e46135ac5"
+            ],
+            "securityGroups": [
+                "sg-06e4fd317bedfefcd"
+            ],
+            "assignPublicIp": "ENABLED"
+        }
+    },
+    "healthCheckGracePeriodSeconds": 60,
+    "schedulingStrategy": "REPLICA",
+    "deploymentController": {
+        "type": "ECS"
+    },
+    "createdBy": "arn:aws:iam::009293460979:role/cdk-hnb659fds-cfn-exec-role-009293460979-ap-northeast-1",
+    "enableECSManagedTags": false,
+    "propagateTags": "NONE",
+    "enableExecuteCommand": true,
+    "availabilityZoneRebalancing": "ENABLED",
+    "resourceManagementType": "CUSTOMER"
+}

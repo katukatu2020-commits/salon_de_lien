@@ -1,0 +1,50 @@
+FROM 009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app:business-schedule-commercial-20260815-127
+USER root
+WORKDIR /app
+COPY tenant-setup.js tenant-setup-client.js store-profile.js commercial-admin-v101.js admin-theme-modal-v146.css patch-tenant-setup.js \
+     tenant-setup.test.js store-profile.test.js runtime-cache-v130.test.js runtime-cache-v135.test.js runtime-cache-v136.test.js admin-shell-ui-v136.test.js shift-hydration-v131.test.js customer-booking-hydration-v132.test.js \
+     patch-shift-hydration-v131.js verify-shift-hydration-v131.js \
+     patch-customer-booking-hydration-v132.js verify-customer-booking-hydration-v132.js \
+     patch-runtime-cache-v128.js verify-runtime-cache-v128.js \
+     patch-runtime-cache-v129.js verify-runtime-cache-v129.js \
+     patch-runtime-cache-v130.js verify-runtime-cache-v130.js \
+     patch-runtime-cache-v135.js verify-runtime-cache-v135.js \
+     patch-admin-shell-stability-v136.js verify-admin-shell-stability-v136.js \
+     patch-runtime-cache-v136.js verify-runtime-cache-v136.js /app/
+RUN node --check /app/tenant-setup.js \
+ && node --check /app/tenant-setup-client.js \
+ && node --check /app/store-profile.js \
+ && node --check /app/commercial-admin-v101.js \
+ && node --check /app/patch-shift-hydration-v131.js \
+ && node --check /app/patch-customer-booking-hydration-v132.js \
+ && node --check /app/patch-admin-shell-stability-v136.js \
+ && node --check /app/patch-runtime-cache-v136.js \
+ && node --test /app/tenant-setup.test.js /app/store-profile.test.js /app/runtime-cache-v130.test.js /app/runtime-cache-v135.test.js /app/runtime-cache-v136.test.js /app/admin-shell-ui-v136.test.js /app/shift-hydration-v131.test.js /app/customer-booking-hydration-v132.test.js \
+ && node /app/patch-shift-hydration-v131.js \
+ && node /app/verify-shift-hydration-v131.js \
+ && node /app/patch-customer-booking-hydration-v132.js \
+ && node /app/verify-customer-booking-hydration-v132.js \
+ && node /app/patch-runtime-cache-v128.js \
+ && node /app/verify-runtime-cache-v128.js \
+ && node /app/patch-runtime-cache-v129.js \
+ && node /app/verify-runtime-cache-v129.js \
+ && node /app/patch-runtime-cache-v130.js \
+ && node /app/verify-runtime-cache-v130.js \
+ && node /app/patch-runtime-cache-v135.js \
+ && node /app/verify-runtime-cache-v135.js \
+ && node /app/patch-admin-shell-stability-v136.js \
+ && node /app/verify-admin-shell-stability-v136.js \
+ && node /app/patch-runtime-cache-v136.js \
+ && node /app/verify-runtime-cache-v136.js \
+ && node /app/verify-shift-hydration-v131.js \
+ && node /app/verify-customer-booking-hydration-v132.js \
+ && rm /app/tenant-setup.test.js /app/store-profile.test.js /app/runtime-cache-v130.test.js /app/runtime-cache-v135.test.js /app/runtime-cache-v136.test.js /app/admin-shell-ui-v136.test.js /app/shift-hydration-v131.test.js /app/customer-booking-hydration-v132.test.js \
+       /app/patch-shift-hydration-v131.js /app/verify-shift-hydration-v131.js \
+       /app/patch-customer-booking-hydration-v132.js /app/verify-customer-booking-hydration-v132.js \
+       /app/patch-runtime-cache-v128.js /app/verify-runtime-cache-v128.js \
+       /app/patch-runtime-cache-v129.js /app/verify-runtime-cache-v129.js \
+       /app/patch-runtime-cache-v130.js /app/verify-runtime-cache-v130.js \
+       /app/patch-runtime-cache-v135.js /app/verify-runtime-cache-v135.js \
+       /app/patch-admin-shell-stability-v136.js /app/verify-admin-shell-stability-v136.js \
+       /app/patch-runtime-cache-v136.js /app/verify-runtime-cache-v136.js /app/patch-tenant-setup.js
+USER nextjs

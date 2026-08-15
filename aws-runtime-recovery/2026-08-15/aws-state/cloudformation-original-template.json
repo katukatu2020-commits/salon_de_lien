@@ -1,0 +1,2217 @@
+{
+    "Resources": {
+        "Vpc8378EB38": {
+            "Type": "AWS::EC2::VPC",
+            "Properties": {
+                "CidrBlock": "10.0.0.0/16",
+                "EnableDnsHostnames": true,
+                "EnableDnsSupport": true,
+                "InstanceTenancy": "default",
+                "Tags": [
+                    {
+                        "Key": "Application",
+                        "Value": "SalonDeLien"
+                    },
+                    {
+                        "Key": "Environment",
+                        "Value": "staging"
+                    },
+                    {
+                        "Key": "Name",
+                        "Value": "salon-de-lien-staging-vpc"
+                    }
+                ]
+            },
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/Vpc/Resource"
+            }
+        },
+        "VpcpublicSubnet1Subnet2BB74ED7": {
+            "Type": "AWS::EC2::Subnet",
+            "Properties": {
+                "AvailabilityZone": "ap-northeast-1a",
+                "CidrBlock": "10.0.0.0/24",
+                "MapPublicIpOnLaunch": true,
+                "Tags": [
+                    {
+                        "Key": "Application",
+                        "Value": "SalonDeLien"
+                    },
+                    {
+                        "Key": "aws-cdk:subnet-name",
+                        "Value": "public"
+                    },
+                    {
+                        "Key": "aws-cdk:subnet-type",
+                        "Value": "Public"
+                    },
+                    {
+                        "Key": "Environment",
+                        "Value": "staging"
+                    },
+                    {
+                        "Key": "Name",
+                        "Value": "SalonDeLien-staging/Vpc/publicSubnet1"
+                    }
+                ],
+                "VpcId": {
+                    "Ref": "Vpc8378EB38"
+                }
+            },
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/Vpc/publicSubnet1/Subnet"
+            }
+        },
+        "VpcpublicSubnet1RouteTable15C15F8E": {
+            "Type": "AWS::EC2::RouteTable",
+            "Properties": {
+                "Tags": [
+                    {
+                        "Key": "Application",
+                        "Value": "SalonDeLien"
+                    },
+                    {
+                        "Key": "Environment",
+                        "Value": "staging"
+                    },
+                    {
+                        "Key": "Name",
+                        "Value": "SalonDeLien-staging/Vpc/publicSubnet1"
+                    }
+                ],
+                "VpcId": {
+                    "Ref": "Vpc8378EB38"
+                }
+            },
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/Vpc/publicSubnet1/RouteTable"
+            }
+        },
+        "VpcpublicSubnet1RouteTableAssociation4E83B6E4": {
+            "Type": "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties": {
+                "RouteTableId": {
+                    "Ref": "VpcpublicSubnet1RouteTable15C15F8E"
+                },
+                "SubnetId": {
+                    "Ref": "VpcpublicSubnet1Subnet2BB74ED7"
+                }
+            },
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/Vpc/publicSubnet1/RouteTableAssociation"
+            }
+        },
+        "VpcpublicSubnet1DefaultRouteB88F9E93": {
+            "Type": "AWS::EC2::Route",
+            "Properties": {
+                "DestinationCidrBlock": "0.0.0.0/0",
+                "GatewayId": {
+                    "Ref": "VpcIGWD7BA715C"
+                },
+                "RouteTableId": {
+                    "Ref": "VpcpublicSubnet1RouteTable15C15F8E"
+                }
+            },
+            "DependsOn": [
+                "VpcVPCGWBF912B6E"
+            ],
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/Vpc/publicSubnet1/DefaultRoute"
+            }
+        },
+        "VpcpublicSubnet2SubnetE34B022A": {
+            "Type": "AWS::EC2::Subnet",
+            "Properties": {
+                "AvailabilityZone": "ap-northeast-1c",
+                "CidrBlock": "10.0.1.0/24",
+                "MapPublicIpOnLaunch": true,
+                "Tags": [
+                    {
+                        "Key": "Application",
+                        "Value": "SalonDeLien"
+                    },
+                    {
+                        "Key": "aws-cdk:subnet-name",
+                        "Value": "public"
+                    },
+                    {
+                        "Key": "aws-cdk:subnet-type",
+                        "Value": "Public"
+                    },
+                    {
+                        "Key": "Environment",
+                        "Value": "staging"
+                    },
+                    {
+                        "Key": "Name",
+                        "Value": "SalonDeLien-staging/Vpc/publicSubnet2"
+                    }
+                ],
+                "VpcId": {
+                    "Ref": "Vpc8378EB38"
+                }
+            },
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/Vpc/publicSubnet2/Subnet"
+            }
+        },
+        "VpcpublicSubnet2RouteTableC5A6DF77": {
+            "Type": "AWS::EC2::RouteTable",
+            "Properties": {
+                "Tags": [
+                    {
+                        "Key": "Application",
+                        "Value": "SalonDeLien"
+                    },
+                    {
+                        "Key": "Environment",
+                        "Value": "staging"
+                    },
+                    {
+                        "Key": "Name",
+                        "Value": "SalonDeLien-staging/Vpc/publicSubnet2"
+                    }
+                ],
+                "VpcId": {
+                    "Ref": "Vpc8378EB38"
+                }
+            },
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/Vpc/publicSubnet2/RouteTable"
+            }
+        },
+        "VpcpublicSubnet2RouteTableAssociationCCE257FF": {
+            "Type": "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties": {
+                "RouteTableId": {
+                    "Ref": "VpcpublicSubnet2RouteTableC5A6DF77"
+                },
+                "SubnetId": {
+                    "Ref": "VpcpublicSubnet2SubnetE34B022A"
+                }
+            },
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/Vpc/publicSubnet2/RouteTableAssociation"
+            }
+        },
+        "VpcpublicSubnet2DefaultRoute732F0BEB": {
+            "Type": "AWS::EC2::Route",
+            "Properties": {
+                "DestinationCidrBlock": "0.0.0.0/0",
+                "GatewayId": {
+                    "Ref": "VpcIGWD7BA715C"
+                },
+                "RouteTableId": {
+                    "Ref": "VpcpublicSubnet2RouteTableC5A6DF77"
+                }
+            },
+            "DependsOn": [
+                "VpcVPCGWBF912B6E"
+            ],
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/Vpc/publicSubnet2/DefaultRoute"
+            }
+        },
+        "VpcdatabaseSubnet1SubnetD53A427B": {
+            "Type": "AWS::EC2::Subnet",
+            "Properties": {
+                "AvailabilityZone": "ap-northeast-1a",
+                "CidrBlock": "10.0.2.0/24",
+                "MapPublicIpOnLaunch": false,
+                "Tags": [
+                    {
+                        "Key": "Application",
+                        "Value": "SalonDeLien"
+                    },
+                    {
+                        "Key": "aws-cdk:subnet-name",
+                        "Value": "database"
+                    },
+                    {
+                        "Key": "aws-cdk:subnet-type",
+                        "Value": "Isolated"
+                    },
+                    {
+                        "Key": "Environment",
+                        "Value": "staging"
+                    },
+                    {
+                        "Key": "Name",
+                        "Value": "SalonDeLien-staging/Vpc/databaseSubnet1"
+                    }
+                ],
+                "VpcId": {
+                    "Ref": "Vpc8378EB38"
+                }
+            },
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/Vpc/databaseSubnet1/Subnet"
+            }
+        },
+        "VpcdatabaseSubnet1RouteTableF3B572E4": {
+            "Type": "AWS::EC2::RouteTable",
+            "Properties": {
+                "Tags": [
+                    {
+                        "Key": "Application",
+                        "Value": "SalonDeLien"
+                    },
+                    {
+                        "Key": "Environment",
+                        "Value": "staging"
+                    },
+                    {
+                        "Key": "Name",
+                        "Value": "SalonDeLien-staging/Vpc/databaseSubnet1"
+                    }
+                ],
+                "VpcId": {
+                    "Ref": "Vpc8378EB38"
+                }
+            },
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/Vpc/databaseSubnet1/RouteTable"
+            }
+        },
+        "VpcdatabaseSubnet1RouteTableAssociationEE6CA36B": {
+            "Type": "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties": {
+                "RouteTableId": {
+                    "Ref": "VpcdatabaseSubnet1RouteTableF3B572E4"
+                },
+                "SubnetId": {
+                    "Ref": "VpcdatabaseSubnet1SubnetD53A427B"
+                }
+            },
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/Vpc/databaseSubnet1/RouteTableAssociation"
+            }
+        },
+        "VpcdatabaseSubnet2Subnet75663D63": {
+            "Type": "AWS::EC2::Subnet",
+            "Properties": {
+                "AvailabilityZone": "ap-northeast-1c",
+                "CidrBlock": "10.0.3.0/24",
+                "MapPublicIpOnLaunch": false,
+                "Tags": [
+                    {
+                        "Key": "Application",
+                        "Value": "SalonDeLien"
+                    },
+                    {
+                        "Key": "aws-cdk:subnet-name",
+                        "Value": "database"
+                    },
+                    {
+                        "Key": "aws-cdk:subnet-type",
+                        "Value": "Isolated"
+                    },
+                    {
+                        "Key": "Environment",
+                        "Value": "staging"
+                    },
+                    {
+                        "Key": "Name",
+                        "Value": "SalonDeLien-staging/Vpc/databaseSubnet2"
+                    }
+                ],
+                "VpcId": {
+                    "Ref": "Vpc8378EB38"
+                }
+            },
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/Vpc/databaseSubnet2/Subnet"
+            }
+        },
+        "VpcdatabaseSubnet2RouteTable1E50BD8E": {
+            "Type": "AWS::EC2::RouteTable",
+            "Properties": {
+                "Tags": [
+                    {
+                        "Key": "Application",
+                        "Value": "SalonDeLien"
+                    },
+                    {
+                        "Key": "Environment",
+                        "Value": "staging"
+                    },
+                    {
+                        "Key": "Name",
+                        "Value": "SalonDeLien-staging/Vpc/databaseSubnet2"
+                    }
+                ],
+                "VpcId": {
+                    "Ref": "Vpc8378EB38"
+                }
+            },
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/Vpc/databaseSubnet2/RouteTable"
+            }
+        },
+        "VpcdatabaseSubnet2RouteTableAssociationCADBAF9A": {
+            "Type": "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties": {
+                "RouteTableId": {
+                    "Ref": "VpcdatabaseSubnet2RouteTable1E50BD8E"
+                },
+                "SubnetId": {
+                    "Ref": "VpcdatabaseSubnet2Subnet75663D63"
+                }
+            },
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/Vpc/databaseSubnet2/RouteTableAssociation"
+            }
+        },
+        "VpcIGWD7BA715C": {
+            "Type": "AWS::EC2::InternetGateway",
+            "Properties": {
+                "Tags": [
+                    {
+                        "Key": "Application",
+                        "Value": "SalonDeLien"
+                    },
+                    {
+                        "Key": "Environment",
+                        "Value": "staging"
+                    },
+                    {
+                        "Key": "Name",
+                        "Value": "salon-de-lien-staging-vpc"
+                    }
+                ]
+            },
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/Vpc/IGW"
+            }
+        },
+        "VpcVPCGWBF912B6E": {
+            "Type": "AWS::EC2::VPCGatewayAttachment",
+            "Properties": {
+                "InternetGatewayId": {
+                    "Ref": "VpcIGWD7BA715C"
+                },
+                "VpcId": {
+                    "Ref": "Vpc8378EB38"
+                }
+            },
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/Vpc/VPCGW"
+            }
+        },
+        "Repository22E53BBD": {
+            "Type": "AWS::ECR::Repository",
+            "Properties": {
+                "ImageScanningConfiguration": {
+                    "ScanOnPush": true
+                },
+                "ImageTagMutability": "IMMUTABLE",
+                "LifecyclePolicy": {
+                    "LifecyclePolicyText": "{\"rules\":[{\"rulePriority\":1,\"selection\":{\"tagStatus\":\"any\",\"countType\":\"imageCountMoreThan\",\"countNumber\":30},\"action\":{\"type\":\"expire\"}}]}"
+                },
+                "RepositoryName": "salon-de-lien-staging-app",
+                "Tags": [
+                    {
+                        "Key": "Application",
+                        "Value": "SalonDeLien"
+                    },
+                    {
+                        "Key": "Environment",
+                        "Value": "staging"
+                    }
+                ]
+            },
+            "UpdateReplacePolicy": "Retain",
+            "DeletionPolicy": "Retain",
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/Repository/Resource"
+            }
+        },
+        "PrivateAssetsD1F97283": {
+            "Type": "AWS::S3::Bucket",
+            "Properties": {
+                "BucketEncryption": {
+                    "ServerSideEncryptionConfiguration": [
+                        {
+                            "ServerSideEncryptionByDefault": {
+                                "SSEAlgorithm": "AES256"
+                            }
+                        }
+                    ]
+                },
+                "LifecycleConfiguration": {
+                    "Rules": [
+                        {
+                            "AbortIncompleteMultipartUpload": {
+                                "DaysAfterInitiation": 1
+                            },
+                            "Id": "abort-incomplete-uploads",
+                            "Status": "Enabled"
+                        }
+                    ]
+                },
+                "OwnershipControls": {
+                    "Rules": [
+                        {
+                            "ObjectOwnership": "BucketOwnerEnforced"
+                        }
+                    ]
+                },
+                "PublicAccessBlockConfiguration": {
+                    "BlockPublicAcls": true,
+                    "BlockPublicPolicy": true,
+                    "IgnorePublicAcls": true,
+                    "RestrictPublicBuckets": true
+                },
+                "Tags": [
+                    {
+                        "Key": "Application",
+                        "Value": "SalonDeLien"
+                    },
+                    {
+                        "Key": "Environment",
+                        "Value": "staging"
+                    }
+                ],
+                "VersioningConfiguration": {
+                    "Status": "Enabled"
+                }
+            },
+            "UpdateReplacePolicy": "Retain",
+            "DeletionPolicy": "Retain",
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/PrivateAssets/Resource"
+            }
+        },
+        "PrivateAssetsPolicy65091CC0": {
+            "Type": "AWS::S3::BucketPolicy",
+            "Properties": {
+                "Bucket": {
+                    "Ref": "PrivateAssetsD1F97283"
+                },
+                "PolicyDocument": {
+                    "Statement": [
+                        {
+                            "Action": "s3:*",
+                            "Condition": {
+                                "Bool": {
+                                    "aws:SecureTransport": "false"
+                                }
+                            },
+                            "Effect": "Deny",
+                            "Principal": {
+                                "AWS": "*"
+                            },
+                            "Resource": [
+                                {
+                                    "Fn::GetAtt": [
+                                        "PrivateAssetsD1F97283",
+                                        "Arn"
+                                    ]
+                                },
+                                {
+                                    "Fn::Join": [
+                                        "",
+                                        [
+                                            {
+                                                "Fn::GetAtt": [
+                                                    "PrivateAssetsD1F97283",
+                                                    "Arn"
+                                                ]
+                                            },
+                                            "/*"
+                                        ]
+                                    ]
+                                }
+                            ]
+                        }
+                    ],
+                    "Version": "2012-10-17"
+                }
+            },
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/PrivateAssets/Policy/Resource"
+            }
+        },
+        "DatabaseSecurityGroup7319C0F6": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "GroupDescription": "PostgreSQL access from Salon de Lien ECS tasks only",
+                "SecurityGroupEgress": [
+                    {
+                        "CidrIp": "255.255.255.255/32",
+                        "Description": "Disallow all traffic",
+                        "FromPort": 252,
+                        "IpProtocol": "icmp",
+                        "ToPort": 86
+                    }
+                ],
+                "Tags": [
+                    {
+                        "Key": "Application",
+                        "Value": "SalonDeLien"
+                    },
+                    {
+                        "Key": "Environment",
+                        "Value": "staging"
+                    }
+                ],
+                "VpcId": {
+                    "Ref": "Vpc8378EB38"
+                }
+            },
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/DatabaseSecurityGroup/Resource"
+            }
+        },
+        "DatabaseSecurityGroupfromSalonDeLienstagingWebServiceSecurityGroup3C550BBBIndirectPortAF828464": {
+            "Type": "AWS::EC2::SecurityGroupIngress",
+            "Properties": {
+                "Description": "from SalonDeLienstagingWebServiceSecurityGroup3C550BBB:{IndirectPort}",
+                "FromPort": {
+                    "Fn::GetAtt": [
+                        "DatabaseB269D8BB",
+                        "Endpoint.Port"
+                    ]
+                },
+                "GroupId": {
+                    "Fn::GetAtt": [
+                        "DatabaseSecurityGroup7319C0F6",
+                        "GroupId"
+                    ]
+                },
+                "IpProtocol": "tcp",
+                "SourceSecurityGroupId": {
+                    "Fn::GetAtt": [
+                        "WebServiceSecurityGroup7A3EB149",
+                        "GroupId"
+                    ]
+                },
+                "ToPort": {
+                    "Fn::GetAtt": [
+                        "DatabaseB269D8BB",
+                        "Endpoint.Port"
+                    ]
+                }
+            },
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/DatabaseSecurityGroup/from SalonDeLienstagingWebServiceSecurityGroup3C550BBB:{IndirectPort}"
+            }
+        },
+        "DatabaseSubnetGroup7D60F180": {
+            "Type": "AWS::RDS::DBSubnetGroup",
+            "Properties": {
+                "DBSubnetGroupDescription": "Subnet group for Database database",
+                "SubnetIds": [
+                    {
+                        "Ref": "VpcdatabaseSubnet1SubnetD53A427B"
+                    },
+                    {
+                        "Ref": "VpcdatabaseSubnet2Subnet75663D63"
+                    }
+                ],
+                "Tags": [
+                    {
+                        "Key": "Application",
+                        "Value": "SalonDeLien"
+                    },
+                    {
+                        "Key": "Environment",
+                        "Value": "staging"
+                    }
+                ]
+            },
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/Database/SubnetGroup/Default"
+            }
+        },
+        "SalonDeLienstagingDatabaseSecret78E76C7E3fdaad7efa858a3daf9490cf0a702aeb": {
+            "Type": "AWS::SecretsManager::Secret",
+            "Properties": {
+                "Description": {
+                    "Fn::Join": [
+                        "",
+                        [
+                            "Generated by the CDK for stack: ",
+                            {
+                                "Ref": "AWS::StackName"
+                            }
+                        ]
+                    ]
+                },
+                "GenerateSecretString": {
+                    "ExcludeCharacters": " %+~`#$&*()|[]{}:;<>?!'/@\"\\",
+                    "GenerateStringKey": "password",
+                    "PasswordLength": 30,
+                    "SecretStringTemplate": "{\"username\":\"salon_app\"}"
+                },
+                "Tags": [
+                    {
+                        "Key": "Application",
+                        "Value": "SalonDeLien"
+                    },
+                    {
+                        "Key": "Environment",
+                        "Value": "staging"
+                    }
+                ]
+            },
+            "UpdateReplacePolicy": "Delete",
+            "DeletionPolicy": "Delete",
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/Database/Secret/Resource"
+            }
+        },
+        "DatabaseSecretAttachmentE5D1B020": {
+            "Type": "AWS::SecretsManager::SecretTargetAttachment",
+            "Properties": {
+                "SecretId": {
+                    "Ref": "SalonDeLienstagingDatabaseSecret78E76C7E3fdaad7efa858a3daf9490cf0a702aeb"
+                },
+                "TargetId": {
+                    "Ref": "DatabaseB269D8BB"
+                },
+                "TargetType": "AWS::RDS::DBInstance"
+            },
+            "UpdateReplacePolicy": "Retain",
+            "DeletionPolicy": "Retain",
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/Database/Secret/Attachment/Resource"
+            }
+        },
+        "DatabaseB269D8BB": {
+            "Type": "AWS::RDS::DBInstance",
+            "Properties": {
+                "AllocatedStorage": "20",
+                "AutoMinorVersionUpgrade": true,
+                "BackupRetentionPeriod": 7,
+                "CopyTagsToSnapshot": true,
+                "DBInstanceClass": "db.t4g.micro",
+                "DBInstanceIdentifier": "salon-de-lien-staging-db",
+                "DBName": "salon_de_lien",
+                "DBSubnetGroupName": {
+                    "Ref": "DatabaseSubnetGroup7D60F180"
+                },
+                "DeletionProtection": false,
+                "EnableCloudwatchLogsExports": [
+                    "postgresql"
+                ],
+                "Engine": "postgres",
+                "EngineVersion": "16",
+                "MasterUserPassword": {
+                    "Fn::Join": [
+                        "",
+                        [
+                            "{{resolve:secretsmanager:",
+                            {
+                                "Ref": "SalonDeLienstagingDatabaseSecret78E76C7E3fdaad7efa858a3daf9490cf0a702aeb"
+                            },
+                            ":SecretString:password::}}"
+                        ]
+                    ]
+                },
+                "MasterUsername": "salon_app",
+                "MaxAllocatedStorage": 100,
+                "MultiAZ": false,
+                "PubliclyAccessible": false,
+                "StorageEncrypted": true,
+                "StorageType": "gp2",
+                "Tags": [
+                    {
+                        "Key": "Application",
+                        "Value": "SalonDeLien"
+                    },
+                    {
+                        "Key": "Environment",
+                        "Value": "staging"
+                    }
+                ],
+                "VPCSecurityGroups": [
+                    {
+                        "Fn::GetAtt": [
+                            "DatabaseSecurityGroup7319C0F6",
+                            "GroupId"
+                        ]
+                    }
+                ]
+            },
+            "UpdateReplacePolicy": "Snapshot",
+            "DeletionPolicy": "Snapshot",
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/Database/Resource"
+            }
+        },
+        "DatabaseLogRetentionpostgresqlFBE8A947": {
+            "Type": "Custom::LogRetention",
+            "Properties": {
+                "ServiceToken": {
+                    "Fn::GetAtt": [
+                        "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
+                        "Arn"
+                    ]
+                },
+                "LogGroupName": {
+                    "Fn::Join": [
+                        "",
+                        [
+                            "/aws/rds/instance/",
+                            {
+                                "Ref": "DatabaseB269D8BB"
+                            },
+                            "/postgresql"
+                        ]
+                    ]
+                },
+                "RetentionInDays": 30
+            },
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/Database/LogRetentionpostgresql/Resource"
+            }
+        },
+        "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Statement": [
+                        {
+                            "Action": "sts:AssumeRole",
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": "lambda.amazonaws.com"
+                            }
+                        }
+                    ],
+                    "Version": "2012-10-17"
+                },
+                "ManagedPolicyArns": [
+                    {
+                        "Fn::Join": [
+                            "",
+                            [
+                                "arn:",
+                                {
+                                    "Ref": "AWS::Partition"
+                                },
+                                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+                            ]
+                        ]
+                    }
+                ],
+                "Tags": [
+                    {
+                        "Key": "Application",
+                        "Value": "SalonDeLien"
+                    },
+                    {
+                        "Key": "Environment",
+                        "Value": "staging"
+                    }
+                ]
+            },
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole/Resource"
+            }
+        },
+        "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB": {
+            "Type": "AWS::IAM::Policy",
+            "Properties": {
+                "PolicyDocument": {
+                    "Statement": [
+                        {
+                            "Action": [
+                                "logs:PutRetentionPolicy",
+                                "logs:DeleteRetentionPolicy"
+                            ],
+                            "Effect": "Allow",
+                            "Resource": "*"
+                        }
+                    ],
+                    "Version": "2012-10-17"
+                },
+                "PolicyName": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB",
+                "Roles": [
+                    {
+                        "Ref": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB"
+                    }
+                ]
+            },
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole/DefaultPolicy/Resource"
+            }
+        },
+        "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+                "Handler": "index.handler",
+                "Runtime": "nodejs24.x",
+                "Timeout": 900,
+                "Code": {
+                    "S3Bucket": "cdk-hnb659fds-assets-009293460979-ap-northeast-1",
+                    "S3Key": "2819175352ad1ce0dae768e83fc328fb70fb5f10b4a8ff0ccbcb791f02b0716d.zip"
+                },
+                "Role": {
+                    "Fn::GetAtt": [
+                        "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB",
+                        "Arn"
+                    ]
+                },
+                "Tags": [
+                    {
+                        "Key": "Application",
+                        "Value": "SalonDeLien"
+                    },
+                    {
+                        "Key": "Environment",
+                        "Value": "staging"
+                    }
+                ]
+            },
+            "DependsOn": [
+                "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB",
+                "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB"
+            ],
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/Resource",
+                "aws:asset:path": "asset.2819175352ad1ce0dae768e83fc328fb70fb5f10b4a8ff0ccbcb791f02b0716d",
+                "aws:asset:is-bundled": false,
+                "aws:asset:property": "Code"
+            }
+        },
+        "ApplicationSecret25AD4F13": {
+            "Type": "AWS::SecretsManager::Secret",
+            "Properties": {
+                "Description": "Salon de Lien application authentication values",
+                "GenerateSecretString": {
+                    "ExcludePunctuation": true,
+                    "GenerateStringKey": "ADMIN_AUTH_SECRET",
+                    "PasswordLength": 64,
+                    "SecretStringTemplate": "{\"ADMIN_EMAIL\":\"owner@example.invalid\",\"ADMIN_PASSWORD_HASH\":\"SET_BEFORE_DEPLOY\",\"APP_URL\":\"https://invalid.example\"}"
+                },
+                "Name": "salon-de-lien-staging/application",
+                "Tags": [
+                    {
+                        "Key": "Application",
+                        "Value": "SalonDeLien"
+                    },
+                    {
+                        "Key": "Environment",
+                        "Value": "staging"
+                    }
+                ]
+            },
+            "UpdateReplacePolicy": "Retain",
+            "DeletionPolicy": "Retain",
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/ApplicationSecret/Resource"
+            }
+        },
+        "CustomerAuthSecretED84678E": {
+            "Type": "AWS::SecretsManager::Secret",
+            "Properties": {
+                "Description": "Salon de Lien customer session signing secret",
+                "GenerateSecretString": {
+                    "ExcludePunctuation": true,
+                    "GenerateStringKey": "CUSTOMER_AUTH_SECRET",
+                    "PasswordLength": 64,
+                    "SecretStringTemplate": "{}"
+                },
+                "Name": "salon-de-lien-staging/customer-auth",
+                "Tags": [
+                    {
+                        "Key": "Application",
+                        "Value": "SalonDeLien"
+                    },
+                    {
+                        "Key": "Environment",
+                        "Value": "staging"
+                    }
+                ]
+            },
+            "UpdateReplacePolicy": "Retain",
+            "DeletionPolicy": "Retain",
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/CustomerAuthSecret/Resource"
+            }
+        },
+        "SmsVerificationSecretBED11377": {
+            "Type": "AWS::SecretsManager::Secret",
+            "Properties": {
+                "Description": "Salon de Lien SMS challenge signing secret",
+                "GenerateSecretString": {
+                    "ExcludePunctuation": true,
+                    "GenerateStringKey": "SMS_VERIFICATION_SECRET",
+                    "PasswordLength": 64,
+                    "SecretStringTemplate": "{}"
+                },
+                "Name": "salon-de-lien-staging/sms-verification",
+                "Tags": [
+                    {
+                        "Key": "Application",
+                        "Value": "SalonDeLien"
+                    },
+                    {
+                        "Key": "Environment",
+                        "Value": "staging"
+                    }
+                ]
+            },
+            "UpdateReplacePolicy": "Retain",
+            "DeletionPolicy": "Retain",
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/SmsVerificationSecret/Resource"
+            }
+        },
+        "ClusterEB0386A7": {
+            "Type": "AWS::ECS::Cluster",
+            "Properties": {
+                "ClusterName": "salon-de-lien-staging-cluster",
+                "ClusterSettings": [
+                    {
+                        "Name": "containerInsights",
+                        "Value": "disabled"
+                    }
+                ],
+                "Tags": [
+                    {
+                        "Key": "Application",
+                        "Value": "SalonDeLien"
+                    },
+                    {
+                        "Key": "Environment",
+                        "Value": "staging"
+                    }
+                ]
+            },
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/Cluster/Resource"
+            }
+        },
+        "WebTaskTaskRole6A095794": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Statement": [
+                        {
+                            "Action": "sts:AssumeRole",
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": "ecs-tasks.amazonaws.com"
+                            }
+                        }
+                    ],
+                    "Version": "2012-10-17"
+                },
+                "Tags": [
+                    {
+                        "Key": "Application",
+                        "Value": "SalonDeLien"
+                    },
+                    {
+                        "Key": "Environment",
+                        "Value": "staging"
+                    }
+                ]
+            },
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/WebTask/TaskRole/Resource"
+            }
+        },
+        "WebTaskTaskRoleDefaultPolicy9E67E471": {
+            "Type": "AWS::IAM::Policy",
+            "Properties": {
+                "PolicyDocument": {
+                    "Statement": [
+                        {
+                            "Action": [
+                                "s3:GetObject*",
+                                "s3:GetBucket*",
+                                "s3:List*",
+                                "s3:DeleteObject*",
+                                "s3:PutObject",
+                                "s3:PutObjectLegalHold",
+                                "s3:PutObjectRetention",
+                                "s3:PutObjectTagging",
+                                "s3:PutObjectVersionTagging",
+                                "s3:Abort*"
+                            ],
+                            "Effect": "Allow",
+                            "Resource": [
+                                {
+                                    "Fn::GetAtt": [
+                                        "PrivateAssetsD1F97283",
+                                        "Arn"
+                                    ]
+                                },
+                                {
+                                    "Fn::Join": [
+                                        "",
+                                        [
+                                            {
+                                                "Fn::GetAtt": [
+                                                    "PrivateAssetsD1F97283",
+                                                    "Arn"
+                                                ]
+                                            },
+                                            "/private/*"
+                                        ]
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "Action": [
+                                "ses:SendEmail",
+                                "ses:SendRawEmail"
+                            ],
+                            "Effect": "Allow",
+                            "Resource": "*"
+                        },
+                        {
+                            "Action": "sns:Publish",
+                            "Effect": "Allow",
+                            "Resource": "*"
+                        },
+                        {
+                            "Action": [
+                                "ssmmessages:CreateControlChannel",
+                                "ssmmessages:CreateDataChannel",
+                                "ssmmessages:OpenControlChannel",
+                                "ssmmessages:OpenDataChannel"
+                            ],
+                            "Effect": "Allow",
+                            "Resource": "*"
+                        },
+                        {
+                            "Action": "logs:DescribeLogGroups",
+                            "Effect": "Allow",
+                            "Resource": "*"
+                        },
+                        {
+                            "Action": [
+                                "logs:CreateLogStream",
+                                "logs:DescribeLogStreams",
+                                "logs:PutLogEvents"
+                            ],
+                            "Effect": "Allow",
+                            "Resource": "*"
+                        }
+                    ],
+                    "Version": "2012-10-17"
+                },
+                "PolicyName": "WebTaskTaskRoleDefaultPolicy9E67E471",
+                "Roles": [
+                    {
+                        "Ref": "WebTaskTaskRole6A095794"
+                    }
+                ]
+            },
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/WebTask/TaskRole/DefaultPolicy/Resource"
+            }
+        },
+        "WebTask51ED7374": {
+            "Type": "AWS::ECS::TaskDefinition",
+            "Properties": {
+                "ContainerDefinitions": [
+                    {
+                        "Environment": [
+                            {
+                                "Name": "APP_ENV",
+                                "Value": "staging"
+                            },
+                            {
+                                "Name": "NODE_ENV",
+                                "Value": "production"
+                            },
+                            {
+                                "Name": "HOSTNAME",
+                                "Value": "0.0.0.0"
+                            },
+                            {
+                                "Name": "PORT",
+                                "Value": "3000"
+                            },
+                            {
+                                "Name": "STORAGE_PROVIDER",
+                                "Value": "s3"
+                            },
+                            {
+                                "Name": "AWS_REGION",
+                                "Value": "ap-northeast-1"
+                            },
+                            {
+                                "Name": "S3_PRIVATE_ASSETS_BUCKET",
+                                "Value": {
+                                    "Ref": "PrivateAssetsD1F97283"
+                                }
+                            },
+                            {
+                                "Name": "S3_SIGNED_URL_TTL_SECONDS",
+                                "Value": "300"
+                            },
+                            {
+                                "Name": "DEFAULT_ORGANIZATION_ID",
+                                "Value": "org_salon_de_lien"
+                            },
+                            {
+                                "Name": "ALLOW_LEGACY_CUSTOMER_ID_PORTAL",
+                                "Value": "false"
+                            },
+                            {
+                                "Name": "MANUFACTURER_MIN_SAMPLE_SIZE",
+                                "Value": "5"
+                            },
+                            {
+                                "Name": "DB_HOST",
+                                "Value": {
+                                    "Fn::GetAtt": [
+                                        "DatabaseB269D8BB",
+                                        "Endpoint.Address"
+                                    ]
+                                }
+                            },
+                            {
+                                "Name": "DB_PORT",
+                                "Value": {
+                                    "Fn::GetAtt": [
+                                        "DatabaseB269D8BB",
+                                        "Endpoint.Port"
+                                    ]
+                                }
+                            },
+                            {
+                                "Name": "DB_NAME",
+                                "Value": "salon_de_lien"
+                            },
+                            {
+                                "Name": "DB_SCHEMA",
+                                "Value": "public"
+                            },
+                            {
+                                "Name": "GMAIL_AUTO_SYNC_ENABLED",
+                                "Value": "false"
+                            },
+                            {
+                                "Name": "GMAIL_BROWSER_INGEST_ORGANIZATION_ID",
+                                "Value": "org_salon_de_lien"
+                            },
+                            {
+                                "Name": "GMAIL_SYNC_ORGANIZATION_ID",
+                                "Value": "org_salon_de_lien"
+                            },
+                            {
+                                "Name": "PASSWORD_RESET_MAIL_FROM_NAME",
+                                "Value": "Salon de Lien"
+                            },
+                            {
+                                "Name": "CUSTOMER_REGISTRATION_TOKEN_MINUTES",
+                                "Value": "60"
+                            },
+                            {
+                                "Name": "ALLOW_DEMO_DATA",
+                                "Value": "false"
+                            },
+                            {
+                                "Name": "SMS_PROVIDER",
+                                "Value": "aws-sns"
+                            },
+                            {
+                                "Name": "SMS_SENDER_ID",
+                                "Value": "SalonLien"
+                            },
+                            {
+                                "Name": "SMS_MAX_PRICE_USD",
+                                "Value": "0.20"
+                            }
+                        ],
+                        "Essential": true,
+                        "HealthCheck": {
+                            "Command": [
+                                "CMD-SHELL",
+                                "node -e \"fetch('http://127.0.0.1:3000/api/health/live').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))\""
+                            ],
+                            "Interval": 30,
+                            "Retries": 3,
+                            "StartPeriod": 30,
+                            "Timeout": 5
+                        },
+                        "Image": {
+                            "Fn::Join": [
+                                "",
+                                [
+                                    {
+                                        "Fn::Select": [
+                                            4,
+                                            {
+                                                "Fn::Split": [
+                                                    ":",
+                                                    {
+                                                        "Fn::GetAtt": [
+                                                            "Repository22E53BBD",
+                                                            "Arn"
+                                                        ]
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    ".dkr.ecr.",
+                                    {
+                                        "Fn::Select": [
+                                            3,
+                                            {
+                                                "Fn::Split": [
+                                                    ":",
+                                                    {
+                                                        "Fn::GetAtt": [
+                                                            "Repository22E53BBD",
+                                                            "Arn"
+                                                        ]
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    ".",
+                                    {
+                                        "Ref": "AWS::URLSuffix"
+                                    },
+                                    "/",
+                                    {
+                                        "Ref": "Repository22E53BBD"
+                                    },
+                                    ":ac61b9218b0c-20260805164653"
+                                ]
+                            ]
+                        },
+                        "LogConfiguration": {
+                            "LogDriver": "awslogs",
+                            "Options": {
+                                "awslogs-group": {
+                                    "Ref": "ApplicationLogGroupE33FCF9B"
+                                },
+                                "awslogs-stream-prefix": "nextjs",
+                                "awslogs-region": "ap-northeast-1",
+                                "mode": "non-blocking"
+                            }
+                        },
+                        "Name": "Web",
+                        "PortMappings": [
+                            {
+                                "ContainerPort": 3000,
+                                "Protocol": "tcp"
+                            }
+                        ],
+                        "Secrets": [
+                            {
+                                "Name": "DB_USER",
+                                "ValueFrom": {
+                                    "Fn::Join": [
+                                        "",
+                                        [
+                                            {
+                                                "Ref": "DatabaseSecretAttachmentE5D1B020"
+                                            },
+                                            ":username::"
+                                        ]
+                                    ]
+                                }
+                            },
+                            {
+                                "Name": "DB_PASSWORD",
+                                "ValueFrom": {
+                                    "Fn::Join": [
+                                        "",
+                                        [
+                                            {
+                                                "Ref": "DatabaseSecretAttachmentE5D1B020"
+                                            },
+                                            ":password::"
+                                        ]
+                                    ]
+                                }
+                            },
+                            {
+                                "Name": "ADMIN_EMAIL",
+                                "ValueFrom": {
+                                    "Fn::Join": [
+                                        "",
+                                        [
+                                            {
+                                                "Ref": "ApplicationSecret25AD4F13"
+                                            },
+                                            ":ADMIN_EMAIL::"
+                                        ]
+                                    ]
+                                }
+                            },
+                            {
+                                "Name": "ADMIN_PASSWORD_HASH",
+                                "ValueFrom": {
+                                    "Fn::Join": [
+                                        "",
+                                        [
+                                            {
+                                                "Ref": "ApplicationSecret25AD4F13"
+                                            },
+                                            ":ADMIN_PASSWORD_HASH::"
+                                        ]
+                                    ]
+                                }
+                            },
+                            {
+                                "Name": "ADMIN_AUTH_SECRET",
+                                "ValueFrom": {
+                                    "Fn::Join": [
+                                        "",
+                                        [
+                                            {
+                                                "Ref": "ApplicationSecret25AD4F13"
+                                            },
+                                            ":ADMIN_AUTH_SECRET::"
+                                        ]
+                                    ]
+                                }
+                            },
+                            {
+                                "Name": "APP_URL",
+                                "ValueFrom": {
+                                    "Fn::Join": [
+                                        "",
+                                        [
+                                            {
+                                                "Ref": "ApplicationSecret25AD4F13"
+                                            },
+                                            ":APP_URL::"
+                                        ]
+                                    ]
+                                }
+                            },
+                            {
+                                "Name": "GMAIL_RESERVATION_EMAIL",
+                                "ValueFrom": {
+                                    "Fn::Join": [
+                                        "",
+                                        [
+                                            {
+                                                "Ref": "ApplicationSecret25AD4F13"
+                                            },
+                                            ":GMAIL_RESERVATION_EMAIL::"
+                                        ]
+                                    ]
+                                }
+                            },
+                            {
+                                "Name": "GMAIL_OAUTH_CLIENT_ID",
+                                "ValueFrom": {
+                                    "Fn::Join": [
+                                        "",
+                                        [
+                                            {
+                                                "Ref": "ApplicationSecret25AD4F13"
+                                            },
+                                            ":GMAIL_OAUTH_CLIENT_ID::"
+                                        ]
+                                    ]
+                                }
+                            },
+                            {
+                                "Name": "GMAIL_OAUTH_CLIENT_SECRET",
+                                "ValueFrom": {
+                                    "Fn::Join": [
+                                        "",
+                                        [
+                                            {
+                                                "Ref": "ApplicationSecret25AD4F13"
+                                            },
+                                            ":GMAIL_OAUTH_CLIENT_SECRET::"
+                                        ]
+                                    ]
+                                }
+                            },
+                            {
+                                "Name": "GMAIL_OAUTH_REFRESH_TOKEN",
+                                "ValueFrom": {
+                                    "Fn::Join": [
+                                        "",
+                                        [
+                                            {
+                                                "Ref": "ApplicationSecret25AD4F13"
+                                            },
+                                            ":GMAIL_OAUTH_REFRESH_TOKEN::"
+                                        ]
+                                    ]
+                                }
+                            },
+                            {
+                                "Name": "CUSTOMER_AUTH_SECRET",
+                                "ValueFrom": {
+                                    "Fn::Join": [
+                                        "",
+                                        [
+                                            {
+                                                "Ref": "CustomerAuthSecretED84678E"
+                                            },
+                                            ":CUSTOMER_AUTH_SECRET::"
+                                        ]
+                                    ]
+                                }
+                            },
+                            {
+                                "Name": "SMS_VERIFICATION_SECRET",
+                                "ValueFrom": {
+                                    "Fn::Join": [
+                                        "",
+                                        [
+                                            {
+                                                "Ref": "SmsVerificationSecretBED11377"
+                                            },
+                                            ":SMS_VERIFICATION_SECRET::"
+                                        ]
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                ],
+                "Cpu": "512",
+                "ExecutionRoleArn": {
+                    "Fn::GetAtt": [
+                        "WebTaskExecutionRole28FA0566",
+                        "Arn"
+                    ]
+                },
+                "Family": "salon-de-lien-staging-web",
+                "Memory": "1024",
+                "NetworkMode": "awsvpc",
+                "RequiresCompatibilities": [
+                    "FARGATE"
+                ],
+                "Tags": [
+                    {
+                        "Key": "Application",
+                        "Value": "SalonDeLien"
+                    },
+                    {
+                        "Key": "Environment",
+                        "Value": "staging"
+                    }
+                ],
+                "TaskRoleArn": {
+                    "Fn::GetAtt": [
+                        "WebTaskTaskRole6A095794",
+                        "Arn"
+                    ]
+                }
+            },
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/WebTask/Resource"
+            }
+        },
+        "WebTaskExecutionRole28FA0566": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Statement": [
+                        {
+                            "Action": "sts:AssumeRole",
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": "ecs-tasks.amazonaws.com"
+                            }
+                        }
+                    ],
+                    "Version": "2012-10-17"
+                },
+                "Tags": [
+                    {
+                        "Key": "Application",
+                        "Value": "SalonDeLien"
+                    },
+                    {
+                        "Key": "Environment",
+                        "Value": "staging"
+                    }
+                ]
+            },
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/WebTask/ExecutionRole/Resource"
+            }
+        },
+        "WebTaskExecutionRoleDefaultPolicy20822D46": {
+            "Type": "AWS::IAM::Policy",
+            "Properties": {
+                "PolicyDocument": {
+                    "Statement": [
+                        {
+                            "Action": [
+                                "ecr:BatchCheckLayerAvailability",
+                                "ecr:GetDownloadUrlForLayer",
+                                "ecr:BatchGetImage"
+                            ],
+                            "Effect": "Allow",
+                            "Resource": {
+                                "Fn::GetAtt": [
+                                    "Repository22E53BBD",
+                                    "Arn"
+                                ]
+                            }
+                        },
+                        {
+                            "Action": "ecr:GetAuthorizationToken",
+                            "Effect": "Allow",
+                            "Resource": "*"
+                        },
+                        {
+                            "Action": [
+                                "logs:CreateLogStream",
+                                "logs:PutLogEvents"
+                            ],
+                            "Effect": "Allow",
+                            "Resource": {
+                                "Fn::GetAtt": [
+                                    "ApplicationLogGroupE33FCF9B",
+                                    "Arn"
+                                ]
+                            }
+                        },
+                        {
+                            "Action": [
+                                "secretsmanager:GetSecretValue",
+                                "secretsmanager:DescribeSecret"
+                            ],
+                            "Effect": "Allow",
+                            "Resource": {
+                                "Ref": "DatabaseSecretAttachmentE5D1B020"
+                            }
+                        },
+                        {
+                            "Action": [
+                                "secretsmanager:GetSecretValue",
+                                "secretsmanager:DescribeSecret"
+                            ],
+                            "Effect": "Allow",
+                            "Resource": {
+                                "Ref": "ApplicationSecret25AD4F13"
+                            }
+                        },
+                        {
+                            "Action": [
+                                "secretsmanager:GetSecretValue",
+                                "secretsmanager:DescribeSecret"
+                            ],
+                            "Effect": "Allow",
+                            "Resource": {
+                                "Ref": "CustomerAuthSecretED84678E"
+                            }
+                        },
+                        {
+                            "Action": [
+                                "secretsmanager:GetSecretValue",
+                                "secretsmanager:DescribeSecret"
+                            ],
+                            "Effect": "Allow",
+                            "Resource": {
+                                "Ref": "SmsVerificationSecretBED11377"
+                            }
+                        }
+                    ],
+                    "Version": "2012-10-17"
+                },
+                "PolicyName": "WebTaskExecutionRoleDefaultPolicy20822D46",
+                "Roles": [
+                    {
+                        "Ref": "WebTaskExecutionRole28FA0566"
+                    }
+                ]
+            },
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/WebTask/ExecutionRole/DefaultPolicy/Resource"
+            }
+        },
+        "ApplicationLogGroupE33FCF9B": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+                "LogGroupName": "/ecs/salon-de-lien-staging/web",
+                "RetentionInDays": 30,
+                "Tags": [
+                    {
+                        "Key": "Application",
+                        "Value": "SalonDeLien"
+                    },
+                    {
+                        "Key": "Environment",
+                        "Value": "staging"
+                    }
+                ]
+            },
+            "UpdateReplacePolicy": "Retain",
+            "DeletionPolicy": "Retain",
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/ApplicationLogGroup/Resource"
+            }
+        },
+        "WebServiceLB9CAD0C10": {
+            "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
+            "Properties": {
+                "LoadBalancerAttributes": [
+                    {
+                        "Key": "deletion_protection.enabled",
+                        "Value": "false"
+                    }
+                ],
+                "Scheme": "internet-facing",
+                "SecurityGroups": [
+                    {
+                        "Fn::GetAtt": [
+                            "WebServiceLBSecurityGroup66424F28",
+                            "GroupId"
+                        ]
+                    }
+                ],
+                "Subnets": [
+                    {
+                        "Ref": "VpcpublicSubnet1Subnet2BB74ED7"
+                    },
+                    {
+                        "Ref": "VpcpublicSubnet2SubnetE34B022A"
+                    }
+                ],
+                "Tags": [
+                    {
+                        "Key": "Application",
+                        "Value": "SalonDeLien"
+                    },
+                    {
+                        "Key": "Environment",
+                        "Value": "staging"
+                    }
+                ],
+                "Type": "application"
+            },
+            "DependsOn": [
+                "VpcpublicSubnet1DefaultRouteB88F9E93",
+                "VpcpublicSubnet1RouteTableAssociation4E83B6E4",
+                "VpcpublicSubnet2DefaultRoute732F0BEB",
+                "VpcpublicSubnet2RouteTableAssociationCCE257FF"
+            ],
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/WebService/LB/Resource"
+            }
+        },
+        "WebServiceLBSecurityGroup66424F28": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "GroupDescription": "Automatically created Security Group for ELB SalonDeLienstagingWebServiceLBE98E7FCF",
+                "SecurityGroupIngress": [
+                    {
+                        "CidrIp": "0.0.0.0/0",
+                        "Description": "Allow from anyone on port 80",
+                        "FromPort": 80,
+                        "IpProtocol": "tcp",
+                        "ToPort": 80
+                    }
+                ],
+                "Tags": [
+                    {
+                        "Key": "Application",
+                        "Value": "SalonDeLien"
+                    },
+                    {
+                        "Key": "Environment",
+                        "Value": "staging"
+                    }
+                ],
+                "VpcId": {
+                    "Ref": "Vpc8378EB38"
+                }
+            },
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/WebService/LB/SecurityGroup/Resource"
+            }
+        },
+        "WebServiceLBSecurityGrouptoSalonDeLienstagingWebServiceSecurityGroup3C550BBB300072091246": {
+            "Type": "AWS::EC2::SecurityGroupEgress",
+            "Properties": {
+                "Description": "Load balancer to target",
+                "DestinationSecurityGroupId": {
+                    "Fn::GetAtt": [
+                        "WebServiceSecurityGroup7A3EB149",
+                        "GroupId"
+                    ]
+                },
+                "FromPort": 3000,
+                "GroupId": {
+                    "Fn::GetAtt": [
+                        "WebServiceLBSecurityGroup66424F28",
+                        "GroupId"
+                    ]
+                },
+                "IpProtocol": "tcp",
+                "ToPort": 3000
+            },
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/WebService/LB/SecurityGroup/to SalonDeLienstagingWebServiceSecurityGroup3C550BBB:3000"
+            }
+        },
+        "WebServiceLBPublicListenerEA62BC7F": {
+            "Type": "AWS::ElasticLoadBalancingV2::Listener",
+            "Properties": {
+                "DefaultActions": [
+                    {
+                        "TargetGroupArn": {
+                            "Ref": "WebServiceLBPublicListenerECSGroup909B7188"
+                        },
+                        "Type": "forward"
+                    }
+                ],
+                "LoadBalancerArn": {
+                    "Ref": "WebServiceLB9CAD0C10"
+                },
+                "Port": 80,
+                "Protocol": "HTTP"
+            },
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/WebService/LB/PublicListener/Resource"
+            }
+        },
+        "WebServiceLBPublicListenerECSGroup909B7188": {
+            "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
+            "Properties": {
+                "HealthCheckIntervalSeconds": 30,
+                "HealthCheckPath": "/api/health/live",
+                "HealthCheckTimeoutSeconds": 5,
+                "Matcher": {
+                    "HttpCode": "200"
+                },
+                "Port": 80,
+                "Protocol": "HTTP",
+                "Tags": [
+                    {
+                        "Key": "Application",
+                        "Value": "SalonDeLien"
+                    },
+                    {
+                        "Key": "Environment",
+                        "Value": "staging"
+                    }
+                ],
+                "TargetGroupAttributes": [
+                    {
+                        "Key": "stickiness.enabled",
+                        "Value": "false"
+                    }
+                ],
+                "TargetType": "ip",
+                "VpcId": {
+                    "Ref": "Vpc8378EB38"
+                }
+            },
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/WebService/LB/PublicListener/ECSGroup/Resource"
+            }
+        },
+        "WebService5EA589E6": {
+            "Type": "AWS::ECS::Service",
+            "Properties": {
+                "Cluster": {
+                    "Ref": "ClusterEB0386A7"
+                },
+                "DeploymentConfiguration": {
+                    "Alarms": {
+                        "AlarmNames": [],
+                        "Enable": false,
+                        "Rollback": false
+                    },
+                    "DeploymentCircuitBreaker": {
+                        "Enable": true,
+                        "Rollback": true
+                    },
+                    "MaximumPercent": 200,
+                    "MinimumHealthyPercent": 100
+                },
+                "DeploymentController": {
+                    "Type": "ECS"
+                },
+                "DesiredCount": 0,
+                "EnableECSManagedTags": false,
+                "EnableExecuteCommand": true,
+                "HealthCheckGracePeriodSeconds": 60,
+                "LaunchType": "FARGATE",
+                "LoadBalancers": [
+                    {
+                        "ContainerName": "Web",
+                        "ContainerPort": 3000,
+                        "TargetGroupArn": {
+                            "Ref": "WebServiceLBPublicListenerECSGroup909B7188"
+                        }
+                    }
+                ],
+                "NetworkConfiguration": {
+                    "AwsvpcConfiguration": {
+                        "AssignPublicIp": "ENABLED",
+                        "SecurityGroups": [
+                            {
+                                "Fn::GetAtt": [
+                                    "WebServiceSecurityGroup7A3EB149",
+                                    "GroupId"
+                                ]
+                            }
+                        ],
+                        "Subnets": [
+                            {
+                                "Ref": "VpcpublicSubnet1Subnet2BB74ED7"
+                            },
+                            {
+                                "Ref": "VpcpublicSubnet2SubnetE34B022A"
+                            }
+                        ]
+                    }
+                },
+                "ServiceName": "salon-de-lien-staging-web",
+                "Tags": [
+                    {
+                        "Key": "Application",
+                        "Value": "SalonDeLien"
+                    },
+                    {
+                        "Key": "Environment",
+                        "Value": "staging"
+                    }
+                ],
+                "TaskDefinition": {
+                    "Ref": "WebTask51ED7374"
+                }
+            },
+            "DependsOn": [
+                "WebServiceLBPublicListenerECSGroup909B7188",
+                "WebServiceLBPublicListenerEA62BC7F",
+                "WebTaskTaskRoleDefaultPolicy9E67E471",
+                "WebTaskTaskRole6A095794"
+            ],
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/WebService/Service/Service"
+            }
+        },
+        "WebServiceSecurityGroup7A3EB149": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "GroupDescription": "SalonDeLien-staging/WebService/Service/SecurityGroup",
+                "SecurityGroupEgress": [
+                    {
+                        "CidrIp": "0.0.0.0/0",
+                        "Description": "Allow all outbound traffic by default",
+                        "IpProtocol": "-1"
+                    }
+                ],
+                "Tags": [
+                    {
+                        "Key": "Application",
+                        "Value": "SalonDeLien"
+                    },
+                    {
+                        "Key": "Environment",
+                        "Value": "staging"
+                    }
+                ],
+                "VpcId": {
+                    "Ref": "Vpc8378EB38"
+                }
+            },
+            "DependsOn": [
+                "WebTaskTaskRoleDefaultPolicy9E67E471",
+                "WebTaskTaskRole6A095794"
+            ],
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/WebService/Service/SecurityGroup/Resource"
+            }
+        },
+        "WebServiceSecurityGroupfromSalonDeLienstagingWebServiceLBSecurityGroupA76FA02C30006B3126EF": {
+            "Type": "AWS::EC2::SecurityGroupIngress",
+            "Properties": {
+                "Description": "Load balancer to target",
+                "FromPort": 3000,
+                "GroupId": {
+                    "Fn::GetAtt": [
+                        "WebServiceSecurityGroup7A3EB149",
+                        "GroupId"
+                    ]
+                },
+                "IpProtocol": "tcp",
+                "SourceSecurityGroupId": {
+                    "Fn::GetAtt": [
+                        "WebServiceLBSecurityGroup66424F28",
+                        "GroupId"
+                    ]
+                },
+                "ToPort": 3000
+            },
+            "DependsOn": [
+                "WebTaskTaskRoleDefaultPolicy9E67E471",
+                "WebTaskTaskRole6A095794"
+            ],
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/WebService/Service/SecurityGroup/from SalonDeLienstagingWebServiceLBSecurityGroupA76FA02C:3000"
+            }
+        },
+        "HttpsDistributionA4D7FA9A": {
+            "Type": "AWS::CloudFront::Distribution",
+            "Properties": {
+                "DistributionConfig": {
+                    "Comment": "salon-de-lien-staging low-cost HTTPS entry point",
+                    "DefaultCacheBehavior": {
+                        "AllowedMethods": [
+                            "GET",
+                            "HEAD",
+                            "OPTIONS",
+                            "PUT",
+                            "PATCH",
+                            "POST",
+                            "DELETE"
+                        ],
+                        "CachePolicyId": "4135ea2d-6df8-44a3-9df3-4b5a84be39ad",
+                        "Compress": true,
+                        "OriginRequestPolicyId": "33f36d7e-f396-46d9-90e0-52428a34d9dc",
+                        "TargetOriginId": "SalonDeLienstagingHttpsDistributionOrigin12C7321F9",
+                        "ViewerProtocolPolicy": "redirect-to-https"
+                    },
+                    "Enabled": true,
+                    "HttpVersion": "http2",
+                    "IPV6Enabled": true,
+                    "Origins": [
+                        {
+                            "CustomOriginConfig": {
+                                "OriginProtocolPolicy": "http-only",
+                                "OriginSSLProtocols": [
+                                    "TLSv1.2"
+                                ]
+                            },
+                            "DomainName": {
+                                "Fn::GetAtt": [
+                                    "WebServiceLB9CAD0C10",
+                                    "DNSName"
+                                ]
+                            },
+                            "Id": "SalonDeLienstagingHttpsDistributionOrigin12C7321F9"
+                        }
+                    ],
+                    "PriceClass": "PriceClass_200"
+                },
+                "Tags": [
+                    {
+                        "Key": "Application",
+                        "Value": "SalonDeLien"
+                    },
+                    {
+                        "Key": "Environment",
+                        "Value": "staging"
+                    }
+                ]
+            },
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/HttpsDistribution/Resource"
+            }
+        },
+        "CDKMetadata": {
+            "Type": "AWS::CDK::Metadata",
+            "Properties": {
+                "Analytics": "v2:deflate64:H4sIAAAAAAAA/31SXW/bMAz8LX1XtS4d+p6PrQgQYIFd9DWgZcZj40iGSCUIBP/3wZYdG+2wJx5PR1E6cqEXL8/66QGu/GjK02NNhY65gDkpuPIholno+N4YtT7a9/1a7UNRk8lDYVE6bkKZC4JvUNQ48RO3ZHaGQMjZu1jtPV1AcLpjawW9RXkFwSvchqZDthQB8+eMVlSOJniS26t3oenb/ZfY2soj8xf+Z0+3Co3XMcPGMYnzfdspaxU/67gK5pTeOKAU9q4mc5voIU/JChhb5UvWcQMCBTBuLQtYgyr9+f7czWpOjOocjU9NN6uxslXcs3wGCxV6HdOvOmEKb+ArlJlbd8GXk0S3qnYV67hzVYaCth/SzlX31424s+IAzCisl11QBGcdM5dm3sfJkYQ6d1nHdR1Y0Hf8CH+Br6BbDz5t8EiWxuX4zDgrQBb9jBtqc/QXMmnhEuzbHRqQbpFYL5umJtOv3c5BuYK687D8VI41sJCpHZRFryBbXRY6/rvaJ0tm+VxHLGgHzYhn52kEd2dnaatM7UJ59M6Kjhti8VSE0ZN53rYqQ3bBp5/fcT+SXKAiW3UHv4M0QVplXYn6g79dFj/09xf99PDBRI8+WKEz6izFv0lNfdYJBAAA"
+            },
+            "Metadata": {
+                "aws:cdk:path": "SalonDeLien-staging/CDKMetadata/Default"
+            }
+        }
+    },
+    "Outputs": {
+        "WebServiceLoadBalancerDNSE01F32A9": {
+            "Value": {
+                "Fn::GetAtt": [
+                    "WebServiceLB9CAD0C10",
+                    "DNSName"
+                ]
+            }
+        },
+        "WebServiceServiceURL970B691A": {
+            "Value": {
+                "Fn::Join": [
+                    "",
+                    [
+                        "http://",
+                        {
+                            "Fn::GetAtt": [
+                                "WebServiceLB9CAD0C10",
+                                "DNSName"
+                            ]
+                        }
+                    ]
+                ]
+            }
+        },
+        "LoadBalancerUrl": {
+            "Value": {
+                "Fn::Join": [
+                    "",
+                    [
+                        "https://",
+                        {
+                            "Fn::GetAtt": [
+                                "HttpsDistributionA4D7FA9A",
+                                "DomainName"
+                            ]
+                        }
+                    ]
+                ]
+            }
+        },
+        "CloudFrontDistributionId": {
+            "Value": {
+                "Ref": "HttpsDistributionA4D7FA9A"
+            }
+        },
+        "RepositoryUri": {
+            "Value": {
+                "Fn::Join": [
+                    "",
+                    [
+                        {
+                            "Fn::Select": [
+                                4,
+                                {
+                                    "Fn::Split": [
+                                        ":",
+                                        {
+                                            "Fn::GetAtt": [
+                                                "Repository22E53BBD",
+                                                "Arn"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        ".dkr.ecr.",
+                        {
+                            "Fn::Select": [
+                                3,
+                                {
+                                    "Fn::Split": [
+                                        ":",
+                                        {
+                                            "Fn::GetAtt": [
+                                                "Repository22E53BBD",
+                                                "Arn"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        ".",
+                        {
+                            "Ref": "AWS::URLSuffix"
+                        },
+                        "/",
+                        {
+                            "Ref": "Repository22E53BBD"
+                        }
+                    ]
+                ]
+            }
+        },
+        "ClusterName": {
+            "Value": {
+                "Ref": "ClusterEB0386A7"
+            }
+        },
+        "ServiceName": {
+            "Value": {
+                "Fn::GetAtt": [
+                    "WebService5EA589E6",
+                    "Name"
+                ]
+            }
+        },
+        "DesiredCount": {
+            "Value": "0"
+        },
+        "TaskDefinitionArn": {
+            "Value": {
+                "Ref": "WebTask51ED7374"
+            }
+        },
+        "ApplicationSubnetIds": {
+            "Value": {
+                "Fn::Join": [
+                    ",",
+                    [
+                        {
+                            "Ref": "VpcpublicSubnet1Subnet2BB74ED7"
+                        },
+                        {
+                            "Ref": "VpcpublicSubnet2SubnetE34B022A"
+                        }
+                    ]
+                ]
+            }
+        },
+        "AssignPublicIp": {
+            "Value": "ENABLED"
+        },
+        "ApplicationSecurityGroupId": {
+            "Value": {
+                "Fn::GetAtt": [
+                    "WebServiceSecurityGroup7A3EB149",
+                    "GroupId"
+                ]
+            }
+        },
+        "PrivateAssetsBucket": {
+            "Value": {
+                "Ref": "PrivateAssetsD1F97283"
+            }
+        },
+        "DatabaseSecretArn": {
+            "Value": {
+                "Ref": "DatabaseSecretAttachmentE5D1B020"
+            }
+        },
+        "ApplicationSecretArn": {
+            "Value": {
+                "Ref": "ApplicationSecret25AD4F13"
+            }
+        }
+    },
+    "Parameters": {
+        "BootstrapVersion": {
+            "Type": "AWS::SSM::Parameter::Value<String>",
+            "Default": "/cdk-bootstrap/hnb659fds/version",
+            "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+        }
+    },
+    "Rules": {
+        "CheckBootstrapVersion": {
+            "Assertions": [
+                {
+                    "Assert": {
+                        "Fn::Not": [
+                            {
+                                "Fn::Contains": [
+                                    [
+                                        "1",
+                                        "2",
+                                        "3",
+                                        "4",
+                                        "5"
+                                    ],
+                                    {
+                                        "Ref": "BootstrapVersion"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
+                }
+            ]
+        }
+    }
+}

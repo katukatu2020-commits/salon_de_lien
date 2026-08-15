@@ -1,0 +1,377 @@
+﻿{
+    "taskDefinitionArn": "arn:aws:ecs:ap-northeast-1:009293460979:task-definition/salon-de-lien-staging-web:248",
+    "containerDefinitions": [
+        {
+            "name": "Web",
+            "image": "009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app:admin-theme-modal-20260815-153",
+            "cpu": 0,
+            "links": [],
+            "portMappings": [
+                {
+                    "containerPort": 3000,
+                    "hostPort": 3000,
+                    "protocol": "tcp"
+                }
+            ],
+            "essential": true,
+            "entryPoint": [],
+            "command": [],
+            "environment": [
+                {
+                    "name": "BILLING_ONBOARDING_ENABLED",
+                    "value": "true"
+                },
+                {
+                    "name": "SUBSCRIPTION_TRIAL_DAYS",
+                    "value": "30"
+                },
+                {
+                    "name": "APP_ENV",
+                    "value": "staging"
+                },
+                {
+                    "name": "DEFAULT_ORGANIZATION_ID",
+                    "value": "org_salon_de_lien"
+                },
+                {
+                    "name": "INBOUND_EMAIL_DOMAIN",
+                    "value": "inbound.salon-de-lien.com"
+                },
+                {
+                    "name": "S3_PRIVATE_ASSETS_BUCKET",
+                    "value": "salondelien-staging-privateassetsd1f97283-rerwrzvg3mgj"
+                },
+                {
+                    "name": "DB_PORT",
+                    "value": "5432"
+                },
+                {
+                    "name": "COMMUNITY_AI_COMMENT_ENABLED",
+                    "value": "true"
+                },
+                {
+                    "name": "PASSWORD_RESET_MAIL_FROM_NAME",
+                    "value": "Salon de Lien"
+                },
+                {
+                    "name": "CUSTOMER_REFERRAL_REWARDS_ENABLED",
+                    "value": "false"
+                },
+                {
+                    "name": "DB_NAME",
+                    "value": "salon_de_lien"
+                },
+                {
+                    "name": "SMS_SENDER_ID",
+                    "value": "SalonLien"
+                },
+                {
+                    "name": "GMAIL_SYNC_ORGANIZATION_ID",
+                    "value": "org_salon_de_lien"
+                },
+                {
+                    "name": "GMAIL_AUTO_SYNC_ENABLED",
+                    "value": "true"
+                },
+                {
+                    "name": "S3_SIGNED_URL_TTL_SECONDS",
+                    "value": "300"
+                },
+                {
+                    "name": "SMS_PROVIDER",
+                    "value": "aws-sns"
+                },
+                {
+                    "name": "CUSTOMER_REGISTRATION_TOKEN_MINUTES",
+                    "value": "60"
+                },
+                {
+                    "name": "DB_SCHEMA",
+                    "value": "public"
+                },
+                {
+                    "name": "MANUFACTURER_MIN_SAMPLE_SIZE",
+                    "value": "5"
+                },
+                {
+                    "name": "SALON_PLAN_TIER",
+                    "value": "take"
+                },
+                {
+                    "name": "GMAIL_SYNC_INTERVAL_SECONDS",
+                    "value": "60"
+                },
+                {
+                    "name": "STORE_REGISTRATION_TOKEN_MINUTES",
+                    "value": "60"
+                },
+                {
+                    "name": "AWS_REGION",
+                    "value": "ap-northeast-1"
+                },
+                {
+                    "name": "COMMUNITY_AI_COMMENT_INTERVAL_SECONDS",
+                    "value": "600"
+                },
+                {
+                    "name": "STORAGE_PROVIDER",
+                    "value": "s3"
+                },
+                {
+                    "name": "STRIPE_ALLOW_LIVE_BILLING",
+                    "value": "false"
+                },
+                {
+                    "name": "ALLOW_LEGACY_CUSTOMER_ID_PORTAL",
+                    "value": "false"
+                },
+                {
+                    "name": "PORT",
+                    "value": "3000"
+                },
+                {
+                    "name": "CUSTOMER_COUPON_CODE_ENTRY_ENABLED",
+                    "value": "false"
+                },
+                {
+                    "name": "PUBLIC_CONTACT_EMAIL",
+                    "value": "support@salon-de-lien.com"
+                },
+                {
+                    "name": "GMAIL_BROWSER_INGEST_ORGANIZATION_ID",
+                    "value": "org_salon_de_lien"
+                },
+                {
+                    "name": "DB_HOST",
+                    "value": "salon-de-lien-staging-db.clwk6me003mk.ap-northeast-1.rds.amazonaws.com"
+                },
+                {
+                    "name": "SMS_MAX_PRICE_USD",
+                    "value": "0.20"
+                },
+                {
+                    "name": "HOSTNAME",
+                    "value": "0.0.0.0"
+                },
+                {
+                    "name": "ALLOW_DEMO_DATA",
+                    "value": "false"
+                },
+                {
+                    "name": "NODE_ENV",
+                    "value": "production"
+                },
+                {
+                    "name": "OPENAI_MODEL",
+                    "value": "gpt-4.1-mini"
+                },
+                {
+                    "name": "CUSTOMER_SMS_VERIFICATION_ENABLED",
+                    "value": "false"
+                }
+            ],
+            "environmentFiles": [],
+            "mountPoints": [],
+            "volumesFrom": [],
+            "secrets": [
+                {
+                    "name": "DB_USER",
+                    "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:009293460979:secret:SalonDeLienstagingDatabaseS-GOjySZc27zVy-BFudsA:username::"
+                },
+                {
+                    "name": "DB_PASSWORD",
+                    "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:009293460979:secret:SalonDeLienstagingDatabaseS-GOjySZc27zVy-BFudsA:password::"
+                },
+                {
+                    "name": "ADMIN_EMAIL",
+                    "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:009293460979:secret:salon-de-lien-staging/application-8mneEp:ADMIN_EMAIL::"
+                },
+                {
+                    "name": "ADMIN_PASSWORD_HASH",
+                    "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:009293460979:secret:salon-de-lien-staging/application-8mneEp:ADMIN_PASSWORD_HASH::"
+                },
+                {
+                    "name": "ADMIN_AUTH_SECRET",
+                    "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:009293460979:secret:salon-de-lien-staging/application-8mneEp:ADMIN_AUTH_SECRET::"
+                },
+                {
+                    "name": "APP_URL",
+                    "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:009293460979:secret:salon-de-lien-staging/application-8mneEp:APP_URL::"
+                },
+                {
+                    "name": "GMAIL_RESERVATION_EMAIL",
+                    "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:009293460979:secret:salon-de-lien-staging/application-8mneEp:GMAIL_RESERVATION_EMAIL::"
+                },
+                {
+                    "name": "GMAIL_OAUTH_CLIENT_ID",
+                    "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:009293460979:secret:salon-de-lien-staging/application-8mneEp:GMAIL_OAUTH_CLIENT_ID::"
+                },
+                {
+                    "name": "GMAIL_OAUTH_CLIENT_SECRET",
+                    "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:009293460979:secret:salon-de-lien-staging/application-8mneEp:GMAIL_OAUTH_CLIENT_SECRET::"
+                },
+                {
+                    "name": "GMAIL_OAUTH_REFRESH_TOKEN",
+                    "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:009293460979:secret:salon-de-lien-staging/application-8mneEp:GMAIL_OAUTH_REFRESH_TOKEN::"
+                },
+                {
+                    "name": "CUSTOMER_AUTH_SECRET",
+                    "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:009293460979:secret:salon-de-lien-staging/customer-auth-uP9xBN:CUSTOMER_AUTH_SECRET::"
+                },
+                {
+                    "name": "SMS_VERIFICATION_SECRET",
+                    "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:009293460979:secret:salon-de-lien-staging/sms-verification-NPcdPD:SMS_VERIFICATION_SECRET::"
+                },
+                {
+                    "name": "GMAIL_SYNC_CRON_SECRET",
+                    "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:009293460979:secret:salon-de-lien-staging/application-8mneEp:GMAIL_SYNC_CRON_SECRET::"
+                },
+                {
+                    "name": "OPENAI_API_KEY",
+                    "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:009293460979:secret:salon-de-lien-staging/application-8mneEp:OPENAI_API_KEY::"
+                },
+                {
+                    "name": "GMAIL_SEND_OAUTH_REFRESH_TOKEN",
+                    "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:009293460979:secret:salon-de-lien-staging/application-8mneEp:GMAIL_SEND_OAUTH_REFRESH_TOKEN::"
+                },
+                {
+                    "name": "GMAIL_SEND_EMAIL",
+                    "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:009293460979:secret:salon-de-lien-staging/application-8mneEp:GMAIL_SEND_EMAIL::"
+                },
+                {
+                    "name": "STRIPE_SECRET_KEY",
+                    "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:009293460979:secret:salon-de-lien-staging/application-8mneEp:STRIPE_SECRET_KEY::"
+                },
+                {
+                    "name": "STRIPE_WEBHOOK_SECRET",
+                    "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:009293460979:secret:salon-de-lien-staging/application-8mneEp:STRIPE_WEBHOOK_SECRET::"
+                },
+                {
+                    "name": "STRIPE_PRICE_UME",
+                    "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:009293460979:secret:salon-de-lien-staging/application-8mneEp:STRIPE_PRICE_UME::"
+                },
+                {
+                    "name": "STRIPE_PRICE_TAKE",
+                    "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:009293460979:secret:salon-de-lien-staging/application-8mneEp:STRIPE_PRICE_TAKE::"
+                },
+                {
+                    "name": "STRIPE_PRICE_MATSU",
+                    "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:009293460979:secret:salon-de-lien-staging/application-8mneEp:STRIPE_PRICE_MATSU::"
+                },
+                {
+                    "name": "TENANT_GMAIL_OAUTH_CLIENT_ID",
+                    "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:009293460979:secret:salon-de-lien-staging/tenant-gmail-oauth-0G1mDA:TENANT_GMAIL_OAUTH_CLIENT_ID::"
+                },
+                {
+                    "name": "TENANT_GMAIL_OAUTH_CLIENT_SECRET",
+                    "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:009293460979:secret:salon-de-lien-staging/tenant-gmail-oauth-0G1mDA:TENANT_GMAIL_OAUTH_CLIENT_SECRET::"
+                },
+                {
+                    "name": "PLATFORM_OPERATOR_EMAIL",
+                    "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:009293460979:secret:salon-de-lien-staging/platform-operator-VZo9Mg:PLATFORM_OPERATOR_EMAIL::"
+                },
+                {
+                    "name": "PLATFORM_OPERATOR_PASSWORD_HASH",
+                    "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:009293460979:secret:salon-de-lien-staging/platform-operator-VZo9Mg:PLATFORM_OPERATOR_PASSWORD_HASH::"
+                },
+                {
+                    "name": "PLATFORM_OPERATOR_AUTH_SECRET",
+                    "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:009293460979:secret:salon-de-lien-staging/platform-operator-VZo9Mg:PLATFORM_OPERATOR_AUTH_SECRET::"
+                },
+                {
+                    "name": "INBOUND_EMAIL_HMAC_SECRET",
+                    "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:009293460979:secret:salon-de-lien-staging/inbound-email-KvM1hs:INBOUND_EMAIL_HMAC_SECRET::"
+                }
+            ],
+            "dnsServers": [],
+            "dnsSearchDomains": [],
+            "extraHosts": [],
+            "dockerSecurityOptions": [],
+            "dockerLabels": {},
+            "ulimits": [],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/ecs/salon-de-lien-staging/web",
+                    "mode": "non-blocking",
+                    "awslogs-region": "ap-northeast-1",
+                    "awslogs-stream-prefix": "nextjs"
+                },
+                "secretOptions": []
+            },
+            "healthCheck": {
+                "command": [
+                    "CMD-SHELL",
+                    "node -e \"fetch('http://127.0.0.1:3000/api/health/live').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))\""
+                ],
+                "interval": 30,
+                "timeout": 5,
+                "retries": 3,
+                "startPeriod": 30
+            },
+            "systemControls": [],
+            "credentialSpecs": []
+        }
+    ],
+    "family": "salon-de-lien-staging-web",
+    "taskRoleArn": "arn:aws:iam::009293460979:role/SalonDeLien-staging-WebTaskTaskRole6A095794-3wgaBcwpb7pB",
+    "executionRoleArn": "arn:aws:iam::009293460979:role/SalonDeLien-staging-WebTaskExecutionRole28FA0566-u3O2G3Xo9EzE",
+    "networkMode": "awsvpc",
+    "revision": 248,
+    "volumes": [],
+    "status": "ACTIVE",
+    "requiresAttributes": [
+        {
+            "name": "ecs.capability.execution-role-awslogs"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.ecr-auth"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.17"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.28"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.task-iam-role"
+        },
+        {
+            "name": "ecs.capability.container-health-check"
+        },
+        {
+            "name": "ecs.capability.execution-role-ecr-pull"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.18"
+        },
+        {
+            "name": "ecs.capability.task-eni"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.29"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.logging-driver.awslogs"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
+        },
+        {
+            "name": "ecs.capability.secrets.asm.environment-variables"
+        }
+    ],
+    "placementConstraints": [],
+    "compatibilities": [
+        "EC2",
+        "MANAGED_INSTANCES",
+        "FARGATE"
+    ],
+    "requiresCompatibilities": [
+        "FARGATE"
+    ],
+    "cpu": "512",
+    "memory": "1024",
+    "registeredAt": "2026-08-15T17:20:33.877000+09:00",
+    "registeredBy": "arn:aws:iam::009293460979:root"
+}

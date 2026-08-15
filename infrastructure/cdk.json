@@ -2,8 +2,13 @@
   "app": "npx tsx bin/app.ts",
   "context": {
     "environment": "staging",
-    "imageTag": "staging-latest",
+    "imageTag": "admin-theme-modal-20260815-153",
     "region": "ap-northeast-1",
-    "costOptimized": true
+    "costOptimized": true,
+    "desiredCount": 1,
+    "domainName": "salon-de-lien.com",
+    "hostedZoneId": "Z1020061AYO2HKUG2STF",
+    "hostedZoneName": "salon-de-lien.com",
+    "cloudFrontCertificateArn": "arn:aws:acm:us-east-1:009293460979:certificate/29eb8062-7289-4734-9b7b-46116464af0d"
   }
 }
