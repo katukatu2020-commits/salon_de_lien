@@ -5,10 +5,10 @@ current AWS service while using the local PostgreSQL database.
 
 ## Source of truth
 
-- ECS task definition revision: `265`
-- ECR tag: `admin-service-brand-20260816-02`
-- Immutable digest: `sha256:fc7aec2a6862f56b08739e16d8cc13b17cc4c400c16c234867e739edbb778d04`
-- Audited runtime patch: `scripts/aws/runtime-patches/admin-service-brand/`
+- ECS task definition revision: `266`
+- ECR tag: `demo-polish-20260816-01`
+- Immutable digest: `sha256:a0adf3c5d9cd82a6992e816df13654edde546ac9e7703ddd4057aa63f70766f7`
+- Audited runtime patch: `scripts/aws/runtime-patches/demo-polish-20260816/`
 - Recovery manifest: `aws-runtime-recovery/2026-08-15/manifest.json`
 
 The final container contains compiled Next.js output and runtime patches. It
