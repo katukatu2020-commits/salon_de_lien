@@ -1,0 +1,271 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Fail-closed deployment protection for the Salon de Lien ECS service.
+
+Parameters:
+  ClusterName:
+    Type: String
+  ServiceName:
+    Type: String
+  ContainerName:
+    Type: String
+  ApprovedTaskDefinitionArn:
+    Type: String
+  ApprovedImage:
+    Type: String
+  ApprovedImageDigest:
+    Type: String
+  EcrRepositoryName:
+    Type: String
+  ApprovedDesiredCount:
+    Type: Number
+    Default: 1
+
+Resources:
+  DeploymentGuardRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: salon-de-lien-deployment-guard-staging
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: deployment-guard
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub ${DeploymentGuardLogGroup.Arn}:*
+              - Effect: Allow
+                Action:
+                  - ecs:DescribeServices
+                  - ecs:DescribeTaskDefinition
+                Resource: "*"
+              - Effect: Allow
+                Action: ecs:UpdateService
+                Resource: !Sub arn:${AWS::Partition}:ecs:${AWS::Region}:${AWS::AccountId}:service/${ClusterName}/${ServiceName}
+              - Effect: Allow
+                Action: ecr:DescribeImages
+                Resource: !Sub arn:${AWS::Partition}:ecr:${AWS::Region}:${AWS::AccountId}:repository/${EcrRepositoryName}
+              - Effect: Allow
+                Action: cloudwatch:PutMetricData
+                Resource: "*"
+                Condition:
+                  StringEquals:
+                    cloudwatch:namespace: SalonDeLien/DeploymentProtection
+
+  DeploymentGuardLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      LogGroupName: /aws/lambda/salon-de-lien-deployment-guard-staging
+      RetentionInDays: 90
+
+  DeploymentGuardFunction:
+    Type: AWS::Lambda::Function
+    DependsOn: DeploymentGuardLogGroup
+    Properties:
+      FunctionName: salon-de-lien-deployment-guard-staging
+      Description: Restores the approved ECS release when service drift is detected.
+      Runtime: nodejs22.x
+      Handler: index.handler
+      Role: !GetAtt DeploymentGuardRole.Arn
+      Timeout: 30
+      Environment:
+        Variables:
+          CLUSTER_NAME: !Ref ClusterName
+          SERVICE_NAME: !Ref ServiceName
+          CONTAINER_NAME: !Ref ContainerName
+          APPROVED_TASK_DEFINITION_ARN: !Ref ApprovedTaskDefinitionArn
+          APPROVED_IMAGE: !Ref ApprovedImage
+          APPROVED_IMAGE_DIGEST: !Ref ApprovedImageDigest
+          APPROVED_DESIRED_COUNT: !Ref ApprovedDesiredCount
+          ECR_REPOSITORY_NAME: !Ref EcrRepositoryName
+          METRIC_NAMESPACE: SalonDeLien/DeploymentProtection
+      Code:
+        ZipFile: |
+          const {
+            ECSClient,
+            DescribeServicesCommand,
+            DescribeTaskDefinitionCommand,
+            UpdateServiceCommand,
+          } = require("@aws-sdk/client-ecs");
+          const { ECRClient, DescribeImagesCommand } = require("@aws-sdk/client-ecr");
+          const {
+            CloudWatchClient,
+            PutMetricDataCommand,
+          } = require("@aws-sdk/client-cloudwatch");
+
+          const ecs = new ECSClient({});
+          const ecr = new ECRClient({});
+          const cloudWatch = new CloudWatchClient({});
+          const approvedTask = process.env.APPROVED_TASK_DEFINITION_ARN;
+          const approvedImage = process.env.APPROVED_IMAGE;
+          const approvedDigest = process.env.APPROVED_IMAGE_DIGEST;
+          const approvedDesiredCount = Number(process.env.APPROVED_DESIRED_COUNT);
+
+          async function metric(name) {
+            await cloudWatch.send(new PutMetricDataCommand({
+              Namespace: process.env.METRIC_NAMESPACE,
+              MetricData: [{ MetricName: name, Value: 1, Unit: "Count" }],
+            }));
+          }
+
+          async function verifyApprovedArtifact() {
+            const definition = await ecs.send(new DescribeTaskDefinitionCommand({
+              taskDefinition: approvedTask,
+            }));
+            const container = definition.taskDefinition.containerDefinitions.find(
+              (item) => item.name === process.env.CONTAINER_NAME,
+            );
+            if (!container || container.image !== approvedImage) {
+              throw new Error("Approved task definition does not reference the locked image.");
+            }
+
+            const imageTag = approvedImage.slice(approvedImage.lastIndexOf(":") + 1);
+            const images = await ecr.send(new DescribeImagesCommand({
+              repositoryName: process.env.ECR_REPOSITORY_NAME,
+              imageIds: [{ imageTag }],
+            }));
+            if (images.imageDetails?.[0]?.imageDigest !== approvedDigest) {
+              throw new Error("Approved ECR tag no longer resolves to the locked digest.");
+            }
+          }
+
+          exports.handler = async (event = {}) => {
+            if (event.mode === "validate-candidate") {
+              return {
+                allowed: event.candidateTaskDefinition === approvedTask,
+                approvedTaskDefinition: approvedTask,
+              };
+            }
+
+            try {
+              await verifyApprovedArtifact();
+              const response = await ecs.send(new DescribeServicesCommand({
+                cluster: process.env.CLUSTER_NAME,
+                services: [process.env.SERVICE_NAME],
+              }));
+              const service = response.services?.[0];
+              if (!service || service.status === "INACTIVE") {
+                throw new Error("Protected ECS service was not found or is inactive.");
+              }
+
+              const drifted = service.taskDefinition !== approvedTask ||
+                service.desiredCount !== approvedDesiredCount;
+              if (!drifted) {
+                return {
+                  status: "protected",
+                  taskDefinition: service.taskDefinition,
+                  desiredCount: service.desiredCount,
+                };
+              }
+
+              console.error(JSON.stringify({
+                event: "UNAPPROVED_ECS_DEPLOYMENT_DETECTED",
+                actualTaskDefinition: service.taskDefinition,
+                actualDesiredCount: service.desiredCount,
+                approvedTaskDefinition: approvedTask,
+                approvedDesiredCount,
+              }));
+              await ecs.send(new UpdateServiceCommand({
+                cluster: process.env.CLUSTER_NAME,
+                service: process.env.SERVICE_NAME,
+                taskDefinition: approvedTask,
+                desiredCount: approvedDesiredCount,
+                forceNewDeployment: true,
+              }));
+              await metric("UnauthorizedDeploymentRollback");
+              return { status: "rollback-started", taskDefinition: approvedTask };
+            } catch (error) {
+              console.error(JSON.stringify({
+                event: "DEPLOYMENT_PROTECTION_FAILURE",
+                message: error instanceof Error ? error.message : String(error),
+              }));
+              await metric("ProtectionFailure");
+              throw error;
+            }
+          };
+
+  ScheduledProtectionCheck:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: salon-de-lien-deployment-guard-schedule-staging
+      Description: Checks the protected ECS release every minute.
+      ScheduleExpression: rate(1 minute)
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt DeploymentGuardFunction.Arn
+          Id: DeploymentGuard
+
+  EcsDeploymentProtectionCheck:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: salon-de-lien-deployment-guard-ecs-staging
+      Description: Checks protection immediately after an ECS deployment event.
+      EventPattern:
+        source:
+          - aws.ecs
+        detail-type:
+          - ECS Deployment State Change
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt DeploymentGuardFunction.Arn
+          Id: DeploymentGuard
+
+  ScheduledInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref DeploymentGuardFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt ScheduledProtectionCheck.Arn
+
+  EcsEventInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref DeploymentGuardFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt EcsDeploymentProtectionCheck.Arn
+
+  UnauthorizedDeploymentAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: salon-de-lien-unauthorized-deployment-staging
+      AlarmDescription: An unapproved ECS task definition was automatically rolled back.
+      Namespace: SalonDeLien/DeploymentProtection
+      MetricName: UnauthorizedDeploymentRollback
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+
+  ProtectionFailureAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: salon-de-lien-deployment-protection-failure-staging
+      AlarmDescription: The deployment guard could not verify or restore the approved release.
+      Namespace: SalonDeLien/DeploymentProtection
+      MetricName: ProtectionFailure
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+
+Outputs:
+  GuardFunctionName:
+    Value: !Ref DeploymentGuardFunction
+  ApprovedTaskDefinitionArn:
+    Value: !Ref ApprovedTaskDefinitionArn

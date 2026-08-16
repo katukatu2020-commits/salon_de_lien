@@ -1,0 +1,14 @@
+{
+  "Version": "2008-10-17",
+  "Statement": [
+    {
+      "Sid": "DenyDestructiveImageOperations",
+      "Effect": "Deny",
+      "Principal": "*",
+      "Action": [
+        "ecr:BatchDeleteImage",
+        "ecr:DeleteRepository"
+      ]
+    }
+  ]
+}

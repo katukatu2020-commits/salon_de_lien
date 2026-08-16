@@ -8,6 +8,12 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+$repoRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+Set-Location $repoRoot
+. (Join-Path $PSScriptRoot "common.ps1")
+. (Join-Path $PSScriptRoot "deployment-protection.ps1")
+Initialize-LienAwsCli
+Assert-LienApprovedAutomationContext -Action "AWS database migration image execution" -Profile $Profile -Region $Region
 
 $serviceDefinition = (& aws ecs describe-services `
   --cluster $Cluster `

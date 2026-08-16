@@ -9,7 +9,9 @@ $ErrorActionPreference = "Stop"
 $repoRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 Set-Location $repoRoot
 . (Join-Path $PSScriptRoot "common.ps1")
+. (Join-Path $PSScriptRoot "deployment-protection.ps1")
 Initialize-LienAwsCli
+Assert-LienApprovedAutomationContext -Action "staging restore and resume" -Profile $Profile -Region $Region
 
 $outputs = (& aws cloudformation describe-stacks --stack-name SalonDeLien-staging --profile $Profile --region $Region --query 'Stacks[0].Outputs' --output json --no-cli-pager | ConvertFrom-Json)
 function Output-Value([string]$Key) {

@@ -6,6 +6,12 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+$repoRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+Set-Location $repoRoot
+. (Join-Path $PSScriptRoot "common.ps1")
+. (Join-Path $PSScriptRoot "deployment-protection.ps1")
+Initialize-LienAwsCli
+Assert-LienApprovedAutomationContext -Action "ECS task definition registration" -Profile $Profile -Region $Region
 
 $definition = & aws ecs describe-task-definition `
   --task-definition $TaskDefinition `

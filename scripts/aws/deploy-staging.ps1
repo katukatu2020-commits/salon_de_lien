@@ -14,7 +14,9 @@ $ErrorActionPreference = "Stop"
 $repoRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 Set-Location $repoRoot
 . (Join-Path $PSScriptRoot "common.ps1")
+. (Join-Path $PSScriptRoot "deployment-protection.ps1")
 Initialize-LienAwsCli
+Assert-LienApprovedAutomationContext -Action "staging application deployment" -Profile $Profile -Region $Region
 
 if (-not $ImageTag) {
   $sha = (& git rev-parse --short=12 HEAD).Trim()

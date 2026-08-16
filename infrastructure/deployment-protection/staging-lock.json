@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "environment": "staging",
+  "accountId": "009293460979",
+  "region": "ap-northeast-1",
+  "applicationStackName": "SalonDeLien-staging",
+  "protectionStackName": "SalonDeLienDeploymentProtection-staging",
+  "clusterName": "salon-de-lien-staging-cluster",
+  "serviceName": "salon-de-lien-staging-web",
+  "taskDefinitionArn": "arn:aws:ecs:ap-northeast-1:009293460979:task-definition/salon-de-lien-staging-web:248",
+  "desiredCount": 1,
+  "containerName": "Web",
+  "imageUri": "009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app:admin-theme-modal-20260815-153",
+  "imageDigest": "sha256:2a1fe98b4422c0005b404d0d96df2bbd12e684eac18e4cdd8b42864f8bc5f72e",
+  "ecrRepositoryName": "salon-de-lien-staging-app",
+  "canonicalCommit": "26ad2a9470c93112324fd41790f0c53abd9442bc",
+  "allowedAutomationRoleName": "SalonDeLienGitHubDeployRole",
+  "localApplicationDeploymentAllowed": false
+}

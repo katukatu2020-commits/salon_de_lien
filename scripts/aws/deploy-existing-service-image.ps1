@@ -9,6 +9,12 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+$repoRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+Set-Location $repoRoot
+. (Join-Path $PSScriptRoot "common.ps1")
+. (Join-Path $PSScriptRoot "deployment-protection.ps1")
+Initialize-LienAwsCli
+Assert-LienApprovedAutomationContext -Action "ECS image deployment" -Profile $Profile -Region $Region
 
 $currentArn = (& aws ecs describe-services `
   --cluster $Cluster `
