@@ -96,6 +96,7 @@ Resources:
               - Sid: PassDeploymentGuardRole
                 Effect: Allow
                 Action:
+                  - iam:GetRole
                   - iam:PassRole
                 Resource: arn:aws:iam::009293460979:role/salon-de-lien-deployment-guard-staging
                 Condition:
