@@ -1,3 +1,5 @@
+import { FREE_STAFF, SALON_STAFF, normalizeSalonStaffName } from "@/lib/salon/staff";
+
 export type ReservationEmailInput = {
   subject?: string | null;
   content: string;
@@ -12,6 +14,7 @@ export type ParsedReservationEmail = {
   menu: string | null;
   estimatedPrice: number | null;
   staffName: string | null;
+  staffAssignment: "named" | "free" | "unknown";
   durationMinutes: number | null;
   bookingReference: string | null;
   status: string;
@@ -52,9 +55,47 @@ const labelGroups = {
   scheduledAt: ["予約日時", "ご予約日時", "来店日時", "ご来店日時", "予約日", "来店日", "日時"],
   menu: ["予約時クーポン", "予約時メニュー", "予約メニュー", "ご予約メニュー", "施術メニュー", "メニュー", "コース"],
   price: ["予約時合計金額", "合計金額", "予定金額", "料金", "金額"],
-  staff: ["担当スタイリスト", "担当スタッフ", "指名スタッフ", "担当者", "スタッフ", "担当"],
-  duration: ["合計施術時間", "合計時間", "所要時間", "施術時間", "予定時間"],
-  reference: ["予約番号", "予約ID", "受付番号", "予約No", "予約NO"]
+  staff: [
+    "予約時担当スタイリスト名",
+    "予約時担当スタイリスト",
+    "予約時担当スタッフ名",
+    "予約時担当スタッフ",
+    "予約時スタイリスト名",
+    "予約時スタイリスト",
+    "予約時指名スタッフ",
+    "予約時指名",
+    "ご指名担当者名",
+    "ご指名担当者",
+    "指名担当者名",
+    "指名担当者",
+    "担当スタイリスト名",
+    "担当スタイリスト",
+    "担当スタッフ名",
+    "担当スタッフ",
+    "指名スタイリスト",
+    "指名スタッフ",
+    "施術担当者",
+    "施術担当",
+    "スタイリスト名",
+    "スタイリスト",
+    "予約担当者",
+    "担当者名",
+    "担当者",
+    "ご指名",
+    "スタッフ",
+    "担当",
+    "指名"
+  ],
+  duration: [
+    "合計施術時間",
+    "施術時間目安",
+    "所要時間目安",
+    "合計時間",
+    "所要時間",
+    "施術時間",
+    "予定時間"
+  ],
+  reference: ["予約受付番号", "予約番号", "予約ID", "受付番号", "予約No", "予約NO"]
 } as const;
 
 function normalizeEmailText(value: string) {
@@ -65,6 +106,8 @@ function normalizeEmailText(value: string) {
     .replace(/<[^>]+>/g, " ")
     .replace(/&nbsp;/gi, " ")
     .replace(/&amp;/gi, "&")
+    .replace(/&yen;/gi, "¥")
+    .replace(/&#(?:165|x0*a5);/gi, "¥")
     .replace(/\r/g, "")
     .replace(/[\t ]+/g, " ")
     .replace(/\n{3,}/g, "\n\n")
@@ -84,8 +127,8 @@ function labeledMatches(text: string, labels: readonly string[]) {
     const label = sourceLabel.normalize("NFKC");
     const labelPattern = `${escapeRegExp(label)}(?:\\s*[（(][^）)\\n]{1,20}[）)])?`;
     const patterns = [
-      new RegExp(`(?:^|\\n|[■●])\\s*[・]?\\s*(${labelPattern})\\s*[:：]?\\s*([^\\n■●]+)`, "gi"),
-      new RegExp(`(?:^|\\n|[■●])\\s*[・]?\\s*(${labelPattern})\\s*[:：]?\\s*\\n\\s*([^\\n■●]+)`, "gi")
+      new RegExp(`(?:^|\\n|[■●□◆◇])\\s*[・]?\\s*(${labelPattern})\\s*[:：]?\\s*([^\\n■●□◆◇]+)`, "gi"),
+      new RegExp(`(?:^|\\n|[■●□◆◇])\\s*[・]?\\s*(${labelPattern})\\s*[:：]?\\s*\\n\\s*([^\\n■●□◆◇]+)`, "gi")
     ];
 
     for (const pattern of patterns) {
@@ -218,6 +261,63 @@ function cleanTextValue(value?: string | null) {
   return result || null;
 }
 
+function compactStaffValue(value: string) {
+  return value.normalize("NFKC").replace(/[\s　]+/g, "").toLowerCase();
+}
+
+function parseStaff(text: string) {
+  const rawValues = labeledValues(text, labelGroups.staff);
+  const cleanedValues = rawValues
+    .map((rawValue) =>
+      cleanTextValue(rawValue)
+        ?.replace(/^指名あり\s*[:：]?\s*/, "")
+        .replace(/\s*(?:様|さん|氏)\s*$/, "")
+        .replace(/\s*[（(](?:指名|担当|スタイリスト)[^）)]*[）)]\s*$/, "")
+        .trim()
+    )
+    .filter((value): value is string => Boolean(value));
+
+  const knownStaff = (value: string) => {
+    const compact = compactStaffValue(value);
+    return SALON_STAFF.find((staff) =>
+      [staff.name, ...staff.aliases].some((candidate) => compact.includes(compactStaffValue(candidate)))
+    );
+  };
+
+  // A mail can contain both a generic "指名なし" marker and the actual assigned
+  // stylist in another section. A concrete salon staff name always wins.
+  for (const value of cleanedValues) {
+    const matchedStaff = knownStaff(value);
+    if (matchedStaff) return { staffName: matchedStaff.name, staffAssignment: "named" as const };
+  }
+
+  for (const line of text.split("\n").filter((value) => /担当|指名|スタイリスト|スタッフ/.test(value))) {
+    const matchedStaff = knownStaff(line);
+    if (matchedStaff) return { staffName: matchedStaff.name, staffAssignment: "named" as const };
+  }
+
+  for (const value of cleanedValues) {
+    const compact = compactStaffValue(value);
+    if (/^(?:フリー|指名なし|指定なし|希望なし|おまかせ|お任せ|なし)(?:[（(].*[）)])?$/.test(compact)) continue;
+    if (/^(?:-|ー|未定|あり|指名あり|希望あり)$/.test(compact)) continue;
+
+    const normalized = normalizeSalonStaffName(value);
+    if (normalized) return { staffName: normalized, staffAssignment: "named" as const };
+  }
+
+  if (
+    cleanedValues.some((value) =>
+      /^(?:フリー|指名なし|指定なし|希望なし|おまかせ|お任せ|なし)(?:[（(].*[）)])?$/.test(
+        compactStaffValue(value)
+      )
+    )
+  ) {
+    return { staffName: FREE_STAFF.name, staffAssignment: "free" as const };
+  }
+
+  return { staffName: null, staffAssignment: "unknown" as const };
+}
+
 function parsePrice(value?: string | null) {
   const match = (value ?? "").match(/(?:¥|￥)?\s*([\d,]+)\s*円?/);
   if (!match) return null;
@@ -233,12 +333,63 @@ function parseDuration(value?: string | null) {
   return total > 0 && total <= 12 * 60 ? total : null;
 }
 
+function parseDurationFromText(text: string) {
+  for (const value of labeledValues(text, labelGroups.duration)) {
+    const parsed = parseDuration(value);
+    if (parsed) return parsed;
+  }
+
+  const inlineCandidates = Array.from(
+    text.matchAll(
+      /(?:合計施術時間|施術時間目安|所要時間目安|合計時間|所要時間|施術時間|予定時間)\s*[:：]?\s*([0-9]+\s*時間(?:\s*[0-9]+\s*分)?|[0-9]+\s*分)/g
+    ),
+    (match) => match[1]
+  );
+  for (const value of inlineCandidates) {
+    const parsed = parseDuration(value);
+    if (parsed) return parsed;
+  }
+  return null;
+}
+
 function inferStatus(subject: string, content: string) {
   const source = `${subject}\n${content}`;
   if (/キャンセル|取消|取り消し/.test(source)) return "キャンセル";
-  if (/変更受付|予約変更|予約を変更|ご予約を変更/.test(source)) return "変更受付";
-  if (/予約確定|予約が確定|ご予約を承りました|予約完了|受付完了/.test(source)) return "予約確定";
+  if (/変更受付|予約変更|予約内容変更|変更連絡|予約を変更|ご予約を変更/.test(source)) return "変更受付";
+  if (
+    /予約確定|予約が確定|ご予約を承りました|予約完了|受付完了|ご?予約が入りました|予約連絡|直前予約が入りました/.test(
+      source
+    )
+  ) {
+    return "予約確定";
+  }
   return "仮予約";
+}
+
+export function isReservationNotificationEmail(input: ReservationEmailInput) {
+  const content = normalizeEmailText(input.content);
+  const subject = cleanTextValue(input.subject) ?? "";
+  if (/予約お知らせメールアドレスの確認|予約お知らせメールの宛先|メールアドレスを有効に/.test(`${subject}\n${content}`)) {
+    return false;
+  }
+
+  const phone = parsePhone(content);
+  const customerName = parseCustomerName(content, phone?.index);
+  const scheduledAt = parseDateTime(content);
+  const bookingReference =
+    cleanTextValue(labeledValue(content, labelGroups.reference)) ??
+    content.match(/kanzashi\.com\/reservation\/(\d+)/i)?.[1] ??
+    null;
+  const hasReservationDetails = Boolean(
+    bookingReference || labeledValue(content, labelGroups.menu) || parseStaff(content).staffAssignment !== "unknown"
+  );
+
+  return Boolean(
+    customerName &&
+      scheduledAt &&
+      hasReservationDetails &&
+      /予約|ご予約|キャンセル|取消|取り消し|変更/.test(`${subject}\n${content}`)
+  );
 }
 
 export function parseReservationEmail(input: ReservationEmailInput) {
@@ -247,6 +398,7 @@ export function parseReservationEmail(input: ReservationEmailInput) {
   const customerPhone = parsePhone(content);
   const customerName = parseCustomerName(content, customerPhone?.index);
   const scheduledAt = parseDateTime(content);
+  const staff = parseStaff(content);
   const errors: string[] = [];
 
   if (!customerName) errors.push("お客様名を読み取れませんでした。");
@@ -264,8 +416,9 @@ export function parseReservationEmail(input: ReservationEmailInput) {
       scheduledAt,
       menu: cleanTextValue(labeledValue(content, labelGroups.menu)),
       estimatedPrice: parsePrice(labeledValue(content, labelGroups.price)),
-      staffName: cleanTextValue(labeledValue(content, labelGroups.staff)),
-      durationMinutes: parseDuration(labeledValue(content, labelGroups.duration)),
+      staffName: staff.staffName,
+      staffAssignment: staff.staffAssignment,
+      durationMinutes: parseDurationFromText(content),
       bookingReference:
         cleanTextValue(labeledValue(content, labelGroups.reference)) ??
         content.match(/kanzashi\.com\/reservation\/(\d+)/i)?.[1] ??

@@ -25,7 +25,11 @@ import {
   REFERRAL_DISCOUNT_RATES,
   referralDiscountAmount
 } from "../src/lib/points/referral-reward";
-import { parseReservationEmail } from "../src/lib/appointments/reservation-email";
+import {
+  isReservationNotificationEmail,
+  parseReservationEmail
+} from "../src/lib/appointments/reservation-email";
+import { mergeReservationEmailDetails } from "../src/lib/appointments/import-reservation-email";
 import { LONG_HAIR_FEES, longHairFee, percentageDiscountAmount } from "../src/lib/appointments/checkout-items";
 import { bookingStartTimes, isBookingRangeAvailable } from "../src/lib/appointments/customer-booking";
 import { isBookingRangeWithinCapacityOverrides } from "../src/lib/appointments/booking-capacity";
@@ -250,9 +254,212 @@ test("kanzashi reservation parser reads an inline appointed staff field", () => 
   if (!result.ok) return;
   assert.equal(result.value.customerName, "中川千里");
   assert.equal(result.value.staffName, "小林 美奈子");
+  assert.equal(result.value.staffAssignment, "named");
   assert.equal(result.value.bookingReference, "315097736");
   assert.equal(result.value.menu, "カット+カラー+Aujuaトリートメント ¥13,800");
   assert.equal(result.value.durationMinutes, 150);
+});
+
+test("kanzashi reservation parser supports legacy white-square field separators", () => {
+  const result = parseReservationEmail({
+    subject: "新規のご予約が確定しました（2026/08/02）",
+    content:
+      "□予約詳細ページ https://kanzashi.com/reservation/314000000 □来店日時 2026/08/02 10:00 □店舗名 Salon de Lien（美容室） □担当スタッフ 渡邊 浩明□予約時メニュー カット□合計施術時間 50 分□予約時合計金額 4,500 円□お客様名（カナ） 山田 太郎（ヤマダタロウ）□電話番号 09012345678"
+  });
+
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  assert.equal(result.value.staffName, "渡邊 浩明");
+  assert.equal(result.value.staffAssignment, "named");
+  assert.equal(result.value.durationMinutes, 50);
+  assert.equal(result.value.customerName, "山田 太郎");
+});
+
+test("salon board reservation parser reads named staff, duration, price, and reference", () => {
+  const result = parseReservationEmail({
+    subject: "【当日】予約連絡",
+    sender: "SALON BOARD <yoyaku_system@salonboard.com>",
+    content: `
+Salon de Lien様
+HOT PEPPER Beauty「SALON BOARD」にお客様からご予約が入りました。
+◇ご予約内容
+■予約番号
+BF50000001
+■氏名
+山田 太郎（ヤマダ タロウ）
+■来店日時
+2026年08月16日（日）17:00
+■スタイリスト
+渡辺 浩明
+■メニュー
+カット（SB込）
+シャンプー・ブロー込み
+（メニュー金額：4,500円）
+（施術時間目安：1時間）
+■合計金額
+予約時合計金額 4,500円
+`
+  });
+
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  assert.equal(result.value.customerName, "山田 太郎");
+  assert.equal(result.value.bookingReference, "BF50000001");
+  assert.equal(result.value.staffName, "渡邊 浩明");
+  assert.equal(result.value.staffAssignment, "named");
+  assert.equal(result.value.durationMinutes, 60);
+  assert.equal(result.value.estimatedPrice, 4_500);
+  assert.equal(result.value.status, "予約確定");
+});
+
+test("salon board reservation parser only assigns free when the email explicitly says so", () => {
+  const freeResult = parseReservationEmail({
+    subject: "【明日】予約連絡",
+    content:
+      "■予約番号 BF50000002 ■氏名 佐藤 花子（サトウ ハナコ） ■来店日時 2026年08月17日（月）10:30 ■スタイリスト 指名なし ■メニュー カット （施術時間目安：60分）"
+  });
+  const unknownResult = parseReservationEmail({
+    subject: "予約内容変更連絡",
+    content:
+      "■予約番号 BF50000003 ■氏名 鈴木 一郎（スズキ イチロウ） ■来店日時 2026年08月18日（火）11:00 ■メニュー カラー"
+  });
+
+  assert.equal(freeResult.ok, true);
+  if (freeResult.ok) {
+    assert.equal(freeResult.value.staffName, "フリー");
+    assert.equal(freeResult.value.staffAssignment, "free");
+  }
+  assert.equal(unknownResult.ok, true);
+  if (unknownResult.ok) {
+    assert.equal(unknownResult.value.staffName, null);
+    assert.equal(unknownResult.value.staffAssignment, "unknown");
+    assert.equal(unknownResult.value.status, "変更受付");
+  }
+});
+
+test("reservation parser prefers a concrete stylist over a generic free marker", () => {
+  const result = parseReservationEmail({
+    subject: "【かんざし結】新規のご予約が確定しました",
+    content: [
+      "■予約番号 KZ50000005",
+      "■氏名 田中 花子（タナカ ハナコ）",
+      "■来店日時 2026年08月20日（木）13:30",
+      "■ご指名 指名なし",
+      "■予約時担当スタイリスト名 谷崎 太二",
+      "■メニュー カット＋カラー",
+      "■合計施術時間 2時間30分"
+    ].join("\n")
+  });
+
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  assert.equal(result.value.staffName, "谷崎 太二");
+  assert.equal(result.value.staffAssignment, "named");
+});
+
+test("reservation parser recognizes additional Kanzashi stylist labels", () => {
+  for (const [label, expected] of [
+    ["ご指名担当者", "浅野 清美"],
+    ["予約時担当スタッフ", "小林 美奈子"],
+    ["予約時スタイリスト", "渡辺 浩明"]
+  ] as const) {
+    const result = parseReservationEmail({
+      subject: "【かんざし結】新規のご予約が確定しました",
+      content: `■予約番号 KZ-${label}\n■氏名 田中 花子\n■来店日時 2026年08月21日（金）10:00\n■${label} ${expected}\n■メニュー カット`
+    });
+    assert.equal(result.ok, true);
+    if (!result.ok) continue;
+    assert.equal(result.value.staffAssignment, "named");
+    assert.notEqual(result.value.staffName, "フリー");
+  }
+});
+
+test("salon board point and last-minute subject variants remain confirmed reservations", () => {
+  for (const subject of [
+    "【ポイント利用】予約連絡",
+    "【ポイント利用明日】予約連絡",
+    "【ポイント利用当日】予約連絡",
+    "【当日10時30分】直前予約が入りました"
+  ]) {
+    const result = parseReservationEmail({
+      subject,
+      content:
+        "■予約番号 BF50000004 ■氏名 高橋 美咲（タカハシ ミサキ） ■来店日時 2026年08月19日（水）14:00 ■スタイリスト 浅野 清美 ■メニュー カット＋カラー （施術時間目安：2時間30分）"
+    });
+    assert.equal(result.ok, true);
+    if (!result.ok) continue;
+    assert.equal(result.value.status, "予約確定");
+    assert.equal(result.value.durationMinutes, 150);
+    assert.equal(result.value.staffName, "浅野 清美");
+  }
+});
+
+test("salon board cancellation keeps its staff data and is recognized as cancelled", () => {
+  const result = parseReservationEmail({
+    subject: "【明日】キャンセル連絡",
+    content:
+      "■予約番号 BF50000005 ■氏名 田中 次郎（タナカ ジロウ） ■来店日時 2026年08月20日（木）13:00 ■スタイリスト 谷崎 太二 ■メニュー カット＋ヘッドスパ （施術時間目安：1時間30分）"
+  });
+
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  assert.equal(result.value.status, "キャンセル");
+  assert.equal(result.value.staffName, "谷崎 太二");
+  assert.equal(result.value.durationMinutes, 90);
+});
+
+test("reservation address confirmation mail is not treated as a customer reservation", () => {
+  assert.equal(
+    isReservationNotificationEmail({
+      subject: "【SALON BOARD】予約お知らせメールアドレスの確認",
+      content:
+        "本メールアドレスはSALON BOARDで予約お知らせメールの宛先として設定されました。以下のURLをクリックして、メールアドレスを有効にしてください。"
+    }),
+    false
+  );
+  assert.equal(
+    isReservationNotificationEmail({
+      subject: "予約連絡",
+      content:
+        "■予約番号 BF50000006 ■氏名 山田 太郎（ヤマダ タロウ） ■来店日時 2026年08月21日（金）15:00 ■スタイリスト 小林 美奈子 ■メニュー カット"
+    }),
+    true
+  );
+});
+
+test("reservation updates preserve known details when a later email omits them", () => {
+  const existing = {
+    staffName: "小林 美奈子",
+    durationMinutes: 120,
+    menu: "カット＋カラー",
+    estimatedPrice: 12_000
+  };
+  assert.deepEqual(
+    mergeReservationEmailDetails(
+      {
+        staffAssignment: "unknown",
+        staffName: null,
+        durationMinutes: null,
+        menu: null,
+        estimatedPrice: null
+      },
+      existing
+    ),
+    existing
+  );
+  assert.equal(
+    mergeReservationEmailDetails(
+      {
+        staffAssignment: "free",
+        staffName: "フリー",
+        durationMinutes: null,
+        menu: null,
+        estimatedPrice: null
+      },
+      existing
+    ).staffName,
+    "フリー"
+  );
 });
 
 test("kanzashi cancellation email is recognized as a cancelled appointment", () => {

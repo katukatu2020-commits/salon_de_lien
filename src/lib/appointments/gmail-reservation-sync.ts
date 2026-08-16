@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { importReservationEmail } from "@/lib/appointments/import-reservation-email";
 import { inferBookingProvider } from "@/lib/appointments/booking-provider";
+import { isReservationNotificationEmail } from "@/lib/appointments/reservation-email";
 
 const GMAIL_API_BASE = "https://gmail.googleapis.com/gmail/v1/users/me";
 const GOOGLE_TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token";
@@ -11,6 +12,7 @@ const DEFAULT_HOTPEPPER_SENDERS = ["salonboard.com", "beauty.hotpepper.jp", "rec
 const DEFAULT_LOOKBACK_DAYS = 30;
 const MAX_MESSAGES_PER_SYNC = 100;
 const GMAIL_FETCH_TIMEOUT_MS = 20_000;
+const RESERVATION_PARSER_VERSION = "reservation-email-v3";
 
 type GmailHeader = {
   name?: string;
@@ -235,11 +237,43 @@ function messageDigest(messageId: string) {
   return createHash("sha256").update(messageId, "utf8").digest("hex");
 }
 
-function contactIdForMessageId(messageId: string, organizationId: string) {
+function ingestIdForMessageId(messageId: string, organizationId: string) {
   const digest = createHash("sha256")
-    .update(`${organizationId}:${messageDigest(messageId)}`, "utf8")
+    .update(`${organizationId}:${messageId}`, "utf8")
     .digest("hex");
-  return `gmail-contact-${digest.slice(0, 24)}`;
+  return `gmail-ingest-${digest.slice(0, 24)}`;
+}
+
+async function recordGmailIngest(input: {
+  organizationId: string;
+  messageId: string;
+  status: "imported" | "failed" | "skipped";
+  appointmentId?: string | null;
+  errorMessage?: string | null;
+}) {
+  const status = `${input.status}:${RESERVATION_PARSER_VERSION}`;
+  await prisma.gmailIngestMessage.upsert({
+    where: {
+      organizationId_gmailMessageId: {
+        organizationId: input.organizationId,
+        gmailMessageId: input.messageId
+      }
+    },
+    update: {
+      status,
+      appointmentId: input.appointmentId ?? null,
+      errorMessage: input.errorMessage?.slice(0, 300) ?? null,
+      processedAt: new Date()
+    },
+    create: {
+      id: ingestIdForMessageId(input.messageId, input.organizationId),
+      organizationId: input.organizationId,
+      gmailMessageId: input.messageId,
+      status,
+      appointmentId: input.appointmentId ?? null,
+      errorMessage: input.errorMessage?.slice(0, 300) ?? null
+    }
+  });
 }
 
 function safeErrorMessage(error: unknown) {
@@ -285,22 +319,43 @@ async function performGmailReservationSync(
   const messageIds = (list.messages ?? [])
     .map((message) => message.id)
     .filter((id): id is string => Boolean(id));
-  const contactIdByMessageId = new Map(
-    messageIds.map((id) => [id, contactIdForMessageId(id, organizationId)])
+  const sourceByMessageId = new Map(
+    messageIds.map((id) => [id, `gmail:${messageDigest(id)}`])
   );
-  const existingContacts = messageIds.length
-    ? await prisma.contactLog.findMany({
+  const incompleteProviderAppointments = messageIds.length
+    ? await prisma.appointment.findMany({
         where: {
-          id: { in: [...contactIdByMessageId.values()] },
-          customer: { organizationId }
+          source: { in: [...sourceByMessageId.values()] },
+          bookingProvider: { in: ["hotpepper", "kanzashi"] },
+          staffName: null
         },
-        select: { id: true }
+        select: { source: true }
       })
     : [];
-  const importedContactIds = new Set(existingContacts.map((item) => item.id));
-  const pendingIds = messageIds.filter(
-    (id) => !importedContactIds.has(contactIdByMessageId.get(id) ?? "")
+  const incompleteSources = new Set(
+    incompleteProviderAppointments
+      .map((appointment) => appointment.source)
+      .filter((source): source is string => Boolean(source))
   );
+  const parserAttempts = messageIds.length
+    ? await prisma.gmailIngestMessage.findMany({
+        where: {
+          organizationId,
+          gmailMessageId: { in: messageIds },
+          status: { endsWith: RESERVATION_PARSER_VERSION }
+        },
+        select: { gmailMessageId: true }
+      })
+    : [];
+  const attemptedMessageIds = new Set(parserAttempts.map((item) => item.gmailMessageId));
+  const pendingIds = messageIds
+    .filter((id) => {
+      if (!attemptedMessageIds.has(id)) return true;
+      return incompleteSources.has(sourceByMessageId.get(id) ?? "");
+    })
+    // Gmail lists newest messages first. Apply older events first so a later change or
+    // cancellation cannot be overwritten by the original confirmation email.
+    .reverse();
   const errors: string[] = [];
   let matched = 0;
   let imported = 0;
@@ -330,18 +385,34 @@ async function performGmailReservationSync(
       const isHotPepper = provider === "hotpepper" && /予約|ご予約|キャンセル|取消|取り消し/.test(reservationEventText);
       if (!isKanzashi && !isHotPepper) continue;
 
+      if (!isReservationNotificationEmail({ subject, content, messageId, sender })) {
+        await recordGmailIngest({ organizationId, messageId, status: "skipped" });
+        continue;
+      }
+
       matched += 1;
 
       const result = await importReservationEmail({ subject, content, messageId, sender }, organizationId);
       if (!result.ok) {
-        errors.push(`メール ${messageId.slice(0, 8)}: ${result.errors.join(" ")}`);
+        const errorMessage = result.errors.join(" ");
+        errors.push(`メール ${messageId.slice(0, 8)}: ${errorMessage}`);
+        await recordGmailIngest({ organizationId, messageId, status: "failed", errorMessage });
         continue;
       }
+
+      await recordGmailIngest({
+        organizationId,
+        messageId,
+        status: "imported",
+        appointmentId: result.appointment.id
+      });
 
       if (result.duplicate) updated += 1;
       else imported += 1;
     } catch (error) {
-      errors.push(`メール ${messageId.slice(0, 8)}: ${safeErrorMessage(error)}`);
+      const errorMessage = safeErrorMessage(error);
+      errors.push(`メール ${messageId.slice(0, 8)}: ${errorMessage}`);
+      await recordGmailIngest({ organizationId, messageId, status: "failed", errorMessage }).catch(() => undefined);
     }
   }
 

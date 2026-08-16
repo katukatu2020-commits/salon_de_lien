@@ -27,11 +27,12 @@ customer data.
 
 ## Current approved release
 
-- ECS task definition: `salon-de-lien-staging-web:248`
-- ECR tag: `admin-theme-modal-20260815-153`
+- ECS task definition: `salon-de-lien-staging-web:262`
+- ECR tag: `showcase-gmail-staff-20260816-02`
 - ECR digest:
-  `sha256:2a1fe98b4422c0005b404d0d96df2bbd12e684eac18e4cdd8b42864f8bc5f72e`
+  `sha256:ce50928756c743abed0da569d54203ae570cdc5b5fd3700398e328940f9d4b47`
 - Canonical Git commit: `26ad2a9470c93112324fd41790f0c53abd9442bc`
+- Audited runtime patch: `showcase-gmail-staff-20260816-02`
 
 ## Verification
 

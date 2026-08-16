@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import {
   normalizeReservationPhone,
   parseReservationEmail,
+  type ParsedReservationEmail,
   type ReservationEmailInput
 } from "@/lib/appointments/reservation-email";
 import { BOOKING_PROVIDERS, inferBookingProvider } from "@/lib/appointments/booking-provider";
@@ -19,6 +20,31 @@ function monthParam(value: Date) {
     year: "numeric",
     month: "2-digit"
   }).format(value);
+}
+
+type ExistingAppointmentDetails = {
+  staffName: string | null;
+  durationMinutes: number | null;
+  menu: string | null;
+  estimatedPrice: number | null;
+};
+
+export function mergeReservationEmailDetails(
+  parsed: Pick<
+    ParsedReservationEmail,
+    "staffAssignment" | "staffName" | "durationMinutes" | "menu" | "estimatedPrice"
+  >,
+  existing?: ExistingAppointmentDetails | null
+) {
+  return {
+    staffName:
+      parsed.staffAssignment === "unknown"
+        ? existing?.staffName ?? null
+        : parsed.staffName,
+    durationMinutes: parsed.durationMinutes ?? existing?.durationMinutes ?? null,
+    menu: parsed.menu ?? existing?.menu ?? null,
+    estimatedPrice: parsed.estimatedPrice ?? existing?.estimatedPrice ?? null
+  };
 }
 
 async function resolveCustomer(customerName: string, phone: string | null, digest: string, organizationId: string) {
@@ -107,27 +133,36 @@ export async function importReservationEmail(
   const appointmentId =
     matchedCancellation?.id ??
     `gmail-appt-${stableHash(`${organizationId}:${appointmentIdentity}`).slice(0, 24)}`;
+  const existing = await prisma.appointment.findUnique({
+    where: { id: appointmentId },
+    select: {
+      id: true,
+      staffName: true,
+      durationMinutes: true,
+      menu: true,
+      estimatedPrice: true
+    }
+  });
+  const mergedDetails = mergeReservationEmailDetails(parsed.value, existing);
   const note = [
     parsed.value.bookingReference ? `予約番号: ${parsed.value.bookingReference}` : null,
-    parsed.value.staffName ? `担当: ${parsed.value.staffName}` : null,
-    parsed.value.durationMinutes ? `所要時間: ${parsed.value.durationMinutes}分` : null,
+    mergedDetails.staffName ? `担当: ${mergedDetails.staffName}` : null,
+    mergedDetails.durationMinutes ? `所要時間: ${mergedDetails.durationMinutes}分` : null,
     parsed.value.subject ? `メール件名: ${parsed.value.subject}` : null,
     `予約元: ${providerLabel}`,
     "Gmail予約メールから抽出。元メール本文は保存していません。"
   ]
     .filter((value): value is string => Boolean(value))
     .join("\n");
-
-  const existing = await prisma.appointment.findUnique({ where: { id: appointmentId }, select: { id: true } });
   const appointment = await prisma.appointment.upsert({
     where: { id: appointmentId },
     update: {
       customerId: customer.id,
       scheduledAt: parsed.value.scheduledAt,
-      durationMinutes: parsed.value.durationMinutes,
-      menu: parsed.value.menu,
-      staffName: parsed.value.staffName,
-      estimatedPrice: parsed.value.estimatedPrice,
+      durationMinutes: mergedDetails.durationMinutes,
+      menu: mergedDetails.menu,
+      staffName: mergedDetails.staffName,
+      estimatedPrice: mergedDetails.estimatedPrice,
       status: parsed.value.status,
       source,
       bookingProvider,
@@ -137,10 +172,10 @@ export async function importReservationEmail(
       id: appointmentId,
       customerId: customer.id,
       scheduledAt: parsed.value.scheduledAt,
-      durationMinutes: parsed.value.durationMinutes,
-      menu: parsed.value.menu,
-      staffName: parsed.value.staffName,
-      estimatedPrice: parsed.value.estimatedPrice,
+      durationMinutes: mergedDetails.durationMinutes,
+      menu: mergedDetails.menu,
+      staffName: mergedDetails.staffName,
+      estimatedPrice: mergedDetails.estimatedPrice,
       status: parsed.value.status,
       source,
       bookingProvider,
@@ -159,10 +194,10 @@ export async function importReservationEmail(
       purpose: "予約取込",
       message: [
         `予約日時: ${parsed.value.scheduledAt.toISOString()}`,
-        parsed.value.durationMinutes ? `施術時間: ${parsed.value.durationMinutes}分` : null,
-        `メニュー: ${parsed.value.menu ?? "記載なし"}`,
+        appointment.durationMinutes ? `施術時間: ${appointment.durationMinutes}分` : null,
+        `メニュー: ${appointment.menu ?? "記載なし"}`,
         `ステータス: ${parsed.value.status}`,
-        parsed.value.staffName ? `担当: ${parsed.value.staffName}` : null,
+        appointment.staffName ? `担当: ${appointment.staffName}` : null,
         parsed.value.bookingReference ? `予約番号: ${parsed.value.bookingReference}` : null
       ].filter(Boolean).join("\n"),
       outcome: existing ? "予約更新" : "予約登録",
@@ -176,10 +211,10 @@ export async function importReservationEmail(
       purpose: "予約取込",
       message: [
         `予約日時: ${parsed.value.scheduledAt.toISOString()}`,
-        parsed.value.durationMinutes ? `施術時間: ${parsed.value.durationMinutes}分` : null,
-        `メニュー: ${parsed.value.menu ?? "記載なし"}`,
+        appointment.durationMinutes ? `施術時間: ${appointment.durationMinutes}分` : null,
+        `メニュー: ${appointment.menu ?? "記載なし"}`,
         `ステータス: ${parsed.value.status}`,
-        parsed.value.staffName ? `担当: ${parsed.value.staffName}` : null,
+        appointment.staffName ? `担当: ${appointment.staffName}` : null,
         parsed.value.bookingReference ? `予約番号: ${parsed.value.bookingReference}` : null
       ].filter(Boolean).join("\n"),
       outcome: existing ? "予約更新" : "予約登録",
