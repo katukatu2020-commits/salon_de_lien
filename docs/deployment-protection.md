@@ -27,12 +27,12 @@ customer data.
 
 ## Current approved release
 
-- ECS task definition: `salon-de-lien-staging-web:263`
-- ECR tag: `notification-history-nav-20260816-01`
+- ECS task definition: `salon-de-lien-staging-web:265`
+- ECR tag: `admin-service-brand-20260816-02`
 - ECR digest:
-  `sha256:a5494cfc7b80e8c9350082d396f1157e149696f2b155cd120b698ddd1d7779bc`
-- Canonical Git commit: `994ae79fcb40013714d15f4e1c09b7bb1c047e03`
-- Audited runtime patch: `notification-history-nav-20260816-01`
+  `sha256:fc7aec2a6862f56b08739e16d8cc13b17cc4c400c16c234867e739edbb778d04`
+- Canonical Git commit: `663bb2fb3fbac1d875cacf3779df73b1facbe9aa`
+- Audited runtime patch: `admin-service-brand-20260816-02`
 
 ## Verification
 
