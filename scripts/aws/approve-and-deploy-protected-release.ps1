@@ -30,7 +30,7 @@ Assert-LienApprovedAutomationContext `
   -Region $Region
 
 $lockedPolicyPath = Join-Path $repoRoot "infrastructure/deployment-protection/locked-stack-policy.json"
-$allowPolicyPath = Join-Path $env:TEMP "lien-release-stack-policy-$([Guid]::NewGuid().ToString('N')).json"
+$allowPolicyPath = Join-Path ([IO.Path]::GetTempPath()) "lien-release-stack-policy-$([Guid]::NewGuid().ToString('N')).json"
 $profileArguments = @()
 if ($Profile) { $profileArguments = @("--profile", $Profile) }
 

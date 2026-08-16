@@ -58,7 +58,7 @@ if ($taskDefinition.ephemeralStorage) {
   $payload.ephemeralStorage = $taskDefinition.ephemeralStorage
 }
 
-$payloadPath = Join-Path $env:TEMP "lien-release-task-$([Guid]::NewGuid().ToString('N')).json"
+$payloadPath = Join-Path ([IO.Path]::GetTempPath()) "lien-release-task-$([Guid]::NewGuid().ToString('N')).json"
 try {
   [IO.File]::WriteAllText(
     $payloadPath,

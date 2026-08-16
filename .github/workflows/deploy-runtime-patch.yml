@@ -88,7 +88,9 @@ jobs:
       - name: Build and push immutable child image
         shell: pwsh
         run: |
-          $shortSha = $env:GITHUB_SHA.Substring(0, 12)
+          $releaseCommit = (git log -1 --format=%H -- $env:RELEASE_DIR).Trim()
+          if (-not $releaseCommit) { throw "The runtime release commit could not be resolved." }
+          $shortSha = $releaseCommit.Substring(0, 12)
           $tag = "admin-operations-v267-$shortSha"
           $image = "$($env:AWS_ACCOUNT_ID).dkr.ecr.$($env:AWS_REGION).amazonaws.com/$($env:ECR_REPOSITORY):$tag"
           aws ecr describe-images `
