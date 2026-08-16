@@ -96,12 +96,16 @@ Resources:
               - Sid: PassDeploymentGuardRole
                 Effect: Allow
                 Action:
-                  - iam:GetRole
                   - iam:PassRole
                 Resource: arn:aws:iam::009293460979:role/salon-de-lien-deployment-guard-staging
                 Condition:
                   StringEquals:
                     iam:PassedToService: lambda.amazonaws.com
+              - Sid: ReadDeploymentGuardRole
+                Effect: Allow
+                Action:
+                  - iam:GetRole
+                Resource: arn:aws:iam::009293460979:role/salon-de-lien-deployment-guard-staging
               - Sid: UpdateProtectionStack
                 Effect: Allow
                 Action:
