@@ -1,0 +1,8 @@
+{
+  "containerOverrides": [
+    {
+      "name": "Web",
+      "command": ["node", "/app/scripts/seed-showcase-expansion.cjs"]
+    }
+  ]
+}
