@@ -84,6 +84,35 @@ runtimeClient = replaceExpected(
   "responsive sidebar styles",
 );
 
+const sidebarNormalizerAnchor = `  async function handleCatalogCreateSubmit(event) {`;
+const serviceBrandNormalizer = `  function normalizeServiceBrand() {
+    document.querySelectorAll('.admin-desktop-sidebar a[href="/admin/customers"],.admin-mobile-sidebar a[href="/admin/customers"]').forEach(link => {
+      const mark = link.querySelector('span[role="img"]')
+      if (mark && mark.style.backgroundImage !== 'url("${serviceMarkUrl}")') {
+        mark.style.backgroundImage = 'url("${serviceMarkUrl}")'
+      }
+      const textGroup = link.querySelector(':scope > span.min-w-0')
+      const subtitle = textGroup?.lastElementChild
+      if (subtitle && subtitle.textContent !== '${nextSubtitle}') subtitle.textContent = '${nextSubtitle}'
+    })
+  }
+
+`;
+runtimeClient = replaceExpected(
+  runtimeClient,
+  sidebarNormalizerAnchor,
+  `${serviceBrandNormalizer}${sidebarNormalizerAnchor}`,
+  1,
+  "service brand DOM normalizer",
+);
+runtimeClient = replaceExpected(
+  runtimeClient,
+  "    styles(); applyAdminTheme(savedAdminTheme()); normalizeSidebarControl(); removeCommandPalette();",
+  "    styles(); applyAdminTheme(savedAdminTheme()); normalizeServiceBrand(); normalizeSidebarControl(); removeCommandPalette();",
+  1,
+  "service brand enhancement hook",
+);
+
 fs.writeFileSync(serverPath, server, "utf8");
 fs.writeFileSync(runtimeClientPath, runtimeClient, "utf8");
 fs.writeFileSync(serverLayoutPath, serverLayout, "utf8");

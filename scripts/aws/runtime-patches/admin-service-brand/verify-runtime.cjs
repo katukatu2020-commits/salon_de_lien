@@ -34,6 +34,9 @@ const checks = {
   subtitleWrapsWithoutClipping:
     runtimeClient.includes("white-space:normal!important")
     && runtimeClient.includes("text-wrap:balance!important"),
+  cachedLayoutIsNormalized:
+    runtimeClient.includes("function normalizeServiceBrand()")
+    && runtimeClient.includes("normalizeServiceBrand(); normalizeSidebarControl()"),
   serviceMarkExists: fs.existsSync(serviceMarkPath) && fs.statSync(serviceMarkPath).size > 500,
 };
 
