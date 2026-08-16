@@ -1,0 +1,128 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: GitHub OIDC role for protected Salon de Lien runtime releases.
+
+Parameters:
+  GitHubRepository:
+    Type: String
+    Default: katukatu2020-commits/salon_de_lien
+  GitHubBranch:
+    Type: String
+    Default: recovery/aws-canonical-20260815
+
+Resources:
+  GitHubOidcProvider:
+    Type: AWS::IAM::OIDCProvider
+    Properties:
+      Url: https://token.actions.githubusercontent.com
+      ClientIdList:
+        - sts.amazonaws.com
+      Tags:
+        - Key: Application
+          Value: SalonDeLien
+
+  GitHubDeployRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: SalonDeLienGitHubDeployRole
+      MaxSessionDuration: 3600
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !Ref GitHubOidcProvider
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                token.actions.githubusercontent.com:aud: sts.amazonaws.com
+                token.actions.githubusercontent.com:sub: !Sub repo:${GitHubRepository}:ref:refs/heads/${GitHubBranch}
+      Policies:
+        - PolicyName: SalonDeLienProtectedRelease
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: EcrLogin
+                Effect: Allow
+                Action:
+                  - ecr:GetAuthorizationToken
+                Resource: "*"
+              - Sid: EcrReleaseArtifact
+                Effect: Allow
+                Action:
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:BatchGetImage
+                  - ecr:CompleteLayerUpload
+                  - ecr:DescribeImages
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:InitiateLayerUpload
+                  - ecr:PutImage
+                  - ecr:UploadLayerPart
+                Resource: arn:aws:ecr:ap-northeast-1:009293460979:repository/salon-de-lien-staging-app
+              - Sid: ReadEcsReleaseState
+                Effect: Allow
+                Action:
+                  - ecs:DescribeServices
+                  - ecs:DescribeTaskDefinition
+                  - ecs:DescribeTasks
+                Resource: "*"
+              - Sid: RegisterTaskDefinition
+                Effect: Allow
+                Action:
+                  - ecs:RegisterTaskDefinition
+                Resource: "*"
+              - Sid: RunMigrationTask
+                Effect: Allow
+                Action:
+                  - ecs:RunTask
+                Resource: arn:aws:ecs:ap-northeast-1:009293460979:task-definition/salon-de-lien-staging-web:*
+                Condition:
+                  ArnEquals:
+                    ecs:cluster: arn:aws:ecs:ap-northeast-1:009293460979:cluster/salon-de-lien-staging-cluster
+              - Sid: UpdateProtectedService
+                Effect: Allow
+                Action:
+                  - ecs:UpdateService
+                Resource: arn:aws:ecs:ap-northeast-1:009293460979:service/salon-de-lien-staging-cluster/salon-de-lien-staging-web
+              - Sid: PassEcsRoles
+                Effect: Allow
+                Action:
+                  - iam:PassRole
+                Resource:
+                  - arn:aws:iam::009293460979:role/SalonDeLien-staging-WebTaskTaskRole6A095794-3wgaBcwpb7pB
+                  - arn:aws:iam::009293460979:role/SalonDeLien-staging-WebTaskExecutionRole28FA0566-u3O2G3Xo9EzE
+                Condition:
+                  StringEquals:
+                    iam:PassedToService: ecs-tasks.amazonaws.com
+              - Sid: PassDeploymentGuardRole
+                Effect: Allow
+                Action:
+                  - iam:PassRole
+                Resource: arn:aws:iam::009293460979:role/salon-de-lien-deployment-guard-staging
+                Condition:
+                  StringEquals:
+                    iam:PassedToService: lambda.amazonaws.com
+              - Sid: UpdateProtectionStack
+                Effect: Allow
+                Action:
+                  - cloudformation:DescribeStackEvents
+                  - cloudformation:DescribeStacks
+                  - cloudformation:GetTemplate
+                  - cloudformation:SetStackPolicy
+                  - cloudformation:UpdateStack
+                Resource: arn:aws:cloudformation:ap-northeast-1:009293460979:stack/SalonDeLienDeploymentProtection-staging/*
+              - Sid: UpdateDeploymentGuard
+                Effect: Allow
+                Action:
+                  - lambda:GetFunction
+                  - lambda:GetFunctionConfiguration
+                  - lambda:ListTags
+                  - lambda:TagResource
+                  - lambda:UntagResource
+                  - lambda:UpdateFunctionConfiguration
+                Resource: arn:aws:lambda:ap-northeast-1:009293460979:function:salon-de-lien-deployment-guard-staging
+
+Outputs:
+  DeployRoleArn:
+    Value: !GetAtt GitHubDeployRole.Arn
+  ProviderArn:
+    Value: !Ref GitHubOidcProvider

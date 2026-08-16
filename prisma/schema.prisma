@@ -36,6 +36,7 @@ model Organization {
   customers                    Customer[]
   customerBroadcasts           CustomerBroadcast[]
   customerRegistrationInvites  CustomerRegistrationInvite[]
+  customerStoreLinks           CustomerStoreLink[]
   billing                      OrganizationBilling?
   products                     Product[]
   SmsSendLog                   SmsSendLog[]
@@ -56,15 +57,31 @@ model AppUser {
   updatedAt           DateTime                @updatedAt
   loginId             String?                 @unique
   displayName         String?
+  customerPublicCode  String?                 @unique
   customer            Customer?               @relation(fields: [customerId], references: [id])
   organization        Organization?           @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   customerBroadcasts  CustomerBroadcast[]
+  customerStoreLinks  CustomerStoreLink[]
   passwordResetTokens PasswordResetToken[]
   communityComments   VisitCommunityComment[]
   communityLikes      VisitCommunityLike[]
 
   @@index([organizationId, role])
   @@index([manufacturerName])
+}
+
+model CustomerStoreLink {
+  id             String       @id @default(cuid())
+  appUserId      String
+  organizationId String
+  customerId     String       @unique
+  createdAt      DateTime     @default(now())
+  appUser        AppUser      @relation(fields: [appUserId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customer       Customer     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@unique([appUserId, organizationId])
+  @@index([organizationId, createdAt])
 }
 
 model PasswordResetToken {
@@ -139,6 +156,7 @@ model Customer {
   organization             Organization                 @relation(fields: [organizationId], references: [id])
   broadcastRecipients      CustomerBroadcastRecipient[]
   customerOffers           CustomerOffer[]
+  storeLink                CustomerStoreLink?
   phoneIdentity            CustomerPhoneIdentity?
   pointAccount             CustomerPointAccount?
   portalAccesses           CustomerPortalAccess[]

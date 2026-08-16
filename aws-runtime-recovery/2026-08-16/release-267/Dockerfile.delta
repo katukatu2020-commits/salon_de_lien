@@ -1,0 +1,39 @@
+FROM 009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app@sha256:a0adf3c5d9cd82a6992e816df13654edde546ac9e7703ddd4057aa63f70766f7
+
+USER root
+WORKDIR /app
+
+COPY --chown=nextjs:nodejs server.js ./server.js
+COPY --chown=nextjs:nodejs commercial-admin-v101.js ./commercial-admin-v101.js
+COPY --chown=nextjs:nodejs tenant-setup-client.js ./tenant-setup-client.js
+COPY --chown=nextjs:nodejs tenant-setup.js ./tenant-setup.js
+COPY --chown=nextjs:nodejs appointment-operations-v267.js ./appointment-operations-v267.js
+COPY --chown=nextjs:nodejs customer-runtime-v267.js ./customer-runtime-v267.js
+COPY --chown=nextjs:nodejs runtime-schema.prisma ./prisma/schema.prisma
+COPY --chown=nextjs:nodejs customer-public-code-migration.sql ./prisma/migrations/20260817010000_add_customer_public_code_store_link/migration.sql
+
+COPY --chown=nextjs:nodejs appointments-shift-v131.js ./.next/static/chunks/app/admin/appointments/page-shift-layout-20260812-02.capacity-persist-v44.business-schedule-v267.js
+COPY --chown=nextjs:nodejs admin-layout-runtime-v153.js ./.next/static/chunks/app/layout-sidebar-boundary-20260812-01.customertabs.sms-compliance-v1.admin-mobile-v38.staff-unified-v48.tenant-runtime-v267.js
+COPY --chown=nextjs:nodejs customer-profile-loader-v267.js /tmp/customer-profile-loader-v267.js
+
+RUN cat /tmp/customer-profile-loader-v267.js \
+      './.next/static/chunks/app/u/(account)/profile/page-0bc3c43d5706a97e.js' \
+      > './.next/static/chunks/app/u/(account)/profile/page-profile-code-v267.js' \
+    && chown nextjs:nodejs \
+      './.next/static/chunks/app/u/(account)/profile/page-profile-code-v267.js' \
+    && rm /tmp/customer-profile-loader-v267.js
+
+RUN sed -i \
+      's/page-shift-layout-20260812-02\.capacity-persist-v44\.business-schedule-v127\.shift-hydration-gate-v131\.js/page-shift-layout-20260812-02.capacity-persist-v44.business-schedule-v267.js/g' \
+      ./.next/app-build-manifest.json \
+      ./.next/server/app/admin/appointments/page_client-reference-manifest.js \
+    && sed -i \
+      's/layout-sidebar-boundary-20260812-01\.customertabs\.sms-compliance-v1\.admin-mobile-v38\.staff-unified-v48\.tenant-runtime-v153\.js/layout-sidebar-boundary-20260812-01.customertabs.sms-compliance-v1.admin-mobile-v38.staff-unified-v48.tenant-runtime-v267.js/g' \
+      ./.next/app-build-manifest.json \
+      $(find ./.next/server/app -name page_client-reference-manifest.js -type f) \
+    && sed -i \
+      's/profile\/page-0bc3c43d5706a97e\.js/profile\/page-profile-code-v267.js/g' \
+      ./.next/app-build-manifest.json \
+      ./.next/server/app/u/\(account\)/profile/page_client-reference-manifest.js
+
+USER nextjs

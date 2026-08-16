@@ -1,0 +1,211 @@
+name: Deploy protected runtime patch
+
+on:
+  push:
+    branches:
+      - recovery/aws-canonical-20260815
+    paths:
+      - .github/workflows/deploy-runtime-patch.yml
+      - aws-runtime-recovery/2026-08-16/release-267/**
+      - scripts/aws/approve-and-deploy-protected-release.ps1
+      - scripts/aws/register-release-task.ps1
+      - scripts/aws/run-image-migration.ps1
+      - infrastructure/github-deploy-oidc.yaml
+      - prisma/migrations/20260817010000_add_customer_public_code_store_link/**
+      - prisma/schema.prisma
+
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
+  group: salon-de-lien-protected-release
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: ap-northeast-1
+  AWS_ACCOUNT_ID: "009293460979"
+  ECR_REPOSITORY: salon-de-lien-staging-app
+  ECS_CLUSTER: salon-de-lien-staging-cluster
+  ECS_SERVICE: salon-de-lien-staging-web
+  RELEASE_DIR: aws-runtime-recovery/2026-08-16/release-267
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out the canonical branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure temporary AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::009293460979:role/SalonDeLienGitHubDeployRole
+          role-session-name: GitHubActions
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Verify protected automation identity
+        shell: pwsh
+        run: |
+          $identity = aws sts get-caller-identity --output json --no-cli-pager | ConvertFrom-Json
+          if ($identity.Account -ne $env:AWS_ACCOUNT_ID) {
+            throw "Unexpected AWS account."
+          }
+          if ($identity.Arn -notmatch ':assumed-role/SalonDeLienGitHubDeployRole/') {
+            throw "The workflow did not assume the approved deployment role."
+          }
+
+      - name: Validate runtime patch syntax
+        shell: pwsh
+        run: |
+          $files = @(
+            'server.js',
+            'commercial-admin-v101.js',
+            'tenant-setup-client.js',
+            'tenant-setup.js',
+            'appointments-shift-v131.js',
+            'appointment-operations-v267.js',
+            'customer-runtime-v267.js',
+            'admin-layout-runtime-v153.js',
+            'customer-profile-loader-v267.js'
+          )
+          foreach ($file in $files) {
+            node --check (Join-Path $env:RELEASE_DIR $file)
+          }
+
+      - name: Log in to Amazon ECR
+        shell: bash
+        run: |
+          aws ecr get-login-password --region "$AWS_REGION" \
+            | docker login --username AWS --password-stdin "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
+
+      - name: Build and push immutable child image
+        shell: pwsh
+        run: |
+          $shortSha = $env:GITHUB_SHA.Substring(0, 12)
+          $tag = "admin-operations-v267-$shortSha"
+          $image = "$($env:AWS_ACCOUNT_ID).dkr.ecr.$($env:AWS_REGION).amazonaws.com/$($env:ECR_REPOSITORY):$tag"
+          aws ecr describe-images `
+            --repository-name $env:ECR_REPOSITORY `
+            --image-ids "imageTag=$tag" `
+            --region $env:AWS_REGION `
+            --no-cli-pager 2>$null | Out-Null
+          if ($LASTEXITCODE -ne 0) {
+            docker build `
+              --file "$($env:RELEASE_DIR)/Dockerfile.delta" `
+              --tag $image `
+              $env:RELEASE_DIR
+            if ($LASTEXITCODE -ne 0) { throw "Docker build failed." }
+            docker push $image
+            if ($LASTEXITCODE -ne 0) { throw "ECR push failed." }
+          }
+          $digest = (aws ecr describe-images `
+            --repository-name $env:ECR_REPOSITORY `
+            --image-ids "imageTag=$tag" `
+            --region $env:AWS_REGION `
+            --query 'imageDetails[0].imageDigest' `
+            --output text `
+            --no-cli-pager).Trim()
+          if (-not $digest -or $digest -eq 'None') { throw "The release digest was not resolved." }
+          "RELEASE_TAG=$tag" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "RELEASE_IMAGE=$image" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "RELEASE_DIGEST=$digest" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Apply the idempotent Prisma migration
+        shell: pwsh
+        run: |
+          & ./scripts/aws/run-image-migration.ps1 -Image $env:RELEASE_IMAGE -Profile ''
+
+      - name: Register the application task definition
+        shell: pwsh
+        run: |
+          $lock = Get-Content -Raw 'infrastructure/deployment-protection/staging-lock.json' | ConvertFrom-Json
+          $newTask = (& ./scripts/aws/register-release-task.ps1 `
+            -CurrentTaskDefinition $lock.taskDefinitionArn `
+            -Image $env:RELEASE_IMAGE `
+            -Profile '' | Select-Object -Last 1).Trim()
+          if (-not $newTask) { throw "The release task definition was not registered." }
+          "PREVIOUS_TASK=$($lock.taskDefinitionArn)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "PREVIOUS_IMAGE=$($lock.imageUri)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "PREVIOUS_DIGEST=$($lock.imageDigest)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "RELEASE_TASK=$newTask" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Approve and deploy with automatic rollback
+        shell: pwsh
+        run: |
+          & ./scripts/aws/approve-and-deploy-protected-release.ps1 `
+            -PreviousTaskDefinitionArn $env:PREVIOUS_TASK `
+            -PreviousImage $env:PREVIOUS_IMAGE `
+            -PreviousImageDigest $env:PREVIOUS_DIGEST `
+            -NewTaskDefinitionArn $env:RELEASE_TASK `
+            -NewImage $env:RELEASE_IMAGE `
+            -NewImageDigest $env:RELEASE_DIGEST `
+            -Profile ''
+
+      - name: Verify public readiness
+        shell: pwsh
+        run: |
+          $ready = $false
+          for ($attempt = 1; $attempt -le 30; $attempt += 1) {
+            try {
+              $response = Invoke-WebRequest `
+                -Uri 'https://salon-de-lien.com/api/health/ready' `
+                -TimeoutSec 10 `
+                -UseBasicParsing
+              if ($response.StatusCode -eq 200) {
+                $ready = $true
+                break
+              }
+            } catch {
+              Start-Sleep -Seconds 10
+            }
+          }
+          if (-not $ready) { throw "The production readiness endpoint did not recover." }
+          $actualTask = (aws ecs describe-services `
+            --cluster $env:ECS_CLUSTER `
+            --services $env:ECS_SERVICE `
+            --region $env:AWS_REGION `
+            --query 'services[0].taskDefinition' `
+            --output text `
+            --no-cli-pager).Trim()
+          if ($actualTask -ne $env:RELEASE_TASK) {
+            throw "The service is not running the approved release task."
+          }
+
+      - name: Record the approved release lock
+        shell: pwsh
+        run: |
+          $lockPath = 'infrastructure/deployment-protection/staging-lock.json'
+          $lock = Get-Content -Raw $lockPath | ConvertFrom-Json
+          $lock.taskDefinitionArn = $env:RELEASE_TASK
+          $lock.imageUri = $env:RELEASE_IMAGE
+          $lock.imageDigest = $env:RELEASE_DIGEST
+          $lock.canonicalCommit = $env:GITHUB_SHA
+          $lock.runtimePatchId = $env:RELEASE_TAG
+          [IO.File]::WriteAllText(
+            (Resolve-Path $lockPath),
+            ($lock | ConvertTo-Json -Depth 20) + "`n",
+            [Text.UTF8Encoding]::new($false)
+          )
+
+          $docsPath = 'docs/deployment-protection.md'
+          $docs = Get-Content -Raw $docsPath
+          $docs = [Regex]::Replace($docs, '- ECS task definition: `[^`]+`', "- ECS task definition: ``$($env:RELEASE_TASK.Split('/')[-1])``")
+          $docs = [Regex]::Replace($docs, '- ECR tag: `[^`]+`', "- ECR tag: ``$($env:RELEASE_TAG)``")
+          $docs = [Regex]::Replace($docs, '- ECR digest:\s*`[^`]+`', "- ECR digest:`n  ``$($env:RELEASE_DIGEST)``")
+          $docs = [Regex]::Replace($docs, '- Canonical Git commit: `[^`]+`', "- Canonical Git commit: ``$($env:GITHUB_SHA)``")
+          $docs = [Regex]::Replace($docs, '- Audited runtime patch: `[^`]+`', "- Audited runtime patch: ``$($env:RELEASE_TAG)``")
+          [IO.File]::WriteAllText(
+            (Resolve-Path $docsPath),
+            $docs,
+            [Text.UTF8Encoding]::new($false)
+          )
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add $lockPath $docsPath
+          git commit -m "chore: record protected runtime release [skip ci]"
+          git push origin "HEAD:$($env:GITHUB_REF_NAME)"

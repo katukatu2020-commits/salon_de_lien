@@ -15,10 +15,13 @@ Set-Location $repoRoot
 Initialize-LienAwsCli
 Assert-LienApprovedAutomationContext -Action "AWS database migration image execution" -Profile $Profile -Region $Region
 
+$profileArguments = @()
+if ($Profile) { $profileArguments = @("--profile", $Profile) }
+
 $serviceDefinition = (& aws ecs describe-services `
   --cluster $Cluster `
   --services $Service `
-  --profile $Profile `
+  @profileArguments `
   --region $Region `
   --query 'services[0].taskDefinition' `
   --output text `
@@ -30,7 +33,7 @@ if (-not $serviceDefinition -or $serviceDefinition -eq "None") {
 
 $taskDefinition = & aws ecs describe-task-definition `
   --task-definition $serviceDefinition `
-  --profile $Profile `
+  @profileArguments `
   --region $Region `
   --query taskDefinition `
   --output json `
@@ -64,7 +67,7 @@ try {
 
   $migrationDefinition = (& aws ecs register-task-definition `
     --cli-input-json "file://$definitionPath" `
-    --profile $Profile `
+    @profileArguments `
     --region $Region `
     --query 'taskDefinition.taskDefinitionArn' `
     --output text `
@@ -77,7 +80,7 @@ try {
   $networkConfigJson = (& aws ecs describe-services `
     --cluster $Cluster `
     --services $Service `
-    --profile $Profile `
+    @profileArguments `
     --region $Region `
     --query 'services[0].networkConfiguration.awsvpcConfiguration' `
     --output json `
@@ -109,7 +112,7 @@ try {
     --launch-type FARGATE `
     --network-configuration $network `
     --overrides "file://$overridePath" `
-    --profile $Profile `
+    @profileArguments `
     --region $Region `
     --query 'tasks[0].taskArn' `
     --output text `
@@ -123,13 +126,13 @@ try {
   & aws ecs wait tasks-stopped `
     --cluster $Cluster `
     --tasks $taskArn `
-    --profile $Profile `
+    @profileArguments `
     --region $Region
 
   $result = & aws ecs describe-tasks `
     --cluster $Cluster `
     --tasks $taskArn `
-    --profile $Profile `
+    @profileArguments `
     --region $Region `
     --query 'tasks[0].containers[0].{exitCode:exitCode,reason:reason}' `
     --output json `
