@@ -27,12 +27,12 @@ customer data.
 
 ## Current approved release
 
-- ECS task definition: `salon-de-lien-staging-web:262`
-- ECR tag: `showcase-gmail-staff-20260816-02`
+- ECS task definition: `salon-de-lien-staging-web:263`
+- ECR tag: `notification-history-nav-20260816-01`
 - ECR digest:
-  `sha256:ce50928756c743abed0da569d54203ae570cdc5b5fd3700398e328940f9d4b47`
-- Canonical Git commit: `26ad2a9470c93112324fd41790f0c53abd9442bc`
-- Audited runtime patch: `showcase-gmail-staff-20260816-02`
+  `sha256:a5494cfc7b80e8c9350082d396f1157e149696f2b155cd120b698ddd1d7779bc`
+- Canonical Git commit: `994ae79fcb40013714d15f4e1c09b7bb1c047e03`
+- Audited runtime patch: `notification-history-nav-20260816-01`
 
 ## Verification
 
