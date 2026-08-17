@@ -27,12 +27,12 @@ customer data.
 
 ## Current approved release
 
-- ECS task definition: `salon-de-lien-staging-web:293`
-- ECR tag: `customer-store-link-v293-dca5a14ff881`
+- ECS task definition: `salon-de-lien-staging-web:294`
+- ECR tag: `ui-workflows-v294-7eda20e80900`
 - ECR digest:
-  `sha256:e350d1a122383912c870fbcab487f85dc978321f31918446f4c41a7c63262c18`
-- Canonical Git commit: `dca5a14ff8812b1d409080f2f039cbf1a3a51db7`
-- Audited runtime patch: `customer-store-link-v293-dca5a14ff881`
+  `sha256:a357392a692bded5bb6cdda13da08a0561ea5405eab45debf8e783c14b63e47f`
+- Canonical Git commit: `7eda20e809008c1c72ce1f028a9ff5b814c4bdaf`
+- Audited runtime patch: `ui-workflows-v294-7eda20e80900`
 
 ## Verification
 
