@@ -1,0 +1,12 @@
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE}
+
+USER root
+WORKDIR /app
+COPY ui-workflows-v294.js patch-runtime.mjs verify-runtime.cjs /tmp/release-294/
+COPY ui-workflows-v294.js /app/ui-workflows-v294.js
+RUN chown nextjs:nodejs /app/ui-workflows-v294.js \
+ && node /tmp/release-294/patch-runtime.mjs /app \
+ && node /tmp/release-294/verify-runtime.cjs /app \
+ && rm -rf /tmp/release-294
+USER nextjs
