@@ -1,0 +1,14 @@
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE}
+
+USER root
+WORKDIR /app
+COPY customer-links-v293.js customer-link-ui-v293.js patch-runtime.mjs verify-runtime.cjs /tmp/release-293/
+COPY jsQR-v293.js /app/public/vendor/jsQR-v293.js
+COPY customer-links-v293.js /app/customer-links-v293.js
+COPY customer-link-ui-v293.js /app/customer-link-ui-v293.js
+RUN chown -R nextjs:nodejs /app/customer-links-v293.js /app/customer-link-ui-v293.js /app/public/vendor/jsQR-v293.js \
+ && node /tmp/release-293/patch-runtime.mjs /app \
+ && node /tmp/release-293/verify-runtime.cjs /app \
+ && rm -rf /tmp/release-293
+USER nextjs
