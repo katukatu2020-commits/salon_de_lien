@@ -4,8 +4,8 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$ExpectedDigest = "sha256:a0adf3c5d9cd82a6992e816df13654edde546ac9e7703ddd4057aa63f70766f7"
-$ExpectedTaskRevision = 266
+$ExpectedDigest = "sha256:e350d1a122383912c870fbcab487f85dc978321f31918446f4c41a7c63262c18"
+$ExpectedTaskRevision = 293
 $ContainerName = "salon_de_lien_aws_parity"
 
 $container = docker inspect $ContainerName 2>$null | ConvertFrom-Json
@@ -28,17 +28,20 @@ if (-not $live.ok -or -not $ready.ok) {
   throw "Health verification failed."
 }
 
-$databaseUrl = "postgresql://salon:salon_password@localhost:5432/salon_de_lien?schema=public"
-$previousDatabaseUrl = $env:DATABASE_URL
+$runtimeAssetPath = "/customer-link-ui-v293.js?v=293-4"
+$localRuntimeAsset = (Invoke-WebRequest -Uri "http://127.0.0.1:$Port$runtimeAssetPath" -UseBasicParsing -TimeoutSec 10).Content
+$awsRuntimeAsset = (Invoke-WebRequest -Uri "https://salon-de-lien.com$runtimeAssetPath" -UseBasicParsing -TimeoutSec 20).Content
+$sha256 = [Security.Cryptography.SHA256]::Create()
 try {
-  $env:DATABASE_URL = $databaseUrl
-  & npx.cmd prisma migrate status
-  if ($LASTEXITCODE -ne 0) {
-    throw "Prisma migration status failed."
-  }
+  $localAssetDigest = ([BitConverter]::ToString($sha256.ComputeHash([Text.Encoding]::UTF8.GetBytes($localRuntimeAsset))) -replace '-', '').ToLowerInvariant()
+  $sha256.Initialize()
+  $awsAssetDigest = ([BitConverter]::ToString($sha256.ComputeHash([Text.Encoding]::UTF8.GetBytes($awsRuntimeAsset))) -replace '-', '').ToLowerInvariant()
 }
 finally {
-  $env:DATABASE_URL = $previousDatabaseUrl
+  $sha256.Dispose()
+}
+if ($localAssetDigest -ne $awsAssetDigest) {
+  throw "Frontend runtime mismatch. Local $localAssetDigest, AWS $awsAssetDigest."
 }
 
 [pscustomobject]@{
@@ -47,5 +50,6 @@ finally {
   RuntimeDigest = $actualImage
   Live = $live.status
   Ready = $ready.status
+  FrontendAssetDigest = $localAssetDigest
   Url = "http://localhost:$Port"
 } | Format-List
