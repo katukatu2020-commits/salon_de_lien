@@ -1,0 +1,10 @@
+ARG BASE_IMAGE=009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app@sha256:2ddc740eb3f7b41467e53b7ceb9e3757963259dde769f9cb92a45d6632c84f3b
+FROM ${BASE_IMAGE}
+
+USER root
+WORKDIR /app
+COPY --chown=nextjs:nodejs patch-runtime.mjs /tmp/lien-patch-runtime.mjs
+RUN node /tmp/lien-patch-runtime.mjs /app && rm /tmp/lien-patch-runtime.mjs
+COPY --chown=nextjs:nodejs verify-runtime.cjs /tmp/lien-verify-runtime.cjs
+RUN node /tmp/lien-verify-runtime.cjs && rm /tmp/lien-verify-runtime.cjs
+USER nextjs

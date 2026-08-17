@@ -6,13 +6,10 @@ on:
       - recovery/aws-canonical-20260815
     paths:
       - .github/workflows/deploy-runtime-patch.yml
-      - aws-runtime-recovery/2026-08-16/release-267/**
+      - aws-runtime-recovery/2026-08-17/release-287-consistency/**
       - scripts/aws/approve-and-deploy-protected-release.ps1
       - scripts/aws/register-release-task.ps1
-      - scripts/aws/run-image-migration.ps1
       - infrastructure/github-deploy-oidc.yaml
-      - prisma/migrations/20260817010000_add_customer_public_code_store_link/**
-      - prisma/schema.prisma
 
 permissions:
   contents: write
@@ -28,7 +25,7 @@ env:
   ECR_REPOSITORY: salon-de-lien-staging-app
   ECS_CLUSTER: salon-de-lien-staging-cluster
   ECS_SERVICE: salon-de-lien-staging-web
-  RELEASE_DIR: aws-runtime-recovery/2026-08-16/release-267
+  RELEASE_DIR: aws-runtime-recovery/2026-08-17/release-287-consistency
 
 jobs:
   deploy:
@@ -62,15 +59,8 @@ jobs:
         shell: pwsh
         run: |
           $files = @(
-            'server.js',
-            'commercial-admin-v101.js',
-            'tenant-setup-client.js',
-            'tenant-setup.js',
-            'appointments-shift-v131.js',
-            'appointment-operations-v267.js',
-            'customer-runtime-v267.js',
-            'admin-layout-runtime-v153.js',
-            'customer-profile-loader-v267.js'
+            'patch-runtime.mjs',
+            'verify-runtime.cjs'
           )
           foreach ($file in $files) {
             node --check (Join-Path $env:RELEASE_DIR $file)
@@ -91,7 +81,7 @@ jobs:
           $releaseCommit = (git log -1 --format=%H -- $env:RELEASE_DIR).Trim()
           if (-not $releaseCommit) { throw "The runtime release commit could not be resolved." }
           $shortSha = $releaseCommit.Substring(0, 12)
-          $tag = "admin-operations-v267-$shortSha"
+          $tag = "consistency-v287-$shortSha"
           $image = "$($env:AWS_ACCOUNT_ID).dkr.ecr.$($env:AWS_REGION).amazonaws.com/$($env:ECR_REPOSITORY):$tag"
           aws ecr describe-images `
             --repository-name $env:ECR_REPOSITORY `
@@ -99,7 +89,7 @@ jobs:
             --region $env:AWS_REGION `
             --no-cli-pager 2>$null | Out-Null
           if ($LASTEXITCODE -ne 0) {
-            $baseImage = "$($env:AWS_ACCOUNT_ID).dkr.ecr.$($env:AWS_REGION).amazonaws.com/$($env:ECR_REPOSITORY)@sha256:a0adf3c5d9cd82a6992e816df13654edde546ac9e7703ddd4057aa63f70766f7"
+            $baseImage = "$($env:AWS_ACCOUNT_ID).dkr.ecr.$($env:AWS_REGION).amazonaws.com/$($env:ECR_REPOSITORY)@sha256:2ddc740eb3f7b41467e53b7ceb9e3757963259dde769f9cb92a45d6632c84f3b"
             $rootfs = Join-Path $env:RUNNER_TEMP 'salon-base-rootfs.tar'
             $flatBase = "salon-de-lien-base-flat:$shortSha"
             crane export $baseImage $rootfs
@@ -137,11 +127,6 @@ jobs:
           "RELEASE_TAG=$tag" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "RELEASE_IMAGE=$image" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "RELEASE_DIGEST=$digest" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-
-      - name: Apply the idempotent Prisma migration
-        shell: pwsh
-        run: |
-          & ./scripts/aws/run-image-migration.ps1 -Image $env:RELEASE_IMAGE -Profile ''
 
       - name: Register the application task definition
         shell: pwsh
