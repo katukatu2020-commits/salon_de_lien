@@ -27,12 +27,12 @@ customer data.
 
 ## Current approved release
 
-- ECS task definition: `salon-de-lien-staging-web:290`
-- ECR tag: `commercial-operations-v290-0e0a1940a685`
+- ECS task definition: `salon-de-lien-staging-web:291`
+- ECR tag: `chat-session-v291-eabce51c12ba`
 - ECR digest:
-  `sha256:ba4a5587d12e45618413fc05e3c40dfecfb995f9ee9ac6ccdfecdb9772911343`
-- Canonical Git commit: `0e0a1940a685ea9ac22b5545f40fae077ec99788`
-- Audited runtime patch: `commercial-operations-v290-0e0a1940a685`
+  `sha256:bff3892d970bf5a3699cb3a827a5ec927ffb39196af82df7bf2386716589e913`
+- Canonical Git commit: `eabce51c12bafc5ff47a445846485309e0d1956a`
+- Audited runtime patch: `chat-session-v291-eabce51c12ba`
 
 ## Verification
 
