@@ -27,12 +27,12 @@ customer data.
 
 ## Current approved release
 
-- ECS task definition: `salon-de-lien-staging-web:292`
-- ECR tag: `customer-claim-v292-e705db78bef0`
+- ECS task definition: `salon-de-lien-staging-web:293`
+- ECR tag: `customer-store-link-v293-dca5a14ff881`
 - ECR digest:
-  `sha256:358f5f1af170933236fa8135b6c9fdd5fb360efd9ad3c1457522b858d0b53408`
-- Canonical Git commit: `e705db78bef04269af612a5fa51772f3a266d9d8`
-- Audited runtime patch: `customer-claim-v292-e705db78bef0`
+  `sha256:e350d1a122383912c870fbcab487f85dc978321f31918446f4c41a7c63262c18`
+- Canonical Git commit: `dca5a14ff8812b1d409080f2f039cbf1a3a51db7`
+- Audited runtime patch: `customer-store-link-v293-dca5a14ff881`
 
 ## Verification
 
