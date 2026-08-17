@@ -1,0 +1,12 @@
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE}
+
+USER root
+WORKDIR /app
+
+COPY patch-runtime.mjs verify-runtime.cjs /tmp/release-302/
+RUN node /tmp/release-302/patch-runtime.mjs /app \
+ && node /tmp/release-302/verify-runtime.cjs /app \
+ && rm -rf /tmp/release-302
+
+USER nextjs
