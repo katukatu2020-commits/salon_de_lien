@@ -36,6 +36,15 @@ if (!helperSource.includes('.lien-chat-v294 .lien-chat-v294__sidebar{display:blo
 if (!helperSource.includes('<section class="lien-chat-v294__sidebar" aria-label="相談するスタッフ">') || helperSource.includes('<aside class="lien-chat-v294__sidebar">')) {
   throw new Error('Release 295 customer chat helper still uses the globally hidden aside element.')
 }
+if (!helperSource.includes('.lien-chat-v294.is-conversation .lien-chat-v294__sidebar{display:none!important}') ||
+    !helperSource.includes('.lien-chat-v294.is-conversation .lien-chat-v294__conversation{display:flex!important}')) {
+  throw new Error('Release 295 customer chat helper does not switch from the staff list to the conversation on mobile.')
+}
+if (!helperSource.includes('data-chat-back aria-label="スタッフ一覧へ戻る"') ||
+    !helperSource.includes("chatRoot?.classList.remove('is-conversation')") ||
+    !helperSource.includes("chatRoot?.classList.add('is-conversation')")) {
+  throw new Error('Release 295 customer chat helper does not provide the mobile conversation back flow.')
+}
 new Function(source)
 new Function(layoutSource)
 new Function(helperSource)

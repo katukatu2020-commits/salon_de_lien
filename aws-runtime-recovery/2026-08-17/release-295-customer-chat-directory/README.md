@@ -8,6 +8,9 @@ route asset so `/u/chat` reliably loads the already-audited
 The staff directory uses a dedicated `section` instead of the customer shell's
 globally hidden `aside`, so existing and new conversations remain selectable
 on mobile as well as desktop.
+On mobile, selecting a staff member switches to a full-width conversation view;
+the conversation header provides a clear route back to the staff list. Desktop
+keeps the two-pane layout.
 The helper is still gated to `/u/chat`. No database, API, admin UI, or
 unrelated customer behavior is modified.
 

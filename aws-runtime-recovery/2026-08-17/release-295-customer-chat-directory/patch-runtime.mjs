@@ -70,6 +70,41 @@ chatHelper = replaceExpected(
   1,
   'customer chat staff directory closing element',
 )
+chatHelper = replaceExpected(
+  chatHelper,
+  '@media(prefers-reduced-motion:reduce){.lien-chat-v294__staff-button{transition:none}}',
+  '@media(max-width:720px){.lien-chat-v294__grid{display:block}.lien-chat-v294__sidebar{border:0!important;padding:14px!important}.lien-chat-v294__staff{display:grid!important;overflow:visible!important}.lien-chat-v294__staff-button{min-width:0!important}.lien-chat-v294__conversation{display:none!important}.lien-chat-v294.is-conversation .lien-chat-v294__sidebar{display:none!important}.lien-chat-v294.is-conversation .lien-chat-v294__conversation{display:flex!important}.lien-chat-v294__back{display:grid!important}}.lien-chat-v294__back{display:none;width:40px;height:40px;flex:0 0 40px;place-items:center;border:1px solid #e3d5cc;border-radius:50%;background:#fffdfa;color:#6f5c52;cursor:pointer}.lien-chat-v294__back svg{width:20px;height:20px}@media(prefers-reduced-motion:reduce){.lien-chat-v294__staff-button{transition:none}}',
+  1,
+  'customer chat mobile view transition styles',
+)
+chatHelper = replaceExpected(
+  chatHelper,
+  "    const error = main.querySelector('[data-chat-error]')\n\n    const staffIdentity",
+  "    const error = main.querySelector('[data-chat-error]')\n    const chatRoot = main.querySelector('.lien-chat-v294')\n\n    const staffIdentity",
+  1,
+  'customer chat root reference',
+)
+chatHelper = replaceExpected(
+  chatHelper,
+  'conversation.innerHTML = `<header class="lien-chat-v294__conversation-head">${avatar(staff)}',
+  'conversation.innerHTML = `<header class="lien-chat-v294__conversation-head"><button type="button" class="lien-chat-v294__back" data-chat-back aria-label="スタッフ一覧へ戻る"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>${avatar(staff)}',
+  1,
+  'customer chat mobile back button',
+)
+chatHelper = replaceExpected(
+  chatHelper,
+  "      wireAvatarFallbacks(conversation)\n      const box = conversation.querySelector('[data-chat-messages]')",
+  "      wireAvatarFallbacks(conversation)\n      conversation.querySelector('[data-chat-back]')?.addEventListener('click', () => {\n        chatRoot?.classList.remove('is-conversation')\n        staffList.querySelector(`[data-staff-key=\"${CSS.escape(String(state.activeKey || ''))}\"]`)?.focus()\n      })\n      const box = conversation.querySelector('[data-chat-messages]')",
+  1,
+  'customer chat mobile back behavior',
+)
+chatHelper = replaceExpected(
+  chatHelper,
+  "      if (!staff) return\n      state.activeKey = staff.key",
+  "      if (!staff) return\n      state.activeKey = staff.key\n      chatRoot?.classList.add('is-conversation')",
+  1,
+  'customer chat mobile conversation transition',
+)
 fs.writeFileSync(path.join(root, files.chatHelper), chatHelper, 'utf8')
 
 const oldLayoutBasename = path.basename(files.customerLayout)
