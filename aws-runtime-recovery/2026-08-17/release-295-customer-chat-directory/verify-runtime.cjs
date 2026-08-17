@@ -3,9 +3,9 @@ const path = require('node:path')
 
 const root = path.resolve(process.argv[2] || '/app')
 const oldBasename = 'page-02f2b7a47700a9dc.js'
-const newBasename = 'page-02f2b7a47700a9dc.staff-directory-v295.js'
+const newBasename = 'page-02f2b7a47700a9dc.mobile-flow-v296.js'
 const oldLayoutBasename = 'layout-1c1963f4f2eb1b14.unified-reservation-chat.premium-mobile-v29.customer-home-unified-v35.customer-shell-chat-v36.notification-badge-v44.navigation-v45.customer-native-v82.customer-shell-v91.navigation-v86.customer-experience-v278.js'
-const newLayoutBasename = 'layout-chat-v295-4.js'
+const newLayoutBasename = 'layout-chat-v296-1.js'
 const newChunk = path.join(root, '.next/static/chunks/app/u/(account)/messages', newBasename)
 const newLayoutChunk = path.join(root, '.next/static/chunks/app/u/(account)', newLayoutBasename)
 const appManifest = fs.readFileSync(path.join(root, '.next/app-build-manifest.json'), 'utf8')
@@ -24,10 +24,10 @@ if (!appManifest.includes(newLayoutBasename) || !clientManifest.includes(newLayo
 if (appManifest.includes(oldLayoutBasename) || clientManifest.includes(oldLayoutBasename)) {
   throw new Error('Release 295 manifests still reference the cached customer layout.')
 }
-if (!source.includes("script.src='/ui-workflows-v294.js?v=295-2'")) {
+if (!source.includes("script.src='/ui-workflows-v294.js?v=296-1'")) {
   throw new Error('Release 295 chat chunk does not load the bounded customer chat helper.')
 }
-if (!layoutSource.includes("location.pathname!=='/u/chat'") || !layoutSource.includes("script.src='/ui-workflows-v294.js?v=295-2'")) {
+if (!layoutSource.includes("location.pathname!=='/u/chat'") || !layoutSource.includes("script.src='/ui-workflows-v294.js?v=296-1'")) {
   throw new Error('Release 295 customer layout does not load the bounded chat helper on /u/chat.')
 }
 if (!helperSource.includes('.lien-chat-v294 .lien-chat-v294__sidebar{display:block!important')) {

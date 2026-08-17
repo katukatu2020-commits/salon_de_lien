@@ -42,10 +42,10 @@ function replaceExpected(source, before, after, expectedCount, label) {
 }
 
 const oldBasename = path.basename(files.messagePage)
-const newBasename = oldBasename.replace('.js', '.staff-directory-v295.js')
+const newBasename = oldBasename.replace('.js', '.mobile-flow-v296.js')
 const newPath = path.join(path.dirname(files.messagePage), newBasename)
 let messagePage = readChecked(files.messagePage)
-messagePage += `\n;(()=>{if(document.querySelector('script[data-lien-ui-workflows-v294]'))return;const script=document.createElement('script');script.src='/ui-workflows-v294.js?v=295-2';script.defer=true;script.dataset.lienUiWorkflowsV294='1';document.head.appendChild(script)})()\n`
+messagePage += `\n;(()=>{if(document.querySelector('script[data-lien-ui-workflows-v294]'))return;const script=document.createElement('script');script.src='/ui-workflows-v294.js?v=296-1';script.defer=true;script.dataset.lienUiWorkflowsV294='1';document.head.appendChild(script)})()\n`
 fs.writeFileSync(path.join(root, newPath), messagePage, 'utf8')
 
 let chatHelper = readChecked(files.chatHelper)
@@ -108,10 +108,10 @@ chatHelper = replaceExpected(
 fs.writeFileSync(path.join(root, files.chatHelper), chatHelper, 'utf8')
 
 const oldLayoutBasename = path.basename(files.customerLayout)
-const newLayoutBasename = 'layout-chat-v295-4.js'
+const newLayoutBasename = 'layout-chat-v296-1.js'
 const newLayoutPath = path.join(path.dirname(files.customerLayout), newLayoutBasename)
 let customerLayout = readChecked(files.customerLayout)
-customerLayout += `\n;(()=>{if(location.pathname!=='/u/chat'||document.querySelector('script[data-lien-ui-workflows-v294]'))return;const script=document.createElement('script');script.src='/ui-workflows-v294.js?v=295-2';script.defer=true;script.dataset.lienUiWorkflowsV294='1';document.head.appendChild(script)})()\n`
+customerLayout += `\n;(()=>{if(location.pathname!=='/u/chat'||document.querySelector('script[data-lien-ui-workflows-v294]'))return;const script=document.createElement('script');script.src='/ui-workflows-v294.js?v=296-1';script.defer=true;script.dataset.lienUiWorkflowsV294='1';document.head.appendChild(script)})()\n`
 fs.writeFileSync(path.join(root, newLayoutPath), customerLayout, 'utf8')
 
 function collectFiles(directory) {
