@@ -17,3 +17,4 @@ The helper is still gated to `/u/chat`. No database, API, admin UI, or
 unrelated customer behavior is modified.
 
 The patch fails closed when any parent file hash or manifest reference differs.
+Deployment continues through the protected rolling-release workflow only.
