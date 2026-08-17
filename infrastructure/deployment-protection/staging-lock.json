@@ -7,14 +7,14 @@
   "protectionStackName": "SalonDeLienDeploymentProtection-staging",
   "clusterName": "salon-de-lien-staging-cluster",
   "serviceName": "salon-de-lien-staging-web",
-  "taskDefinitionArn": "arn:aws:ecs:ap-northeast-1:009293460979:task-definition/salon-de-lien-staging-web:297",
+  "taskDefinitionArn": "arn:aws:ecs:ap-northeast-1:009293460979:task-definition/salon-de-lien-staging-web:300",
   "desiredCount": 1,
   "containerName": "Web",
-  "imageUri": "009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app:customer-chat-directory-v295-53f5f36ef07f",
-  "imageDigest": "sha256:ed9fb9614baef097a507eb3c63c53fec459d2a4d1aba679f512e35f3e6b6b4d9",
+  "imageUri": "009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app:booking-performance-v300",
+  "imageDigest": "sha256:f6e35fca8a2ac16f502d430c7ef2cdc3bbd00c8914d43e82208d62d8fd2b197e",
   "ecrRepositoryName": "salon-de-lien-staging-app",
   "canonicalCommit": "53f5f36ef07fc5326133a0ee5f10cacee5a9b4e1",
-  "runtimePatchId": "customer-chat-directory-v295-53f5f36ef07f",
+  "runtimePatchId": "booking-performance-v300",
   "allowedAutomationRoleName": "SalonDeLienGitHubDeployRole",
   "localApplicationDeploymentAllowed": false
 }
