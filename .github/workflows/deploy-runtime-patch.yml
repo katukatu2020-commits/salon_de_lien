@@ -6,7 +6,7 @@ on:
       - recovery/aws-canonical-20260815
     paths:
       - .github/workflows/deploy-runtime-patch.yml
-      - aws-runtime-recovery/2026-08-17/release-289-staff-avatars/**
+      - aws-runtime-recovery/2026-08-17/release-290-commercial-operations/**
       - scripts/aws/approve-and-deploy-protected-release.ps1
       - scripts/aws/register-release-task.ps1
       - infrastructure/github-deploy-oidc.yaml
@@ -25,7 +25,7 @@ env:
   ECR_REPOSITORY: salon-de-lien-staging-app
   ECS_CLUSTER: salon-de-lien-staging-cluster
   ECS_SERVICE: salon-de-lien-staging-web
-  RELEASE_DIR: aws-runtime-recovery/2026-08-17/release-289-staff-avatars
+  RELEASE_DIR: aws-runtime-recovery/2026-08-17/release-290-commercial-operations
 
 jobs:
   deploy:
@@ -81,7 +81,7 @@ jobs:
           $releaseCommit = (git log -1 --format=%H -- $env:RELEASE_DIR).Trim()
           if (-not $releaseCommit) { throw "The runtime release commit could not be resolved." }
           $shortSha = $releaseCommit.Substring(0, 12)
-          $tag = "staff-avatars-v289-$shortSha"
+          $tag = "commercial-operations-v290-$shortSha"
           $image = "$($env:AWS_ACCOUNT_ID).dkr.ecr.$($env:AWS_REGION).amazonaws.com/$($env:ECR_REPOSITORY):$tag"
           aws ecr describe-images `
             --repository-name $env:ECR_REPOSITORY `
@@ -89,7 +89,7 @@ jobs:
             --region $env:AWS_REGION `
             --no-cli-pager 2>$null | Out-Null
           if ($LASTEXITCODE -ne 0) {
-            $baseImage = "$($env:AWS_ACCOUNT_ID).dkr.ecr.$($env:AWS_REGION).amazonaws.com/$($env:ECR_REPOSITORY)@sha256:330f5d22df4c96c6aaa11bed4b14ae7471af7511e33e610c3ee3425ffec6ac60"
+            $baseImage = "$($env:AWS_ACCOUNT_ID).dkr.ecr.$($env:AWS_REGION).amazonaws.com/$($env:ECR_REPOSITORY)@sha256:b5c1719c5614bcd520aee718e9b9e04fb282185865891e84cbd933a3dda2e8da"
             $rootfs = Join-Path $env:RUNNER_TEMP 'salon-base-rootfs.tar'
             $flatBase = "salon-de-lien-base-flat:$shortSha"
             crane export $baseImage $rootfs
