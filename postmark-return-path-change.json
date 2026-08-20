@@ -1,0 +1,18 @@
+{
+  "Comment": "Postmark custom Return-Path for Salon de Lien outbound mail",
+  "Changes": [
+    {
+      "Action": "UPSERT",
+      "ResourceRecordSet": {
+        "Name": "pm_bounces.salon-de-lien.com.",
+        "Type": "CNAME",
+        "TTL": 300,
+        "ResourceRecords": [
+          {
+            "Value": "pm.mtasv.net."
+          }
+        ]
+      }
+    }
+  ]
+}

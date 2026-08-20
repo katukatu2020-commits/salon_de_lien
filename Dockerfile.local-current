@@ -1,0 +1,6 @@
+FROM 009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app@sha256:ccfe8d5f7450a57cab630880076e31cd5f6c07593f699cad97821ddc5acb032a
+
+COPY patch-admin-register-link.cjs /tmp/patch-admin-register-link.cjs
+RUN PATCH_LOCAL_BILLING_URL=true node /tmp/patch-admin-register-link.cjs
+
+LABEL salon-de-lien.local-change="admin-registration-link-and-local-billing-v2"
