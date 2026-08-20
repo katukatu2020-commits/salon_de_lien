@@ -1,0 +1,7 @@
+FROM 009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app@sha256:3abea4e2102deeeba32dba1bbbdcaea6825561ee710a6f634512e9a17c7fc4df
+
+COPY patch-customer-header-menu-button.cjs /tmp/patch-customer-header-menu-button.cjs
+RUN node /tmp/patch-customer-header-menu-button.cjs \
+ && node --check /app/server.js
+
+LABEL salon-de-lien.release="customer-header-menu-button-v308"
