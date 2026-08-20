@@ -9,6 +9,7 @@ const source = fs.readFileSync(actionChunkPath, 'utf8')
 
 const required = [
   'provisionalCandidates=await t.customer.findMany',
+  'appUsers:{none:{}}',
   'sourceCustomerId="string"==typeof ea&&ea.startsWith("customer:")',
   'normalizeClaimName(e.name)===normalizeClaimName(f)',
   'await t.appUser.updateMany({where:{customerId:duplicateCustomerId}',
@@ -21,6 +22,10 @@ for (const marker of required) {
 
 if (source.split('provisionalCandidates=await t.customer.findMany').length - 1 !== 1) {
   throw new Error('Customer claim patch must exist exactly once.')
+}
+
+if (source.includes('appUsers:{is:null}')) {
+  throw new Error('Invalid singular relation filter remains in customer registration.')
 }
 
 new Function(source)

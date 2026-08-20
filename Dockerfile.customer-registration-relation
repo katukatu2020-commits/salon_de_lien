@@ -1,0 +1,6 @@
+FROM 009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app@sha256:ad5325543a962eb3fb99805f9c39a93aaf417faf7caa737754976f2e9f2a57a0
+
+COPY patch-customer-registration-relation.cjs /tmp/patch-customer-registration-relation.cjs
+RUN node /tmp/patch-customer-registration-relation.cjs
+
+LABEL salon-de-lien.release="customer-registration-relation-v1"
