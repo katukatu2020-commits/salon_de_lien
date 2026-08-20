@@ -1,6 +1,6 @@
 (function () {
   'use strict'
-  const VERSION = 'sales-ledger-accounts-v318'
+  const VERSION = 'sales-ledger-accounts-v324'
   let lastRoute = ''
   let rendering = false
   let accountInjecting = false
@@ -38,8 +38,8 @@
       .sl-card{border:1px solid var(--sl-line);border-radius:22px;background:var(--sl-card);padding:22px;box-shadow:0 10px 30px #6e4b3c0b}.sl-filter-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px}.sl-field{display:grid;gap:6px}.sl-field.wide{grid-column:span 2}.sl-field label{font-size:10px;color:var(--sl-muted);font-weight:800}.sl-field input,.sl-field select,.sl-field textarea{width:100%;min-height:43px;border:1px solid #dfcfc7;border-radius:12px;background:#fff;padding:10px 12px;color:inherit;font:inherit}.sl-field textarea{min-height:86px;resize:vertical}.sl-field input:focus,.sl-field select:focus,.sl-field textarea:focus{outline:3px solid #d85a7b1c;border-color:#d76b88}.sl-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:16px;padding-top:16px;border-top:1px solid var(--sl-line)}.sl-action-group{display:flex;gap:9px;flex-wrap:wrap}.sl-button{display:inline-flex;min-height:42px;align-items:center;justify-content:center;gap:7px;border:1px solid #dfccc3;border-radius:999px;background:#fff;padding:10px 17px;color:#5e4b43;font-size:11px;font-weight:900;cursor:pointer}.sl-button.primary{border-color:var(--sl-rose);background:var(--sl-rose);color:#fff;box-shadow:0 8px 18px #b63d6128}.sl-button:disabled{opacity:.4;cursor:not-allowed}.sl-status{color:var(--sl-muted);font-size:11px}
       .sl-table-card{padding:0;overflow:hidden}.sl-table-head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 22px;border-bottom:1px solid var(--sl-line)}.sl-section-title{display:flex;align-items:center;gap:9px}.sl-section-title svg{color:var(--sl-rose)}.sl-section-title h2{margin:0;font:700 20px Georgia,"Yu Mincho",serif}.sl-table-wrap{overflow:auto;max-height:650px}.sl-table{width:100%;min-width:1180px;border-collapse:collapse}.sl-table th{position:sticky;z-index:2;top:0;background:#faf5f2;padding:12px 10px;color:#776963;font-size:10px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--sl-line)}.sl-table td{padding:13px 10px;border-bottom:1px solid #f0e7e2;font-size:11px;vertical-align:middle}.sl-table tbody tr:hover{background:#fff8fa}.sl-table tbody tr.selected{background:#fff0f5}.sl-table input[type=checkbox]{width:17px;height:17px;accent-color:var(--sl-rose)}.sl-money{text-align:right;font-weight:900;font-variant-numeric:tabular-nums}.sl-muted{color:var(--sl-muted)}.sl-id{font:10px ui-monospace,SFMono-Regular,Consolas,monospace;color:#927e75}.sl-audit{display:inline-flex;border-radius:99px;background:#f3ece8;padding:4px 7px;color:#7b6258;font-size:9px;font-weight:800}.sl-empty{padding:52px;text-align:center;color:var(--sl-muted)}
       .sl-dialog{width:min(720px,calc(100% - 28px));max-height:calc(100vh - 40px);border:1px solid var(--sl-line);border-radius:24px;background:#fffdfb;padding:0;box-shadow:0 30px 90px #3e2b2460}.sl-dialog::backdrop{background:#2d201c55;backdrop-filter:blur(5px)}.sl-dialog-head{display:flex;align-items:center;justify-content:space-between;padding:21px 24px;border-bottom:1px solid var(--sl-line)}.sl-dialog-head h2{margin:0;font:700 22px Georgia,"Yu Mincho",serif}.sl-close{display:grid;width:40px;height:40px;place-items:center;border:1px solid var(--sl-line);border-radius:50%;background:#fff;cursor:pointer}.sl-close svg{width:18px;height:18px;fill:none;stroke:currentColor}.sl-dialog-body{padding:22px 24px;overflow:auto}.sl-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.sl-dialog-foot{display:flex;justify-content:flex-end;gap:9px;margin-top:20px;padding-top:18px;border-top:1px solid var(--sl-line)}
-      .sl-shared{margin-top:22px}.sl-shared-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.sl-shared-note{margin:0 0 16px;color:var(--sl-muted);font-size:11px;line-height:1.8}.sl-account-badge{display:inline-flex;border-radius:99px;background:#edf7f0;color:#35684a;padding:5px 9px;font-size:9px;font-weight:900}
-      @media(max-width:1100px){.sl-filter-grid{grid-template-columns:repeat(3,1fr)}}@media(max-width:700px){.sl-tabs{grid-template-columns:1fr}.sl-hero{align-items:flex-start;padding:22px}.sl-hero-mark{display:none}.sl-filter-grid,.sl-form-grid,.sl-shared-grid{grid-template-columns:1fr}.sl-field.wide{grid-column:auto}.sl-actions{align-items:stretch;flex-direction:column}.sl-action-group{width:100%}.sl-button{flex:1}.sl-table-head{align-items:flex-start;flex-direction:column}}
+      .sl-shared-account-card{overflow:hidden}.sl-shared-account-card .ca-theme-card-head{align-items:center}.sl-shared-account-card .sl-eyebrow{display:block;margin-bottom:4px}.sl-shared-account-form{padding:20px 22px 22px}.sl-shared-account-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.sl-shared-account-field{display:grid;gap:7px}.sl-shared-account-field label{color:var(--ca-ink,#493a34);font-size:10px;font-weight:900}.sl-shared-account-field input{width:100%;min-height:46px;border:1px solid var(--ca-line,#dfcfc7);border-radius:13px;background:var(--ca-paper,#fffdfb);padding:0 14px;color:var(--ca-ink,#2f2420);font:inherit;outline:0}.sl-shared-account-field input:focus{border-color:#bf7667;box-shadow:0 0 0 4px #c37c6d1a}.sl-shared-account-actions{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:18px;padding-top:17px;border-top:1px solid var(--ca-line,#eadbd4)}.sl-shared-account-status{display:flex;align-items:center;gap:7px;color:var(--ca-muted,#80726b);font-size:10px;font-weight:800}.sl-account-badge{display:inline-flex;min-height:26px;align-items:center;border-radius:999px;background:#edf7f0;padding:0 10px;color:#35684a;font-size:9px;font-weight:900}.sl-shared-save{display:inline-flex!important;min-width:250px!important;min-height:44px!important;align-items:center!important;justify-content:center!important;gap:8px!important;border:0!important;border-radius:999px!important;background:linear-gradient(135deg,#a65747,#bd6d5b)!important;padding:0 20px!important;color:#fff!important;font-size:11px!important;font-weight:900!important;line-height:1!important;opacity:1!important;box-shadow:0 10px 24px #753a2d27!important;cursor:pointer!important;transition:transform .16s,box-shadow .16s,opacity .16s!important}.sl-shared-save:hover{transform:translateY(-1px);box-shadow:0 14px 28px #753a2d32!important}.sl-shared-save:focus-visible{outline:3px solid #cf4f7230!important;outline-offset:2px}.sl-shared-save:disabled{cursor:wait!important;opacity:.62!important}.sl-shared-save svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8}.sl-shared-feedback{min-height:16px;margin:10px 0 0;color:#3f7659;font-size:10px;font-weight:800}.sl-shared-feedback.error{color:#ae393d}
+      @media(max-width:1100px){.sl-filter-grid{grid-template-columns:repeat(3,1fr)}}@media(max-width:700px){.sl-tabs{grid-template-columns:1fr}.sl-hero{align-items:flex-start;padding:22px}.sl-hero-mark{display:none}.sl-filter-grid,.sl-form-grid,.sl-shared-account-grid{grid-template-columns:1fr}.sl-field.wide{grid-column:auto}.sl-actions,.sl-shared-account-actions{align-items:stretch;flex-direction:column}.sl-action-group{width:100%}.sl-button,.sl-shared-save{width:100%;min-width:0!important;flex:1}.sl-table-head{align-items:flex-start;flex-direction:column}.sl-shared-account-form{padding:17px}.sl-shared-account-card .ca-theme-card-head{align-items:flex-start}}
       @media print{body *{visibility:hidden!important}.sl-page,.sl-page *{visibility:visible!important}.sl-page{position:absolute;inset:0;display:block;background:#fff}.sl-tabs,.sl-hero,.sl-card:not(.sl-table-card),.sl-table-head .sl-action-group,.sl-table th:first-child,.sl-table td:first-child,.sl-table th:last-child,.sl-table td:last-child{display:none!important}.sl-table-card{border:0;box-shadow:none}.sl-table-wrap{overflow:visible;max-height:none}.sl-table{min-width:0;font-size:9pt}.sl-table tbody tr:not(.print-row){display:none!important}.sl-table th{position:static;background:#eee!important;color:#000!important}.sl-table td,.sl-table th{padding:6px;border:1px solid #bbb}.sl-table-head{display:block!important;padding:0 0 10px}.sl-section-title h2:after{content:"（会計データ）"}}
     `
     document.head.appendChild(style)
@@ -190,30 +190,49 @@
     nav.insertBefore(link, nav.children[1] || null)
   }
 
+  function isAccountSettingsPage() {
+    return location.pathname === '/admin/account' && !new URLSearchParams(location.search).has('panel')
+  }
+
+  function removeSharedAccountOutsideSettings() {
+    if (isAccountSettingsPage()) return
+    document.querySelectorAll('[data-sl-shared-account]').forEach(node => node.remove())
+  }
+
   async function injectSharedAccount() {
-    if (location.pathname !== '/admin/account' || accountInjecting || document.querySelector('[data-sl-shared-account]')) return
+    if (!isAccountSettingsPage() || accountInjecting || document.querySelector('[data-sl-shared-account]')) return
     const main = document.querySelector('main')
     if (!main) return
+    const accountLayout = [...main.children].find(node => node.matches('div') && node.querySelector(':scope > header'))
+    if (!accountLayout) return
     accountInjecting = true
     installStyles()
     try {
       const payload = await request('/api/admin/shared-store-account')
+      if (!isAccountSettingsPage() || !accountLayout.isConnected) return
       const account = payload.account || {}
       const section = document.createElement('section')
-      section.className = 'sl-card sl-shared'
+      section.className = 'ca-theme-card sl-shared-account-card'
       section.dataset.slSharedAccount = '1'
-      section.innerHTML = `<div class="sl-section-title">${icon('users')}<div><span class="sl-eyebrow">STORE SHARED ACCOUNT</span><h2>店舗共通アカウント</h2></div></div><p class="sl-shared-note">オーナー個人のアカウントとは別に、店舗共通で利用するスタッフ権限のアカウントです。店舗データは他店舗から完全に分離されます。</p><form data-shared-form><div class="sl-shared-grid"><div class="sl-field"><label>店舗共通ログインID</label><input name="loginId" value="${esc(account.loginId || '')}" pattern="[a-z0-9._-]{3,80}" required></div><div class="sl-field"><label>新しい専用パスワード</label><input name="password" type="password" minlength="10" maxlength="128" placeholder="10文字以上" required></div></div><div class="sl-actions"><span class="sl-status">状態：${account.active ? '<span class="sl-account-badge">利用可能</span>' : '初期設定が必要'}</span><button class="sl-button primary" type="submit">${icon('check')}店舗共通アカウントを保存</button></div></form>`
-      main.appendChild(section)
+      section.innerHTML = `<header class="ca-theme-card-head"><span class="symbol">${icon('users')}</span><div><span class="sl-eyebrow">STORE SHARED ACCOUNT</span><h2>店舗共通アカウント</h2><p>オーナー個人のアカウントとは別に、店舗スタッフが共通で利用するアカウントです。店舗データは他店舗から完全に分離されます。</p></div></header><form class="sl-shared-account-form" data-shared-form><div class="sl-shared-account-grid"><div class="sl-shared-account-field"><label>店舗共通ログインID</label><input name="loginId" value="${esc(account.loginId || '')}" pattern="[a-z0-9._-]{3,80}" autocomplete="username" required></div><div class="sl-shared-account-field"><label>新しい専用パスワード</label><input name="password" type="password" minlength="10" maxlength="128" placeholder="10文字以上" autocomplete="new-password" required></div></div><div class="sl-shared-account-actions"><span class="sl-shared-account-status">状態：${account.active ? '<span class="sl-account-badge">利用可能</span>' : '<span>初期設定が必要</span>'}</span><button class="sl-shared-save" type="submit">${icon('check')}店舗共通アカウントを保存</button></div><p class="sl-shared-feedback" data-shared-feedback role="status" aria-live="polite"></p></form>`
+      accountLayout.appendChild(section)
       section.querySelector('form').addEventListener('submit', async event => {
         event.preventDefault()
         const button = event.currentTarget.querySelector('button')
+        const feedback = event.currentTarget.querySelector('[data-shared-feedback]')
         button.disabled = true
+        feedback.className = 'sl-shared-feedback'
+        feedback.textContent = '保存しています…'
         try {
           const data = Object.fromEntries(new FormData(event.currentTarget).entries())
           await request('/api/admin/shared-store-account', { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify(data) })
-          alert('店舗共通アカウントを保存しました。')
-          location.reload()
-        } catch (error) { alert(error.message) }
+          feedback.textContent = '店舗共通アカウントを保存しました。'
+          section.querySelector('.sl-shared-account-status').innerHTML = '状態：<span class="sl-account-badge">利用可能</span>'
+          event.currentTarget.password.value = ''
+        } catch (error) {
+          feedback.className = 'sl-shared-feedback error'
+          feedback.textContent = error.message
+        }
         finally { button.disabled = false }
       })
     } catch {}
@@ -222,6 +241,7 @@
 
   function enhance() {
     const route = location.pathname + location.search
+    removeSharedAccountOutsideSettings()
     if (new URLSearchParams(location.search).get('salesLedger') === '1' && location.pathname === '/admin/owner-analytics') {
       if (!document.querySelector('.sl-page')) renderLedger()
       return

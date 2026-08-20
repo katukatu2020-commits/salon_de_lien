@@ -43,7 +43,16 @@ function sameOrigin(req) {
   // by a cross-site HTML form. Some embedded WebViews omit Origin on same-site
   // requests, so an absent header is accepted while a supplied origin must match.
   if (!supplied) return true
-  try { return new URL(supplied).origin === new URL(origin(req)).origin } catch { return false }
+  try {
+    const suppliedOrigin = new URL(supplied).origin
+    const allowedOrigins = new Set([new URL(origin(req)).origin, 'https://salon-de-lien.com'])
+    for (const key of ['APP_BASE_URL', 'AUTH_BASE_URL', 'NEXTAUTH_URL', 'NEXT_PUBLIC_APP_URL']) {
+      const configured = String(process.env[key] || '').trim()
+      if (!configured) continue
+      try { allowedOrigins.add(new URL(configured).origin) } catch {}
+    }
+    return allowedOrigins.has(suppliedOrigin)
+  } catch { return false }
 }
 
 function cleanText(value, max) {
