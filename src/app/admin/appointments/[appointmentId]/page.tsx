@@ -201,7 +201,7 @@ export default async function AppointmentCheckoutPage({ params, searchParams }: 
             <div className="flex justify-between gap-4"><dt className="text-[color:var(--lien-muted)]">予定料金</dt><dd className="font-semibold tabular-nums">{serviceSubtotal.toLocaleString("ja-JP")}円</dd></div>
             {staffName ? <div className="flex justify-between gap-4"><dt className="text-[color:var(--lien-muted)]">担当</dt><dd className="font-semibold">{staffName}</dd></div> : null}
           </dl>
-          {appointment.note ? <p className="mt-5 rounded-2xl bg-[color:var(--lien-surface-soft)] p-4 text-xs leading-6 text-[color:var(--lien-muted)]">{appointment.note}</p> : null}
+          {appointment.note ? <p className="mt-5 whitespace-pre-line rounded-2xl bg-[color:var(--lien-surface-soft)] p-4 text-xs leading-6 text-[color:var(--lien-muted)]">{appointment.note}</p> : null}
         </LienCard>
 
         <LienCard tone={isCompleted ? "success" : "default"}>

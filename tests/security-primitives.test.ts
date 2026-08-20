@@ -409,6 +409,51 @@ test("salon board point and last-minute subject variants remain confirmed reserv
   }
 });
 
+test("salon board reservation parser reads used points and the post-discount payment amount", () => {
+  const result = parseReservationEmail({
+    subject: "【ポイント利用】予約連絡",
+    content: [
+      "■予約番号 BF48093294",
+      "■氏名 藤田 美里（フジタ ミサト）",
+      "■来店日時 2026年08月13日（木）10:00",
+      "■スタイリスト 渡邊 浩明",
+      "■メニュー カット＋ヘッドスパ",
+      "■合計金額",
+      "予約時合計金額 7,700円",
+      "今回の利用ギフト券 利用なし",
+      "今回の利用ポイント 100ポイント",
+      "お支払い予定金額 7,600円"
+    ].join("\n")
+  });
+
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  assert.equal(result.value.estimatedPrice, 7_700);
+  assert.equal(result.value.usedPoints, 100);
+  assert.equal(result.value.paymentDue, 7_600);
+});
+
+test("kanzashi reservation parser reads reservation point label variants", () => {
+  const result = parseReservationEmail({
+    subject: "【かんざし結】新規のご予約が確定しました",
+    content: [
+      "■予約詳細ページ https://kanzashi.com/reservation/316480108",
+      "■来店日時 2026/08/23 10:00",
+      "■担当スタッフ 谷崎 太二",
+      "■予約時メニュー 52.眉カット",
+      "■予約時合計金額 9,900 円",
+      "■予約時利用ポイント 300 ポイント",
+      "■お客様名（カナ） 河田 治希（カワタ ハルキ）",
+      "■電話番号 08056293309"
+    ].join("\n")
+  });
+
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  assert.equal(result.value.usedPoints, 300);
+  assert.equal(result.value.paymentDue, null);
+});
+
 test("salon board cancellation keeps its staff data and is recognized as cancelled", () => {
   const result = parseReservationEmail({
     subject: "【明日】キャンセル連絡",

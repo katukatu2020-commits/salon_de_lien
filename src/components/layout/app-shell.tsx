@@ -72,15 +72,15 @@ function isActivePath(pathname: string, currentView: string, href: string) {
   return pathname === path || pathname.startsWith(`${path}/`);
 }
 
-function StoreMark({ imageUrl, compact = false }: { imageUrl?: string | null; compact?: boolean }) {
+function ServiceMark({ compact = false }: { compact?: boolean }) {
   return (
     <span
       role="img"
-      aria-label="店舗アイコン"
+      aria-label="Salon de Lien サービスアイコン"
       className={`${compact ? "h-8 w-8 rounded-full text-sm" : "h-11 w-11 rounded-2xl text-lg"} inline-flex shrink-0 items-center justify-center border border-[#ead8ca] bg-[#fff7ef] bg-cover bg-center font-semibold text-[color:var(--lien-primary-dark)] shadow-sm`}
-      style={imageUrl ? { backgroundImage: `url(${imageUrl})` } : undefined}
+      style={{ backgroundImage: "url(/brand/salon-customer-service-mark.svg)" }}
     >
-      {imageUrl ? <span className="sr-only">Salon de Lien</span> : "L"}
+      <span className="sr-only">Salon de Lien</span>
     </span>
   );
 }
@@ -107,12 +107,10 @@ function AccountBadge({ displayName, compact = false }: { displayName?: string |
 
 export function AppShell({
   children,
-  storeIconUrl,
   backofficeRole,
   backofficeDisplayName
 }: {
   children: ReactNode;
-  storeIconUrl?: string | null;
   backofficeRole?: "ADMIN" | "STAFF" | "MANUFACTURER" | null;
   backofficeDisplayName?: string | null;
 }) {
@@ -187,7 +185,7 @@ export function AppShell({
       <div className="border-b border-lien px-4 py-4">
         <div className="flex items-center justify-between gap-3">
           <Link href="/admin/customers" className="flex min-w-0 items-center gap-3 text-lien-ink">
-            <StoreMark imageUrl={storeIconUrl} />
+            <ServiceMark />
             <span className="min-w-0">
               <span className="block truncate text-lg font-semibold tracking-normal">Salon de Lien</span>
               <span className="block truncate text-[11px] font-semibold text-lien-muted">既存客を動かす美容室CRM</span>
@@ -292,7 +290,7 @@ export function AppShell({
         <header className="sticky top-0 z-40 border-b border-lien bg-[#fffdf9]/92 backdrop-blur-xl">
           <div className="flex h-14 items-center justify-between px-4 md:hidden">
             <Link href="/admin/customers" className="flex min-w-0 items-center gap-2 font-semibold text-lien-ink">
-              <StoreMark imageUrl={storeIconUrl} compact />
+              <ServiceMark compact />
               <span className="truncate">Salon de Lien</span>
             </Link>
             <div className="flex items-center gap-2">

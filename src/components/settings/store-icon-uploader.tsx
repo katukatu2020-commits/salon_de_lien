@@ -22,7 +22,7 @@ function SaveButton() {
       disabled={pending}
       className="inline-flex min-h-11 items-center justify-center rounded-full bg-[color:var(--lien-primary)] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[color:var(--lien-primary-dark)] disabled:cursor-not-allowed disabled:opacity-60"
     >
-      {pending ? "保存中..." : "アイコンを保存"}
+      {pending ? "保存中..." : "店舗画像を保存"}
     </button>
   );
 }
@@ -51,9 +51,9 @@ export function StoreIconUploader({ imageUrl }: { imageUrl: string | null }) {
 
       <form action={formAction} encType="multipart/form-data" className="grid gap-3">
         <div>
-          <p className="text-sm font-semibold text-[color:var(--lien-ink)]">アプリ左上の店舗アイコン</p>
+          <p className="text-sm font-semibold text-[color:var(--lien-ink)]">店舗プロフィール画像</p>
           <p className="mt-1 text-xs leading-5 text-[color:var(--lien-muted)]">
-            正方形の画像がおすすめです。PCのサイドバーとスマホのヘッダーに反映されます。
+            店舗一覧やお客様画面に表示する店舗固有の画像です。左上のSalon de Lienサービスロゴは変更されません。
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">

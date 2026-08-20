@@ -13,6 +13,8 @@ export type ParsedReservationEmail = {
   scheduledAt: Date;
   menu: string | null;
   estimatedPrice: number | null;
+  usedPoints: number | null;
+  paymentDue: number | null;
   staffName: string | null;
   staffAssignment: "named" | "free" | "unknown";
   durationMinutes: number | null;
@@ -54,7 +56,9 @@ const labelGroups = {
   ],
   scheduledAt: ["予約日時", "ご予約日時", "来店日時", "ご来店日時", "予約日", "来店日", "日時"],
   menu: ["予約時クーポン", "予約時メニュー", "予約メニュー", "ご予約メニュー", "施術メニュー", "メニュー", "コース"],
-  price: ["予約時合計金額", "合計金額", "予定金額", "料金", "金額"],
+  price: ["予約時合計金額", "メニュー金額", "合計金額", "予定金額", "料金", "金額"],
+  usedPoints: ["今回の利用ポイント", "予約時利用ポイント", "ご利用ポイント", "利用ポイント", "ポイント利用"],
+  paymentDue: ["お支払い予定金額", "支払い予定金額", "今回のお支払い金額"],
   staff: [
     "予約時担当スタイリスト名",
     "予約時担当スタイリスト",
@@ -325,6 +329,16 @@ function parsePrice(value?: string | null) {
   return Number.isSafeInteger(amount) && amount >= 0 ? amount : null;
 }
 
+function parsePointAmount(value?: string | null) {
+  const normalized = (value ?? "").normalize("NFKC");
+  if (!normalized) return null;
+  if (/利用なし|未利用|なし/.test(normalized)) return 0;
+  const match = normalized.match(/([\d,]+)\s*(?:ポイント|point|pt|p)?/i);
+  if (!match) return null;
+  const points = Number(match[1].replace(/,/g, ""));
+  return Number.isSafeInteger(points) && points >= 0 ? points : null;
+}
+
 function parseDuration(value?: string | null) {
   if (!value) return null;
   const hours = Number(value.match(/(\d+)\s*時間/)?.[1] ?? 0);
@@ -416,6 +430,8 @@ export function parseReservationEmail(input: ReservationEmailInput) {
       scheduledAt,
       menu: cleanTextValue(labeledValue(content, labelGroups.menu)),
       estimatedPrice: parsePrice(labeledValue(content, labelGroups.price)),
+      usedPoints: parsePointAmount(labeledValue(content, labelGroups.usedPoints)),
+      paymentDue: parsePrice(labeledValue(content, labelGroups.paymentDue)),
       staffName: staff.staffName,
       staffAssignment: staff.staffAssignment,
       durationMinutes: parseDurationFromText(content),

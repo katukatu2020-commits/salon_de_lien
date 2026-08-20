@@ -999,7 +999,7 @@ export async function uploadOrganizationIconAction(
   _previousState: { ok: boolean; message: string; imageUrl?: string; cacheKey?: number },
   formData: FormData
 ) {
-  const session = await requireBackofficeSession(["ADMIN", "STAFF"]);
+  const session = await requireBackofficeSession(["ADMIN"]);
 
   try {
     if (!session.organizationId) {

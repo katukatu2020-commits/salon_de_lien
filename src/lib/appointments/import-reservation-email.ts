@@ -27,7 +27,15 @@ type ExistingAppointmentDetails = {
   durationMinutes: number | null;
   menu: string | null;
   estimatedPrice: number | null;
+  note?: string | null;
 };
+
+function noteAmount(note: string | null | undefined, label: string) {
+  const match = (note ?? "").match(new RegExp(`(?:^|\\n)${label}:\\s*([\\d,]+)`, "i"));
+  if (!match) return null;
+  const amount = Number(match[1].replace(/,/g, ""));
+  return Number.isSafeInteger(amount) && amount >= 0 ? amount : null;
+}
 
 export function mergeReservationEmailDetails(
   parsed: Pick<
@@ -140,15 +148,20 @@ export async function importReservationEmail(
       staffName: true,
       durationMinutes: true,
       menu: true,
-      estimatedPrice: true
+      estimatedPrice: true,
+      note: true
     }
   });
   const mergedDetails = mergeReservationEmailDetails(parsed.value, existing);
+  const usedPoints = parsed.value.usedPoints ?? noteAmount(existing?.note, "利用ポイント");
+  const paymentDue = parsed.value.paymentDue ?? noteAmount(existing?.note, "支払予定額");
   const note = [
     parsed.value.bookingReference ? `予約番号: ${parsed.value.bookingReference}` : null,
     mergedDetails.staffName ? `担当: ${mergedDetails.staffName}` : null,
     mergedDetails.durationMinutes ? `所要時間: ${mergedDetails.durationMinutes}分` : null,
     parsed.value.subject ? `メール件名: ${parsed.value.subject}` : null,
+    usedPoints !== null ? `利用ポイント: ${usedPoints}pt` : null,
+    paymentDue !== null ? `支払予定額: ${paymentDue}円` : null,
     `予約元: ${providerLabel}`,
     "Gmail予約メールから抽出。元メール本文は保存していません。"
   ]
@@ -198,7 +211,9 @@ export async function importReservationEmail(
         `メニュー: ${appointment.menu ?? "記載なし"}`,
         `ステータス: ${parsed.value.status}`,
         appointment.staffName ? `担当: ${appointment.staffName}` : null,
-        parsed.value.bookingReference ? `予約番号: ${parsed.value.bookingReference}` : null
+        parsed.value.bookingReference ? `予約番号: ${parsed.value.bookingReference}` : null,
+        usedPoints !== null ? `利用ポイント: ${usedPoints}pt` : null,
+        paymentDue !== null ? `支払予定額: ${paymentDue}円` : null
       ].filter(Boolean).join("\n"),
       outcome: existing ? "予約更新" : "予約登録",
       nextAction: "予約内容と顧客情報を確認する",
@@ -215,7 +230,9 @@ export async function importReservationEmail(
         `メニュー: ${appointment.menu ?? "記載なし"}`,
         `ステータス: ${parsed.value.status}`,
         appointment.staffName ? `担当: ${appointment.staffName}` : null,
-        parsed.value.bookingReference ? `予約番号: ${parsed.value.bookingReference}` : null
+        parsed.value.bookingReference ? `予約番号: ${parsed.value.bookingReference}` : null,
+        usedPoints !== null ? `利用ポイント: ${usedPoints}pt` : null,
+        paymentDue !== null ? `支払予定額: ${paymentDue}円` : null
       ].filter(Boolean).join("\n"),
       outcome: existing ? "予約更新" : "予約登録",
       nextAction: "予約内容と顧客情報を確認する",
