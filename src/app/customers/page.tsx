@@ -18,7 +18,7 @@ import { BrandVisual } from "@/components/lien/brand-visual";
 import { StoreSettingsPanel } from "@/components/settings/store-settings-panel";
 import { createContactLog, markProposalResponseHandledWithContactLog } from "@/lib/actions";
 import { prisma } from "@/lib/prisma";
-import { customerAttendantSummary } from "@/lib/salon/staff";
+import { customerPaidAttendantSummary } from "@/lib/salon/staff";
 import { requireBackofficeSession } from "@/lib/auth/authorization";
 import { resolveCustomerPhotoReferences } from "@/lib/storage/customer-photo";
 import { customerAgeLabel } from "@/lib/customer-age";
@@ -1193,7 +1193,16 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
       },
       serviceSales: {
         orderBy: { paidAt: "desc" },
-        select: { id: true, customerId: true, amount: true, paidAt: true, title: true, source: true, note: true },
+        select: {
+          id: true,
+          customerId: true,
+          amount: true,
+          paidAt: true,
+          title: true,
+          source: true,
+          note: true,
+          appointment: { select: { staffName: true } }
+        },
         take: 20
       },
       proposalResponses: {
@@ -5505,7 +5514,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
                   <p className="mt-1 text-xs font-semibold text-[color:var(--lien-primary)]">{customerCode(row.customer.id)}</p>
                   <p className="mt-2 flex items-center gap-1.5 text-xs text-[color:var(--lien-muted)]">
                     <UserRound className="h-3.5 w-3.5 shrink-0" />
-                    {customerAttendantSummary(row.customer)}
+                    {customerPaidAttendantSummary(row.customer)}
                   </p>
                   <p className="mt-1 text-xs font-medium text-[color:var(--lien-muted)]">
                     {row.customer.gender ?? "性別未登録"} / {customerAgeLabel(row.customer)}
@@ -5565,7 +5574,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
                     <div className="mt-1 text-xs font-medium text-teal-800">{customerCode(row.customer.id)}</div>
                     <div className="mt-2 flex items-center gap-1.5 text-xs text-stone-500">
                       <UserRound className="h-3.5 w-3.5 shrink-0" />
-                      {customerAttendantSummary(row.customer)}
+                      {customerPaidAttendantSummary(row.customer)}
                     </div>
                   </td>
                   <td className="whitespace-nowrap px-5 py-4 text-stone-700">

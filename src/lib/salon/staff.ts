@@ -71,6 +71,17 @@ export function normalizeSalonStaffName(value?: string | null) {
   return staff?.name ?? candidate;
 }
 
+export function customerPaidAttendantSummary(customer: {
+  serviceSales?: ReadonlyArray<{
+    appointment?: { staffName?: string | null } | null;
+  }>;
+}) {
+  const latestPaidSale = customer.serviceSales?.[0];
+  const staffName = normalizeSalonStaffName(latestPaidSale?.appointment?.staffName);
+
+  return `前回担当: ${staffName ?? "未登録"}`;
+}
+
 export function customerAttendantSummary(customer: {
   visits: ReadonlyArray<{ stylistName?: string | null }>;
   appointments?: ReadonlyArray<{
