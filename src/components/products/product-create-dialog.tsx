@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { PackagePlus, Plus, X } from "lucide-react";
+import { ImagePlus, PackagePlus, Plus, X } from "lucide-react";
 
 type ProductCreateDialogProps = {
   action: (formData: FormData) => void | Promise<void>;
@@ -19,6 +19,8 @@ export function ProductCreateDialog({
   buttonClassName = "lien-button-primary"
 }: ProductCreateDialogProps) {
   const [open, setOpen] = useState(false);
+  const [imageDataUrl, setImageDataUrl] = useState("");
+  const [imageError, setImageError] = useState("");
   const titleId = useId();
   const firstInputRef = useRef<HTMLInputElement>(null);
 
@@ -87,7 +89,27 @@ export function ProductCreateDialog({
             </header>
 
             <form action={action} className="min-h-0 overflow-y-auto overscroll-contain px-5 py-5 sm:px-6">
+              <input type="hidden" name="imageDataUrl" value={imageDataUrl} />
               <div className="grid gap-5">
+                <section className="grid gap-4 rounded-2xl border border-dashed border-[#dbbbb0] bg-[#fff9f6] p-4 sm:grid-cols-[116px_1fr] sm:items-center">
+                  <div className="grid h-28 w-28 place-items-center overflow-hidden rounded-2xl border border-lien bg-white text-lien-primary">
+                    {imageDataUrl ? <img src={imageDataUrl} alt="選択した商品画像" className="h-full w-full object-contain" /> : <ImagePlus className="h-8 w-8" />}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-lien-ink">商品画像</p>
+                    <p className="mt-1 text-xs leading-5 text-lien-muted">商品棚とお客様向けの商品表示に使用します。JPEG・PNG・WebP、2MBまで。</p>
+                    <label className="mt-3 inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-xl border border-[#d7bbb0] bg-white px-3 text-xs font-semibold text-lien-primary-dark">
+                      <ImagePlus className="h-4 w-4" />画像を選択
+                      <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(event) => {
+                        const file = event.target.files?.[0]; setImageError(""); setImageDataUrl("");
+                        if (!file) return;
+                        if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 2 * 1024 * 1024) { setImageError("JPEG・PNG・WebPの2MB以下の画像を選択してください。"); event.target.value = ""; return; }
+                        const reader = new FileReader(); reader.onload = () => setImageDataUrl(String(reader.result || "")); reader.onerror = () => setImageError("画像を読み込めませんでした。"); reader.readAsDataURL(file);
+                      }} />
+                    </label>
+                    {imageError ? <p className="mt-2 text-xs font-semibold text-red-700">{imageError}</p> : null}
+                  </div>
+                </section>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <label className="grid gap-2 text-sm font-semibold text-lien-ink">
                     メーカー名 <span className="text-xs font-normal text-lien-muted">必須</span>

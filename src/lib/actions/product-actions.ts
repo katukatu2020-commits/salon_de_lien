@@ -62,6 +62,10 @@ function productMasterInput(formData: FormData) {
     : null;
   const retailPrice = requiredInteger(formData, "retailPrice", "店頭価格", 1, 10_000_000);
   const stockQuantity = requiredInteger(formData, "stockQuantity", "在庫数", 0, 100_000);
+  const imageDataUrlValue = safeNullableString(formData.get("imageDataUrl"));
+  const imageUrl = imageDataUrlValue && /^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(imageDataUrlValue) && Buffer.byteLength(imageDataUrlValue.split(",")[1] || "", "base64") <= 2 * 1024 * 1024
+    ? imageDataUrlValue
+    : null;
   const concernTags = Array.from(
     new Set(
       formStringArray(formData, "concernTags")
@@ -82,7 +86,8 @@ function productMasterInput(formData: FormData) {
     stockQuantity,
     concernTags,
     description,
-    alternativeRecommendation
+    alternativeRecommendation,
+    imageUrl
   };
 }
 
