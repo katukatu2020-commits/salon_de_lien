@@ -921,6 +921,7 @@ function createBillingService(dependencies) {
     let errorText = ''
     if (error === 'input') errorText = '入力内容を確認してください。'
     if (error === 'duplicate') errorText = '同じメールアドレスまたは店舗IDが登録されています。'
+    if (error === 'registered') errorText = 'このメールアドレスは登録済みです。'
     if (error === 'locked') errorText = '操作回数が多すぎます。しばらくしてから再度お試しください。'
     if (error === 'mail') errorText = '確認メールを送信できませんでした。しばらくしてから再度お試しください。'
     if (error === 'expired' || (token && !verification)) errorText = '確認リンクが無効か、有効期限が切れています。メールアドレスからやり直してください。'
@@ -928,9 +929,12 @@ function createBillingService(dependencies) {
     const readiness = config.ready ? '' : '<div class="notice warn">新規店舗の課金受付は現在準備中です。既存店舗の管理画面には影響ありません。</div>'
     if (!verification) {
       const sent = url.searchParams.get('sent') === '1'
+      const registered = url.searchParams.get('registered') === '1'
       const actionCard = sent
         ? '<section class="card emailVerificationCard"><span class="verificationMark">' + uiIcon('mail') + '</span><h2>確認メールを送信しました</h2><p>メール内の「店舗登録を続ける」リンクを開いてください。リンクを開くまでは、店舗アカウントは作成されません。</p><div class="notice info">メールが届かない場合は、迷惑メールフォルダと入力したアドレスをご確認ください。</div><a class="btn secondary" href="/admin/register">別のメールアドレスでやり直す</a></section>'
-        : '<form method="post" action="/admin/register"><section class="card emailVerificationCard"><div class="sectionHeading"><span class="sectionIcon">' + uiIcon('mail') + '</span><div><h2>メールアドレスを確認</h2><p>ご本人が受信できるアドレスだけで店舗登録を開始できます。</p></div></div><div class="field emailField"><label for="email">ログイン用メールアドレス</label><input id="email" type="email" name="email" maxlength="254" autocomplete="email" inputmode="email" placeholder="owner@example.com" required><span class="fieldHint">確認リンクの有効期限は' + registrationTokenMinutes() + '分です。アカウントはリンクを開いた後に作成します。</span></div><div class="submitBar"><p class="muted small">入力しただけでは登録されません。確認メールを受信し、リンクを開いてください。</p><button class="btn primary" type="submit"' + (!config.ready ? ' disabled' : '') + '>' + uiIcon('mail') + '確認メールを送信</button></div></section></form>'
+        : (registered
+          ? '<section class="card emailVerificationCard"><span class="verificationMark">' + uiIcon('store') + '</span><h2>このメールアドレスは登録済みです。</h2><p>店舗管理画面へログインするか、ログイン情報の再設定をご利用ください。</p><div class="actions"><a class="btn primary" href="/admin/login">店舗ログインへ</a><a class="btn secondary" href="/admin/password-reset">ログイン情報を再設定</a></div></section>'
+          : '<form method="post" action="/admin/register"><section class="card emailVerificationCard"><div class="sectionHeading"><span class="sectionIcon">' + uiIcon('mail') + '</span><div><h2>メールアドレスを確認</h2><p>ご本人が受信できるアドレスだけで店舗登録を開始できます。</p></div></div><div class="field emailField"><label for="email">ログイン用メールアドレス</label><input id="email" type="email" name="email" maxlength="254" autocomplete="email" inputmode="email" placeholder="owner@example.com" required><span class="fieldHint">確認リンクの有効期限は' + registrationTokenMinutes() + '分です。アカウントはリンクを開いた後に作成します。</span></div><div class="submitBar"><p class="muted small">入力しただけでは登録されません。確認メールを受信し、リンクを開いてください。</p><button class="btn primary" type="submit"' + (!config.ready ? ' disabled' : '') + '>' + uiIcon('mail') + '確認メールを送信</button></div></section></form>')
       const content = '<div class="registrationWrap">' + onboardingSteps(1) + registrationIntro(config) + readiness + (errorText ? '<div class="notice danger" role="alert">' + htmlEscape(errorText) + '</div>' : '') + actionCard + '</div>'
       sendHtml(res, config.ready ? 200 : 503, pageShell('新規店舗登録', content, null, { wide: true }))
       return
@@ -971,8 +975,9 @@ function createBillingService(dependencies) {
     if (!verificationToken) {
       const requestedEmail = normalizeEmail(body.email)
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(requestedEmail) || requestedEmail.length > 254) return redirect(res, '/admin/register?error=input')
-      const existing = await prisma.$queryRawUnsafe('SELECT "id" FROM "AppUser" WHERE lower("email")=$1 OR lower("loginId")=$1 LIMIT 1', requestedEmail)
-      if (!existing[0]) {
+      const existing = await prisma.$queryRawUnsafe('SELECT "id" FROM "AppUser" WHERE "role" IN (\'ADMIN\',\'STAFF\',\'MANUFACTURER\') AND (lower("email")=$1 OR lower("loginId")=$1) LIMIT 1', requestedEmail)
+      if (existing[0]) return redirect(res, '/admin/register?registered=1')
+      {
         const rawToken = crypto.randomBytes(32).toString('base64url')
         const tokenHash = registrationTokenHash(crypto, rawToken)
         const verificationId = randomId(crypto, 'storeverify')

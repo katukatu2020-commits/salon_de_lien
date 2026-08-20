@@ -338,6 +338,7 @@ function createStoreProfileService({ prisma, crypto }) {
     const duplicate = await prisma.appUser.findFirst({
       where: {
         id: { not: user.id },
+        role: { in: ['ADMIN', 'STAFF', 'MANUFACTURER'] },
         OR: [{ email: { equals: email, mode: 'insensitive' } }, { loginId: { equals: email, mode: 'insensitive' } }],
       },
       select: { id: true },

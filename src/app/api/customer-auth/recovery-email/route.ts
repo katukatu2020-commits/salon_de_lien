@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.redirect(resultUrl, 303);
   }
   const duplicate = await prisma.appUser.findFirst({
-    where: { email: { equals: email, mode: "insensitive" }, NOT: { id: session.userId } },
+    where: { email: { equals: email, mode: "insensitive" }, role: "CUSTOMER", NOT: { id: session.userId } },
     select: { id: true }
   });
   if (duplicate) {

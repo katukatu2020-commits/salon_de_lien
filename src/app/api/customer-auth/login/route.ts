@@ -58,8 +58,8 @@ export async function POST(request: NextRequest) {
   }
   if (attempt && attempt.resetAt <= now) attempts.delete(key);
 
-  const appUser = await prisma.appUser.findUnique({
-    where: { loginId },
+  const appUser = await prisma.appUser.findFirst({
+    where: { loginId, role: "CUSTOMER" },
     select: {
       id: true,
       loginId: true,

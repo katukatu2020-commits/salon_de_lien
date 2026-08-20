@@ -22,6 +22,8 @@ export type CustomerRegistrationSearchParams = {
   referrerName?: string;
   error?: string;
   sent?: string;
+  registered?: string;
+  limited?: string;
 };
 
 function SelectBox({ label, name, options, defaultValue = "" }: { label: string; name: string; options: readonly string[]; defaultValue?: string }) {

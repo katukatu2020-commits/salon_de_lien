@@ -17,9 +17,9 @@ export const runtime = "nodejs";
 const REQUEST_WINDOW_MINUTES = 15;
 const MAX_REQUESTS_PER_EMAIL = 3;
 
-function successResponse(request: NextRequest) {
+function registrationResponse(request: NextRequest, status: "sent" | "registered" | "limited" | "error") {
   const url = getExternalRequestUrl(request, "/u/register");
-  url.searchParams.set("sent", "1");
+  url.searchParams.set(status, "1");
   const response = NextResponse.redirect(url, 303);
   response.headers.set("Cache-Control", "no-store");
   return response;
@@ -32,21 +32,21 @@ export async function POST(request: NextRequest) {
 
   const formData = await request.formData();
   const email = normalizeRegistrationEmail(String(formData.get("email") || ""));
-  const success = () => successResponse(request);
-  if (!isDeliverableRecoveryEmail(email)) return success();
+  const response = (status: "sent" | "registered" | "limited" | "error") => registrationResponse(request, status);
+  if (!isDeliverableRecoveryEmail(email)) return response("error");
 
   const organizationId = process.env.DEFAULT_ORGANIZATION_ID ?? "org_salon_de_lien";
   const existingAccount = await prisma.appUser.findFirst({
-    where: { email: { equals: email, mode: "insensitive" } },
+    where: { email: { equals: email, mode: "insensitive" }, role: "CUSTOMER" },
     select: { id: true }
   });
-  if (existingAccount) return success();
+  if (existingAccount) return response("registered");
 
   const requestedSince = new Date(Date.now() - REQUEST_WINDOW_MINUTES * 60_000);
   const recentRequests = await prisma.customerRegistrationInvite.count({
     where: { organizationId, email, createdAt: { gte: requestedSince } }
   });
-  if (recentRequests >= MAX_REQUESTS_PER_EMAIL) return success();
+  if (recentRequests >= MAX_REQUESTS_PER_EMAIL) return response("limited");
 
   const context = sanitizeCustomerRegistrationContext({
     source: String(formData.get("source") || ""),
@@ -81,10 +81,11 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     await prisma.customerRegistrationInvite.deleteMany({ where: { id: invite.id } });
     console.error("customer registration mail delivery failed", {
-      provider: "gmail",
+      provider: "postmark",
       error: error instanceof Error ? error.message : "unknown error"
     });
+    return response("error");
   }
 
-  return success();
+  return response("sent");
 }

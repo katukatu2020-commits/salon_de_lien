@@ -34,7 +34,11 @@ export async function POST(request: NextRequest) {
   const unchangedId = (user.loginId ?? user.email).toLowerCase() === newLoginId;
   if (unchangedId && !newPassword) return redirectError(request, "unchanged");
   const duplicate = await prisma.appUser.findFirst({
-    where: { id: { not: user.id }, OR: [{ loginId: { equals: newLoginId, mode: "insensitive" } }, { email: { equals: newLoginId, mode: "insensitive" } }] },
+    where: {
+      id: { not: user.id },
+      role: "CUSTOMER",
+      OR: [{ loginId: { equals: newLoginId, mode: "insensitive" } }, { email: { equals: newLoginId, mode: "insensitive" } }]
+    },
     select: { id: true }
   });
   if (duplicate) return redirectError(request, "duplicate");

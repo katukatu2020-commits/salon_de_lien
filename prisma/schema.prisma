@@ -48,14 +48,14 @@ model AppUser {
   id                  String                  @id @default(cuid())
   organizationId      String?
   customerId          String?                 @unique
-  email               String                  @unique
+  email               String
   passwordHash        String?
   role                AppRole
   manufacturerName    String?
   active              Boolean                 @default(true)
   createdAt           DateTime                @default(now())
   updatedAt           DateTime                @updatedAt
-  loginId             String?                 @unique
+  loginId             String?
   displayName         String?
   customerPublicCode  String?                 @unique
   customer            Customer?               @relation(fields: [customerId], references: [id])
@@ -67,6 +67,8 @@ model AppUser {
   communityLikes      VisitCommunityLike[]
 
   @@index([organizationId, role])
+  @@index([email])
+  @@index([loginId])
   @@index([manufacturerName])
 }
 

@@ -59,6 +59,7 @@ export async function POST(request: NextRequest) {
   const password = String(formData.get("password") || "");
   const appUser = await prisma.appUser.findFirst({
     where: {
+      role: { in: ["ADMIN", "STAFF", "MANUFACTURER"] },
       OR: [
         { email: { equals: email, mode: "insensitive" } },
         { loginId: { equals: email, mode: "insensitive" } }

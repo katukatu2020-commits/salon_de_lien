@@ -479,9 +479,9 @@ export async function createPublicConsultationLead(formData: FormData) {
   if (submittedEmail !== email || !/^[a-z0-9_-]{4,24}$/.test(loginId) || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || password.length < 8 || password.length > 72) {
     throw new Error("ログインIDまたはパスワードの形式が正しくありません。");
   }
-  const existingLogin = await prisma.appUser.findUnique({ where: { loginId }, select: { id: true } });
+  const existingLogin = await prisma.appUser.findFirst({ where: { loginId, role: "CUSTOMER" }, select: { id: true } });
   if (existingLogin) redirect(registrationErrorPath("loginId"));
-  const existingEmail = await prisma.appUser.findFirst({ where: { email: { equals: email, mode: "insensitive" } }, select: { id: true } });
+  const existingEmail = await prisma.appUser.findFirst({ where: { email: { equals: email, mode: "insensitive" }, role: "CUSTOMER" }, select: { id: true } });
   if (existingEmail) redirect(registrationErrorPath("email"));
   const passwordHash = hashScryptPassword(password);
   const name = requiredString(formData, "name");

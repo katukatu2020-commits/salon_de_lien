@@ -5,6 +5,9 @@ import type { CustomerRegistrationSearchParams } from "@/components/customer-app
 
 export function CustomerRegistrationLinkPage({ searchParams }: { searchParams?: CustomerRegistrationSearchParams }) {
   const sent = searchParams?.sent === "1";
+  const registered = searchParams?.registered === "1";
+  const limited = searchParams?.limited === "1";
+  const failed = searchParams?.error === "1";
 
   return (
     <main className="min-h-screen bg-lien px-4 py-6 text-lien-ink sm:px-6 sm:py-10">
@@ -33,6 +36,21 @@ export function CustomerRegistrationLinkPage({ searchParams }: { searchParams?: 
           {sent ? (
             <div role="status" className="mt-5 rounded-2xl border border-[#bfd5c1] bg-[#f2f8f2] px-4 py-4 text-sm leading-6 text-[#3f6144]">
               登録用メールを送信しました。受信箱と迷惑メールをご確認ください。リンクは60分間有効です。
+            </div>
+          ) : null}
+          {registered ? (
+            <div role="alert" className="mt-5 rounded-2xl border border-[#efc3c9] bg-[#fff4f5] px-4 py-4 text-sm font-semibold leading-6 text-[#9e4051]">
+              このメールアドレスは登録済みです。
+            </div>
+          ) : null}
+          {limited ? (
+            <div role="alert" className="mt-5 rounded-2xl border border-[#ead4ae] bg-[#fff9ed] px-4 py-4 text-sm leading-6 text-[#805f28]">
+              短時間に複数回の送信が行われました。15分ほど待ってから、もう一度お試しください。
+            </div>
+          ) : null}
+          {failed ? (
+            <div role="alert" className="mt-5 rounded-2xl border border-[#efc3c9] bg-[#fff4f5] px-4 py-4 text-sm leading-6 text-[#9e4051]">
+              登録用メールを送信できませんでした。しばらくしてから、もう一度お試しください。
             </div>
           ) : null}
 

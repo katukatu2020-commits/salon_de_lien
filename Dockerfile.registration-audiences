@@ -1,0 +1,7 @@
+FROM 009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app@sha256:4a499986c1828cab7bab74fd5b098b27bc89c87ce3bb31b549c651c1dc87fa68
+
+COPY patch-role-scoped-registration.cjs /tmp/patch-role-scoped-registration.cjs
+COPY prisma/migrations/20260820130000_scope_app_user_identity_by_audience/migration.sql /app/prisma/migrations/20260820130000_scope_app_user_identity_by_audience/migration.sql
+RUN node /tmp/patch-role-scoped-registration.cjs
+
+LABEL salon-de-lien.release="role-scoped-registration-v1"
