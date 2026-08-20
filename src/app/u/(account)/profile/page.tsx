@@ -48,7 +48,7 @@ function SelectField({
 export default async function CustomerProfilePage({
   searchParams
 }: {
-  searchParams?: { email?: string; profile?: string; account?: string };
+  searchParams?: { email?: string; profile?: string; account?: string; withdrawal?: string };
 }) {
   const session = await getCurrentCustomerSession();
   if (!session) return null;
@@ -299,6 +299,41 @@ export default async function CustomerProfilePage({
           />
           <button type="submit" className="h-12 rounded-full bg-[#8f4f42] px-5 text-sm font-semibold text-white">
             保存する
+          </button>
+        </form>
+      </section>
+
+      <section className="rounded-[20px] border border-[#efced0] bg-[#fffafa] p-5 shadow-sm">
+        <h2 className="text-base font-semibold text-[#71383c]">退会手続き</h2>
+        <p className="mt-2 text-sm leading-6 text-[#7c6566]">
+          登録済みのメールアドレスへ確認リンクを送ります。リンク先で退会を確定するまで、アカウントは停止されません。
+        </p>
+        {searchParams?.withdrawal === "sent" ? (
+          <p role="status" className="mt-3 rounded-xl bg-[#edf7ef] px-4 py-3 text-sm text-[#315c3c]">
+            退会確認メールを送信しました。30分以内にメール内のリンクを開いてください。
+          </p>
+        ) : null}
+        {searchParams?.withdrawal === "email-required" ? (
+          <p role="alert" className="mt-3 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-800">
+            先に、このページの「ログイン情報の復旧」で受信可能なメールアドレスを登録してください。
+          </p>
+        ) : null}
+        {searchParams?.withdrawal === "limited" ? (
+          <p role="alert" className="mt-3 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-800">
+            送信回数の上限に達しました。1時間ほど待ってからお試しください。
+          </p>
+        ) : null}
+        {searchParams?.withdrawal === "mail-failed" ? (
+          <p role="alert" className="mt-3 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-800">
+            確認メールを送信できませんでした。時間をおいてもう一度お試しください。
+          </p>
+        ) : null}
+        <form action="/api/customer-auth/withdrawal/request" method="post" className="mt-4">
+          <button
+            type="submit"
+            className="inline-flex min-h-12 items-center justify-center rounded-full border border-[#b94c53] bg-white px-6 text-sm font-semibold text-[#9f3f44] transition hover:bg-[#fff0f1]"
+          >
+            退会確認メールを送信する
           </button>
         </form>
       </section>

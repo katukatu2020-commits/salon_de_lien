@@ -55,6 +55,11 @@ import {
   isCustomerRegistrationTokenFormat,
   sanitizeCustomerRegistrationContext
 } from "../src/lib/auth/customer-registration-invite";
+import {
+  createCustomerWithdrawalToken,
+  hashCustomerWithdrawalToken,
+  isCustomerWithdrawalToken
+} from "../src/lib/auth/customer-withdrawal";
 
 test("customer portal tokens are opaque, random and stored as SHA-256 hashes", () => {
   const first = generateCustomerPortalToken();
@@ -78,6 +83,16 @@ test("password reset links use opaque one-time-token primitives", () => {
   assert.notEqual(hashPasswordResetToken(first), first);
   assert.equal(isDeliverableRecoveryEmail("customer@example.com"), true);
   assert.equal(isDeliverableRecoveryEmail("demo@customer.salon-de-lien.local"), false);
+});
+
+test("customer withdrawal links are opaque one-time-token primitives", () => {
+  const first = createCustomerWithdrawalToken();
+  const second = createCustomerWithdrawalToken();
+  assert.equal(isCustomerWithdrawalToken(first), true);
+  assert.equal(isCustomerWithdrawalToken(second), true);
+  assert.notEqual(first, second);
+  assert.match(hashCustomerWithdrawalToken(first), /^[a-f0-9]{64}$/);
+  assert.notEqual(hashCustomerWithdrawalToken(first), first);
 });
 
 test("customer registration email links are opaque and keep only bounded referral context", () => {

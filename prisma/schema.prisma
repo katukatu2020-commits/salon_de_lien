@@ -63,6 +63,7 @@ model AppUser {
   customerBroadcasts  CustomerBroadcast[]
   customerStoreLinks  CustomerStoreLink[]
   passwordResetTokens PasswordResetToken[]
+  withdrawalRequests  CustomerWithdrawalRequest[]
   communityComments   VisitCommunityComment[]
   communityLikes      VisitCommunityLike[]
 
@@ -97,6 +98,23 @@ model PasswordResetToken {
   appUser   AppUser   @relation(fields: [appUserId], references: [id], onDelete: Cascade)
 
   @@index([appUserId, createdAt])
+  @@index([expiresAt, usedAt])
+}
+
+model CustomerWithdrawalRequest {
+  id         String    @id @default(cuid())
+  customerId String
+  appUserId  String
+  email      String
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  usedAt     DateTime?
+  createdAt  DateTime  @default(now())
+  customer   Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  appUser    AppUser   @relation(fields: [appUserId], references: [id], onDelete: Cascade)
+
+  @@index([appUserId, createdAt])
+  @@index([customerId, createdAt])
   @@index([expiresAt, usedAt])
 }
 
@@ -180,6 +198,7 @@ model Customer {
   visits                   Visit[]
   communityPosts           VisitCommunityPost[]
   visitPhotos              VisitPhoto[]
+  withdrawalRequests       CustomerWithdrawalRequest[]
 
   @@index([organizationId, deletedAt])
   @@index([referredByCustomerId])

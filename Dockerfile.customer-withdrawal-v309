@@ -1,0 +1,10 @@
+FROM 009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app@sha256:6b65ab8da4fa3e8d1583e141fb77b5874a6b44c7efb2dc106e7a624bf2d17f9a
+
+COPY customer-withdrawal-v309.js /app/customer-withdrawal-v309.js
+COPY patch-customer-withdrawal-v309.cjs /tmp/patch-customer-withdrawal-v309.cjs
+RUN node /tmp/patch-customer-withdrawal-v309.cjs \
+ && node --check /app/server.js \
+ && node --check /app/customer-withdrawal-v309.js \
+ && node --check '/app/.next/server/app/u/(account)/profile/page.js'
+
+LABEL salon-de-lien.release="customer-withdrawal-v309"
