@@ -1,0 +1,6 @@
+FROM 009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app@sha256:013abb4fceb343c732f9526537448d92a2ee92fad7f897e19b418dfaae434984
+
+COPY patch-transactional-link-tracking.cjs /tmp/patch-transactional-link-tracking.cjs
+RUN node /tmp/patch-transactional-link-tracking.cjs
+
+LABEL salon-de-lien.release="transactional-links-v1"

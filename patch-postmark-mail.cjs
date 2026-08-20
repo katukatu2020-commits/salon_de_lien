@@ -36,6 +36,8 @@ async function sendPostmarkTextMail(input) {
     Subject: String(input.subject || ''),
     TextBody: String(input.body || ''),
     MessageStream: String(input.messageStream || config.transactionalStream),
+    TrackOpens: false,
+    TrackLinks: 'None',
   }
   if (config.replyTo) payload.ReplyTo = config.replyTo
   if (input.tag) payload.Tag = String(input.tag).slice(0, 1000)
@@ -106,6 +108,10 @@ const compiledPostmarkSender = String.raw`async function C(e) {
           TextBody: String(e.body || ""),
           MessageStream: stream,
         };
+        if (stream !== String(process.env.POSTMARK_BROADCAST_STREAM || "broadcast").trim()) {
+          payload.TrackOpens = false;
+          payload.TrackLinks = "None";
+        }
         if (replyTo) payload.ReplyTo = replyTo;
         if (e.tag) payload.Tag = String(e.tag).slice(0, 1000);
         let response = await fetch("https://api.postmarkapp.com/email", {
@@ -151,7 +157,7 @@ const routeMailModule = String.raw`6183:(e,t,r)=>{
       replyTo=String(process.env.POSTMARK_REPLY_TO||"").trim(),
       stream=String(process.env.POSTMARK_TRANSACTIONAL_STREAM||"outbound").trim();
     if(!token||!from)throw Error("Postmarkの送信設定が完了していません。");
-    let payload={From:fromName+" <"+from+">",To:String(e.to||"").trim(),Subject:String(e.subject||""),TextBody:String(e.body||""),MessageStream:stream};
+    let payload={From:fromName+" <"+from+">",To:String(e.to||"").trim(),Subject:String(e.subject||""),TextBody:String(e.body||""),MessageStream:stream,TrackOpens:false,TrackLinks:"None"};
     if(replyTo)payload.ReplyTo=replyTo;
     let response=await fetch("https://api.postmarkapp.com/email",{method:"POST",headers:{Accept:"application/json","Content-Type":"application/json","X-Postmark-Server-Token":token},body:JSON.stringify(payload),cache:"no-store",signal:AbortSignal.timeout(20000)}),result=await response.json().catch(()=>({}));
     if(!response.ok||Number(result.ErrorCode||0)!==0)throw Error("Postmark send error (HTTP "+response.status+", code "+Number(result.ErrorCode||0)+")");
