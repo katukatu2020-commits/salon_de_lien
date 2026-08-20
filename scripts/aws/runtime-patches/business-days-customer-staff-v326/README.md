@@ -6,3 +6,5 @@
 - 配信対象モーダルに前回担当者フィルターを追加します。
 
 Production base: `salon-de-lien:shift-drag-fluid-v325`
+
+The production tag is `business-days-customer-staff-v328`; v328 adds a cache-busted recipient-filter script URL and a hydration-safe reinsertion guard after browser verification found the old public asset cached.

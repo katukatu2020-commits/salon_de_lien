@@ -2,8 +2,8 @@ param(
   [string]$Region = 'ap-northeast-1',
   [string]$Cluster = 'salon-de-lien-staging-cluster',
   [string]$Service = 'salon-de-lien-staging-web',
-  [string]$SourceTaskDefinition = 'salon-de-lien-staging-web:325',
-  [string]$Image = '009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app:business-days-customer-staff-v326'
+  [string]$SourceTaskDefinition = 'salon-de-lien-staging-web:328',
+  [string]$Image = '009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app:business-days-customer-staff-v328'
 )
 
 $ErrorActionPreference = 'Stop'

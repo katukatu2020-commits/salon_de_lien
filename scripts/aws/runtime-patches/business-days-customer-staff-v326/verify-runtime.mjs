@@ -37,6 +37,7 @@ if (!patchedHelpers.length) throw new Error('customer attendant helper output wa
 assertIncludes('/app/.next/server/app/admin/customers/messages/page.js', [
   '"data-recipient-staff"',
   'scheduledAt: { lte: new Date() }',
+  'src: "/broadcast-recipient-modal.js?v=328"',
 ])
 
 assertIncludes('/app/public/broadcast-recipient-modal.js', [

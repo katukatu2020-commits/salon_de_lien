@@ -225,6 +225,12 @@ messagesPage = replaceOnce(
                                               className:`,
   'broadcast recipient staff attribute',
 )
+messagesPage = replaceOnce(
+  messagesPage,
+  'src: "/broadcast-recipient-modal.js"',
+  'src: "/broadcast-recipient-modal.js?v=328"',
+  'broadcast recipient modal cache bust',
+)
 write(messagesPageFile, messagesPage)
 
 const modalFile = '/app/public/broadcast-recipient-modal.js'
@@ -271,6 +277,10 @@ modal = replaceOnce(
   `    modal.hidden = false;
     ensureStaffFilter();
     applyFilters();
+    setTimeout(function () {
+      ensureStaffFilter();
+      applyFilters();
+    }, 150);
     document.body.style.overflow = "hidden";`,
   'initialize broadcast staff filter',
 )
@@ -292,6 +302,12 @@ modal = replaceOnce(
     if (event.target.id === "broadcast-recipient-staff") applyFilters();
   });`,
   'broadcast combined filters',
+)
+modal = replaceOnce(
+  modal,
+  '  setTimeout(updateCount, 100);',
+  '  setTimeout(function () { ensureStaffFilter(); updateCount(); }, 600);',
+  'broadcast filter hydration guard',
 )
 write(modalFile, modal)
 
