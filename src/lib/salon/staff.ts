@@ -73,12 +73,33 @@ export function normalizeSalonStaffName(value?: string | null) {
 
 export function customerAttendantSummary(customer: {
   visits: ReadonlyArray<{ stylistName?: string | null }>;
+  appointments?: ReadonlyArray<{
+    staffName?: string | null;
+    scheduledAt?: Date | string | null;
+    status?: string | null;
+  }>;
   staffAssignmentType?: string | null;
   assignedStaffName?: string | null;
 }) {
   const latestVisit = customer.visits[0];
   if (latestVisit) {
-    return `前回の対応者: ${normalizeSalonStaffName(latestVisit.stylistName) ?? "フリー"}`;
+    return `前回担当: ${normalizeSalonStaffName(latestVisit.stylistName) ?? "フリー"}`;
+  }
+
+  const latestAppointment = [...(customer.appointments ?? [])]
+    .filter((appointment) => {
+      const status = appointment.status?.toLowerCase() ?? "";
+      const scheduledAt = appointment.scheduledAt ? new Date(appointment.scheduledAt).getTime() : 0;
+      return appointment.staffName && scheduledAt <= Date.now() && !status.includes("cancel") && !status.includes("キャンセル");
+    })
+    .sort((left, right) => {
+      const leftTime = left.scheduledAt ? new Date(left.scheduledAt).getTime() : 0;
+      const rightTime = right.scheduledAt ? new Date(right.scheduledAt).getTime() : 0;
+      return rightTime - leftTime;
+    })[0];
+
+  if (latestAppointment) {
+    return `前回担当: ${normalizeSalonStaffName(latestAppointment.staffName) ?? "フリー"}`;
   }
 
   const assignedStaff =
@@ -86,5 +107,5 @@ export function customerAttendantSummary(customer: {
       ? normalizeSalonStaffName(customer.assignedStaffName)
       : null;
 
-  return `来店履歴なし / 指名: ${assignedStaff ?? "フリー"}`;
+  return `前回担当: ${assignedStaff ?? "フリー"}`;
 }

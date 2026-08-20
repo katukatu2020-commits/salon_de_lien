@@ -1188,7 +1188,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
         take: 8
       },
       appointments: {
-        orderBy: { scheduledAt: "asc" },
+        orderBy: { scheduledAt: "desc" },
         take: 20
       },
       serviceSales: {
