@@ -334,6 +334,7 @@ function createCustomerLinkService({ prisma, staffSessionProvider, customerSessi
 
   async function storesPage(req, res, url) {
     const session = await currentCustomer(req)
+    await prisma.$executeRawUnsafe('INSERT INTO "CustomerStoreLink" ("id","appUserId","organizationId","customerId","createdAt") VALUES ($1,$2,$3,$4,NOW()) ON CONFLICT DO NOTHING', `customer-store-link-${session.customerId}`, session.userId, session.organizationId, session.customerId)
     const rows = await prisma.$queryRawUnsafe(`SELECT l."organizationId",o."name",o."publicCode",CASE WHEN l."organizationId"=$2 THEN TRUE ELSE FALSE END AS "current"
       FROM "CustomerStoreLink" l JOIN "Organization" o ON o."id"=l."organizationId" WHERE l."appUserId"=$1 ORDER BY "current" DESC,l."createdAt"`, session.userId, session.organizationId)
     const cards = rows.map(store => `<article class="registered-store-card ${store.current ? 'current' : ''}"><span class="registered-store-mark"><img src="/api/lien-store-icon?organizationId=${encodeURIComponent(store.organizationId)}" alt="${escapeHtml(store.name)}の店舗アイコン"></span><div><strong>${escapeHtml(store.name)}</strong><p>${store.current ? '現在利用中の店舗' : '登録済み'}</p></div>${store.current ? '<span class="registered-store-current">利用中</span>' : `<button type="button" data-switch-store="${escapeHtml(store.organizationId)}">切り替える</button>`}</article>`).join('')

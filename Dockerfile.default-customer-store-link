@@ -1,0 +1,6 @@
+FROM 009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app@sha256:12487ea2d076345a8df070033b222e3be38f6869ace0b9b8efc8caff6bffe801
+
+COPY patch-default-customer-store-link.cjs /tmp/patch-default-customer-store-link.cjs
+RUN node /tmp/patch-default-customer-store-link.cjs
+
+LABEL salon-de-lien.release="default-customer-store-link-v1"

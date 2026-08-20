@@ -784,6 +784,20 @@ export async function createPublicConsultationLead(formData: FormData) {
       }
     });
 
+    const registeredAppUser = await tx.appUser.findFirst({
+      where: { customerId: createdCustomer.id, role: "CUSTOMER" },
+      select: { id: true }
+    });
+    if (registeredAppUser) {
+      await tx.$executeRawUnsafe(
+        'INSERT INTO "CustomerStoreLink" ("id","appUserId","organizationId","customerId","createdAt") VALUES ($1,$2,$3,$4,NOW()) ON CONFLICT DO NOTHING',
+        `customer-store-link-${createdCustomer.id}`,
+        registeredAppUser.id,
+        organizationId,
+        createdCustomer.id
+      );
+    }
+
     if (preferredDate) {
       await tx.appointment.create({
         data: {
