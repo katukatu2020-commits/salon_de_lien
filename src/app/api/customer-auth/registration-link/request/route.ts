@@ -16,10 +16,20 @@ export const runtime = "nodejs";
 
 const REQUEST_WINDOW_MINUTES = 15;
 const MAX_REQUESTS_PER_EMAIL = 3;
+const RESEND_COOLDOWN_SECONDS = 60;
 
-function registrationResponse(request: NextRequest, status: "sent" | "registered" | "limited" | "error") {
+function registrationResponse(
+  request: NextRequest,
+  status: "sent" | "registered" | "limited" | "cooldown" | "error",
+  context?: ReturnType<typeof sanitizeCustomerRegistrationContext>,
+  retryAfterSeconds?: number
+) {
   const url = getExternalRequestUrl(request, "/u/register");
   url.searchParams.set(status, "1");
+  for (const [key, value] of Object.entries(context ?? {})) {
+    if (value) url.searchParams.set(key, value);
+  }
+  if (retryAfterSeconds) url.searchParams.set("retryAfter", String(retryAfterSeconds));
   const response = NextResponse.redirect(url, 303);
   response.headers.set("Cache-Control", "no-store");
   return response;
@@ -32,7 +42,14 @@ export async function POST(request: NextRequest) {
 
   const formData = await request.formData();
   const email = normalizeRegistrationEmail(String(formData.get("email") || ""));
-  const response = (status: "sent" | "registered" | "limited" | "error") => registrationResponse(request, status);
+  const context = sanitizeCustomerRegistrationContext({
+    source: String(formData.get("source") || ""),
+    campaign: String(formData.get("campaign") || ""),
+    referrer: String(formData.get("referrer") || ""),
+    referrerName: String(formData.get("referrerName") || "")
+  });
+  const response = (status: "sent" | "registered" | "limited" | "cooldown" | "error", retryAfterSeconds?: number) =>
+    registrationResponse(request, status, context, retryAfterSeconds);
   if (!isDeliverableRecoveryEmail(email)) return response("error");
 
   const organizationId = process.env.DEFAULT_ORGANIZATION_ID ?? "org_salon_de_lien";
@@ -42,18 +59,25 @@ export async function POST(request: NextRequest) {
   });
   if (existingAccount) return response("registered");
 
+  const latestRequest = await prisma.customerRegistrationInvite.findFirst({
+    where: { organizationId, email },
+    orderBy: { createdAt: "desc" },
+    select: { createdAt: true }
+  });
+  if (latestRequest) {
+    const elapsedMilliseconds = Date.now() - latestRequest.createdAt.getTime();
+    const cooldownMilliseconds = RESEND_COOLDOWN_SECONDS * 1000;
+    if (elapsedMilliseconds < cooldownMilliseconds) {
+      return response("cooldown", Math.ceil((cooldownMilliseconds - elapsedMilliseconds) / 1000));
+    }
+  }
+
   const requestedSince = new Date(Date.now() - REQUEST_WINDOW_MINUTES * 60_000);
   const recentRequests = await prisma.customerRegistrationInvite.count({
     where: { organizationId, email, createdAt: { gte: requestedSince } }
   });
   if (recentRequests >= MAX_REQUESTS_PER_EMAIL) return response("limited");
 
-  const context = sanitizeCustomerRegistrationContext({
-    source: String(formData.get("source") || ""),
-    campaign: String(formData.get("campaign") || ""),
-    referrer: String(formData.get("referrer") || ""),
-    referrerName: String(formData.get("referrerName") || "")
-  });
   const token = generateCustomerRegistrationToken();
   const invite = await prisma.$transaction(async (tx) => {
     await tx.customerRegistrationInvite.updateMany({
@@ -87,5 +111,5 @@ export async function POST(request: NextRequest) {
     return response("error");
   }
 
-  return response("sent");
+  return response("sent", RESEND_COOLDOWN_SECONDS);
 }

@@ -24,6 +24,8 @@ export type CustomerRegistrationSearchParams = {
   sent?: string;
   registered?: string;
   limited?: string;
+  cooldown?: string;
+  retryAfter?: string;
 };
 
 function SelectBox({ label, name, options, defaultValue = "" }: { label: string; name: string; options: readonly string[]; defaultValue?: string }) {

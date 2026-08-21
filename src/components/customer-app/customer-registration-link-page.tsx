@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft, Mail, MailCheck, ShieldCheck } from "lucide-react";
 import { BrandVisual } from "@/components/lien/brand-visual";
+import { CustomerRegistrationEmailForm } from "@/components/customer-app/customer-registration-email-form";
 import type { CustomerRegistrationSearchParams } from "@/components/customer-app/customer-registration-page";
 
 export function CustomerRegistrationLinkPage({ searchParams }: { searchParams?: CustomerRegistrationSearchParams }) {
@@ -8,6 +9,8 @@ export function CustomerRegistrationLinkPage({ searchParams }: { searchParams?: 
   const registered = searchParams?.registered === "1";
   const limited = searchParams?.limited === "1";
   const failed = searchParams?.error === "1";
+  const cooldown = searchParams?.cooldown === "1";
+  const retryAfterSeconds = Math.min(60, Math.max(0, Number(searchParams?.retryAfter) || 0));
 
   return (
     <main className="min-h-screen bg-lien px-4 py-6 text-lien-ink sm:px-6 sm:py-10">
@@ -53,21 +56,22 @@ export function CustomerRegistrationLinkPage({ searchParams }: { searchParams?: 
               登録用メールを送信できませんでした。しばらくしてから、もう一度お試しください。
             </div>
           ) : null}
+          {cooldown ? (
+            <div role="status" className="mt-5 rounded-2xl border border-[#ead4ae] bg-[#fff9ed] px-4 py-4 text-sm leading-6 text-[#805f28]">
+              直前にメールを送信しています。画面のカウントダウン後に再送できます。
+            </div>
+          ) : null}
 
-          <form action="/api/customer-auth/registration-link/request" method="post" className="mt-6 grid gap-4">
-            <input type="hidden" name="source" value={searchParams?.source ?? ""} />
-            <input type="hidden" name="campaign" value={searchParams?.campaign ?? ""} />
-            <input type="hidden" name="referrer" value={searchParams?.referrer ?? ""} />
-            <input type="hidden" name="referrerName" value={searchParams?.referrerName ?? ""} />
-            <label className="grid gap-2 text-sm font-semibold">
-              メールアドレス
-              <span className="relative">
-                <Mail className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-lien-muted" />
-                <input name="email" type="email" autoComplete="email" required placeholder="example@email.com" className="lien-input h-12 pl-11" />
-              </span>
-            </label>
-            <button type="submit" className="lien-button-primary min-h-12 w-full">登録用メールを送る</button>
-          </form>
+          <CustomerRegistrationEmailForm
+            resendMode={sent || cooldown}
+            retryAfterSeconds={retryAfterSeconds}
+            context={{
+              source: searchParams?.source,
+              campaign: searchParams?.campaign,
+              referrer: searchParams?.referrer,
+              referrerName: searchParams?.referrerName
+            }}
+          />
 
           <div className="mt-5 flex gap-2 rounded-2xl bg-lien-soft px-4 py-3 text-xs leading-5 text-lien-muted">
             <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-lien-sage" />
