@@ -41,17 +41,23 @@ export async function POST(request: NextRequest) {
         smsTransactionalOptOutAt: now
       }
     });
-    await tx.appUser.update({ where: { id: requestRow.appUserId }, data: { active: false } });
+    // A customer can have legacy/linked login rows from an earlier registration
+    // flow.  Deactivate every login tied to the withdrawn customer so none of
+    // those rows can keep the customer visible or usable in a store context.
+    await tx.appUser.updateMany({
+      where: { customerId: requestRow.customerId },
+      data: { active: false }
+    });
     await tx.customerPortalAccess.updateMany({
       where: { customerId: requestRow.customerId, revokedAt: null },
       data: { revokedAt: now }
     });
     await tx.passwordResetToken.updateMany({
-      where: { appUserId: requestRow.appUserId, usedAt: null },
+      where: { appUser: { customerId: requestRow.customerId }, usedAt: null },
       data: { usedAt: now }
     });
     await tx.customerWithdrawalRequest.updateMany({
-      where: { appUserId: requestRow.appUserId, usedAt: null },
+      where: { customerId: requestRow.customerId, usedAt: null },
       data: { usedAt: now }
     });
   });
