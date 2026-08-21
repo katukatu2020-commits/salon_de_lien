@@ -141,7 +141,11 @@ function createCustomerWithdrawalService({ prisma, crypto, sessionProvider }) {
   }
 
   async function confirmWithdrawal(req, res) {
-    if (!validOrigin(req)) return render(res, '不正なリクエスト', '<h1 class="title">操作を確認できません</h1>', 403)
+    // This endpoint is authenticated by the 256-bit, single-use token sent to
+    // the customer's registered email address. Mail-app privacy browsers can
+    // legitimately submit an absent, null, or mail-app Origin, so Origin must
+    // not be used as an additional gate here. The session-protected request
+    // endpoint above continues to enforce the same-origin check.
     const form = await readForm(req)
     const token = String(form.get('token') || '')
     if (!TOKEN_PATTERN.test(token)) return redirect(res, `${externalOrigin(req)}/u/withdrawal/invalid`)

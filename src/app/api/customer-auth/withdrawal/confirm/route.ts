@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { CUSTOMER_SESSION_COOKIE } from "@/lib/auth/customer-session";
 import { hashCustomerWithdrawalToken, isCustomerWithdrawalToken } from "@/lib/auth/customer-withdrawal";
-import { getExternalRequestUrl, hasValidRequestOrigin, isExternalHttpsRequest } from "@/lib/auth/request-security";
+import { getExternalRequestUrl, isExternalHttpsRequest } from "@/lib/auth/request-security";
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
-  if (!hasValidRequestOrigin(request)) return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
+  // The opaque 256-bit token delivered to the registered email address is the
+  // authorization for this one-time action. Some mail-app privacy browsers
+  // submit a null or mail-app Origin, so rejecting on Origin here prevents a
+  // legitimate customer from completing withdrawal. The request endpoint is
+  // still session-protected and retains its same-origin validation.
   const formData = await request.formData();
   const token = String(formData.get("token") || "");
   if (!isCustomerWithdrawalToken(token)) {
