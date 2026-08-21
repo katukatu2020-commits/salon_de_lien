@@ -1,0 +1,11 @@
+ALTER TABLE "VisitCommunityPost"
+  ALTER COLUMN "customerId" DROP NOT NULL,
+  ALTER COLUMN "visitId" DROP NOT NULL,
+  ADD COLUMN IF NOT EXISTS "postKind" TEXT NOT NULL DEFAULT 'VISIT',
+  ADD COLUMN IF NOT EXISTS "caption" TEXT,
+  ADD COLUMN IF NOT EXISTS "photoReferences" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+  ADD COLUMN IF NOT EXISTS "publishedByName" TEXT;
+
+UPDATE "VisitCommunityPost"
+SET "postKind" = 'VISIT'
+WHERE "postKind" IS NULL OR "postKind" = '';

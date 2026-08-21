@@ -45,21 +45,21 @@ model Organization {
 }
 
 model AppUser {
-  id                  String                  @id @default(cuid())
+  id                  String                      @id @default(cuid())
   organizationId      String?
-  customerId          String?                 @unique
+  customerId          String?                     @unique
   email               String
   passwordHash        String?
   role                AppRole
   manufacturerName    String?
-  active              Boolean                 @default(true)
-  createdAt           DateTime                @default(now())
-  updatedAt           DateTime                @updatedAt
+  active              Boolean                     @default(true)
+  createdAt           DateTime                    @default(now())
+  updatedAt           DateTime                    @updatedAt
   loginId             String?
   displayName         String?
-  customerPublicCode  String?                 @unique
-  customer            Customer?               @relation(fields: [customerId], references: [id])
-  organization        Organization?           @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  customerPublicCode  String?                     @unique
+  customer            Customer?                   @relation(fields: [customerId], references: [id])
+  organization        Organization?               @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   customerBroadcasts  CustomerBroadcast[]
   customerStoreLinks  CustomerStoreLink[]
   passwordResetTokens PasswordResetToken[]
@@ -309,25 +309,25 @@ model Visit {
 }
 
 model VisitCommunityPost {
-  id             String                  @id @default(cuid())
-  organizationId String
-  customerId     String?
-  visitId        String?                 @unique
-  postKind       String                  @default("VISIT")
-  caption        String?
-  photoReferences String[]               @default([])
+  id              String                  @id @default(cuid())
+  organizationId  String
+  customerId      String?
+  visitId         String?                 @unique
+  postKind        String                  @default("VISIT")
+  caption         String?
+  photoReferences String[]                @default([])
   publishedByName String?
-  published      Boolean                 @default(true)
-  publishedAt    DateTime                @default(now())
-  createdAt      DateTime                @default(now())
-  updatedAt      DateTime                @updatedAt
-  aiCommentDueAt DateTime?
-  aiCommentedAt  DateTime?
-  comments       VisitCommunityComment[]
-  likes          VisitCommunityLike[]
-  customer       Customer?               @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  organization   Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  visit          Visit?                  @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  published       Boolean                 @default(true)
+  publishedAt     DateTime                @default(now())
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+  aiCommentDueAt  DateTime?
+  aiCommentedAt   DateTime?
+  comments        VisitCommunityComment[]
+  likes           VisitCommunityLike[]
+  customer        Customer?               @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  organization    Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  visit           Visit?                  @relation(fields: [visitId], references: [id], onDelete: Cascade)
 
   @@index([organizationId, published, publishedAt])
   @@index([customerId, publishedAt])

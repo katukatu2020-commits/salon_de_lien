@@ -137,26 +137,31 @@ function ageCustomerFilter(age: CommunityAgeBand): Prisma.CustomerWhereInput | n
 }
 
 function communityWhere(organizationId: string, filters: CommunityListFilters): Prisma.VisitCommunityPostWhereInput {
-  const conditions: Prisma.VisitCommunityPostWhereInput[] = [
-    {
-      organizationId,
-      published: true,
-      customer: { deletedAt: null },
-      visit: { photos: { some: {} } }
-    }
-  ];
-  if (filters.stylist) conditions.push({ visit: { stylistName: filters.stylist } });
+  const hasVisitFilter = Boolean(filters.stylist || filters.course || filters.gender || filters.age !== "all");
+  const visitPost: Prisma.VisitCommunityPostWhereInput = {
+    postKind: "VISIT",
+    customer: { is: { deletedAt: null } },
+    visit: { is: { photos: { some: {} } } }
+  };
+  const conditions: Prisma.VisitCommunityPostWhereInput[] = [{
+    organizationId,
+    published: true,
+    OR: hasVisitFilter
+      ? [visitPost]
+      : [visitPost, { postKind: "STORE", photoReferences: { isEmpty: false } }]
+  }];
+  if (filters.stylist) conditions.push({ visit: { is: { stylistName: filters.stylist } } });
   if (filters.course) {
     conditions.push({
       OR: [
-        { visit: { performedStyle: filters.course } },
-        { visit: { requestedStyle: filters.course } }
+        { visit: { is: { performedStyle: filters.course } } },
+        { visit: { is: { requestedStyle: filters.course } } }
       ]
     });
   }
-  if (filters.gender) conditions.push({ customer: { gender: filters.gender } });
+  if (filters.gender) conditions.push({ customer: { is: { gender: filters.gender } } });
   const ageFilter = ageCustomerFilter(filters.age);
-  if (ageFilter) conditions.push({ customer: ageFilter });
+  if (ageFilter) conditions.push({ customer: { is: ageFilter } });
   return { AND: conditions };
 }
 
@@ -171,8 +176,9 @@ async function loadCommunityFilterOptions(organizationId: string) {
     where: {
       organizationId,
       published: true,
-      customer: { deletedAt: null },
-      visit: { photos: { some: {} } }
+      postKind: "VISIT",
+      customer: { is: { deletedAt: null } },
+      visit: { is: { photos: { some: {} } } }
     },
     select: {
       customer: { select: { gender: true } },
@@ -184,11 +190,11 @@ async function loadCommunityFilterOptions(organizationId: string) {
   const courses = new Set<string>();
   const genders = new Set<string>();
   for (const row of rows) {
-    const stylist = row.visit.stylistName?.trim();
+    const stylist = row.visit?.stylistName?.trim();
     if (stylist) stylistMap.set(stylist, normalizeSalonStaffName(stylist) ?? stylist);
-    const course = (row.visit.performedStyle ?? row.visit.requestedStyle)?.trim();
+    const course = (row.visit?.performedStyle ?? row.visit?.requestedStyle)?.trim();
     if (course) courses.add(course);
-    const gender = row.customer.gender?.trim();
+    const gender = row.customer?.gender?.trim();
     if (gender) genders.add(gender);
   }
 
@@ -220,6 +226,8 @@ export async function loadVisitCommunityPostList({
     take: COMMUNITY_PAGE_SIZE,
     select: {
       id: true,
+      postKind: true,
+      photoReferences: true,
       visit: {
         select: {
           photos: {
@@ -234,7 +242,9 @@ export async function loadVisitCommunityPostList({
 
   const posts = (await Promise.all(rows.map(async (post) => ({
     id: post.id,
-    coverPhotoUrl: await resolveCustomerPhotoReference(post.visit.photos[0]?.storageReference)
+    coverPhotoUrl: await resolveCustomerPhotoReference(
+      post.postKind === "STORE" ? post.photoReferences[0] : post.visit?.photos[0]?.storageReference
+    )
   })))).filter((post): post is CommunityListPostView => Boolean(post.coverPhotoUrl));
 
   return {
@@ -261,12 +271,18 @@ export async function loadVisitCommunityPostDetail({
       id: postId,
       organizationId,
       published: true,
-      customer: { deletedAt: null },
-      visit: { photos: { some: {} } }
+      OR: [
+        { postKind: "STORE", photoReferences: { isEmpty: false } },
+        { postKind: "VISIT", customer: { is: { deletedAt: null } }, visit: { is: { photos: { some: {} } } } }
+      ]
     },
     select: {
       id: true,
       publishedAt: true,
+      postKind: true,
+      caption: true,
+      photoReferences: true,
+      publishedByName: true,
       customer: { select: { name: true } },
       visit: {
         select: {
@@ -299,18 +315,24 @@ export async function loadVisitCommunityPostDetail({
   });
   if (!post) return null;
 
-  const photos = await Promise.all(post.visit.photos.map(async (photo) => ({
-    id: photo.id,
-    url: await resolveCustomerPhotoReference(photo.storageReference),
-    caption: photo.caption
-  })));
+  const photos = post.postKind === "STORE"
+    ? await Promise.all(post.photoReferences.map(async (reference, index) => ({
+        id: `${post.id}-${index}`,
+        url: await resolveCustomerPhotoReference(reference),
+        caption: post.caption
+      })))
+    : await Promise.all((post.visit?.photos ?? []).map(async (photo) => ({
+        id: photo.id,
+        url: await resolveCustomerPhotoReference(photo.storageReference),
+        caption: photo.caption
+      })));
 
   return {
     id: post.id,
-    customerName: communityDisplayName(post.customer.name),
-    visitDate: post.visit.visitedAt.toISOString(),
-    menu: post.visit.performedStyle ?? post.visit.requestedStyle ?? "施術記録",
-    stylistName: normalizeSalonStaffName(post.visit.stylistName) ?? "フリー",
+    customerName: post.postKind === "STORE" ? "Salon de Lien" : communityDisplayName(post.customer?.name ?? ""),
+    visitDate: (post.visit?.visitedAt ?? post.publishedAt).toISOString(),
+    menu: post.postKind === "STORE" ? "店舗スタイル" : post.visit?.performedStyle ?? post.visit?.requestedStyle ?? "施術記録",
+    stylistName: post.postKind === "STORE" ? post.publishedByName?.trim() || "店舗スタッフ" : normalizeSalonStaffName(post.visit?.stylistName) ?? "フリー",
     photos: photos.filter((photo): photo is { id: string; url: string; caption: string | null } => Boolean(photo.url)),
     likeCount: post.likes.length,
     likedByCurrentUser: Boolean(currentUserId && post.likes.some((like) => like.appUserId === currentUserId)),
