@@ -1,0 +1,9 @@
+FROM salon-de-lien:customer-withdrawal-confirm-v339
+
+COPY scripts/aws/runtime-patches/customer-store-selection-v340/patch-runtime.mjs /tmp/customer-store-selection-v340.mjs
+RUN node /tmp/customer-store-selection-v340.mjs
+
+COPY scripts/aws/runtime-patches/customer-store-selection-v340/verify-runtime.cjs /tmp/customer-store-selection-v340-verify.cjs
+RUN node /tmp/customer-store-selection-v340-verify.cjs
+
+LABEL salon-de-lien.release="customer-store-selection-v340"
