@@ -13,12 +13,17 @@ function Assert-ExternalSuccess([string]$step) {
   if ($LASTEXITCODE -ne 0) { throw "$step failed with exit code $LASTEXITCODE" }
 }
 
-cmd /c "aws ecr get-login-password --region $region | docker login --username AWS --password-stdin $accountId.dkr.ecr.$region.amazonaws.com"
-Assert-ExternalSuccess 'ECR login'
-docker build --pull=false -f scripts/aws/runtime-patches/free-pool-capacity-v372/Dockerfile -t $image .
-Assert-ExternalSuccess 'Docker build'
-docker push $image
-Assert-ExternalSuccess 'Docker push'
+$existingImage = aws ecr describe-images --region $region --repository-name $repository --image-ids "imageTag=$tag" 2>$null | ConvertFrom-Json
+if (-not $existingImage.imageDetails) {
+  cmd /c "aws ecr get-login-password --region $region | docker login --username AWS --password-stdin $accountId.dkr.ecr.$region.amazonaws.com"
+  Assert-ExternalSuccess 'ECR login'
+  docker build --pull=false -f scripts/aws/runtime-patches/free-pool-capacity-v372/Dockerfile -t $image .
+  Assert-ExternalSuccess 'Docker build'
+  docker push $image
+  Assert-ExternalSuccess 'Docker push'
+} else {
+  Write-Output "Using existing immutable image $image"
+}
 
 $current = aws ecs describe-task-definition --region $region --task-definition $family | ConvertFrom-Json
 Assert-ExternalSuccess 'Current task definition lookup'
