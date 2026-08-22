@@ -75,10 +75,10 @@ export function CommunityFeed({ initialPosts, actor }: { initialPosts: Community
   }
 
   return (
-    <div className="grid gap-5 xl:grid-cols-2">
+    <div className="community-feed-grid grid gap-5 xl:grid-cols-2">
       {error ? <p className="rounded-xl border border-[#efc6c1] bg-[#fff4f2] px-4 py-3 text-sm text-[#9d342d] xl:col-span-2" role="alert">{error}</p> : null}
       {posts.map((post) => (
-        <article key={post.id} className="overflow-hidden rounded-[20px] border border-[#e8ded2] bg-white shadow-[0_12px_35px_rgba(47,42,37,0.07)]">
+        <article key={post.id} className="community-feed-card overflow-hidden rounded-[20px] border border-[#e8ded2] bg-white shadow-[0_12px_35px_rgba(47,42,37,0.07)]">
           <header className="flex items-center justify-between gap-3 px-4 py-4 sm:px-5">
             <div className="flex min-w-0 items-center gap-3">
               <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#f1dfd7] text-sm font-bold text-[#7d453a]">
@@ -92,17 +92,17 @@ export function CommunityFeed({ initialPosts, actor }: { initialPosts: Community
             <span className="rounded-full bg-[#eef5ee] px-3 py-1 text-[11px] font-semibold text-[#567157]">公開中</span>
           </header>
 
-          <div className={`grid gap-1 bg-[#eee7df] ${post.photos.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
+          <div className={`community-feed-media grid gap-1 bg-[#eee7df] ${post.photos.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
             {post.photos.slice(0, 4).map((photo) => (
-              <a key={photo.id} href={photo.url} target="_blank" rel="noreferrer" className="group relative aspect-[4/3] min-w-0 overflow-hidden focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-[#e9c9be]" aria-label="施術後写真を拡大表示">
+              <a key={photo.id} href={photo.url} target="_blank" rel="noreferrer" className="community-feed-photo group relative aspect-[4/3] min-w-0 overflow-hidden focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-[#e9c9be]" aria-label="施術後写真を拡大表示">
                 <span className="absolute inset-0 bg-cover bg-center transition duration-200 group-hover:scale-[1.02] motion-reduce:transition-none" style={{ backgroundImage: `url(${photo.url})` }} />
                 {photo.caption ? <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-3 pb-3 pt-10 text-xs text-white">{photo.caption}</span> : null}
               </a>
             ))}
           </div>
 
-          <div className="p-4 sm:p-5">
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 rounded-2xl bg-[#fbf7f0] px-3 py-2.5 text-sm sm:grid sm:grid-cols-2 sm:gap-2 sm:p-3">
+          <div className="community-feed-content p-4 sm:p-5">
+            <div className="community-feed-meta flex flex-wrap items-center gap-x-4 gap-y-1.5 rounded-2xl bg-[#fbf7f0] px-3 py-2.5 text-sm sm:grid sm:grid-cols-2 sm:gap-2 sm:p-3">
               <p className="flex items-center gap-2"><Scissors className="h-4 w-4 text-[#8f4f42]" /><span className="font-semibold">{post.menu}</span></p>
               <p className="flex items-center gap-2 text-[#6f6259]"><UserRound className="h-4 w-4" />担当 {post.stylistName}</p>
             </div>
