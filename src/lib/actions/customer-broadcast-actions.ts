@@ -52,7 +52,7 @@ async function uniqueCouponCode(tx: BroadcastTx, issuedAt: Date) {
 }
 
 export async function createCustomerBroadcastAction(formData: FormData) {
-  const session = await requireBackofficeSession(["ADMIN"]);
+  const session = await requireBackofficeSession(["ADMIN", "STAFF"]);
   if (!session.organizationId) throw new Error("店舗所属が設定されていません。");
 
   const title = textValue(formData, "title", 60);

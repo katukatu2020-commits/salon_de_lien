@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Boxes, CheckCircle2, Gift, Percent, ReceiptJapaneseYen, Save, TicketPercent, Trophy, WalletCards } from "lucide-react";
 import { LienCard, PageHeader, StatusBadge } from "@/components/lien/lien-ui";
 import { updateStoreOperationalSettingsAction } from "@/lib/actions/store-settings-actions";
@@ -23,7 +24,10 @@ function NumberField({ name, label, value, min, max, unit }: { name: string; lab
 }
 
 export default async function StoreSettingsPage({ searchParams }: StoreSettingsPageProps) {
-  const session = await requireBackofficeSession(["ADMIN"]);
+  const session = await requireBackofficeSession(["ADMIN", "STAFF"]);
+  // Store operational settings remain owner-only. Shared store accounts are
+  // redirected to their account page instead of rendering an unhandled 403.
+  if (session.role !== "ADMIN") redirect("/admin/account?notice=owner-required");
   if (!session.organizationId) return null;
 
   const [organization, pointRules] = await Promise.all([

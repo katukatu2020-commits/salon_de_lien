@@ -268,7 +268,7 @@ export async function DELETE(request: NextRequest) {
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 
     await prisma.$executeRawUnsafe(
-      'INSERT INTO "StaffSystemNotification" ("id","organizationId","type","title","body","href","entityType","entityId","source","createdAt","updatedAt") VALUES ($1,$2,\'customer_cancellation\',$3,$4,$5,\'appointment\',$6,\'customer_app\',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP) ON CONFLICT ("organizationId","type","entityId") DO NOTHING',
+      'INSERT INTO "StaffSystemNotification" ("id","organizationId","type","title","body","href","entityType","entityId","source","createdAt") VALUES ($1,$2,\'customer_cancellation\',$3,$4,$5,\'appointment\',$6,\'customer_app\',CURRENT_TIMESTAMP) ON CONFLICT ("organizationId","type","entityId") DO NOTHING',
       crypto.randomUUID(),
       session.organizationId,
       "お客様が予約をキャンセルしました",

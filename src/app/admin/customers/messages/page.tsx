@@ -24,7 +24,10 @@ function audienceLabel(broadcast: { audienceGender: string | null; audienceMinAg
 }
 
 export default async function CustomerMessagesPage({ searchParams }: PageProps) {
-  const session = await requireBackofficeSession(["ADMIN"]);
+  // Chat, point lookup and customer delivery are day-to-day salon operations.
+  // The shared store account has the STAFF role, so this workspace must not be
+  // restricted to the owner account only.
+  const session = await requireBackofficeSession(["ADMIN", "STAFF"]);
   if (!session.organizationId) return null;
 
   const [organization, customers, broadcasts] = await Promise.all([
