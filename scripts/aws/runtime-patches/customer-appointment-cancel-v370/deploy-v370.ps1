@@ -8,7 +8,7 @@ $ImageTag = 'customer-appointment-cancel-v370'
 $Cluster = 'salon-de-lien-staging-cluster'
 $Service = 'salon-de-lien-staging-web'
 
-$ExistingImage = aws ecr describe-images --region $Region --repository-name $RepositoryName --query "imageDetails[?contains(imageTags, '$ImageTag')].imageDigest | [0]" --output text
+$ExistingImage = aws ecr list-images --region $Region --repository-name $RepositoryName --filter tagStatus=TAGGED --query "imageIds[?imageTag=='$ImageTag'].imageDigest | [0]" --output text
 if ([string]::IsNullOrWhiteSpace($ExistingImage) -or $ExistingImage -eq 'None') {
   docker build --provenance=false --file scripts/aws/runtime-patches/customer-appointment-cancel-v370/Dockerfile --tag "${Repository}:${ImageTag}" .
   if ($LASTEXITCODE -ne 0) { throw 'docker build failed' }
