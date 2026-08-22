@@ -62,3 +62,37 @@ home = replaceOnce(
   '"section",{"data-customer-next-appointment-id":j.id,className:"rounded-[20px] border border-[#b8d5bf] bg-[#edf7ef] p-5",children:',
 )
 fs.writeFileSync(homePath, home)
+
+// Publish the customer layout under a new immutable chunk name as well as
+// changing the workflow query. This prevents an existing browser cache from
+// keeping the pre-v362 workflow after deployment.
+const customerLayoutDirectory = '/app/.next/static/chunks/app/u/(account)'
+const previousCustomerLayoutName = 'layout-customer-stability-v298.js'
+const currentCustomerLayoutName = 'layout-customer-stability-v362.js'
+const previousCustomerLayoutPath = path.join(customerLayoutDirectory, previousCustomerLayoutName)
+const currentCustomerLayoutPath = path.join(customerLayoutDirectory, currentCustomerLayoutName)
+let customerLayout = fs.readFileSync(previousCustomerLayoutPath, 'utf8')
+customerLayout = replaceOnce(
+  customerLayout,
+  'customer workflow cache key',
+  'ui-workflows-v294.js?v=296-1',
+  'ui-workflows-v294.js?v=362',
+)
+fs.writeFileSync(currentCustomerLayoutPath, customerLayout)
+
+function replaceManifestChunkReference(directory) {
+  for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+    const target = path.join(directory, entry.name)
+    if (entry.isDirectory()) {
+      replaceManifestChunkReference(target)
+      continue
+    }
+    if (!entry.isFile() || !/\.(?:json|js)$/.test(entry.name)) continue
+    let source = fs.readFileSync(target, 'utf8')
+    if (!source.includes(previousCustomerLayoutName)) continue
+    source = source.split(previousCustomerLayoutName).join(currentCustomerLayoutName)
+    fs.writeFileSync(target, source)
+  }
+}
+
+replaceManifestChunkReference('/app/.next')
