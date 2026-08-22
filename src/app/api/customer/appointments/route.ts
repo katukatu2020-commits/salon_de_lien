@@ -159,3 +159,95 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: retryable ? "同時に予約が入りました。空き状況を更新してください。" : error instanceof Error ? error.message : "予約を登録できませんでした。" }, { status: retryable ? 409 : 400 });
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  if (!hasValidRequestOrigin(request)) return NextResponse.json({ error: "不正なリクエストです。" }, { status: 403 });
+  const session = await getCurrentCustomerSession();
+  if (!session) return NextResponse.json({ error: "ログインが必要です。" }, { status: 401 });
+
+  const body = (await request.json().catch(() => null)) as { appointmentId?: unknown } | null;
+  const appointmentId = typeof body?.appointmentId === "string" ? body.appointmentId.trim() : "";
+  if (!appointmentId || appointmentId.length > 100) {
+    return NextResponse.json({ error: "予約情報を確認してください。" }, { status: 400 });
+  }
+
+  try {
+    const result = await prisma.$transaction(async (tx) => {
+      const appointment = await tx.appointment.findFirst({
+        where: {
+          id: appointmentId,
+          customerId: session.customerId,
+          customer: { organizationId: session.organizationId, deletedAt: null }
+        },
+        select: {
+          id: true,
+          customerId: true,
+          scheduledAt: true,
+          menu: true,
+          staffName: true,
+          status: true,
+          note: true,
+          serviceSales: { select: { id: true }, take: 1 },
+          customer: { select: { name: true } }
+        }
+      });
+      if (!appointment) throw new Error("予約が見つかりません。");
+      if (CANCELLED_STATUSES.includes(appointment.status)) throw new Error("この予約はすでにキャンセル済みです。");
+      if (appointment.scheduledAt <= new Date()) throw new Error("開始時刻を過ぎた予約はアプリからキャンセルできません。店舗へお問い合わせください。");
+      if (appointment.serviceSales.length > 0 || appointment.status === "来店済み") {
+        throw new Error("会計済みの予約はキャンセルできません。");
+      }
+
+      const updated = await tx.appointment.updateMany({
+        where: {
+          id: appointment.id,
+          customerId: session.customerId,
+          status: { notIn: CANCELLED_STATUSES },
+          scheduledAt: { gt: new Date() }
+        },
+        data: {
+          status: "キャンセル",
+          note: [appointment.note?.trim(), "お客様アプリからキャンセル"].filter(Boolean).join("\n")
+        }
+      });
+      if (updated.count !== 1) throw new Error("予約状況が更新されています。画面を再読み込みしてください。");
+
+      await tx.contactLog.create({
+        data: {
+          customerId: appointment.customerId,
+          channel: "お客様アプリ",
+          purpose: "予約キャンセル",
+          message: `${appointment.scheduledAt.toISOString()} / ${appointment.menu ?? "メニュー未設定"} / 担当 ${appointment.staffName ?? "フリー"}`,
+          outcome: "キャンセル"
+        }
+      });
+
+      return appointment;
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+
+    await prisma.$executeRawUnsafe(
+      'INSERT INTO "StaffSystemNotification" ("id","organizationId","type","title","body","href","entityType","entityId","source","createdAt","updatedAt") VALUES ($1,$2,\'customer_cancellation\',$3,$4,$5,\'appointment\',$6,\'customer_app\',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP) ON CONFLICT ("organizationId","type","entityId") DO NOTHING',
+      crypto.randomUUID(),
+      session.organizationId,
+      "お客様が予約をキャンセルしました",
+      `${result.customer.name}様が${result.menu ?? "施術"}の予約をキャンセルしました。`,
+      `/admin/appointments/${encodeURIComponent(result.id)}`,
+      result.id
+    ).catch((notificationError) => {
+      console.warn("[customer-appointment-cancel] staff notification could not be recorded", notificationError);
+    });
+
+    revalidatePath("/admin/appointments");
+    revalidatePath(`/admin/appointments/${result.id}`);
+    revalidatePath("/u/appointments");
+    revalidatePath("/u/home");
+    revalidatePath("/u/news");
+    return NextResponse.json({ success: true, appointmentId: result.id, status: "キャンセル" });
+  } catch (error) {
+    const retryable = error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2034";
+    return NextResponse.json(
+      { error: retryable ? "予約状況が更新されました。画面を再読み込みしてください。" : error instanceof Error ? error.message : "予約をキャンセルできませんでした。" },
+      { status: retryable ? 409 : 400 }
+    );
+  }
+}

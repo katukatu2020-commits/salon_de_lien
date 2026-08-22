@@ -1,14 +1,17 @@
 "use client";
 
 import {
+  AlertTriangle,
   CalendarDays,
   Check,
   CheckCircle2,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Clock3,
   Loader2,
-  Scissors
+  Scissors,
+  X
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { CUSTOMER_BOOKING_MENUS, minutesText } from "@/lib/appointments/customer-booking";
@@ -103,12 +106,14 @@ export function CustomerBookingCalendar({
   currentDate,
   defaultStaffKey,
   staff,
-  upcoming
+  upcoming,
+  initialDetailAppointmentId = null
 }: {
   currentDate: string;
   defaultStaffKey: string;
   staff: StaffOption[];
   upcoming: Array<{ id: string; scheduledAt: string; menu: string | null; staffName: string | null; status: string }>;
+  initialDetailAppointmentId?: string | null;
 }) {
   const staffOptions = useMemo<StaffOption[]>(
     () => [{ key: "free", name: "指名なし", role: "担当者の指定なし" }, ...staff],
@@ -125,6 +130,11 @@ export function CustomerBookingCalendar({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState<{ date: string; minutes: number; staffName: string; menu: string } | null>(null);
+  const [visibleUpcoming, setVisibleUpcoming] = useState(upcoming);
+  const [expandedAppointmentId, setExpandedAppointmentId] = useState<string | null>(initialDetailAppointmentId);
+  const [cancellingAppointmentId, setCancellingAppointmentId] = useState<string | null>(null);
+  const [cancelError, setCancelError] = useState("");
+  const [cancelSuccess, setCancelSuccess] = useState("");
 
   const weekDates = useMemo(() => Array.from({ length: 7 }, (_, index) => addDays(weekStart, index)), [weekStart]);
   const months = useMemo(() => [...new Set(weekDates.map((date) => date.slice(0, 7)))], [weekDates]);
@@ -211,6 +221,29 @@ export function CustomerBookingCalendar({
       setError(reason instanceof Error ? reason.message : "予約を登録できませんでした。");
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function cancelAppointment(appointmentId: string) {
+    if (cancellingAppointmentId) return;
+    setCancellingAppointmentId(appointmentId);
+    setCancelError("");
+    setCancelSuccess("");
+    try {
+      const response = await fetch("/api/customer/appointments", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ appointmentId })
+      });
+      const payload = await response.json() as { error?: string; success?: boolean };
+      if (!response.ok || !payload.success) throw new Error(payload.error ?? "予約をキャンセルできませんでした。");
+      setVisibleUpcoming((current) => current.filter((appointment) => appointment.id !== appointmentId));
+      setExpandedAppointmentId(null);
+      setCancelSuccess("予約をキャンセルしました。店舗にも通知しました。");
+    } catch (reason) {
+      setCancelError(reason instanceof Error ? reason.message : "予約をキャンセルできませんでした。");
+    } finally {
+      setCancellingAppointmentId(null);
     }
   }
 
@@ -383,16 +416,60 @@ export function CustomerBookingCalendar({
         ) : null}
       </section>
 
-      {upcoming.length > 0 ? (
-        <section className="rounded-[24px] border border-[#e8ded2] bg-white p-5 shadow-sm">
+      {visibleUpcoming.length > 0 || cancelSuccess ? (
+        <section id="current-reservations" className="scroll-mt-24 rounded-[24px] border border-[#e8ded2] bg-white p-5 shadow-sm">
           <h2 className="flex items-center gap-2 text-base font-semibold"><CalendarDays className="h-5 w-5 text-[#8aa58a]" />現在の予約</h2>
+          {cancelSuccess ? <p role="status" className="mt-3 rounded-xl border border-[#b9d9c0] bg-[#edf7ef] px-4 py-3 text-sm font-semibold text-[#315c3c]">{cancelSuccess}</p> : null}
           <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {upcoming.map((appointment) => (
-              <div key={appointment.id} className="rounded-2xl bg-[#f6efe6] px-4 py-3">
-                <p className="flex items-center gap-2 text-sm font-semibold"><Clock3 className="h-4 w-4 text-[#8f4f42]" />{new Intl.DateTimeFormat("ja-JP", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Tokyo" }).format(new Date(appointment.scheduledAt))}</p>
-                <p className="mt-1 text-xs leading-5 text-[#7c7168]">{appointment.menu ?? "メニュー未設定"} / {appointment.staffName ?? "フリー"}</p>
-              </div>
-            ))}
+            {visibleUpcoming.map((appointment) => {
+              const expanded = expandedAppointmentId === appointment.id;
+              const cancelling = cancellingAppointmentId === appointment.id;
+              const formattedDate = new Intl.DateTimeFormat("ja-JP", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Tokyo" }).format(new Date(appointment.scheduledAt));
+              return (
+                <article key={appointment.id} data-customer-appointment-id={appointment.id} className="overflow-hidden rounded-2xl border border-[#eadfd5] bg-[#f8f3ed]">
+                  <button
+                    type="button"
+                    onClick={() => { setExpandedAppointmentId(expanded ? null : appointment.id); setCancelError(""); }}
+                    className="flex min-h-24 w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-[#f3ebe3]"
+                    aria-expanded={expanded}
+                    aria-controls={`appointment-detail-${appointment.id}`}
+                  >
+                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white text-[#8f4f42] shadow-sm"><Clock3 className="h-5 w-5" /></span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-semibold text-[#382f2a]">{formattedDate}</span>
+                      <span className="mt-1 block text-xs leading-5 text-[#7c7168]">{appointment.menu ?? "メニュー未設定"} / {appointment.staffName ?? "フリー"}</span>
+                      <span className="mt-2 block text-xs font-semibold text-[#8f4f42]">予約の詳細</span>
+                    </span>
+                    <ChevronDown className={`h-5 w-5 shrink-0 text-[#9a8d84] transition ${expanded ? "rotate-180" : ""}`} />
+                  </button>
+
+                  {expanded ? (
+                    <div id={`appointment-detail-${appointment.id}`} className="border-t border-[#e5d8ce] bg-white px-4 py-4">
+                      <dl className="grid grid-cols-[84px_minmax(0,1fr)] gap-x-3 gap-y-2 text-sm">
+                        <dt className="text-[#8b8178]">予約日時</dt><dd className="font-semibold text-[#382f2a]">{formattedDate}</dd>
+                        <dt className="text-[#8b8178]">メニュー</dt><dd className="text-[#4f463f]">{appointment.menu ?? "メニュー未設定"}</dd>
+                        <dt className="text-[#8b8178]">担当</dt><dd className="text-[#4f463f]">{appointment.staffName ?? "フリー"}</dd>
+                        <dt className="text-[#8b8178]">予約状況</dt><dd className="text-[#4f463f]">{appointment.status}</dd>
+                      </dl>
+                      <div className="mt-4 rounded-xl border border-[#efcbc6] bg-[#fff7f5] p-3">
+                        <p className="flex items-start gap-2 text-xs leading-5 text-[#795047]"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />予約をキャンセルすると元に戻せません。内容をご確認のうえ操作してください。</p>
+                        <button
+                          type="button"
+                          disabled={cancelling}
+                          onClick={() => {
+                            if (window.confirm(`${formattedDate}の予約をキャンセルしますか？`)) void cancelAppointment(appointment.id);
+                          }}
+                          className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full border border-[#d56b61] bg-white px-5 text-sm font-semibold text-[#ad4038] transition hover:bg-[#fff0ed] disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          {cancelling ? <><Loader2 className="h-4 w-4 animate-spin" />キャンセルしています</> : <><X className="h-4 w-4" />予約をキャンセルする</>}
+                        </button>
+                      </div>
+                      {cancelError ? <p role="alert" className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-xs font-semibold leading-5 text-red-800">{cancelError}</p> : null}
+                    </div>
+                  ) : null}
+                </article>
+              );
+            })}
           </div>
         </section>
       ) : null}

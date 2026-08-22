@@ -71,8 +71,8 @@ export default async function CustomerHomePage() {
       </section>
 
       {nextAppointment ? (
-        <section className="rounded-[20px] border border-[#b8d5bf] bg-[#edf7ef] p-5">
-          <div className="flex items-start gap-3"><CalendarDays className="mt-0.5 h-5 w-5 shrink-0 text-[#54745a]" /><div><p className="text-sm font-semibold text-[#315c3c]">次回のご予約</p><p className="mt-2 text-lg font-semibold">{formatDate(nextAppointment.scheduledAt)}</p><p className="mt-1 text-sm text-[#54745a]">{nextAppointment.menu ?? "メニュー相談"}</p></div></div>
+        <section data-customer-next-appointment-id={nextAppointment.id} className="rounded-[20px] border border-[#b8d5bf] bg-[#edf7ef] p-5">
+          <div className="flex items-start gap-3"><CalendarDays className="mt-0.5 h-5 w-5 shrink-0 text-[#54745a]" /><div className="min-w-0 flex-1"><p className="text-sm font-semibold text-[#315c3c]">次回のご予約</p><p className="mt-2 text-lg font-semibold">{formatDate(nextAppointment.scheduledAt)}</p><p className="mt-1 text-sm text-[#54745a]">{nextAppointment.menu ?? "メニュー相談"}</p><Link href={`/u/appointments?detail=${encodeURIComponent(nextAppointment.id)}#current-reservations`} className="mt-3 inline-flex min-h-10 items-center gap-1 rounded-full border border-[#8eb59a] bg-white px-4 text-xs font-semibold text-[#315c3c] transition hover:bg-[#f7fff8]">予約の詳細を見る<ChevronRight className="h-4 w-4" /></Link></div></div>
         </section>
       ) : null}
 

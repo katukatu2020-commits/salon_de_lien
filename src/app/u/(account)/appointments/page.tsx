@@ -7,7 +7,7 @@ import { SALON_STAFF, salonStaffKey } from "@/lib/salon/staff";
 
 export const dynamic = "force-dynamic";
 
-export default async function CustomerAppointmentsPage() {
+export default async function CustomerAppointmentsPage({ searchParams }: { searchParams?: { detail?: string } }) {
   const session = await getCurrentCustomerSession();
   if (!session) redirect("/u/login");
   const customer = await prisma.customer.findFirst({
@@ -26,6 +26,9 @@ export default async function CustomerAppointmentsPage() {
   if (!customer) redirect("/u/login");
   const assignedKey = customer.staffAssignmentType === "assigned" ? salonStaffKey(customer.assignedStaffName) : null;
   const today = scheduleDateKey(new Date());
+  const initialDetailAppointmentId = customer.appointments.some((appointment) => appointment.id === searchParams?.detail)
+    ? searchParams?.detail ?? null
+    : null;
 
   return (
     <div className="grid gap-5">
@@ -39,6 +42,7 @@ export default async function CustomerAppointmentsPage() {
         defaultStaffKey={assignedKey ?? "free"}
         staff={SALON_STAFF.map(({ key, name, role }) => ({ key, name, role }))}
         upcoming={customer.appointments.map((appointment) => ({ ...appointment, scheduledAt: appointment.scheduledAt.toISOString() }))}
+        initialDetailAppointmentId={initialDetailAppointmentId}
       />
     </div>
   );
