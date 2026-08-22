@@ -78,6 +78,12 @@ customerLayout = replaceOnce(
   'ui-workflows-v294.js?v=296-1',
   'ui-workflows-v294.js?v=362',
 )
+customerLayout = replaceOnce(
+  customerLayout,
+  'customer workflow routes',
+  "location.pathname!=='/u/chat'",
+  "!['/u/home','/u/appointments','/u/chat'].includes(location.pathname)",
+)
 fs.writeFileSync(currentCustomerLayoutPath, customerLayout)
 
 function replaceManifestChunkReference(directory) {

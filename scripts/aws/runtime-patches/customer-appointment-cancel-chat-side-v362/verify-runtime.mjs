@@ -52,6 +52,9 @@ const customerLayout = fs.readFileSync(
   'utf8',
 )
 requireMarkers(customerLayout, 'customer layout cache key', ['ui-workflows-v294.js?v=362'])
+requireMarkers(customerLayout, 'customer workflow routes', [
+  "['/u/home','/u/appointments','/u/chat'].includes(location.pathname)",
+])
 if (customerLayout.includes('ui-workflows-v294.js?v=296-1')) {
   throw new Error('legacy customer workflow cache key remains')
 }
