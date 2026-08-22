@@ -7,11 +7,16 @@ $ImageTag = 'shared-account-save-v368'
 $Cluster = 'salon-de-lien-staging-cluster'
 $Service = 'salon-de-lien-staging-web'
 
-docker build --file scripts/aws/runtime-patches/shared-account-save-v368/Dockerfile --tag "${Repository}:${ImageTag}" .
-if ($LASTEXITCODE -ne 0) { throw 'docker build failed' }
+$ExistingImage = aws ecr describe-images --region $Region --repository-name 'salon-de-lien-staging-app' --image-ids "imageTag=$ImageTag" --query 'imageDetails[0].imageDigest' --output text 2>$null
+if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($ExistingImage) -or $ExistingImage -eq 'None') {
+  docker build --provenance=false --file scripts/aws/runtime-patches/shared-account-save-v368/Dockerfile --tag "${Repository}:${ImageTag}" .
+  if ($LASTEXITCODE -ne 0) { throw 'docker build failed' }
 
-docker push "${Repository}:${ImageTag}"
-if ($LASTEXITCODE -ne 0) { throw 'docker push failed' }
+  docker push "${Repository}:${ImageTag}"
+  if ($LASTEXITCODE -ne 0) { throw 'docker push failed' }
+} else {
+  Write-Host "Using existing immutable image ${Repository}:${ImageTag} (${ExistingImage})"
+}
 
 $CurrentTaskDefinition = aws ecs describe-services --region $Region --cluster $Cluster --services $Service --query 'services[0].taskDefinition' --output text
 $Task = aws ecs describe-task-definition --region $Region --task-definition $CurrentTaskDefinition --query 'taskDefinition' | ConvertFrom-Json
