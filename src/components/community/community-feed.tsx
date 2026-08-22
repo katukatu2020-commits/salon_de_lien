@@ -102,12 +102,12 @@ export function CommunityFeed({ initialPosts, actor }: { initialPosts: Community
           </div>
 
           <div className="p-4 sm:p-5">
-            <div className="grid gap-2 rounded-2xl bg-[#fbf7f0] p-3 text-sm sm:grid-cols-2">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 rounded-2xl bg-[#fbf7f0] px-3 py-2.5 text-sm sm:grid sm:grid-cols-2 sm:gap-2 sm:p-3">
               <p className="flex items-center gap-2"><Scissors className="h-4 w-4 text-[#8f4f42]" /><span className="font-semibold">{post.menu}</span></p>
               <p className="flex items-center gap-2 text-[#6f6259]"><UserRound className="h-4 w-4" />担当 {post.stylistName}</p>
             </div>
 
-            <div className="mt-4 flex items-center gap-3 border-b border-[#eee4da] pb-4">
+            <div className="mt-3 flex items-center gap-3 border-b border-[#eee4da] pb-3 sm:mt-4 sm:pb-4">
               <button type="button" onClick={() => void toggleLike(post.id)} disabled={Boolean(pendingKey)} className={`inline-flex min-h-11 items-center gap-2 rounded-full px-4 text-sm font-semibold transition ${post.likedByCurrentUser ? "bg-[#f9e2df] text-[#9b3e36]" : "bg-[#f6efe6] text-[#6f6259] hover:bg-[#f1e5d9]"}`} aria-pressed={post.likedByCurrentUser}>
                 {pendingKey === `like:${post.id}` ? <Loader2 className="h-4 w-4 animate-spin" /> : <Heart className={`h-4 w-4 ${post.likedByCurrentUser ? "fill-current" : ""}`} />}
                 {post.likeCount}
@@ -130,7 +130,7 @@ export function CommunityFeed({ initialPosts, actor }: { initialPosts: Community
               </div>
             ) : null}
 
-            <form onSubmit={(event) => void submitComment(event, post.id)} className="mt-4 flex items-end gap-2">
+            <form onSubmit={(event) => void submitComment(event, post.id)} className="mt-3 flex items-end gap-2 sm:mt-4">
               <label className="min-w-0 flex-1">
                 <span className="sr-only">コメント</span>
                 <textarea value={drafts[post.id] ?? ""} onChange={(event) => setDrafts((current) => ({ ...current, [post.id]: event.target.value }))} maxLength={300} rows={2} placeholder={actor === "staff" ? "スタイリストとしてコメント" : "コメントを入力"} className="min-h-12 w-full resize-none rounded-2xl border border-[#e8ded2] bg-white px-4 py-3 text-base leading-6 outline-none transition placeholder:text-[#aaa097] focus:border-[#8f4f42] focus:ring-4 focus:ring-[#e9c9be]/40 sm:text-sm" />
