@@ -30,9 +30,13 @@ $Registration = [ordered]@{
   runtimePlatform = $Task.runtimePlatform
 }
 $JsonPath = Join-Path $env:TEMP 'salon-task-v368.json'
-$Registration | ConvertTo-Json -Depth 100 | Set-Content -Encoding utf8 $JsonPath
+$Json = $Registration | ConvertTo-Json -Depth 100
+[System.IO.File]::WriteAllText($JsonPath, $Json, [System.Text.UTF8Encoding]::new($false))
 $NewTaskDefinition = aws ecs register-task-definition --region $Region --cli-input-json "file://$JsonPath" --query 'taskDefinition.taskDefinitionArn' --output text
+if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($NewTaskDefinition)) { throw 'task definition registration failed' }
 aws ecs update-service --region $Region --cluster $Cluster --service $Service --task-definition $NewTaskDefinition --force-new-deployment | Out-Null
+if ($LASTEXITCODE -ne 0) { throw 'ECS service update failed' }
 aws ecs wait services-stable --region $Region --cluster $Cluster --services $Service
+if ($LASTEXITCODE -ne 0) { throw 'ECS service did not stabilize' }
 
 Write-Host "Deployed ${Repository}:${ImageTag} with $NewTaskDefinition"
