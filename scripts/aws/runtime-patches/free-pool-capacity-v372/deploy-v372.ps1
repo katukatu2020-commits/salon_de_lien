@@ -13,9 +13,7 @@ function Assert-ExternalSuccess([string]$step) {
   if ($LASTEXITCODE -ne 0) { throw "$step failed with exit code $LASTEXITCODE" }
 }
 
-$loginPassword = aws ecr get-login-password --region $region
-Assert-ExternalSuccess 'ECR password retrieval'
-$loginPassword | docker login --username AWS --password-stdin "$accountId.dkr.ecr.$region.amazonaws.com"
+cmd /c "aws ecr get-login-password --region $region | docker login --username AWS --password-stdin $accountId.dkr.ecr.$region.amazonaws.com"
 Assert-ExternalSuccess 'ECR login'
 docker build --pull=false -f scripts/aws/runtime-patches/free-pool-capacity-v372/Dockerfile -t $image .
 Assert-ExternalSuccess 'Docker build'
