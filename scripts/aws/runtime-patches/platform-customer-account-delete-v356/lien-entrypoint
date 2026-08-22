@@ -1,0 +1,5 @@
+#!/bin/sh
+set -eu
+
+node /app/ensure-platform-account-actions.cjs
+exec /usr/local/bin/lien-entrypoint-v355 "$@"
