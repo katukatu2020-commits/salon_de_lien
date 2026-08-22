@@ -8,8 +8,8 @@ $ImageTag = 'shift-first-grab-v369'
 $Cluster = 'salon-de-lien-staging-cluster'
 $Service = 'salon-de-lien-staging-web'
 
-$ExistingImage = aws ecr describe-images --region $Region --repository-name $RepositoryName --image-ids "imageTag=$ImageTag" --query 'imageDetails[0].imageDigest' --output text 2>$null
-if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($ExistingImage) -or $ExistingImage -eq 'None') {
+$ExistingImage = aws ecr describe-images --region $Region --repository-name $RepositoryName --query "imageDetails[?contains(imageTags, '$ImageTag')].imageDigest | [0]" --output text
+if ([string]::IsNullOrWhiteSpace($ExistingImage) -or $ExistingImage -eq 'None') {
   docker build --provenance=false --file scripts/aws/runtime-patches/shift-first-grab-v369/Dockerfile --tag "${Repository}:${ImageTag}" .
   if ($LASTEXITCODE -ne 0) { throw 'docker build failed' }
   docker push "${Repository}:${ImageTag}"
