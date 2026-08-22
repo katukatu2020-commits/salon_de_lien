@@ -36,6 +36,10 @@ if ($passwordHash -notmatch '^scrypt\$[0-9a-f]{32}\$[0-9a-f]{128}$') {
 }
 
 $values.PLATFORM_OPERATOR_PASSWORD_HASH = $passwordHash
+$values.PLATFORM_OPERATOR_AUTH_SECRET = node -e "process.stdout.write(require('node:crypto').randomBytes(48).toString('hex'))"
+if ([string]$values.PLATFORM_OPERATOR_AUTH_SECRET -notmatch '^[0-9a-f]{96}$') {
+  throw 'Failed to rotate the platform operator session signing secret.'
+}
 $temporaryPath = [System.IO.Path]::GetTempFileName()
 try {
   [System.IO.File]::WriteAllText(
@@ -60,4 +64,4 @@ aws ecs update-service `
   --region $Region `
   --no-cli-pager | Out-Null
 
-Write-Output 'Platform operator password hash rotated and ECS restart requested.'
+Write-Output 'Platform operator password hash and session signing secret rotated; ECS restart requested.'
