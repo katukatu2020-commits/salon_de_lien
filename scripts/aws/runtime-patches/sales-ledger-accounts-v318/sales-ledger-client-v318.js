@@ -218,17 +218,22 @@
       accountLayout.appendChild(section)
       section.querySelector('form').addEventListener('submit', async event => {
         event.preventDefault()
-        const button = event.currentTarget.querySelector('button')
-        const feedback = event.currentTarget.querySelector('[data-shared-feedback]')
+        // currentTarget is cleared by the browser after the synchronous event
+        // dispatch finishes. Keep the form reference before awaiting the API so
+        // the password field can be cleared reliably after a successful save.
+        const form = event.currentTarget
+        const button = form.querySelector('button')
+        const feedback = form.querySelector('[data-shared-feedback]')
         button.disabled = true
         feedback.className = 'sl-shared-feedback'
         feedback.textContent = '保存しています…'
         try {
-          const data = Object.fromEntries(new FormData(event.currentTarget).entries())
+          const data = Object.fromEntries(new FormData(form).entries())
           await request('/api/admin/shared-store-account', { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify(data) })
           feedback.textContent = '店舗共通アカウントを保存しました。'
           section.querySelector('.sl-shared-account-status').innerHTML = '状態：<span class="sl-account-badge">利用可能</span>'
-          event.currentTarget.password.value = ''
+          const passwordField = form.elements.namedItem('password')
+          if (passwordField instanceof HTMLInputElement) passwordField.value = ''
         } catch (error) {
           feedback.className = 'sl-shared-feedback error'
           feedback.textContent = error.message
