@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
     const appointment = await prisma.$transaction(
       async (tx) => {
         const customer = await tx.customer.findFirst({
-          where: { id: customerId, organizationId, deletedAt: null },
+          where: { id: customerId, organizationId, deletedAt: null, storeHiddenAt: null },
           select: { id: true, name: true }
         });
         if (!customer) throw new AuthorizationError("お客様が見つかりません。", 404);

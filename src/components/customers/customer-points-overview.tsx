@@ -25,7 +25,7 @@ function transactionLabel(type: string) {
 
 export async function CustomerPointsOverview() {
   const session = await requireBackofficeSession(["ADMIN", "STAFF"]);
-  const customerScope = { customer: { organizationId: session.organizationId ?? undefined, deletedAt: null } };
+  const customerScope = { customer: { organizationId: session.organizationId ?? undefined, deletedAt: null, storeHiddenAt: null } };
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const expiringBoundary = new Date(now);

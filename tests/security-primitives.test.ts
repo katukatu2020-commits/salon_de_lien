@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import {
   generateCustomerPortalToken,
@@ -83,6 +84,21 @@ test("password reset links use opaque one-time-token primitives", () => {
   assert.notEqual(hashPasswordResetToken(first), first);
   assert.equal(isDeliverableRecoveryEmail("customer@example.com"), true);
   assert.equal(isDeliverableRecoveryEmail("demo@customer.salon-de-lien.local"), false);
+});
+
+test("store-side customer removal never withdraws the customer account", () => {
+  const actionSource = readFileSync(new URL("../src/lib/actions/index.ts", import.meta.url), "utf8");
+  const authorizationSource = readFileSync(new URL("../src/lib/auth/authorization.ts", import.meta.url), "utf8");
+  const customerListSource = readFileSync(new URL("../src/app/customers/page.tsx", import.meta.url), "utf8");
+  const deleteAction = actionSource.slice(
+    actionSource.indexOf("export async function deleteCustomer"),
+    actionSource.indexOf("export async function saveAiConsent")
+  );
+
+  assert.match(deleteAction, /data:\s*\{\s*storeHiddenAt:\s*new Date\(\)\s*\}/);
+  assert.doesNotMatch(deleteAction, /data:\s*\{\s*deletedAt:/);
+  assert.match(authorizationSource, /storeHiddenAt:\s*null/);
+  assert.match(customerListSource, /storeHiddenAt:\s*null/);
 });
 
 test("customer withdrawal links are opaque one-time-token primitives", () => {

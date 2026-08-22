@@ -152,6 +152,7 @@ function operationalCustomerWhere(organizationId: string): Prisma.CustomerWhereI
   return {
     organizationId,
     deletedAt: null,
+    storeHiddenAt: null,
     NOT: {
       name: { contains: "Codex" }
     },
@@ -202,6 +203,7 @@ function simulationCustomerWhere(organizationId: string): Prisma.CustomerWhereIn
   return {
     organizationId,
     deletedAt: null,
+    storeHiddenAt: null,
     memo: {
       contains: "店舗状況シミュレーション用"
     }
@@ -362,7 +364,8 @@ export async function getOwnerDashboardData(
     prisma.customer.count({
       where: {
         organizationId,
-        deletedAt: null
+        deletedAt: null,
+        storeHiddenAt: null
       }
     }),
     prisma.serviceSale.count({

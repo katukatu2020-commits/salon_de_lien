@@ -39,7 +39,7 @@ export default async function CustomerMessagesPage({ searchParams }: PageProps) 
       }
     }),
     prisma.customer.findMany({
-      where: { organizationId: session.organizationId, deletedAt: null },
+      where: { organizationId: session.organizationId, deletedAt: null, storeHiddenAt: null },
       select: { gender: true, birthDate: true, birthYear: true }
     }),
     prisma.customerBroadcast.findMany({

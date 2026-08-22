@@ -967,7 +967,7 @@ export async function deleteCustomer(customerId: string, formData?: FormData) {
 
   await prisma.customer.update({
     where: { id: customerId },
-    data: { deletedAt: new Date() }
+    data: { storeHiddenAt: new Date() }
   });
 
   revalidatePath("/admin/customers");

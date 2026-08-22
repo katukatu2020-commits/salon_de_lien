@@ -146,6 +146,7 @@ model Customer {
   updatedAt                DateTime                     @updatedAt
   profileImageUrl          String?
   deletedAt                DateTime?
+  storeHiddenAt            DateTime?
   aiFrontImageUrl          String?
   aiSideImageUrl           String?
   aiBackImageUrl           String?
@@ -201,6 +202,7 @@ model Customer {
   withdrawalRequests       CustomerWithdrawalRequest[]
 
   @@index([organizationId, deletedAt])
+  @@index([organizationId, storeHiddenAt, deletedAt])
   @@index([referredByCustomerId])
 }
 

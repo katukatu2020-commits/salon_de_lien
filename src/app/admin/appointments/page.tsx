@@ -184,7 +184,7 @@ export default async function AppointmentsPage({ searchParams }: AppointmentsPag
       where: { organizationId: session.organizationId }
     }),
     prisma.customer.findMany({
-      where: { organizationId: session.organizationId, deletedAt: null },
+      where: { organizationId: session.organizationId, deletedAt: null, storeHiddenAt: null },
       orderBy: [{ name: "asc" }, { updatedAt: "desc" }],
       select: { id: true, name: true, phone: true }
     }),

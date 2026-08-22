@@ -1152,6 +1152,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
     where: keyword
       ? {
           deletedAt: null,
+          storeHiddenAt: null,
           organizationId: session.organizationId ?? undefined,
           OR: [
             { name: { contains: keyword, mode: "insensitive" } },
@@ -1159,7 +1160,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
             { memo: { contains: keyword, mode: "insensitive" } }
           ]
         }
-      : { deletedAt: null, organizationId: session.organizationId ?? undefined },
+      : { deletedAt: null, storeHiddenAt: null, organizationId: session.organizationId ?? undefined },
     include: {
       visits: {
         orderBy: { visitedAt: "desc" },

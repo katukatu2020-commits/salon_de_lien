@@ -30,7 +30,7 @@ export async function requireCustomerAccess(customerId: string, allowedRoles: Ad
   const session = await requireBackofficeSession(allowedRoles);
   if (!session.organizationId) throw new AuthorizationError("店舗所属が設定されていません。", 403);
   const customer = await prisma.customer.findFirst({
-    where: { id: customerId, organizationId: session.organizationId, deletedAt: null },
+    where: { id: customerId, organizationId: session.organizationId, deletedAt: null, storeHiddenAt: null },
     select: { id: true, organizationId: true }
   });
   if (!customer) throw new AuthorizationError("顧客が見つからないか、この店舗から参照できません。", 404);

@@ -95,7 +95,7 @@ export async function createCustomerBroadcastAction(formData: FormData) {
   }
 
   const candidates = await prisma.customer.findMany({
-    where: { organizationId: session.organizationId, deletedAt: null },
+    where: { organizationId: session.organizationId, deletedAt: null, storeHiddenAt: null },
     select: { id: true, name: true, gender: true, birthDate: true, birthYear: true }
   });
   const recipients = candidates.filter((customer) => {

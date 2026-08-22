@@ -420,7 +420,8 @@ export default async function CustomerDetailPage({ params, searchParams }: Custo
     where: {
       id: params.id,
       organizationId: session.organizationId ?? undefined,
-      deletedAt: null
+      deletedAt: null,
+      storeHiddenAt: null
     },
     include: {
       organization: {
@@ -873,7 +874,7 @@ export default async function CustomerDetailPage({ params, searchParams }: Custo
         <TabsList className="sticky top-16 z-10 !grid-cols-3 bg-white/95 shadow-sm backdrop-blur sm:!grid-cols-3">
           <TabsTrigger value="points">ポイント</TabsTrigger>
           <TabsTrigger value="history">履歴</TabsTrigger>
-          <TabsTrigger value="delete" className="text-red-700 data-[state=active]:text-red-800">削除</TabsTrigger>
+          <TabsTrigger value="delete" className="text-red-700 data-[state=active]:text-red-800">店舗から非表示</TabsTrigger>
         </TabsList>
 
         <TabsContent value="proposal" className="mt-0 grid gap-5">
@@ -2165,14 +2166,14 @@ export default async function CustomerDetailPage({ params, searchParams }: Custo
               <div>
                 <h2 className="flex items-center gap-2 text-sm font-semibold text-red-800">
                   <Trash2 className="h-4 w-4" />
-                  顧客情報の削除
+                  店舗の顧客一覧から非表示
                 </h2>
                 <p className="mt-2 text-sm leading-6 text-stone-600">
-                  この顧客を削除すると、顧客一覧とお客様アプリから表示されなくなります。施術履歴などの関連データは復旧や確認のためDB上に保持されます。
+                  この店舗の顧客一覧・カルテからのみ非表示にします。顧客アカウント、他店舗のカルテ、予約・会計・施術履歴は削除されません。
                 </p>
               </div>
               <span className="rounded border border-red-200 bg-red-50 px-3 py-1 text-xs font-semibold text-red-800">
-                論理削除
+                店舗のみ非表示
               </span>
             </div>
             <form action={deleteCustomerAction} className="mt-4 grid gap-3 rounded-md border border-red-100 bg-red-50 p-4">
@@ -2184,14 +2185,14 @@ export default async function CustomerDetailPage({ params, searchParams }: Custo
                   required
                   className="mt-1 h-4 w-4 rounded border-red-300 text-red-700"
                 />
-                {customer.name}さんの顧客情報を削除することを確認しました。
+                {customer.name}さんを、この店舗の顧客一覧から非表示にすることを確認しました。
               </label>
               <button
                 type="submit"
                 className="inline-flex h-10 w-fit items-center justify-center gap-2 rounded-md bg-red-700 px-4 text-sm font-semibold text-white shadow-sm hover:bg-red-800"
               >
                 <Trash2 className="h-4 w-4" />
-                顧客情報を削除
+                この店舗から非表示にする
               </button>
             </form>
           </section>
