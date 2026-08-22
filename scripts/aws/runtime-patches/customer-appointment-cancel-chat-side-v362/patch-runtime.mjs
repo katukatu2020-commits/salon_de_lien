@@ -68,7 +68,7 @@ fs.writeFileSync(homePath, home)
 // keeping the pre-v362 workflow after deployment.
 const customerLayoutDirectory = '/app/.next/static/chunks/app/u/(account)'
 const previousCustomerLayoutName = 'layout-customer-stability-v298.js'
-const currentCustomerLayoutName = 'layout-customer-stability-v362.js'
+const currentCustomerLayoutName = 'layout-customer-stability-v364.js'
 const previousCustomerLayoutPath = path.join(customerLayoutDirectory, previousCustomerLayoutName)
 const currentCustomerLayoutPath = path.join(customerLayoutDirectory, currentCustomerLayoutName)
 let customerLayout = fs.readFileSync(previousCustomerLayoutPath, 'utf8')
@@ -76,7 +76,7 @@ customerLayout = replaceOnce(
   customerLayout,
   'customer workflow cache key',
   'ui-workflows-v294.js?v=296-1',
-  'ui-workflows-v294.js?v=362',
+  'ui-workflows-v294.js?v=364',
 )
 customerLayout = replaceOnce(
   customerLayout,

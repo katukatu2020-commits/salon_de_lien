@@ -48,10 +48,10 @@ const home = fs.readFileSync('/app/.next/server/app/u/(account)/home/page.js', '
 requireMarkers(home, 'customer home', ['"data-customer-next-appointment-id":j.id'])
 
 const customerLayout = fs.readFileSync(
-  '/app/.next/static/chunks/app/u/(account)/layout-customer-stability-v362.js',
+  '/app/.next/static/chunks/app/u/(account)/layout-customer-stability-v364.js',
   'utf8',
 )
-requireMarkers(customerLayout, 'customer layout cache key', ['ui-workflows-v294.js?v=362'])
+requireMarkers(customerLayout, 'customer layout cache key', ['ui-workflows-v294.js?v=364'])
 requireMarkers(customerLayout, 'customer workflow routes', [
   "['/u/home','/u/appointments','/u/chat'].includes(location.pathname)",
 ])
@@ -59,7 +59,7 @@ if (customerLayout.includes('ui-workflows-v294.js?v=296-1')) {
   throw new Error('legacy customer workflow cache key remains')
 }
 const appBuildManifest = fs.readFileSync('/app/.next/app-build-manifest.json', 'utf8')
-requireMarkers(appBuildManifest, 'app build manifest', ['layout-customer-stability-v362.js'])
+requireMarkers(appBuildManifest, 'app build manifest', ['layout-customer-stability-v364.js'])
 if (appBuildManifest.includes('layout-customer-stability-v298.js')) {
   throw new Error('legacy customer layout chunk remains in app build manifest')
 }
