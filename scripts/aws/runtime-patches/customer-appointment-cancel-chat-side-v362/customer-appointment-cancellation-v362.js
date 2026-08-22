@@ -62,7 +62,7 @@ function createCustomerAppointmentCancellationService({ prisma, crypto, sessionP
 
       const note = [String(appointment.note || '').trim(), 'お客様アプリからキャンセル'].filter(Boolean).join('\n')
       const changed = await tx.$executeRawUnsafe(
-        `UPDATE "Appointment" SET "status"='キャンセル',"note"=$2,"updatedAt"=CURRENT_TIMESTAMP
+        `UPDATE "Appointment" SET "status"='キャンセル',"note"=$2,"couponIssueId"=NULL,"updatedAt"=CURRENT_TIMESTAMP
          WHERE "id"=$1 AND "customerId"=$3 AND "status" NOT IN ('キャンセル','無断キャンセル') AND "scheduledAt">CURRENT_TIMESTAMP`,
         appointment.id,
         note,
@@ -79,18 +79,32 @@ function createCustomerAppointmentCancellationService({ prisma, crypto, sessionP
         appointment.customerId,
         `${when} / ${appointment.menu || 'メニュー未設定'} / 担当 ${appointment.staffName || 'フリー'}`,
       )
-      await tx.$executeRawUnsafe(
-        `INSERT INTO "StaffSystemNotification" ("id","organizationId","type","title","body","href","entityType","entityId","source","createdAt","updatedAt")
-         VALUES ($1,$2,'customer_cancellation','お客様が予約をキャンセルしました',$3,$4,'appointment',$5,'customer_app',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)
+      return {
+        id: appointment.id,
+        customerName: appointment.customerName,
+        menu: appointment.menu,
+      }
+    })
+
+    // Cancelling the appointment is the primary operation. Notification
+    // persistence must not turn a successful cancellation into an API error.
+    try {
+      await prisma.$executeRawUnsafe(
+        `INSERT INTO "StaffSystemNotification" ("id","organizationId","type","title","body","href","entityType","entityId","source","createdAt")
+         VALUES ($1,$2,'customer_cancellation','お客様が予約をキャンセルしました',$3,$4,'appointment',$5,'customer_app',CURRENT_TIMESTAMP)
          ON CONFLICT ("organizationId","type","entityId") DO NOTHING`,
         crypto.randomUUID(),
         session.organizationId,
-        `${appointment.customerName || 'お客様'}様が${appointment.menu || '施術'}の予約をキャンセルしました。`,
-        `/admin/appointments/${encodeURIComponent(appointment.id)}`,
-        appointment.id,
+        `${result.customerName || 'お客様'}様が${result.menu || '施術'}の予約をキャンセルしました。`,
+        `/admin/appointments/${encodeURIComponent(result.id)}`,
+        result.id,
       )
-      return { id: appointment.id }
-    })
+    } catch (notificationError) {
+      console.warn('[customer-appointment-cancellation-v362] staff notification could not be recorded', {
+        appointmentId: result.id,
+        error: notificationError instanceof Error ? notificationError.message : String(notificationError),
+      })
+    }
 
     return json(res, 200, { success: true, appointmentId: result.id, status: 'キャンセル' })
   }
