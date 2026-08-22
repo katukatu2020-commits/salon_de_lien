@@ -41,8 +41,8 @@ $payload = [ordered]@{
   requiresCompatibilities = $definition.requiresCompatibilities
   cpu = $definition.cpu
   memory = $definition.memory
-  runtimePlatform = $definition.runtimePlatform
 }
+if ($definition.runtimePlatform) { $payload.runtimePlatform = $definition.runtimePlatform }
 $taskFile = Join-Path $env:TEMP 'salon-de-lien-task-v372.json'
 [System.IO.File]::WriteAllText($taskFile, ($payload | ConvertTo-Json -Depth 100), [System.Text.UTF8Encoding]::new($false))
 $registered = aws ecs register-task-definition --region $region --cli-input-json "file://$taskFile" | ConvertFrom-Json
