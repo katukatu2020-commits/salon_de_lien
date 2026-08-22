@@ -32,8 +32,8 @@ $Registration = [ordered]@{
   requiresCompatibilities = $Task.requiresCompatibilities
   cpu = $Task.cpu
   memory = $Task.memory
-  runtimePlatform = $Task.runtimePlatform
 }
+if ($null -ne $Task.runtimePlatform) { $Registration.runtimePlatform = $Task.runtimePlatform }
 $JsonPath = Join-Path $env:TEMP 'salon-task-v368.json'
 $Json = $Registration | ConvertTo-Json -Depth 100
 [System.IO.File]::WriteAllText($JsonPath, $Json, [System.Text.UTF8Encoding]::new($false))
