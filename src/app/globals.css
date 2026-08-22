@@ -196,6 +196,51 @@ div {
 }
 
 @media (max-width: 639px) {
+  /*
+   * The customer community detail is rendered inside a route shell that is a
+   * grid on desktop.  Mobile Safari distributes the shell's spare block-size
+   * through nested grids unless every sizing boundary opts back into content
+   * sizing.  Keep the photograph at 4:3, while every surrounding block grows
+   * only from its actual content.  This also prevents short comment lists from
+   * becoming viewport-height panels.
+   */
+  .community-detail-page,
+  .community-detail-page > .community-feed-grid,
+  .community-detail-page .community-feed-card,
+  .community-detail-page .community-feed-media,
+  .community-detail-page .community-feed-content,
+  .community-detail-page .community-feed-meta,
+  .community-detail-page .community-feed-comments {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    flex: none !important;
+    align-self: auto !important;
+  }
+
+  .community-detail-page > .community-feed-grid,
+  .community-detail-page .community-feed-card,
+  .community-detail-page .community-feed-content {
+    display: block !important;
+  }
+
+  .community-detail-page .community-feed-media,
+  .community-detail-page .community-feed-comments {
+    display: grid !important;
+    grid-auto-rows: max-content !important;
+    align-content: start !important;
+  }
+
+  .community-detail-page .community-feed-photo {
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    aspect-ratio: 4 / 3 !important;
+    flex: none !important;
+  }
+
   .community-feed-grid {
     display: block;
   }
