@@ -13,7 +13,12 @@ function Assert-ExternalSuccess([string]$step) {
   if ($LASTEXITCODE -ne 0) { throw "$step failed with exit code $LASTEXITCODE" }
 }
 
-$existingImage = aws ecr describe-images --region $region --repository-name $repository --image-ids "imageTag=$tag" 2>$null | ConvertFrom-Json
+$previousErrorActionPreference = $ErrorActionPreference
+$ErrorActionPreference = 'Continue'
+$existingImageJson = aws ecr describe-images --region $region --repository-name $repository --image-ids "imageTag=$tag" 2>$null
+$imageLookupExitCode = $LASTEXITCODE
+$ErrorActionPreference = $previousErrorActionPreference
+$existingImage = if ($imageLookupExitCode -eq 0 -and $existingImageJson) { $existingImageJson | ConvertFrom-Json } else { $null }
 if (-not $existingImage.imageDetails) {
   cmd /c "aws ecr get-login-password --region $region | docker login --username AWS --password-stdin $accountId.dkr.ecr.$region.amazonaws.com"
   Assert-ExternalSuccess 'ECR login'
