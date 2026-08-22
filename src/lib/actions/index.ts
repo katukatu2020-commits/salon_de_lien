@@ -1552,6 +1552,7 @@ export async function updateAppointmentStatus(appointmentId: string, customerId:
       where: { id: appointmentId, customerId },
       data: {
         status,
+        couponIssueId: status === "キャンセル" || status === "無断キャンセル" ? null : undefined,
         note: note ?? undefined
       }
     });
@@ -1646,7 +1647,7 @@ export async function createAppointmentConfirmationResponse(appointmentId: strin
     if (wantsCancellation) {
       await tx.appointment.update({
         where: { id: appointment.id },
-        data: { status: "キャンセル" }
+        data: { status: "キャンセル", couponIssueId: null }
       });
     } else if (!wantsReschedule) {
       await tx.appointment.update({

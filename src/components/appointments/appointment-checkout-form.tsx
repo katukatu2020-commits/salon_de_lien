@@ -216,6 +216,7 @@ export function AppointmentCheckoutForm({
   initialSubtotal,
   availablePoints,
   coupons,
+  initialCouponSelection = "",
   products,
   taxRate
 }: {
@@ -224,12 +225,13 @@ export function AppointmentCheckoutForm({
   initialSubtotal: number;
   availablePoints: number;
   coupons: CheckoutCoupon[];
+  initialCouponSelection?: string;
   products: CheckoutProduct[];
   taxRate: number;
 }) {
   const [subtotal, setSubtotal] = useState(initialSubtotal);
   const [longHairLength, setLongHairLength] = useState<LongHairLength | "">("");
-  const [couponSelection, setCouponSelection] = useState("");
+  const [couponSelection, setCouponSelection] = useState(initialCouponSelection);
   const [pointDiscount, setPointDiscount] = useState(0);
   const [productLines, setProductLines] = useState<Array<{ productId: string; quantity: number }>>([]);
   const [pickerOpen, setPickerOpen] = useState(false);

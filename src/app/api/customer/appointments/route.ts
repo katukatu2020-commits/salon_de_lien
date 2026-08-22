@@ -5,6 +5,7 @@ import { getCurrentCustomerSession } from "@/lib/auth/current-customer";
 import { hasValidRequestOrigin } from "@/lib/auth/request-security";
 import {
   customerBookingMenu,
+  customerBookingMenuKeyFromName,
   isBookingRangeAvailable,
   isRegularClosedDate,
   type BookingCapacitySetting
@@ -27,11 +28,12 @@ export async function POST(request: NextRequest) {
   if (!hasValidRequestOrigin(request)) return NextResponse.json({ error: "不正なリクエストです。" }, { status: 403 });
   const session = await getCurrentCustomerSession();
   if (!session) return NextResponse.json({ error: "ログインが必要です。" }, { status: 401 });
-  const body = (await request.json()) as { staffKey?: unknown; menuKey?: unknown; date?: unknown; startMinutes?: unknown };
+  const body = (await request.json()) as { staffKey?: unknown; menuKey?: unknown; date?: unknown; startMinutes?: unknown; couponIssueId?: unknown };
   const staffKey = typeof body.staffKey === "string" ? body.staffKey : "";
   const menu = customerBookingMenu(typeof body.menuKey === "string" ? body.menuKey : "");
   const date = typeof body.date === "string" ? body.date : "";
   const startMinutes = Number(body.startMinutes);
+  const couponIssueId = typeof body.couponIssueId === "string" ? body.couponIssueId.trim() : "";
   const today = scheduleDateKey(new Date());
   if (
     !menu ||
@@ -40,8 +42,7 @@ export async function POST(request: NextRequest) {
     startMinutes % 30 !== 0 ||
     date < today ||
     date > bookingMaximumDate(today) ||
-    isRegularClosedDate(date) ||
-    (staffKey !== "free" && !SALON_STAFF.some((staff) => staff.key === staffKey))
+    isRegularClosedDate(date)
   ) return NextResponse.json({ error: "予約日時を確認してください。" }, { status: 400 });
   if (date === today && startMinutes < appointmentMinutes(new Date()) + 60) {
     return NextResponse.json({ error: "当日の予約は現在時刻から1時間後以降を選んでください。" }, { status: 400 });
@@ -54,19 +55,55 @@ export async function POST(request: NextRequest) {
         select: { id: true, name: true }
       });
       if (!customer) throw new Error("お客様情報が見つかりません。");
+      const couponIssue = couponIssueId
+        ? await tx.couponIssue.findFirst({
+            where: {
+              id: couponIssueId,
+              customerId: customer.id,
+              status: "issued",
+              issuedAt: { lte: new Date() },
+              expiresAt: { gte: new Date() }
+            },
+            select: { id: true, couponCode: true, discountRate: true, targetMenusJson: true }
+          })
+        : null;
+      if (couponIssueId && !couponIssue) throw new Error("選択したクーポンは期限切れまたは使用済みです。");
+      if (couponIssue) {
+        const targetMenus = Array.isArray(couponIssue.targetMenusJson)
+          ? couponIssue.targetMenusJson.filter((value): value is string => typeof value === "string")
+          : [];
+        const targetMenuKeys = targetMenus.map(customerBookingMenuKeyFromName).filter(Boolean);
+        if (targetMenuKeys.length > 0 && !targetMenuKeys.includes(menu.key)) {
+          throw new Error("このクーポンは選択したメニューでは利用できません。");
+        }
+        const existingReservation = await tx.appointment.findFirst({
+          where: { couponIssueId: couponIssue.id, status: { notIn: CANCELLED_STATUSES } },
+          select: { id: true }
+        });
+        if (existingReservation) throw new Error("このクーポンは別の予約に設定済みです。");
+      }
       const savedSettings = await tx.staffBookingSetting.findMany({ where: { organizationId: session.organizationId } });
       const settingByKey = new Map(savedSettings.map((setting) => [setting.staffKey, setting]));
-      const allSettings: BookingCapacitySetting[] = SALON_STAFF.map((staff) => {
-        const saved = settingByKey.get(staff.key);
-        return {
-          staffKey: staff.key,
-          staffName: staff.name,
-          maxConcurrentAppointments: saved?.maxConcurrentAppointments ?? (staff.key === "tanizaki" ? 2 : 1),
-          workStartMinutes: saved?.workStartMinutes ?? 600,
-          workEndMinutes: saved?.workEndMinutes ?? 1140
-        };
-      });
+      const allSettings: BookingCapacitySetting[] = savedSettings.length > 0
+        ? savedSettings.map((setting) => ({
+            staffKey: setting.staffKey,
+            staffName: setting.staffName,
+            maxConcurrentAppointments: setting.maxConcurrentAppointments,
+            workStartMinutes: setting.workStartMinutes,
+            workEndMinutes: setting.workEndMinutes
+          }))
+        : SALON_STAFF.map((staff) => {
+            const saved = settingByKey.get(staff.key);
+            return {
+              staffKey: staff.key,
+              staffName: staff.name,
+              maxConcurrentAppointments: saved?.maxConcurrentAppointments ?? (staff.key === "tanizaki" ? 2 : 1),
+              workStartMinutes: saved?.workStartMinutes ?? 600,
+              workEndMinutes: saved?.workEndMinutes ?? 1140
+            };
+          });
       const candidates = staffKey === "free" ? allSettings : allSettings.filter((setting) => setting.staffKey === staffKey);
+      if (candidates.length === 0) throw new Error("選択した担当者は現在予約を受け付けていません。");
       const dayStart = dateAtTokyoMinutes(date, 0);
       const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60_000);
       const daily = await tx.appointment.findMany({
@@ -125,7 +162,11 @@ export async function POST(request: NextRequest) {
           status: "予約確定",
           source: "お客様アプリ予約",
           bookingProvider: "customer_app",
-          note: staffKey === "free" ? "お客様アプリから予約（指名なし）" : "お客様アプリから予約（担当者指名）"
+          couponIssueId: couponIssue?.id ?? null,
+          note: [
+            staffKey === "free" ? "お客様アプリから予約（指名なし）" : "お客様アプリから予約（担当者指名）",
+            couponIssue ? `予約クーポン: ${couponIssue.discountRate}%OFF（${couponIssue.couponCode}）` : null
+          ].filter(Boolean).join("\n")
         }
       });
       await tx.contactLog.create({
@@ -133,7 +174,7 @@ export async function POST(request: NextRequest) {
           customerId: customer.id,
           channel: "お客様アプリ",
           purpose: "予約登録",
-          message: `${date} ${String(Math.floor(startMinutes / 60)).padStart(2, "0")}:${String(startMinutes % 60).padStart(2, "0")} / ${menu.name} / 担当 ${available.setting.staffName}`,
+          message: `${date} ${String(Math.floor(startMinutes / 60)).padStart(2, "0")}:${String(startMinutes % 60).padStart(2, "0")} / ${menu.name} / 担当 ${available.setting.staffName}${couponIssue ? ` / クーポン ${couponIssue.discountRate}%OFF` : ""}`,
           outcome: "予約確定"
         }
       });
@@ -207,6 +248,7 @@ export async function DELETE(request: NextRequest) {
         },
         data: {
           status: "キャンセル",
+          couponIssueId: null,
           note: [appointment.note?.trim(), "お客様アプリからキャンセル"].filter(Boolean).join("\n")
         }
       });

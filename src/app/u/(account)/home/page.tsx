@@ -85,6 +85,9 @@ export default async function CustomerHomePage() {
             <Link href="/u/appointments" className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-[#8f4f42] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#7d453a]">
               空き状況を見て予約する<ChevronRight className="h-4 w-4" />
             </Link>
+            <Link href="/u/appointments?repeat=previous" className="mt-2 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full border border-[#d9c9bf] bg-white px-5 text-sm font-semibold text-[#70443b] transition hover:bg-[#fff8f5]">
+              前回と同じ内容で予約する<ChevronRight className="h-4 w-4" />
+            </Link>
           </div>
         </div>
       </section>

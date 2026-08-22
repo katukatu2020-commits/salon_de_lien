@@ -87,6 +87,7 @@ export async function completeAppointmentCheckoutAction(appointmentId: string, f
           scheduledAt: true,
           staffName: true,
           source: true,
+          couponIssueId: true,
           customer: {
             select: {
               organizationId: true,
@@ -101,6 +102,9 @@ export async function completeAppointmentCheckoutAction(appointmentId: string, f
         throw new Error("この予約を操作する権限がありません。");
       }
       if (appointment.serviceSales.length > 0) throw new Error("この予約はすでに会計済みです。");
+      const effectiveCouponSelection = appointment.couponIssueId
+        ? `couponIssue:${appointment.couponIssueId}`
+        : couponSelection;
 
       const products = productInputs.length
         ? await tx.product.findMany({
@@ -133,7 +137,7 @@ export async function completeAppointmentCheckoutAction(appointmentId: string, f
       let couponDiscountAmount = 0;
       let couponDiscountLabel = "クーポン利用なし";
 
-      if (couponSelection === "referral") {
+      if (effectiveCouponSelection === "referral") {
         const referralDiscount = await applyReferralCheckoutDiscountInTransaction(
           tx,
           appointment.customerId,
@@ -143,8 +147,8 @@ export async function completeAppointmentCheckoutAction(appointmentId: string, f
         if (!referralDiscount.discount) throw new Error("選択した紹介クーポンは利用できません。画面を更新してください。");
         couponDiscountAmount = referralDiscount.amount;
         couponDiscountLabel = referralDiscount.discount.label;
-      } else if (couponSelection.startsWith("couponIssue:")) {
-        const couponIssueId = couponSelection.slice("couponIssue:".length);
+      } else if (effectiveCouponSelection.startsWith("couponIssue:")) {
+        const couponIssueId = effectiveCouponSelection.slice("couponIssue:".length);
         const couponIssue = await tx.couponIssue.findFirst({
           where: {
             id: couponIssueId,

@@ -11,6 +11,7 @@ import {
   Clock3,
   Loader2,
   Scissors,
+  TicketPercent,
   X
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -27,6 +28,7 @@ type AvailabilityResponse = {
   error?: string;
 };
 type StaffOption = { key: string; name: string; role: string };
+type SelectedCoupon = { id: string; couponCode: string; discountRate: number; expiresAt: string };
 
 const STAFF_GUIDE: Record<string, { strengths: string; message: string }> = {
   tanizaki: {
@@ -105,12 +107,20 @@ function isMonday(date: string) {
 export function CustomerBookingCalendar({
   currentDate,
   defaultStaffKey,
+  initialMenuKey = "cut",
+  previousBookingRequested = false,
+  previousBookingAvailable = false,
+  selectedCoupon = null,
   staff,
   upcoming,
   initialDetailAppointmentId = null
 }: {
   currentDate: string;
   defaultStaffKey: string;
+  initialMenuKey?: string;
+  previousBookingRequested?: boolean;
+  previousBookingAvailable?: boolean;
+  selectedCoupon?: SelectedCoupon | null;
   staff: StaffOption[];
   upcoming: Array<{ id: string; scheduledAt: string; menu: string | null; staffName: string | null; status: string }>;
   initialDetailAppointmentId?: string | null;
@@ -121,7 +131,11 @@ export function CustomerBookingCalendar({
   );
   const [weekStart, setWeekStart] = useState(currentDate);
   const [staffKey, setStaffKey] = useState(defaultStaffKey);
-  const [menuKey, setMenuKey] = useState<(typeof CUSTOMER_BOOKING_MENUS)[number]["key"]>("cut");
+  const [menuKey, setMenuKey] = useState<(typeof CUSTOMER_BOOKING_MENUS)[number]["key"]>(
+    CUSTOMER_BOOKING_MENUS.some((item) => item.key === initialMenuKey)
+      ? initialMenuKey as (typeof CUSTOMER_BOOKING_MENUS)[number]["key"]
+      : "cut"
+  );
   const [availability, setAvailability] = useState<Record<string, AvailabilityDay>>({});
   const [maximumDate, setMaximumDate] = useState(addDays(currentDate, 90));
   const [selectedDate, setSelectedDate] = useState("");
@@ -200,7 +214,13 @@ export function CustomerBookingCalendar({
       const response = await fetch("/api/customer/appointments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ staffKey, menuKey, date: selectedDate, startMinutes: selectedMinutes })
+        body: JSON.stringify({
+          staffKey,
+          menuKey,
+          date: selectedDate,
+          startMinutes: selectedMinutes,
+          couponIssueId: selectedCoupon?.id ?? null
+        })
       });
       const payload = await response.json() as { error?: string; appointment?: { staffName?: string | null } };
       if (!response.ok || !payload.appointment) throw new Error(payload.error ?? "予約を登録できませんでした。");
@@ -249,6 +269,33 @@ export function CustomerBookingCalendar({
 
   return (
     <div className="grid gap-6">
+      {previousBookingRequested ? (
+        <div
+          role="status"
+          className={`rounded-2xl border px-4 py-3 text-sm font-semibold ${
+            previousBookingAvailable
+              ? "border-[#b9d9c0] bg-[#edf7ef] text-[#315c3c]"
+              : "border-[#e4d7ce] bg-[#fff9f5] text-[#795047]"
+          }`}
+        >
+          {previousBookingAvailable
+            ? "前回の会計済み予約と同じメニュー・担当者を選択しました。日時を選んでください。"
+            : "前回の予約がありません。メニューと担当者を選んで予約してください。"}
+        </div>
+      ) : null}
+      {selectedCoupon ? (
+        <div className="flex flex-col gap-3 rounded-2xl border border-[#e5cf93] bg-[#fff9e8] px-4 py-4 text-[#6f5215] sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <TicketPercent className="mt-0.5 h-5 w-5 shrink-0" />
+            <div>
+              <p className="font-semibold">クーポンを予約にセットしました</p>
+              <p className="mt-1 text-sm">{selectedCoupon.discountRate}%OFF / {new Intl.DateTimeFormat("ja-JP", { month: "numeric", day: "numeric" }).format(new Date(selectedCoupon.expiresAt))}まで</p>
+              <p className="mt-1 text-xs">予約時点では使用済みになりません。会計完了時に利用が確定します。</p>
+            </div>
+          </div>
+          <span className="rounded-full bg-white px-3 py-1.5 font-mono text-xs font-semibold">{selectedCoupon.couponCode}</span>
+        </div>
+      ) : null}
       <section className="rounded-[24px] border border-[#e8ded2] bg-white p-5 shadow-sm sm:p-6">
         <div className="border-l-4 border-[#c7b8ad] pl-4">
           <p className="text-xs font-semibold text-[#8f4f42]">STEP 1</p>

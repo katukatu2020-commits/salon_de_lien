@@ -35,6 +35,27 @@ export function customerBookingMenu(key: string | null | undefined) {
   return CUSTOMER_BOOKING_MENUS.find((menu) => menu.key === key) ?? null;
 }
 
+function normalizeBookingMenuName(value: string) {
+  return value
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/[\s　・･＋+／/（）()［］\[\]【】]/g, "");
+}
+
+export function customerBookingMenuKeyFromName(value: string | null | undefined) {
+  if (!value) return null;
+  const normalized = normalizeBookingMenuName(value);
+  const exact = CUSTOMER_BOOKING_MENUS.find((menu) => normalizeBookingMenuName(menu.name) === normalized);
+  if (exact) return exact.key;
+  const included = CUSTOMER_BOOKING_MENUS
+    .filter((menu) => {
+      const candidate = normalizeBookingMenuName(menu.name);
+      return normalized.includes(candidate) || candidate.includes(normalized);
+    })
+    .sort((left, right) => normalizeBookingMenuName(right.name).length - normalizeBookingMenuName(left.name).length)[0];
+  return included?.key ?? null;
+}
+
 export function isBookingRangeAvailable({
   startMinutes,
   durationMinutes,

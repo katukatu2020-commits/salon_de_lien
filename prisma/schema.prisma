@@ -461,7 +461,9 @@ model Appointment {
   staffName           String?
   durationMinutes     Int?
   bookingProvider     String?
+  couponIssueId       String?              @unique
   customer            Customer             @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  couponIssue         CouponIssue?          @relation(fields: [couponIssueId], references: [id], onDelete: SetNull)
   serviceSales        ServiceSale[]
   SmsAppointmentState SmsAppointmentState?
   SmsSendLog          SmsSendLog[]
@@ -910,6 +912,7 @@ model CouponIssue {
   AutomatedCouponGrant AutomatedCouponGrant[]
   customer             Customer                     @relation(fields: [customerId], references: [id], onDelete: Cascade)
   broadcastRecipients  CustomerBroadcastRecipient[]
+  appointments         Appointment[]
 
   @@index([customerId, createdAt])
   @@index([couponCode])

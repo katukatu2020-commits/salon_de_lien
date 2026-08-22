@@ -1,4 +1,5 @@
 import { Bell, CheckCheck, Clock3, Inbox, TicketPercent } from "lucide-react";
+import Link from "next/link";
 import { markCustomerBroadcastsReadAction } from "@/lib/actions/customer-broadcast-actions";
 import { getCurrentCustomerSession } from "@/lib/auth/current-customer";
 import { effectiveCouponIssueStatus } from "@/lib/coupons/coupon-validation";
@@ -27,6 +28,15 @@ export default async function CustomerMessagesPage() {
     ? await prisma.couponIssue.findMany({ where: { id: { in: couponIds }, customerId: session.customerId } })
     : [];
   const couponMap = new Map(couponIssues.map((coupon) => [coupon.id, coupon]));
+  const reservedCouponIds = couponIds.length > 0
+    ? new Set((await prisma.appointment.findMany({
+        where: {
+          couponIssueId: { in: couponIds },
+          status: { notIn: ["キャンセル", "キャンセル済み", "無断キャンセル"] }
+        },
+        select: { couponIssueId: true }
+      })).map((appointment) => appointment.couponIssueId).filter((value): value is string => Boolean(value)))
+    : new Set<string>();
   const unreadCount = recipients.filter((recipient) => !recipient.readAt).length;
 
   return (
@@ -55,6 +65,15 @@ export default async function CustomerMessagesPage() {
                     <div className="mt-4 grid gap-3 sm:grid-cols-3"><div><p className="text-xs text-[#8a7443]">優待内容</p><p className="mt-1 text-xl font-semibold text-[#8f4f42]">{coupon.discountRate}%OFF</p></div><div><p className="text-xs text-[#8a7443]">対象メニュー</p><p className="mt-1 text-sm font-semibold">{broadcast.couponTargetMenu ?? "対象メニュー"}</p></div><div><p className="text-xs text-[#8a7443]">有効期限</p><p className="mt-1 text-sm font-semibold">{formatDate(coupon.expiresAt)}まで</p></div></div>
                     <div className="mt-4 rounded-xl border border-[#ead9a9] bg-white px-3 py-3 text-center"><p className="text-[10px] font-semibold text-[#8a7443]">ご利用コード</p><p className="mt-1 break-all font-mono text-base font-semibold tracking-wider text-[#4f3b22]">{coupon.couponCode}</p></div>
                     <p className="mt-3 flex items-center gap-2 text-xs text-[#7c6a3c]"><Clock3 className="h-4 w-4" />{couponStatus === "used" ? "使用済み" : couponStatus === "expired" ? "期限切れ" : "会計時にこの画面をご提示ください"}</p>
+                    {couponStatus === "issued" ? (
+                      reservedCouponIds.has(coupon.id) ? (
+                        <p className="mt-3 rounded-full bg-[#f1ead7] px-4 py-3 text-center text-sm font-semibold text-[#765813]">予約に設定済みです</p>
+                      ) : (
+                        <Link href={`/u/appointments?coupon=${encodeURIComponent(coupon.id)}`} className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-[#8f4f42] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#7d453a]">
+                          <TicketPercent className="h-4 w-4" />クーポンを使って予約する
+                        </Link>
+                      )
+                    ) : null}
                   </div>
                 ) : null}
               </article>

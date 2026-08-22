@@ -236,6 +236,7 @@ export default async function AppointmentCheckoutPage({ params, searchParams }: 
               initialSubtotal={appointment.estimatedPrice ?? 0}
               availablePoints={pointBalance.availablePoints}
               coupons={checkoutCoupons}
+              initialCouponSelection={appointment.couponIssueId ? `couponIssue:${appointment.couponIssueId}` : ""}
               products={products}
               taxRate={appointment.customer.organization.taxRate}
             />
