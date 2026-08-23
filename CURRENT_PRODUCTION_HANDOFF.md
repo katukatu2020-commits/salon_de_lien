@@ -14,7 +14,7 @@
 - ECR tag: `shift-staff-drop-v394`
 - immutable digest: `sha256:4315f38197acbc6bdab7e38eda70028ff640f0e8d7b8d492f16f6e10d65a542e`
 - production URL: `https://salon-de-lien.com`
-- handoff tag: `aws-production-v394-20260823`
+- handoff tag: `aws-production-v394-20260823-portable`
 
 このdigestを本番コードの正とします。可変タグではなく、必ず上記digestで照合してください。
 
@@ -34,11 +34,11 @@ npm run local:aws-verify
 
 ## GitHubに保存した復旧用スナップショット
 
-`aws-runtime-recovery/2026-08-23/runtime-root/` に、ECS revision 394の実行イメージ `/app` からコードとビルド成果物を抽出して保存しています。
+`aws-runtime-recovery/2026-08-23/runtime-root/` にECS revision 394の実行コードを保存し、Next.js `.next` ビルド成果物はWindowsでも確実にcheckoutできる `next-build.tar.gz` に保存しています。
 
 含むもの:
 
-- Next.js `.next` ビルド成果物
+- Next.js `.next` ビルド成果物（`next-build.tar.gz`、552ファイル）
 - `src`, `public`, `prisma`, `scripts`
 - Prisma schemaと全migration
 - 本番runtime patch群

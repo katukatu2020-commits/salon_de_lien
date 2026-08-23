@@ -10,7 +10,10 @@
   "imageDigest": "sha256:4315f38197acbc6bdab7e38eda70028ff640f0e8d7b8d492f16f6e10d65a542e",
   "sourceBranch": "aws-production-source-complete-20260819",
   "sourceCommitBeforeSnapshot": "db7702a8ffdb7d73bb487ffe7647279a7955298e",
-  "handoffTag": "aws-production-v394-20260823",
+  "handoffTag": "aws-production-v394-20260823-portable",
+  "nextBuildArchive": "next-build.tar.gz",
+  "nextBuildArchiveFiles": 552,
+  "nextBuildArchiveSha256": "7725b28ca7fff3978c9520a5ccf3245859ad1011fc0915150f7ad380bbbf1f15",
   "containsSecrets": false,
   "containsProductionDatabaseData": false,
   "environmentNames": [
