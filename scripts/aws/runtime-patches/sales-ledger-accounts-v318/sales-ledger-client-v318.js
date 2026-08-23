@@ -1,6 +1,6 @@
 (function () {
   'use strict'
-  const VERSION = 'sales-ledger-accounts-v324'
+  const VERSION = 'sales-ledger-layout-v388'
   let lastRoute = ''
   let rendering = false
   let accountInjecting = false
@@ -32,10 +32,12 @@
     const style = document.createElement('style')
     style.id = VERSION
     style.textContent = `
-      .sl-page{--sl-rose:#c94f72;--sl-rose-soft:#fff0f5;--sl-ink:#241d1a;--sl-muted:#80726b;--sl-line:#eadbd4;--sl-card:#fffdfb;display:grid;gap:20px;color:var(--sl-ink)}
+      .sl-ledger-portal{position:fixed;z-index:25;overflow:auto;background:var(--lien-bg,#fffaf6);overscroll-behavior:contain}
+      .sl-ledger-portal-inner{min-height:100%;padding:20px 16px 32px}@media(min-width:640px){.sl-ledger-portal-inner{padding-left:24px;padding-right:24px}}@media(min-width:1024px){.sl-ledger-portal-inner{padding-left:32px;padding-right:32px}}
+      .sl-page{--sl-rose:var(--lien-primary,#c94f72);--sl-rose-soft:var(--lien-primary-soft,#fff0f5);--sl-ink:var(--lien-ink,#241d1a);--sl-muted:var(--lien-muted,#80726b);--sl-line:var(--lien-line,#eadbd4);--sl-card:var(--lien-paper,#fffdfb);display:grid;max-width:80rem;margin:0 auto;gap:24px;color:var(--sl-ink)}
       .sl-page *{box-sizing:border-box}.sl-tabs{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--sl-line);border-radius:18px;background:#fff;padding:5px;box-shadow:0 8px 24px #7c51400a}.sl-tabs a{display:flex;min-height:46px;align-items:center;justify-content:center;border-radius:13px;color:#776a64;text-decoration:none;font-size:13px;font-weight:800}.sl-tabs a.active{background:#fbe7ee;color:#a93659}
       .sl-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;border:1px solid var(--sl-line);border-radius:24px;background:linear-gradient(135deg,#fffdfb,#fff8f5);padding:28px 30px;box-shadow:0 12px 34px #63402f0d}.sl-eyebrow{color:var(--sl-rose);font-size:10px;font-weight:900;letter-spacing:.13em}.sl-hero h1{margin:8px 0 8px;font:700 30px/1.35 Georgia,"Yu Mincho",serif}.sl-hero p{margin:0;color:var(--sl-muted);font-size:12px;line-height:1.8}.sl-hero-mark{display:grid;width:58px;height:58px;place-items:center;border-radius:18px;background:#fff0f4;color:var(--sl-rose)}.sl-hero-mark svg,.sl-button svg,.sl-section-title svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-      .sl-card{border:1px solid var(--sl-line);border-radius:22px;background:var(--sl-card);padding:22px;box-shadow:0 10px 30px #6e4b3c0b}.sl-filter-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px}.sl-field{display:grid;gap:6px}.sl-field.wide{grid-column:span 2}.sl-field label{font-size:10px;color:var(--sl-muted);font-weight:800}.sl-field input,.sl-field select,.sl-field textarea{width:100%;min-height:43px;border:1px solid #dfcfc7;border-radius:12px;background:#fff;padding:10px 12px;color:inherit;font:inherit}.sl-field textarea{min-height:86px;resize:vertical}.sl-field input:focus,.sl-field select:focus,.sl-field textarea:focus{outline:3px solid #d85a7b1c;border-color:#d76b88}.sl-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:16px;padding-top:16px;border-top:1px solid var(--sl-line)}.sl-action-group{display:flex;gap:9px;flex-wrap:wrap}.sl-button{display:inline-flex;min-height:42px;align-items:center;justify-content:center;gap:7px;border:1px solid #dfccc3;border-radius:999px;background:#fff;padding:10px 17px;color:#5e4b43;font-size:11px;font-weight:900;cursor:pointer}.sl-button.primary{border-color:var(--sl-rose);background:var(--sl-rose);color:#fff;box-shadow:0 8px 18px #b63d6128}.sl-button:disabled{opacity:.4;cursor:not-allowed}.sl-status{color:var(--sl-muted);font-size:11px}
+      .sl-card{border:1px solid var(--sl-line);border-radius:28px;background:var(--sl-card);padding:22px;box-shadow:var(--lien-shadow-sm,0 10px 30px #6e4b3c0b)}.sl-filter-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px}.sl-field{display:grid;gap:6px}.sl-field.wide{grid-column:span 2}.sl-field label{font-size:10px;color:var(--sl-muted);font-weight:800}.sl-field input,.sl-field select,.sl-field textarea{width:100%;min-height:43px;border:1px solid #dfcfc7;border-radius:12px;background:#fff;padding:10px 12px;color:inherit;font:inherit}.sl-field textarea{min-height:86px;resize:vertical}.sl-field input:focus,.sl-field select:focus,.sl-field textarea:focus{outline:3px solid #d85a7b1c;border-color:#d76b88}.sl-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:16px;padding-top:16px;border-top:1px solid var(--sl-line)}.sl-action-group{display:flex;gap:9px;flex-wrap:wrap}.sl-button{display:inline-flex;min-height:42px;align-items:center;justify-content:center;gap:7px;border:1px solid #dfccc3;border-radius:999px;background:#fff;padding:10px 17px;color:#5e4b43;font-size:11px;font-weight:900;cursor:pointer}.sl-button.primary{border-color:var(--sl-rose);background:var(--sl-rose);color:#fff;box-shadow:0 8px 18px #b63d6128}.sl-button:disabled{opacity:.4;cursor:not-allowed}.sl-status{color:var(--sl-muted);font-size:11px}
       .sl-table-card{padding:0;overflow:hidden}.sl-table-head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 22px;border-bottom:1px solid var(--sl-line)}.sl-section-title{display:flex;align-items:center;gap:9px}.sl-section-title svg{color:var(--sl-rose)}.sl-section-title h2{margin:0;font:700 20px Georgia,"Yu Mincho",serif}.sl-table-wrap{overflow:auto;max-height:650px}.sl-table{width:100%;min-width:1180px;border-collapse:collapse}.sl-table th{position:sticky;z-index:2;top:0;background:#faf5f2;padding:12px 10px;color:#776963;font-size:10px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--sl-line)}.sl-table td{padding:13px 10px;border-bottom:1px solid #f0e7e2;font-size:11px;vertical-align:middle}.sl-table tbody tr:hover{background:#fff8fa}.sl-table tbody tr.selected{background:#fff0f5}.sl-table input[type=checkbox]{width:17px;height:17px;accent-color:var(--sl-rose)}.sl-money{text-align:right;font-weight:900;font-variant-numeric:tabular-nums}.sl-muted{color:var(--sl-muted)}.sl-id{font:10px ui-monospace,SFMono-Regular,Consolas,monospace;color:#927e75}.sl-audit{display:inline-flex;border-radius:99px;background:#f3ece8;padding:4px 7px;color:#7b6258;font-size:9px;font-weight:800}.sl-empty{padding:52px;text-align:center;color:var(--sl-muted)}
       .sl-dialog{width:min(720px,calc(100% - 28px));max-height:calc(100vh - 40px);border:1px solid var(--sl-line);border-radius:24px;background:#fffdfb;padding:0;box-shadow:0 30px 90px #3e2b2460}.sl-dialog::backdrop{background:#2d201c55;backdrop-filter:blur(5px)}.sl-dialog-head{display:flex;align-items:center;justify-content:space-between;padding:21px 24px;border-bottom:1px solid var(--sl-line)}.sl-dialog-head h2{margin:0;font:700 22px Georgia,"Yu Mincho",serif}.sl-close{display:grid;width:40px;height:40px;place-items:center;border:1px solid var(--sl-line);border-radius:50%;background:#fff;cursor:pointer}.sl-close svg{width:18px;height:18px;fill:none;stroke:currentColor}.sl-dialog-body{padding:22px 24px;overflow:auto}.sl-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.sl-dialog-foot{display:flex;justify-content:flex-end;gap:9px;margin-top:20px;padding-top:18px;border-top:1px solid var(--sl-line)}
       .sl-shared-account-card{overflow:hidden}.sl-shared-account-card .ca-theme-card-head{align-items:center}.sl-shared-account-card .sl-eyebrow{display:block;margin-bottom:4px}.sl-shared-account-form{padding:20px 22px 22px}.sl-shared-account-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.sl-shared-account-field{display:grid;gap:7px}.sl-shared-account-field label{color:var(--ca-ink,#493a34);font-size:10px;font-weight:900}.sl-shared-account-field input{width:100%;min-height:46px;border:1px solid var(--ca-line,#dfcfc7);border-radius:13px;background:var(--ca-paper,#fffdfb);padding:0 14px;color:var(--ca-ink,#2f2420);font:inherit;outline:0}.sl-shared-account-field input:focus{border-color:#bf7667;box-shadow:0 0 0 4px #c37c6d1a}.sl-shared-account-actions{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:18px;padding-top:17px;border-top:1px solid var(--ca-line,#eadbd4)}.sl-shared-account-status{display:flex;align-items:center;gap:7px;color:var(--ca-muted,#80726b);font-size:10px;font-weight:800}.sl-account-badge{display:inline-flex;min-height:26px;align-items:center;border-radius:999px;background:#edf7f0;padding:0 10px;color:#35684a;font-size:9px;font-weight:900}.sl-shared-save{display:inline-flex!important;min-width:250px!important;min-height:44px!important;align-items:center!important;justify-content:center!important;gap:8px!important;border:0!important;border-radius:999px!important;background:linear-gradient(135deg,#a65747,#bd6d5b)!important;padding:0 20px!important;color:#fff!important;font-size:11px!important;font-weight:900!important;line-height:1!important;opacity:1!important;box-shadow:0 10px 24px #753a2d27!important;cursor:pointer!important;transition:transform .16s,box-shadow .16s,opacity .16s!important}.sl-shared-save:hover{transform:translateY(-1px);box-shadow:0 14px 28px #753a2d32!important}.sl-shared-save:focus-visible{outline:3px solid #cf4f7230!important;outline-offset:2px}.sl-shared-save:disabled{cursor:wait!important;opacity:.62!important}.sl-shared-save svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8}.sl-shared-feedback{min-height:16px;margin:10px 0 0;color:#3f7659;font-size:10px;font-weight:800}.sl-shared-feedback.error{color:#ae393d}
@@ -144,8 +146,9 @@
     const from = new Date(now.getFullYear() - 1, now.getMonth(), 1)
     const through = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
     const fmt = value => `${value.getFullYear()}-${String(value.getMonth()+1).padStart(2,'0')}-${String(value.getDate()).padStart(2,'0')}`
-    return `<div class="sl-page"><nav class="sl-tabs" aria-label="経営ページ切替"><a href="/admin/owner-analytics">経営分析</a><a class="active" href="/admin/owner-analytics?salesLedger=1">会計データ管理</a><a href="/admin/owner-analytics?section=billing">システム利用料</a></nav>
-      <section class="sl-hero"><div><span class="sl-eyebrow">SALES LEDGER</span><h1>会計データ管理</h1><p>確定後の売上を検索し、個別または複数選択で修正できます。変更前後と操作担当者は監査履歴へ保存されます。</p></div><span class="sl-hero-mark">${icon('receipt')}</span></section>
+    const segment = 'lien-segment inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-[14px] px-4 text-sm font-semibold transition'
+    return `<div class="sl-page"><nav class="grid w-full grid-cols-3 gap-1 rounded-[18px] border border-lien bg-white p-1 shadow-lien-sm" aria-label="経営ページ切替"><a class="${segment} text-lien-muted hover:bg-lien-soft hover:text-lien-ink" href="/admin/owner-analytics">経営分析</a><a aria-current="page" class="${segment} bg-[color:var(--lien-primary)] text-white shadow-sm" href="/admin/owner-analytics?salesLedger=1">会計データ管理</a><a class="${segment} text-lien-muted hover:bg-lien-soft hover:text-lien-ink" href="/admin/owner-analytics?section=billing">システム利用料</a></nav>
+      <header class="sl-hero lien-glass overflow-hidden rounded-[28px] border p-5 sm:p-6"><div class="min-w-0"><div class="mb-2 inline-flex rounded-full border border-[color:var(--lien-primary-soft)] bg-white/70 px-3 py-1 text-xs font-semibold text-[color:var(--lien-primary-dark)]"><span>Sales ledger</span></div><h1 class="text-balance text-2xl font-semibold tracking-normal text-[color:var(--lien-ink)] sm:text-3xl">会計データ管理</h1><p class="mt-3 max-w-3xl text-sm leading-7 text-lien-muted">確定後の売上を検索し、個別または複数選択で修正できます。変更前後と操作担当者は監査履歴へ保存されます。</p></div><span class="sl-hero-mark">${icon('receipt')}</span></header>
       <section class="sl-card"><form data-sl-search><div class="sl-filter-grid">
         <div class="sl-field"><label>売上日（開始）</label><input type="date" name="from" value="${fmt(from)}"></div><div class="sl-field"><label>売上日（終了）</label><input type="date" name="to" value="${fmt(through)}"></div>
         <div class="sl-field"><label>顧客名</label><input name="customer" maxlength="100" placeholder="顧客名で検索"></div><div class="sl-field"><label>主担当スタッフ</label><select name="staff"><option value="">すべて</option></select></div>
@@ -155,14 +158,55 @@
       <section class="sl-card sl-table-card"><div class="sl-table-head"><div class="sl-section-title">${icon('receipt')}<div><h2>売上一覧</h2><span class="sl-status"><span data-sl-count>0件</span> / <span data-sl-selected>0件選択</span></span></div></div><div class="sl-action-group"><button class="sl-button" type="button" data-sl-bulk disabled>${icon('edit')}選択項目を一括修正</button><button class="sl-button" type="button" data-sl-print disabled>${icon('print')}印刷</button></div></div><div class="sl-table-wrap"><table class="sl-table"><thead><tr><th><input type="checkbox" data-select-all aria-label="表示中をすべて選択"></th><th>売上日 / 売上No.</th><th>顧客名</th><th>主担当</th><th>施術・売上内容</th><th>合計金額</th><th>支払方法</th><th>商品</th><th>施術No.</th><th>履歴</th><th>操作</th></tr></thead><tbody data-sl-rows></tbody></table></div></section><dialog class="sl-dialog" data-sl-dialog></dialog></div>`
   }
 
+  function cleanupLedgerPortal() {
+    document.querySelectorAll('[data-sl-ledger-portal]').forEach(node => {
+      node.dispatchEvent(new Event('sl:cleanup'))
+      node.remove()
+    })
+    document.querySelectorAll('main[data-sl-ledger-source]').forEach(main => {
+      main.style.visibility = main.dataset.slPreviousVisibility || ''
+      main.style.pointerEvents = main.dataset.slPreviousPointerEvents || ''
+      delete main.dataset.slPreviousVisibility
+      delete main.dataset.slPreviousPointerEvents
+      delete main.dataset.slLedgerSource
+    })
+    rendering = false
+  }
+
+  function syncLedgerPortal(portal, main) {
+    if (!portal.isConnected || !main.isConnected) return
+    const rect = main.getBoundingClientRect()
+    portal.style.left = `${Math.max(0, rect.left)}px`
+    portal.style.top = `${Math.max(0, rect.top)}px`
+    portal.style.width = `${Math.max(1, rect.width)}px`
+    portal.style.height = `${Math.max(1, window.innerHeight - Math.max(0, rect.top))}px`
+  }
+
   async function renderLedger() {
     if (rendering) return
     const main = document.querySelector('main')
     if (!main) return
     rendering = true
     installStyles()
-    main.innerHTML = ledgerMarkup()
-    const root = main.querySelector('.sl-page')
+    cleanupLedgerPortal()
+    rendering = true
+    const portal = document.createElement('div')
+    portal.className = 'sl-ledger-portal'
+    portal.dataset.slLedgerPortal = '1'
+    portal.innerHTML = `<div class="sl-ledger-portal-inner">${ledgerMarkup()}</div>`
+    main.dataset.slLedgerSource = '1'
+    main.dataset.slPreviousVisibility = main.style.visibility || ''
+    main.dataset.slPreviousPointerEvents = main.style.pointerEvents || ''
+    main.style.visibility = 'hidden'
+    main.style.pointerEvents = 'none'
+    document.body.appendChild(portal)
+    const sync = () => syncLedgerPortal(portal, main)
+    sync()
+    const observer = new ResizeObserver(sync)
+    observer.observe(main)
+    addEventListener('resize', sync, { passive:true })
+    portal.addEventListener('sl:cleanup', () => { observer.disconnect(); removeEventListener('resize', sync) }, { once:true })
+    const root = portal.querySelector('.sl-page')
     root.querySelector('[data-sl-search]').addEventListener('submit', event => { event.preventDefault(); state.selected.clear(); load(root) })
     root.querySelector('[data-select-all]').addEventListener('change', event => {
       state.selected = event.target.checked ? new Set(state.rows.map(row => row.id)) : new Set()
@@ -174,8 +218,8 @@
       root.querySelectorAll('tr[data-id]').forEach(row => row.classList.toggle('print-row', ids.has(row.dataset.id)))
       window.print()
     })
-    await load(root)
-    rendering = false
+    try { await load(root) }
+    finally { rendering = false }
   }
 
   function addLedgerNavigation() {
@@ -185,7 +229,7 @@
     const link = document.createElement('a')
     link.href = '/admin/owner-analytics?salesLedger=1'
     link.textContent = '会計データ管理'
-    link.style.cssText = 'display:flex;align-items:center;justify-content:center;text-decoration:none;font-weight:800;color:#766861'
+    link.className = 'lien-segment inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-[14px] px-4 text-sm font-semibold transition text-lien-muted hover:bg-lien-soft hover:text-lien-ink'
     nav.style.gridTemplateColumns = 'repeat(3,minmax(0,1fr))'
     nav.insertBefore(link, nav.children[1] || null)
   }
@@ -247,8 +291,10 @@
   function enhance() {
     const route = location.pathname + location.search
     removeSharedAccountOutsideSettings()
-    if (new URLSearchParams(location.search).get('salesLedger') === '1' && location.pathname === '/admin/owner-analytics') {
-      if (!document.querySelector('.sl-page')) renderLedger()
+    const isLedger = new URLSearchParams(location.search).get('salesLedger') === '1' && location.pathname === '/admin/owner-analytics'
+    if (!isLedger) cleanupLedgerPortal()
+    if (isLedger) {
+      if (!document.querySelector('[data-sl-ledger-portal]')) renderLedger()
       return
     }
     if (route !== lastRoute) lastRoute = route
@@ -258,6 +304,15 @@
   const observer = new MutationObserver(() => queueMicrotask(enhance))
   observer.observe(document.documentElement, { childList:true, subtree:true })
   addEventListener('popstate', enhance)
-  document.addEventListener('click', event => setTimeout(enhance, event.target.closest('a') ? 40 : 0), true)
+  document.addEventListener('click', event => {
+    const link = event.target.closest('a[href]')
+    if (link && document.querySelector('[data-sl-ledger-portal]')) {
+      const next = new URL(link.href, location.href)
+      if (`${next.pathname}${next.search}` !== `${location.pathname}${location.search}`) {
+        cleanupLedgerPortal()
+      }
+    }
+    setTimeout(enhance, link ? 40 : 0)
+  }, true)
   enhance()
 })()
