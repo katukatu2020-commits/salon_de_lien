@@ -9,11 +9,8 @@ import {
   HAIR_VOLUME_OPTIONS,
   SERVICE_PREFERENCE_OPTIONS
 } from "@/lib/customer-profile-options";
-import { SALON_STAFF_NAMES } from "@/lib/salon/staff";
 import { BrandVisual } from "@/components/lien/brand-visual";
 import { CustomerPhoneVerificationField } from "@/components/customer-app/customer-phone-verification-field";
-
-const staffOptions = [...SALON_STAFF_NAMES];
 
 export type CustomerRegistrationSearchParams = {
   source?: string;
@@ -118,12 +115,6 @@ export function CustomerRegistrationPage({
               <CustomerPhoneVerificationField />
               <SelectBox label="性別" name="gender" options={CUSTOMER_GENDER_OPTIONS} />
               <label className="grid gap-1.5 text-sm font-semibold">生年月日<input name="birthDate" type="date" min="1900-01-01" required autoComplete="bday" className="lien-input" /></label>
-              <label className="grid gap-1.5 text-sm font-semibold sm:col-span-2">担当者・指名
-                <select name="assignedStaffSelection" defaultValue="free" className="lien-input">
-                  <option value="free">フリー（指名なし）</option>
-                  {staffOptions.map((staff) => <option key={staff} value={staff}>{staff}</option>)}
-                </select>
-              </label>
             </div>
           </section>
 

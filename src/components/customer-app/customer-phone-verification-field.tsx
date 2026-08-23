@@ -148,7 +148,6 @@ export function CustomerPhoneVerificationField() {
           {message}
         </p>
       ) : null}
-      <p className="text-xs leading-5 text-lien-muted">1つの携帯番号につき、お客様アカウントは1つだけ作成できます。</p>
     </div>
   );
 }
