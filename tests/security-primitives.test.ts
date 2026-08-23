@@ -707,4 +707,10 @@ test("organization public codes are deterministic and compatible with store link
   );
   assert.match(registrationPatch, /const publicCode = 'STORE-'/);
   assert.match(registrationPatch, /"name","publicCode","createdAt"/);
+
+  const registrationDestinationPatch = readFileSync(
+    new URL("../scripts/aws/runtime-patches/store-public-code-v404/patch-runtime.mjs", import.meta.url),
+    "utf8"
+  );
+  assert.match(registrationDestinationPatch, /\/admin\/settings\?registered=1/);
 });
