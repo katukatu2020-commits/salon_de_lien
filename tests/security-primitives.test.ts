@@ -741,6 +741,32 @@ test("customer mobile bottom navigation uses one safe-area-aware layout contract
   assert.doesNotMatch(runtime, /\.cx-customer-nav-active\{background:#f7e7e1/);
 });
 
+test("automated coupon stylist selector uses active tenant staff and remains interactive", () => {
+  const patch = readFileSync(
+    new URL(
+      "../scripts/aws/runtime-patches/automated-coupon-stylist-selector-v412/patch-runtime.mjs",
+      import.meta.url
+    ),
+    "utf8"
+  );
+  const client = readFileSync(
+    new URL(
+      "../scripts/aws/runtime-patches/automated-coupon-stylist-selector-v412/automated-coupon-fields-v412.js",
+      import.meta.url
+    ),
+    "utf8"
+  );
+
+  assert.match(patch, /FROM \"AppUser\" u/);
+  assert.match(patch, /u\.\"organizationId\"=\$1/);
+  assert.match(patch, /u\.\"role\"::text IN \('ADMIN','STAFF'\)/);
+  assert.match(patch, /s\.\"onLeave\"=TRUE/);
+  assert.match(patch, /AND \"staffName\"=\$2 LIMIT 1/);
+  assert.match(client, /field\.style\.display = active \? \"\" : \"none\"/);
+  assert.match(client, /form\.dataset\.conditionalFieldsBound = \"v412\"/);
+  assert.match(client, /stylistSelect\.disabled = !hasCandidates/);
+});
+
 test("organization public codes are deterministic and compatible with store linking", () => {
   const code = organizationPublicCode("org_265d45f302de499cacad7c4dff101a9c");
   assert.equal(code, organizationPublicCode("org_265d45f302de499cacad7c4dff101a9c"));
