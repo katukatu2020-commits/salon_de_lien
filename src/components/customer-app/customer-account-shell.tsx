@@ -2,15 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, CalendarDays, Clock3, HeartHandshake, Home, LogOut, MessageCircleQuestion, Sparkles, WalletCards } from "lucide-react";
+import { Bell, CalendarDays, Clock3, Home, LogOut, MessageCircle, Sparkles } from "lucide-react";
 
 const navItems = [
   { href: "/u/home", label: "ホーム", icon: Home },
   { href: "/u/appointments", label: "予約", icon: CalendarDays },
-  { href: "/u/reviews", label: "アンケート", icon: MessageCircleQuestion },
-  { href: "/u/points", label: "ポイント", icon: WalletCards },
-  { href: "/u/history", label: "来店履歴", icon: Clock3 },
-  { href: "/u/community", label: "スタイル", icon: HeartHandshake }
+  { href: "/u/history", label: "履歴", icon: Clock3 },
+  { href: "/u/chat", label: "チャット相談", icon: MessageCircle }
 ];
 
 export function CustomerAccountShell({ customerName, children }: { customerName: string; children: React.ReactNode }) {
@@ -120,7 +118,7 @@ export function CustomerAccountShell({ customerName, children }: { customerName:
       </div>
 
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-[#e8ded2] bg-white/96 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden" aria-label="お客様アプリメニュー">
-        <div className="mx-auto grid h-16 w-full max-w-xl grid-cols-6 px-1">
+        <div className="mx-auto grid h-16 w-full max-w-xl grid-cols-4 px-1">
           {navigation.map((item) => {
             const { active, Icon } = item;
             return (
