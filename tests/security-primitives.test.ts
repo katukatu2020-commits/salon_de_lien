@@ -201,6 +201,20 @@ test("customer session is scoped to one customer and rejects expiration or tampe
   assert.equal(await verifyCustomerSessionToken(token, secret, now + 25 * 60 * 60 * 1000), null);
 });
 
+test("customer account pages accept a canonical or registered store session", () => {
+  const source = readFileSync(
+    new URL("../src/lib/auth/current-customer.ts", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(source, /LEFT JOIN "CustomerStoreLink" l/);
+  assert.match(source, /u\."customerId" = c\."id" AND u\."organizationId" = c\."organizationId"/);
+  assert.match(source, /OR l\."id" IS NOT NULL/);
+  assert.match(source, /LOWER\(COALESCE\(NULLIF\(u\."loginId", ''\), u\."email"\)\)/);
+  assert.doesNotMatch(source, /customerId:\s*session\.customerId/);
+  assert.doesNotMatch(source, /organizationId:\s*session\.organizationId/);
+});
+
 test("purchased-product survey expires after 30 days and awarded points after 40 days", () => {
   const visitedAt = new Date("2026-08-03T00:00:00.000Z");
   const awardedAt = new Date("2026-08-20T00:00:00.000Z");

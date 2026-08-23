@@ -15,29 +15,27 @@ export async function getCurrentCustomerSession() {
   );
   if (!session) return null;
 
-  const appUser = await prisma.appUser.findFirst({
-    where: {
-      id: session.userId,
-      loginId: session.subject,
-      role: "CUSTOMER",
-      active: true,
-      customerId: session.customerId,
-      organizationId: session.organizationId,
-      customer: {
-        id: session.customerId,
-        organizationId: session.organizationId,
-        deletedAt: null
-      }
-    },
-    select: {
-      id: true,
-      customerId: true,
-      organizationId: true,
-      customer: { select: { id: true, name: true } }
-    }
-  });
+  const customers = await prisma.$queryRaw<Array<{ id: string; name: string }>>`
+    SELECT c."id", c."name"
+    FROM "AppUser" u
+    JOIN "Customer" c
+      ON c."id" = ${session.customerId}
+      AND c."organizationId" = ${session.organizationId}
+      AND c."deletedAt" IS NULL
+    LEFT JOIN "CustomerStoreLink" l
+      ON l."appUserId" = u."id"
+      AND l."organizationId" = c."organizationId"
+      AND l."customerId" = c."id"
+    WHERE u."id" = ${session.userId}
+      AND LOWER(COALESCE(NULLIF(u."loginId", ''), u."email")) = ${session.subject}
+      AND u."role" = 'CUSTOMER'
+      AND u."active" = TRUE
+      AND (
+        (u."customerId" = c."id" AND u."organizationId" = c."organizationId")
+        OR l."id" IS NOT NULL
+      )
+    LIMIT 1
+  `;
 
-  return appUser?.customerId && appUser.organizationId && appUser.customer
-    ? { ...session, customer: appUser.customer }
-    : null;
+  return customers[0] ? { ...session, customer: customers[0] } : null;
 }
