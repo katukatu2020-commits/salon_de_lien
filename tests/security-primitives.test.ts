@@ -713,4 +713,15 @@ test("organization public codes are deterministic and compatible with store link
     "utf8"
   );
   assert.match(registrationDestinationPatch, /\/admin\/settings\?registered=1/);
+
+  const productTour = readFileSync(
+    new URL("../scripts/aws/runtime-patches/first-store-product-tour-v405/product-tour-v405.js", import.meta.url),
+    "utf8"
+  );
+  assert.match(productTour, /query\.get\('registered'\) === '1'/);
+  assert.match(productTour, /\/admin\/appointments/);
+  assert.match(productTour, /\/admin\/customers/);
+  assert.match(productTour, /\/admin\/products/);
+  assert.match(productTour, /\/admin\/community/);
+  assert.match(productTour, /\/admin\/owner-analytics/);
 });
