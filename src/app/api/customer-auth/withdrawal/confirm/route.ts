@@ -44,10 +44,22 @@ export async function POST(request: NextRequest) {
     // A customer can have legacy/linked login rows from an earlier registration
     // flow.  Deactivate every login tied to the withdrawn customer so none of
     // those rows can keep the customer visible or usable in a store context.
-    await tx.appUser.updateMany({
-      where: { customerId: requestRow.customerId },
-      data: { active: false }
+    const customerAppUsers = await tx.appUser.findMany({
+      where: { customerId: requestRow.customerId, role: "CUSTOMER" },
+      select: { id: true }
     });
+    for (const customerAppUser of customerAppUsers) {
+      await tx.appUser.update({
+        where: { id: customerAppUser.id },
+        data: {
+          active: false,
+          email: `withdrawn+${customerAppUser.id}@customer.salon-de-lien.local`,
+          loginId: null,
+          passwordHash: null
+        }
+      });
+    }
+    await tx.customerPhoneIdentity.deleteMany({ where: { customerId: requestRow.customerId } });
     await tx.customerPortalAccess.updateMany({
       where: { customerId: requestRow.customerId, revokedAt: null },
       data: { revokedAt: now }

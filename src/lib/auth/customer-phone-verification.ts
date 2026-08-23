@@ -25,9 +25,9 @@ export class PhoneVerificationError extends Error {
 export async function hasExistingCustomerAccount(organizationId: string, phoneE164: string) {
   const identity = await prisma.customerPhoneIdentity.findUnique({
     where: { organizationId_phoneE164: { organizationId, phoneE164 } },
-    select: { id: true }
+    select: { customer: { select: { deletedAt: true } } }
   });
-  if (identity) return true;
+  if (identity?.customer.deletedAt === null) return true;
 
   const legacyAccounts = await prisma.appUser.findMany({
     where: {

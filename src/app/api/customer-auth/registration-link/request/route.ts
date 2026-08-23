@@ -54,7 +54,11 @@ export async function POST(request: NextRequest) {
 
   const organizationId = process.env.DEFAULT_ORGANIZATION_ID ?? "org_salon_de_lien";
   const existingAccount = await prisma.appUser.findFirst({
-    where: { email: { equals: email, mode: "insensitive" }, role: "CUSTOMER" },
+    where: {
+      email: { equals: email, mode: "insensitive" },
+      role: "CUSTOMER",
+      customer: { is: { deletedAt: null } }
+    },
     select: { id: true }
   });
   if (existingAccount) return response("registered");

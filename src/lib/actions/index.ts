@@ -479,9 +479,19 @@ export async function createPublicConsultationLead(formData: FormData) {
   if (submittedEmail !== email || !/^[a-z0-9_-]{4,24}$/.test(loginId) || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || password.length < 8 || password.length > 72) {
     throw new Error("ログインIDまたはパスワードの形式が正しくありません。");
   }
-  const existingLogin = await prisma.appUser.findFirst({ where: { loginId, role: "CUSTOMER" }, select: { id: true } });
+  const existingLogin = await prisma.appUser.findFirst({
+    where: { loginId, role: "CUSTOMER", customer: { is: { deletedAt: null } } },
+    select: { id: true }
+  });
   if (existingLogin) redirect(registrationErrorPath("loginId"));
-  const existingEmail = await prisma.appUser.findFirst({ where: { email: { equals: email, mode: "insensitive" }, role: "CUSTOMER" }, select: { id: true } });
+  const existingEmail = await prisma.appUser.findFirst({
+    where: {
+      email: { equals: email, mode: "insensitive" },
+      role: "CUSTOMER",
+      customer: { is: { deletedAt: null } }
+    },
+    select: { id: true }
+  });
   if (existingEmail) redirect(registrationErrorPath("email"));
   const passwordHash = hashScryptPassword(password);
   const name = requiredString(formData, "name");
@@ -614,9 +624,35 @@ export async function createPublicConsultationLead(formData: FormData) {
     }
     const existingPhoneIdentity = await tx.customerPhoneIdentity.findUnique({
       where: { organizationId_phoneE164: { organizationId, phoneE164 } },
+      select: { id: true, customer: { select: { deletedAt: true } } }
+    });
+    if (existingPhoneIdentity?.customer.deletedAt === null) return null;
+    if (existingPhoneIdentity) {
+      await tx.customerPhoneIdentity.delete({ where: { id: existingPhoneIdentity.id } });
+    }
+
+    const withdrawnAccounts = await tx.appUser.findMany({
+      where: {
+        role: "CUSTOMER",
+        customer: { is: { deletedAt: { not: null } } },
+        OR: [
+          { email: { equals: email, mode: "insensitive" } },
+          { loginId: { equals: loginId, mode: "insensitive" } }
+        ]
+      },
       select: { id: true }
     });
-    if (existingPhoneIdentity) return null;
+    for (const withdrawnAccount of withdrawnAccounts) {
+      await tx.appUser.update({
+        where: { id: withdrawnAccount.id },
+        data: {
+          active: false,
+          email: `withdrawn+${withdrawnAccount.id}@customer.salon-de-lien.local`,
+          loginId: null,
+          passwordHash: null
+        }
+      });
+    }
 
     const friendReferralCode = referrerCode?.trim().toUpperCase().startsWith("LIEN-")
       ? referrerCode.trim().toUpperCase()

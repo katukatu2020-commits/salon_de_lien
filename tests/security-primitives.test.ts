@@ -655,6 +655,30 @@ test("manual reception capacity overrides apply across all staff", () => {
   );
 });
 
+test("withdrawn customer credentials are released without deleting business history", () => {
+  const registrationRoute = readFileSync(
+    new URL("../src/app/api/customer-auth/registration-link/request/route.ts", import.meta.url),
+    "utf8"
+  );
+  const registrationAction = readFileSync(new URL("../src/lib/actions/index.ts", import.meta.url), "utf8");
+  const phoneVerification = readFileSync(
+    new URL("../src/lib/auth/customer-phone-verification.ts", import.meta.url),
+    "utf8"
+  );
+  const withdrawalRoute = readFileSync(
+    new URL("../src/app/api/customer-auth/withdrawal/confirm/route.ts", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(registrationRoute, /customer:\s*\{\s*is:\s*\{\s*deletedAt:\s*null/);
+  assert.match(registrationAction, /withdrawn\+\$\{withdrawnAccount\.id\}@customer\.salon-de-lien\.local/);
+  assert.match(registrationAction, /customerPhoneIdentity\.delete/);
+  assert.match(phoneVerification, /identity\?\.customer\.deletedAt === null/);
+  assert.match(withdrawalRoute, /withdrawn\+\$\{customerAppUser\.id\}@customer\.salon-de-lien\.local/);
+  assert.match(withdrawalRoute, /customerPhoneIdentity\.deleteMany/);
+  assert.doesNotMatch(withdrawalRoute, /tx\.customer\.delete(?:Many)?\s*\(/);
+});
+
 test("profile image crop keeps a square region inside the source image", () => {
   assert.deepEqual(
     calculateSquareCropRegion({
