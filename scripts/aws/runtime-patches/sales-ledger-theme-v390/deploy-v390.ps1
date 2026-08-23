@@ -31,19 +31,16 @@ if ($LASTEXITCODE -ne 0) {
 docker build -f scripts/aws/runtime-patches/sales-ledger-theme-v390/Dockerfile -t $Image .
 if ($LASTEXITCODE -ne 0) { throw 'Docker build failed' }
 
-$ExistingImage = aws ecr describe-images --repository-name $Repository --image-ids "imageTag=$Tag" --region $Region 2>$null
-if ($LASTEXITCODE -ne 0) {
-  try {
-    if ($DockerConfig) {
-      docker --config $DockerConfig push $Image
-    } else {
-      docker push $Image
-    }
-    if ($LASTEXITCODE -ne 0) { throw 'Docker push failed' }
-  } finally {
-    if ($DockerConfig -and (Test-Path -LiteralPath $DockerConfig)) {
-      Remove-Item -LiteralPath $DockerConfig -Recurse -Force
-    }
+try {
+  if ($DockerConfig) {
+    docker --config $DockerConfig push $Image
+  } else {
+    docker push $Image
+  }
+  if ($LASTEXITCODE -ne 0) { throw 'Docker push failed' }
+} finally {
+  if ($DockerConfig -and (Test-Path -LiteralPath $DockerConfig)) {
+    Remove-Item -LiteralPath $DockerConfig -Recurse -Force
   }
 }
 
