@@ -1,4 +1,5 @@
 import { sendPostmarkMessage } from "@/lib/mail/postmark";
+import { renderTransactionalEmail } from "@/lib/mail/transactional-email";
 
 type CustomerRegistrationMailInput = {
   to: string;
@@ -7,29 +8,43 @@ type CustomerRegistrationMailInput = {
 };
 
 export async function sendCustomerRegistrationMail(input: CustomerRegistrationMailInput) {
-  const escapedRegistrationUrl = input.registrationUrl
-    .replaceAll("&", "&amp;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;");
   const body = [
-    "Salon de Lien お客様アプリの初回登録を受け付けました。",
+    "Salon de Lien お客様アプリ",
+    "━━━━━━━━━━━━━━━━━━━━",
+    "登録手続きを完了してください",
     "",
-    `次のURLを開き、${input.expiresInMinutes}分以内にプロフィールとログイン情報を登録してください。`,
+    "お客様アプリの登録手続きを受け付けました。",
+    `以下のURLを開き、${input.expiresInMinutes}分以内にプロフィールとログイン情報を設定してください。`,
+    "",
     input.registrationUrl,
     "",
-    "登録画面では、携帯電話番号のSMS認証を行います。",
-    "このメールに心当たりがない場合は、何もせず破棄してください。",
-    "このURLは登録完了後に無効になります。",
+    `有効期限: このメールの送信から${input.expiresInMinutes}分`,
+    "登録画面では、ご本人確認のため携帯電話番号のSMS認証を行います。",
+    "",
+    "このメールに心当たりがない場合は、URLを開かずにこのメールを削除してください。",
+    "URLは登録完了後、または有効期限を過ぎると利用できなくなります。",
     "",
     "Salon de Lien"
   ].join("\r\n");
 
   await sendPostmarkMessage({
     to: input.to,
-    subject: "Salon de Lien お客様アプリの初回登録",
+    subject: "【Salon de Lien】お客様アプリの登録手続きをお願いします",
     textBody: body,
-    htmlBody: `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;line-height:1.8;color:#2f2522"><p>Salon de Lien お客様アプリの初回登録を受け付けました。</p><p>次のボタンを押し、${input.expiresInMinutes}分以内にプロフィールとログイン情報を登録してください。</p><p><a href="${escapedRegistrationUrl}" style="display:inline-block;padding:12px 22px;border-radius:999px;background:#a75161;color:#fff;text-decoration:none;font-weight:700">お客様アプリの登録を続ける</a></p><p style="font-size:13px;color:#766862">このメールに心当たりがない場合は、何もせず破棄してください。このURLは登録完了後に無効になります。</p><p>Salon de Lien</p></div>`,
+    htmlBody: renderTransactionalEmail({
+      preheader: `お客様アプリの登録手続きを${input.expiresInMinutes}分以内に完了してください。`,
+      eyebrow: "お客様アプリ",
+      title: "登録手続きを完了してください",
+      lead: "お客様アプリの登録手続きを受け付けました。プロフィールとログイン情報を設定すると、予約やポイントなどをご利用いただけます。",
+      details: [
+        { label: "有効期限", value: `このメールの送信から${input.expiresInMinutes}分` },
+        { label: "ご本人確認", value: "登録画面で携帯電話番号のSMS認証を行います" }
+      ],
+      actionLabel: "登録手続きを続ける",
+      actionUrl: input.registrationUrl,
+      notice: "URLは登録完了後、または有効期限を過ぎると利用できなくなります。",
+      securityMessage: "このメールに心当たりがない場合は、ボタンやURLを開かずにこのメールを削除してください。"
+    }),
     tag: "customer-registration"
   });
 }

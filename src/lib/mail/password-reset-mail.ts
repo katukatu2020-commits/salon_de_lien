@@ -1,3 +1,5 @@
+import { renderTransactionalEmail } from "@/lib/mail/transactional-email";
+
 type PasswordResetMailInput = {
   to: string;
   audienceLabel: string;
@@ -10,6 +12,7 @@ type GmailTextMailInput = {
   to: string;
   subject: string;
   body: string;
+  htmlBody?: string;
 };
 
 function base64Url(value: string) {
@@ -51,16 +54,38 @@ export async function sendGmailTextMail(input: GmailTextMailInput) {
   if (!from) throw new Error("GMAIL_RESERVATION_EMAILが設定されていません。");
   const senderName = process.env.PASSWORD_RESET_MAIL_FROM_NAME?.trim() || "Salon de Lien";
   const accessToken = await gmailAccessToken();
-  const raw = [
+  const headers = [
     `From: ${encodeSubject(senderName)} <${from}>`,
     `To: ${input.to}`,
     `Subject: ${encodeSubject(input.subject)}`,
-    "MIME-Version: 1.0",
-    "Content-Type: text/plain; charset=UTF-8",
-    "Content-Transfer-Encoding: 8bit",
-    "",
-    input.body
-  ].join("\r\n");
+    "MIME-Version: 1.0"
+  ];
+  const boundary = `lien-${crypto.randomUUID()}`;
+  const raw = input.htmlBody
+    ? [
+        ...headers,
+        `Content-Type: multipart/alternative; boundary="${boundary}"`,
+        "",
+        `--${boundary}`,
+        "Content-Type: text/plain; charset=UTF-8",
+        "Content-Transfer-Encoding: 8bit",
+        "",
+        input.body,
+        `--${boundary}`,
+        "Content-Type: text/html; charset=UTF-8",
+        "Content-Transfer-Encoding: 8bit",
+        "",
+        input.htmlBody,
+        `--${boundary}--`,
+        ""
+      ].join("\r\n")
+    : [
+        ...headers,
+        "Content-Type: text/plain; charset=UTF-8",
+        "Content-Transfer-Encoding: 8bit",
+        "",
+        input.body
+      ].join("\r\n");
 
   const response = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/send", {
     method: "POST",
@@ -77,23 +102,43 @@ export async function sendGmailTextMail(input: GmailTextMailInput) {
 }
 
 export async function sendPasswordResetMail(input: PasswordResetMailInput) {
-  const loginLine = input.loginId ? `ログインID: ${input.loginId}\r\n\r\n` : "";
   const body = [
+    "Salon de Lien",
+    "━━━━━━━━━━━━━━━━━━━━",
+    "ログイン情報を再設定してください",
+    "",
     `${input.audienceLabel}のログイン情報再設定を受け付けました。`,
     "",
-    loginLine.trimEnd(),
-    `次のURLを開き、${input.expiresInMinutes}分以内に新しいパスワードを設定してください。`,
+    ...(input.loginId ? [`ログインID: ${input.loginId}`, ""] : []),
+    `以下のURLを開き、${input.expiresInMinutes}分以内に新しいパスワードを設定してください。`,
+    "",
     input.resetUrl,
     "",
-    "このメールに心当たりがない場合は、何もせず破棄してください。",
-    "このURLは一度使用すると無効になります。",
+    `有効期限: このメールの送信から${input.expiresInMinutes}分`,
+    "このURLは一度使用すると無効になります。パスワードが変更されるまで、現在のログイン情報はそのまま利用できます。",
+    "",
+    "このメールに心当たりがない場合は、URLを開かずにこのメールを削除してください。",
     "",
     "Salon de Lien"
-  ].filter(Boolean).join("\r\n");
+  ].join("\r\n");
 
   await sendGmailTextMail({
     to: input.to,
-    subject: "Salon de Lien ログイン情報の再設定",
-    body
+    subject: "【Salon de Lien】ログイン情報の再設定",
+    body,
+    htmlBody: renderTransactionalEmail({
+      preheader: `${input.audienceLabel}のログイン情報を${input.expiresInMinutes}分以内に再設定してください。`,
+      eyebrow: input.audienceLabel,
+      title: "ログイン情報を再設定してください",
+      lead: "ログイン情報の再設定を受け付けました。下のボタンから、新しいパスワードを設定してください。",
+      details: [
+        ...(input.loginId ? [{ label: "ログインID", value: input.loginId }] : []),
+        { label: "有効期限", value: `このメールの送信から${input.expiresInMinutes}分` }
+      ],
+      actionLabel: "パスワードを再設定する",
+      actionUrl: input.resetUrl,
+      notice: "URLは一度使用すると無効になります。パスワードが変更されるまで、現在のログイン情報はそのまま利用できます。",
+      securityMessage: "このメールに心当たりがない場合は、ボタンやURLを開かずにこのメールを削除してください。"
+    })
   });
 }
