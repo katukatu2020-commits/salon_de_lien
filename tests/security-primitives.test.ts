@@ -62,6 +62,7 @@ import {
   isCustomerWithdrawalToken
 } from "../src/lib/auth/customer-withdrawal";
 import { calculateSquareCropRegion } from "../src/lib/image/square-crop";
+import { organizationPublicCode } from "../src/lib/organizations/public-code";
 
 test("customer portal tokens are opaque, random and stored as SHA-256 hashes", () => {
   const first = generateCustomerPortalToken();
@@ -693,4 +694,17 @@ test("customer profile image upload is session-scoped and preserves signed image
   assert.match(routeSource, /id:\s*session\.customerId/);
   assert.match(routeSource, /organizationId:\s*session\.organizationId/);
   assert.doesNotMatch(routeSource, /formData\.get\("customerId"\)/);
+});
+
+test("organization public codes are deterministic and compatible with store linking", () => {
+  const code = organizationPublicCode("org_265d45f302de499cacad7c4dff101a9c");
+  assert.equal(code, organizationPublicCode("org_265d45f302de499cacad7c4dff101a9c"));
+  assert.match(code, /^STORE-[A-F0-9]{8}$/);
+
+  const registrationPatch = readFileSync(
+    new URL("../scripts/aws/runtime-patches/store-public-code-v403/patch-runtime.mjs", import.meta.url),
+    "utf8"
+  );
+  assert.match(registrationPatch, /const publicCode = 'STORE-'/);
+  assert.match(registrationPatch, /"name","publicCode","createdAt"/);
 });

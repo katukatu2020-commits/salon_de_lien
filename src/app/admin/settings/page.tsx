@@ -2,9 +2,11 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Boxes, CheckCircle2, Gift, Percent, ReceiptJapaneseYen, Save, TicketPercent, Trophy, WalletCards } from "lucide-react";
 import { LienCard, PageHeader, StatusBadge } from "@/components/lien/lien-ui";
+import { StoreIdentityCard } from "@/components/settings/store-identity-card";
 import { updateStoreOperationalSettingsAction } from "@/lib/actions/store-settings-actions";
 import { requireBackofficeSession } from "@/lib/auth/authorization";
 import { OWNER_CONFIGURABLE_POINT_RULE_KEYS, POINT_RULE_DEFINITIONS } from "@/lib/points/point-service";
+import { organizationPublicCode } from "@/lib/organizations/public-code";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -35,6 +37,7 @@ export default async function StoreSettingsPage({ searchParams }: StoreSettingsP
       where: { id: session.organizationId },
       select: {
         name: true,
+        publicCode: true,
         taxRate: true,
         defaultCouponDiscountRate: true,
         referralReferrerDiscountRate: true,
@@ -62,6 +65,13 @@ export default async function StoreSettingsPage({ searchParams }: StoreSettingsP
     prisma.pointRule.findMany({ where: { key: { in: [...OWNER_CONFIGURABLE_POINT_RULE_KEYS] } } })
   ]);
   if (!organization) return null;
+  const publicCode = organization.publicCode ?? organizationPublicCode(session.organizationId);
+  if (!organization.publicCode) {
+    await prisma.organization.update({
+      where: { id: session.organizationId },
+      data: { publicCode }
+    });
+  }
   const pointRuleMap = new Map(pointRules.map((rule) => [rule.key, rule]));
 
   return (
@@ -72,6 +82,8 @@ export default async function StoreSettingsPage({ searchParams }: StoreSettingsP
         description="会計、ポイント、抽選特典、クーポンと在庫を一か所で管理します。変更後に発生する処理から新しい設定が適用されます。"
         breadcrumb={<Link href="/admin/customers" className="hover:text-[color:var(--lien-primary)]">管理画面 / 店舗運用設定</Link>}
       />
+
+      <StoreIdentityCard storeName={organization.name} publicCode={publicCode} />
 
       {searchParams?.notice === "saved" ? (
         <div role="status" className="flex items-center gap-3 rounded-[18px] border border-[#cbdcc8] bg-[#eef5ed] px-4 py-3 text-sm font-semibold text-[#405d41]">

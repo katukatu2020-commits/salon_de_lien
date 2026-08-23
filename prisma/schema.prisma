@@ -11,6 +11,7 @@ model Organization {
   id                           String                       @id
   slug                         String                       @unique
   name                         String
+  publicCode                   String?                      @unique
   createdAt                    DateTime                     @default(now())
   updatedAt                    DateTime                     @default(now()) @updatedAt
   iconImageUrl                 String?
