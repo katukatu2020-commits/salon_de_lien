@@ -4,8 +4,8 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$ExpectedDigest = "sha256:e350d1a122383912c870fbcab487f85dc978321f31918446f4c41a7c63262c18"
-$ExpectedTaskRevision = 293
+$ExpectedDigest = "sha256:4315f38197acbc6bdab7e38eda70028ff640f0e8d7b8d492f16f6e10d65a542e"
+$ExpectedTaskRevision = 394
 $ContainerName = "salon_de_lien_aws_parity"
 
 $container = docker inspect $ContainerName 2>$null | ConvertFrom-Json
@@ -28,7 +28,7 @@ if (-not $live.ok -or -not $ready.ok) {
   throw "Health verification failed."
 }
 
-$runtimeAssetPath = "/customer-link-ui-v293.js?v=293-4"
+$runtimeAssetPath = "/_next/static/chunks/app/admin/appointments/page-shift-staff-drop-v394.js"
 $localRuntimeAsset = (Invoke-WebRequest -Uri "http://127.0.0.1:$Port$runtimeAssetPath" -UseBasicParsing -TimeoutSec 10).Content
 $awsRuntimeAsset = (Invoke-WebRequest -Uri "https://salon-de-lien.com$runtimeAssetPath" -UseBasicParsing -TimeoutSec 20).Content
 $sha256 = [Security.Cryptography.SHA256]::Create()

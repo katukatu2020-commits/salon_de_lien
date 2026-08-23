@@ -39,7 +39,12 @@
     "storage:migrate-customer-photos:dry-run": "tsx scripts/migrate-customer-photos-to-s3.ts",
     "storage:migrate-customer-photos:apply": "tsx scripts/migrate-customer-photos-to-s3.ts --apply",
     "verify:point-ledger": "tsx scripts/audit-point-ledger.ts",
-    "verify:referral-rewards": "tsx --env-file=.env --env-file=.env.local scripts/verify-friend-referral-rewards.ts"
+    "verify:referral-rewards": "tsx --env-file=.env --env-file=.env.local scripts/verify-friend-referral-rewards.ts",
+    "local:aws-pull": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/local/pull-aws-runtime.ps1",
+    "local:aws-up": "docker compose -f docker-compose.yml -f docker-compose.aws-parity.yml up -d",
+    "local:aws-down": "docker compose -f docker-compose.yml -f docker-compose.aws-parity.yml down",
+    "local:aws-verify": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/local/verify-aws-runtime-parity.ps1",
+    "local:aws-sync": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/local/sync-aws-runtime.ps1"
   },
   "prisma": {
     "seed": "node prisma/seed.js"

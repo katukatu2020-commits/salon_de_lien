@@ -4,8 +4,8 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$ExpectedImage = "009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app@sha256:e350d1a122383912c870fbcab487f85dc978321f31918446f4c41a7c63262c18"
-$ExpectedDigest = "sha256:e350d1a122383912c870fbcab487f85dc978321f31918446f4c41a7c63262c18"
+$ExpectedImage = "009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app@sha256:4315f38197acbc6bdab7e38eda70028ff640f0e8d7b8d492f16f6e10d65a542e"
+$ExpectedDigest = "sha256:4315f38197acbc6bdab7e38eda70028ff640f0e8d7b8d492f16f6e10d65a542e"
 $RepositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot "../..")).Path
 $OutputBase = [IO.Path]::GetFullPath((Join-Path $RepositoryRoot $OutputRoot))
 
@@ -29,27 +29,12 @@ if ($LASTEXITCODE -ne 0 -or -not $containerId) {
 }
 
 try {
-  $items = @(
-    ".next",
-    "public",
-    "prisma",
-    "scripts",
-    "src",
-    "package.json",
-    "package-lock.json",
-    "server.js",
-    "billing.js",
-    "catalog-operations.js",
-    "commercial-admin-v101.js",
-    "inbound-email.js",
-    "platform-operator.js",
-    "public-site.js",
-    "store-profile.js",
-    "tenant-setup-client.js",
-    "tenant-setup.js",
-    "billing-migration.sql",
-    "sms-compliance-migration.sql"
-  )
+  $items = @(".next", "public", "prisma", "scripts", "src")
+  $topLevelFiles = docker run --rm --entrypoint sh $ExpectedImage -c "find /app -maxdepth 1 -type f -printf '%f\n' | sort"
+  if ($LASTEXITCODE -ne 0 -or -not $topLevelFiles) {
+    throw "Failed to enumerate top-level runtime files."
+  }
+  $items += @($topLevelFiles)
 
   foreach ($item in $items) {
     docker cp "${containerId}:/app/$item" $destination
@@ -61,7 +46,7 @@ try {
   $metadata = [ordered]@{
     capturedAt = (Get-Date).ToString("o")
     source = "approved AWS ECS runtime image"
-    taskDefinitionRevision = 293
+    taskDefinitionRevision = 394
     image = $ExpectedImage
     digest = $ExpectedDigest
     localImageId = $imageId
@@ -73,9 +58,7 @@ try {
 cd /app
 {
   find .next public prisma scripts src -type f
-  for file in package.json package-lock.json server.js billing.js catalog-operations.js commercial-admin-v101.js inbound-email.js platform-operator.js public-site.js store-profile.js tenant-setup-client.js tenant-setup.js billing-migration.sql sms-compliance-migration.sql; do
-    if [ -f "$file" ]; then printf '%s\n' "$file"; fi
-  done
+  find . -maxdepth 1 -type f -printf '%P\n'
 } | sort | while IFS= read -r file; do sha256sum "$file"; done
 '@
   $checksums = docker run --rm --entrypoint sh $ExpectedImage -c $checksumCommand

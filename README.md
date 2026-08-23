@@ -1,5 +1,7 @@
 # Salon de Lien
 
+> 最新AWS本番環境から別PCへ引き継ぐ場合は、[CURRENT_PRODUCTION_HANDOFF.md](CURRENT_PRODUCTION_HANDOFF.md) を最初に確認してください。
+
 散髪屋向けの顧客カルテ・髪型提案システムMVPです。顧客ごとの髪質、好み、NG条件、来店履歴、髪型提案を保存し、次回来店時に見返せることを目的にしています。
 
 ## 技術スタック

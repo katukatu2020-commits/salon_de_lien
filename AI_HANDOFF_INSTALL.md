@@ -1,88 +1,30 @@
-# Salon de Lien handoff install guide
+# Salon de Lien 別PC引き継ぎガイド
 
-このZIPはNext.jsアプリのソース一式です。ZIP自体を直接インストールするのではなく、展開してから依存関係をインストールしてください。
+現在のAWS本番環境を別PCへ再現する場合は、まず [CURRENT_PRODUCTION_HANDOFF.md](CURRENT_PRODUCTION_HANDOFF.md) を確認してください。
 
-## 1. 展開
+## 必要なもの
 
-Windows PowerShell:
+- Git
+- Docker Desktop
+- AWS CLI v2
+- AWS account `009293460979` のECR読取権限
+- 必要に応じてNode.js/npm（ソース開発用）
 
-```powershell
-Expand-Archive .\Salon_de_Lien_system_handoff_20260702.zip -DestinationPath .\Salon_de_Lien
-cd .\Salon_de_Lien\salon_de_lien
-```
-
-macOS / Linux:
-
-```bash
-unzip Salon_de_Lien_system_handoff_20260702.zip -d Salon_de_Lien
-cd Salon_de_Lien/salon_de_lien
-```
-
-## 2. 環境変数
-
-`.env` は機密情報を含むためZIPに入れていません。`.env.example` をもとに作成してください。
-
-```bash
-cp .env.example .env
-```
-
-Windows PowerShell:
+## 起動
 
 ```powershell
-Copy-Item .env.example .env
+git clone https://github.com/katukatu2020-commits/salon_de_lien.git
+cd salon_de_lien
+git switch aws-production-source-complete-20260819
+npm run local:aws-pull
+npm run local:aws-up
+npm run local:aws-verify
 ```
 
-## 3. インストール
+`npm run local:aws-verify` が `MATCH` を返せば、実行イメージと本番配信chunkが一致しています。
 
-```bash
-npm install
-```
+## ソースだけを変更する場合
 
-`postinstall` で `prisma generate` が実行されます。失敗した場合は手動で実行してください。
+通常の開発用セットアップは既存の `package.json`、Docker Compose、Prisma migrationを利用してください。本番反映時には、必ずGit commit、GitHub push、ECR digest、ECS revisionを一組として記録します。
 
-```bash
-npx prisma generate
-```
-
-## 4. DB準備
-
-ローカルDBまたは接続先DBを `.env` に設定してから実行してください。
-
-```bash
-npx prisma migrate deploy
-npx prisma db seed
-```
-
-開発用DBで新規に作る場合:
-
-```bash
-npx prisma migrate dev
-npx prisma db seed
-```
-
-## 5. 起動
-
-```bash
-npm run dev
-```
-
-標準URL:
-
-```text
-http://localhost:3000/admin/customers
-```
-
-## ZIPから除外しているもの
-
-- `.env`
-- `.git`
-- `node_modules`
-- `.next`
-- `.vercel`
-- `tmp`
-- `identity-results-preview`
-- `tsconfig.tsbuildinfo`
-
-## 補足
-
-クーポンチラシ用の本番フォントは `public/coupon-template/fonts` に含めています。
+Secretsや本番顧客データはGitHubに含まれません。別PCではAWSの認証経由で取得してください。
