@@ -154,6 +154,9 @@ export async function importReservationEmail(
   });
   const mergedDetails = mergeReservationEmailDetails(parsed.value, existing);
   const usedPoints = parsed.value.usedPoints ?? noteAmount(existing?.note, "利用ポイント");
+  const usedGiftAmount = parsed.value.usedGiftAmount ?? noteAmount(existing?.note, "利用ギフト券");
+  const otherDiscountAmount = parsed.value.otherDiscountAmount ?? noteAmount(existing?.note, "その他割引");
+  const prepaidAmount = parsed.value.prepaidAmount ?? noteAmount(existing?.note, "事前決済額");
   const paymentDue = parsed.value.paymentDue ?? noteAmount(existing?.note, "支払予定額");
   const note = [
     parsed.value.bookingReference ? `予約番号: ${parsed.value.bookingReference}` : null,
@@ -161,6 +164,9 @@ export async function importReservationEmail(
     mergedDetails.durationMinutes ? `所要時間: ${mergedDetails.durationMinutes}分` : null,
     parsed.value.subject ? `メール件名: ${parsed.value.subject}` : null,
     usedPoints !== null ? `利用ポイント: ${usedPoints}pt` : null,
+    usedGiftAmount !== null ? `利用ギフト券: ${usedGiftAmount}円` : null,
+    otherDiscountAmount !== null ? `その他割引: ${otherDiscountAmount}円` : null,
+    prepaidAmount !== null ? `事前決済額: ${prepaidAmount}円` : null,
     paymentDue !== null ? `支払予定額: ${paymentDue}円` : null,
     `予約元: ${providerLabel}`,
     "Gmail予約メールから抽出。元メール本文は保存していません。"
@@ -213,6 +219,9 @@ export async function importReservationEmail(
         appointment.staffName ? `担当: ${appointment.staffName}` : null,
         parsed.value.bookingReference ? `予約番号: ${parsed.value.bookingReference}` : null,
         usedPoints !== null ? `利用ポイント: ${usedPoints}pt` : null,
+        usedGiftAmount !== null ? `利用ギフト券: ${usedGiftAmount}円` : null,
+        otherDiscountAmount !== null ? `その他割引: ${otherDiscountAmount}円` : null,
+        prepaidAmount !== null ? `事前決済額: ${prepaidAmount}円` : null,
         paymentDue !== null ? `支払予定額: ${paymentDue}円` : null
       ].filter(Boolean).join("\n"),
       outcome: existing ? "予約更新" : "予約登録",
@@ -232,6 +241,9 @@ export async function importReservationEmail(
         appointment.staffName ? `担当: ${appointment.staffName}` : null,
         parsed.value.bookingReference ? `予約番号: ${parsed.value.bookingReference}` : null,
         usedPoints !== null ? `利用ポイント: ${usedPoints}pt` : null,
+        usedGiftAmount !== null ? `利用ギフト券: ${usedGiftAmount}円` : null,
+        otherDiscountAmount !== null ? `その他割引: ${otherDiscountAmount}円` : null,
+        prepaidAmount !== null ? `事前決済額: ${prepaidAmount}円` : null,
         paymentDue !== null ? `支払予定額: ${paymentDue}円` : null
       ].filter(Boolean).join("\n"),
       outcome: existing ? "予約更新" : "予約登録",

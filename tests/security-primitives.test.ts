@@ -446,7 +446,39 @@ test("salon board reservation parser reads used points and the post-discount pay
   if (!result.ok) return;
   assert.equal(result.value.estimatedPrice, 7_700);
   assert.equal(result.value.usedPoints, 100);
+  assert.equal(result.value.usedGiftAmount, 0);
+  assert.equal(result.value.otherDiscountAmount, null);
+  assert.equal(result.value.prepaidAmount, null);
   assert.equal(result.value.paymentDue, 7_600);
+});
+
+test("salon board reservation parser reads gift certificates and other payment adjustments", () => {
+  const result = parseReservationEmail({
+    subject: "【ポイント利用】予約連絡",
+    content: [
+      "■予約番号 BF54647078",
+      "■氏名 中谷 凛煌（ナカタニ リオ）",
+      "■来店日時 2026年08月23日（日）11:00",
+      "■スタイリスト フリー",
+      "■メニュー カット＋ストレートパーマ",
+      "■合計金額",
+      "予約時合計金額 15,400円",
+      "今回の利用ギフト券 500円",
+      "今回の利用ポイント 200ポイント",
+      "その他割引 300円",
+      "事前決済額 1,000円",
+      "お支払い予定金額 13,400円"
+    ].join("\n")
+  });
+
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  assert.equal(result.value.estimatedPrice, 15_400);
+  assert.equal(result.value.usedPoints, 200);
+  assert.equal(result.value.usedGiftAmount, 500);
+  assert.equal(result.value.otherDiscountAmount, 300);
+  assert.equal(result.value.prepaidAmount, 1_000);
+  assert.equal(result.value.paymentDue, 13_400);
 });
 
 test("kanzashi reservation parser reads reservation point label variants", () => {
@@ -467,6 +499,7 @@ test("kanzashi reservation parser reads reservation point label variants", () =>
   assert.equal(result.ok, true);
   if (!result.ok) return;
   assert.equal(result.value.usedPoints, 300);
+  assert.equal(result.value.usedGiftAmount, null);
   assert.equal(result.value.paymentDue, null);
 });
 

@@ -41,6 +41,14 @@ function noteLine(note: string | null, label: string) {
   return note?.split("\n").find((line) => line.startsWith(`${label}: `))?.slice(label.length + 2) ?? null;
 }
 
+function noteAmount(note: string | null, label: string) {
+  const value = noteLine(note, label);
+  const match = value?.match(/[\d,]+/);
+  if (!match) return null;
+  const amount = Number(match[0].replace(/,/g, ""));
+  return Number.isSafeInteger(amount) && amount >= 0 ? amount : null;
+}
+
 function couponDiscountFromSale(note: string | null) {
   const match = note?.match(/クーポン (.+?) -([\d,]+)円/) ?? note?.match(/(友達紹介（(?:[^）]+)）\d+%OFF) -([\d,]+)円/);
   if (!match) return null;
@@ -121,9 +129,19 @@ export default async function AppointmentCheckoutPage({ params, searchParams }: 
   const usedLongCharge = longChargeFromSale(sale?.note ?? null);
   const productTotal = sale?.productLines.reduce((sum, line) => sum + line.lineTotal, 0) ?? 0;
   const serviceSubtotal = appointment.estimatedPrice ?? (sale ? Math.max(0, sale.amount + pointDiscount + couponDiscountAmount - productTotal) : 0);
+  const externalUsedPoints = noteAmount(appointment.note, "利用ポイント");
+  const externalGiftAmount = noteAmount(appointment.note, "利用ギフト券");
+  const externalOtherDiscount = noteAmount(appointment.note, "その他割引");
+  const externalPrepaidAmount = noteAmount(appointment.note, "事前決済額");
+  const importedPaymentDue = noteAmount(appointment.note, "支払予定額");
+  const hasExternalPaymentBreakdown = [externalUsedPoints, externalGiftAmount, externalOtherDiscount, externalPrepaidAmount, importedPaymentDue]
+    .some((value) => value !== null);
+  const externalPayableAmount = importedPaymentDue ?? (hasExternalPaymentBreakdown
+    ? Math.max(0, serviceSubtotal - (externalUsedPoints ?? 0) - (externalGiftAmount ?? 0) - (externalOtherDiscount ?? 0) - (externalPrepaidAmount ?? 0))
+    : serviceSubtotal);
   const baseServiceAmount = baseServiceAmountFromSale(sale?.note ?? null) ?? Math.max(0, serviceSubtotal - (usedLongCharge?.amount ?? 0));
   const checkoutSubtotal = serviceSubtotal + productTotal;
-  const finalAmount = sale?.amount ?? Math.max(0, checkoutSubtotal - couponDiscountAmount - pointDiscount);
+  const finalAmount = sale?.amount ?? Math.max(0, externalPayableAmount + productTotal - couponDiscountAmount - pointDiscount);
   const staffName = appointment.staffName ?? noteLine(appointment.note, "担当") ?? "フリー";
   const isCompleted = Boolean(sale);
   const checkoutCoupons = [
@@ -199,6 +217,11 @@ export default async function AppointmentCheckoutPage({ params, searchParams }: 
             {appointment.durationMinutes ? <div className="flex justify-between gap-4"><dt className="text-[color:var(--lien-muted)]">施術時間</dt><dd className="font-semibold">{appointment.durationMinutes}分</dd></div> : null}
             <div className="flex justify-between gap-4"><dt className="text-[color:var(--lien-muted)]">メニュー</dt><dd className="text-right font-semibold">{appointment.menu ?? "未記載"}</dd></div>
             <div className="flex justify-between gap-4"><dt className="text-[color:var(--lien-muted)]">予定料金</dt><dd className="font-semibold tabular-nums">{serviceSubtotal.toLocaleString("ja-JP")}円</dd></div>
+            {externalUsedPoints !== null ? <div className="flex justify-between gap-4"><dt className="text-[color:var(--lien-muted)]">予約サイト利用ポイント</dt><dd className="font-semibold tabular-nums text-[color:var(--lien-primary-dark)]">-{externalUsedPoints.toLocaleString("ja-JP")}pt</dd></div> : null}
+            {externalGiftAmount !== null ? <div className="flex justify-between gap-4"><dt className="text-[color:var(--lien-muted)]">利用ギフト券</dt><dd className="font-semibold tabular-nums text-[color:var(--lien-primary-dark)]">{externalGiftAmount > 0 ? `-${externalGiftAmount.toLocaleString("ja-JP")}円` : "利用なし"}</dd></div> : null}
+            {externalOtherDiscount !== null ? <div className="flex justify-between gap-4"><dt className="text-[color:var(--lien-muted)]">その他割引</dt><dd className="font-semibold tabular-nums text-[color:var(--lien-primary-dark)]">-{externalOtherDiscount.toLocaleString("ja-JP")}円</dd></div> : null}
+            {externalPrepaidAmount !== null ? <div className="flex justify-between gap-4"><dt className="text-[color:var(--lien-muted)]">事前決済額</dt><dd className="font-semibold tabular-nums text-[color:var(--lien-primary-dark)]">-{externalPrepaidAmount.toLocaleString("ja-JP")}円</dd></div> : null}
+            {hasExternalPaymentBreakdown ? <div className="flex justify-between gap-4 border-t border-[color:var(--lien-border)] pt-3"><dt className="font-semibold">お支払い予定額</dt><dd className="font-semibold tabular-nums">{externalPayableAmount.toLocaleString("ja-JP")}円</dd></div> : null}
             {staffName ? <div className="flex justify-between gap-4"><dt className="text-[color:var(--lien-muted)]">担当</dt><dd className="font-semibold">{staffName}</dd></div> : null}
           </dl>
           {appointment.note ? <p className="mt-5 whitespace-pre-line rounded-2xl bg-[color:var(--lien-surface-soft)] p-4 text-xs leading-6 text-[color:var(--lien-muted)]">{appointment.note}</p> : null}
@@ -233,7 +256,7 @@ export default async function AppointmentCheckoutPage({ params, searchParams }: 
             <AppointmentCheckoutForm
               appointmentId={appointment.id}
               initialMenu={appointment.menu ?? ""}
-              initialSubtotal={appointment.estimatedPrice ?? 0}
+              initialSubtotal={externalPayableAmount}
               availablePoints={pointBalance.availablePoints}
               coupons={checkoutCoupons}
               initialCouponSelection={appointment.couponIssueId ? `couponIssue:${appointment.couponIssueId}` : ""}
