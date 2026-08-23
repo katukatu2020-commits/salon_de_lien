@@ -17,7 +17,7 @@ import { resolveCustomerPhotoReference } from "@/lib/storage/customer-photo";
 import { birthDateInputValue } from "@/lib/customer-age";
 
 const fieldClassName =
-  "h-12 w-full min-w-0 rounded-xl border border-[#e8ded2] bg-white px-4 text-base text-[#2f2a25] outline-none transition focus:border-[#8f4f42] focus:ring-4 focus:ring-[#e9c9be]/40";
+  "h-12 w-full min-w-0 max-w-full rounded-xl border border-[#e8ded2] bg-white px-4 text-base text-[#2f2a25] outline-none transition focus:border-[#8f4f42] focus:ring-4 focus:ring-[#e9c9be]/40";
 
 function SelectField({
   label,
@@ -64,7 +64,7 @@ export default async function CustomerProfilePage({
     }),
     prisma.appUser.findUnique({
       where: { id: session.userId },
-      select: { email: true, loginId: true }
+      select: { email: true, loginId: true, nickname: true }
     })
   ]);
   if (!customer || !appUser) return null;
@@ -135,6 +135,20 @@ export default async function CustomerProfilePage({
               お名前
               <input name="name" required maxLength={80} defaultValue={customer.name} className={fieldClassName} />
             </label>
+            <label className="grid min-w-0 gap-1.5 text-sm font-semibold text-[#4f463f]">
+              ニックネーム
+              <input
+                name="nickname"
+                maxLength={30}
+                autoComplete="nickname"
+                defaultValue={appUser.nickname ?? ""}
+                placeholder="例：ひなた"
+                className={fieldClassName}
+              />
+              <span className="text-[11px] font-normal leading-relaxed text-[#8b8178]">
+                スタイル共有やコメントなど、公開される場所では本名の代わりに表示されます。
+              </span>
+            </label>
             <label className="grid gap-1.5 text-sm font-semibold text-[#4f463f]">
               電話番号
               <input
@@ -153,7 +167,7 @@ export default async function CustomerProfilePage({
               options={CUSTOMER_GENDER_OPTIONS}
               defaultValue={customer.gender}
             />
-            <label className="grid gap-1.5 text-sm font-semibold text-[#4f463f]">
+            <label className="grid min-w-0 gap-1.5 text-sm font-semibold text-[#4f463f]">
               生年月日
               <input
                 name="birthDate"
@@ -161,7 +175,7 @@ export default async function CustomerProfilePage({
                 min="1900-01-01"
                 autoComplete="bday"
                 defaultValue={birthDateInputValue(customer.birthDate)}
-                className={fieldClassName}
+                className={`${fieldClassName} appearance-none`}
               />
             </label>
             <label className="grid gap-1.5 text-sm font-semibold text-[#4f463f] sm:col-span-2">

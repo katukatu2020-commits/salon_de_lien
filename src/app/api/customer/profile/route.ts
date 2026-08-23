@@ -44,6 +44,7 @@ export async function POST(request: NextRequest) {
 
   const formData = await request.formData();
   const name = textValue(formData, "name");
+  const nickname = textValue(formData, "nickname");
   const phone = textValue(formData, "phone");
   const birthDate = parseBirthDateInput(textValue(formData, "birthDate"));
   const gender = optionalProfileValue(formData, "gender", CUSTOMER_GENDER_OPTIONS);
@@ -63,6 +64,7 @@ export async function POST(request: NextRequest) {
   const invalid =
     name.length < 1 ||
     name.length > 80 ||
+    nickname.length > 30 ||
     phone.length > 30 ||
     birthDate === undefined ||
     gender === undefined ||
@@ -99,6 +101,17 @@ export async function POST(request: NextRequest) {
           staffAssignmentType: hasAssignedStaff ? "assigned" : "free",
           assignedStaffName: hasAssignedStaff ? assignedStaffSelection : null
         }
+      });
+
+      await tx.appUser.updateMany({
+        where: {
+          id: session.userId,
+          customerId: customer.id,
+          organizationId: session.organizationId,
+          role: "CUSTOMER",
+          active: true
+        },
+        data: { nickname: nickname || null }
       });
 
       await tx.hairProfile.upsert({
