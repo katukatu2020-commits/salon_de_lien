@@ -724,4 +724,13 @@ test("organization public codes are deterministic and compatible with store link
   assert.match(productTour, /\/admin\/products/);
   assert.match(productTour, /\/admin\/community/);
   assert.match(productTour, /\/admin\/owner-analytics/);
+
+  const ledgerUiParity = readFileSync(
+    new URL("../scripts/aws/runtime-patches/sales-ledger-ui-parity-v406/sales-ledger-ui-parity-v406.css", import.meta.url),
+    "utf8"
+  );
+  assert.match(ledgerUiParity, /grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
+  assert.match(ledgerUiParity, /background: var\(--lien-primary, #8f4f42\)/);
+  assert.match(ledgerUiParity, /font-family: var\(--font-noto-sans-jp\)/);
+  assert.match(ledgerUiParity, /\.sl-hero-mark[\s\S]*display: none/);
 });
