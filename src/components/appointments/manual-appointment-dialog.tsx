@@ -16,6 +16,7 @@ export type ManualAppointmentCreated = {
   scheduledAt: string;
   durationMinutes: number;
   menu: string | null;
+  staffKey?: string;
   staffName: string;
   status: string;
   source: string | null;
@@ -26,7 +27,7 @@ export type ManualAppointmentCreated = {
 type Props = {
   date: string;
   customers: ManualAppointmentCustomer[];
-  staff: Array<{ name: string }>;
+  staff: Array<{ key: string; name: string }>;
   onCreated: (appointment: ManualAppointmentCreated) => void;
 };
 
@@ -74,6 +75,7 @@ export function ManualAppointmentDialog({ date, customers, staff, onCreated }: P
     setSubmitting(true);
     setError(null);
     const form = new FormData(event.currentTarget);
+    const selectedStaff = staff.find((member) => member.key === form.get("staffKey"));
 
     try {
       const response = await fetch("/api/admin/appointments/manual", {
@@ -84,7 +86,8 @@ export function ManualAppointmentDialog({ date, customers, staff, onCreated }: P
           date,
           startMinutes: timeToMinutes(String(form.get("startTime") ?? "")),
           durationMinutes: Number(form.get("durationMinutes")),
-          staffName: form.get("staffName"),
+          staffKey: selectedStaff?.key,
+          staffName: selectedStaff?.name,
           menu: form.get("menu"),
           estimatedPrice: form.get("estimatedPrice"),
           bookingProvider: form.get("bookingProvider"),
@@ -187,8 +190,8 @@ export function ManualAppointmentDialog({ date, customers, staff, onCreated }: P
                 </label>
                 <label className="text-sm font-semibold text-[color:var(--lien-ink)]">
                   担当者
-                  <select name="staffName" defaultValue="フリー" required className={inputClassName}>
-                    {staff.map((member) => <option key={member.name} value={member.name}>{member.name}</option>)}
+                  <select name="staffKey" defaultValue="free" required className={inputClassName}>
+                    {staff.map((member) => <option key={member.key} value={member.key}>{member.name}</option>)}
                   </select>
                 </label>
                 <label className="text-sm font-semibold text-[color:var(--lien-ink)]">

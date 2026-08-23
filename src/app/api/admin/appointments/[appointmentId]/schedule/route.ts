@@ -3,6 +3,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { AuthorizationError, requireBackofficeSession } from "@/lib/auth/authorization";
 import { hasValidRequestOrigin } from "@/lib/auth/request-security";
 import { isBookingRangeWithinCapacityOverrides } from "@/lib/appointments/booking-capacity";
+import {
+  canonicalScheduleStaffIdentity,
+  resolveScheduleStaffIdentity
+} from "@/lib/appointments/staff-identity";
 import { prisma } from "@/lib/prisma";
 import {
   appointmentMinutes,
@@ -13,8 +17,7 @@ import {
 } from "@/lib/appointments/schedule";
 import {
   FREE_STAFF,
-  normalizeSalonStaffName,
-  salonStaffKey
+  SALON_STAFF
 } from "@/lib/salon/staff";
 
 export const runtime = "nodejs";
@@ -23,6 +26,7 @@ type ScheduleBody = {
   date?: unknown;
   startMinutes?: unknown;
   durationMinutes?: unknown;
+  staffKey?: unknown;
   staffName?: unknown;
   updatedAt?: unknown;
 };
@@ -45,6 +49,7 @@ async function updateSchedule(
   const date = typeof body.date === "string" ? body.date : "";
   const startMinutes = Number(body.startMinutes);
   const durationMinutes = Number(body.durationMinutes);
+  const requestedStaffKey = typeof body.staffKey === "string" ? body.staffKey.trim() : "";
   const requestedStaffName = typeof body.staffName === "string" ? body.staffName.trim() : "";
   const expectedUpdatedAt = typeof body.updatedAt === "string" ? new Date(body.updatedAt) : null;
 
@@ -54,12 +59,9 @@ async function updateSchedule(
   const rangeError = validateScheduleRange({ startMinutes, durationMinutes });
   if (rangeError) throw new Error(rangeError);
 
-  const normalizedStaffName =
-    requestedStaffName === FREE_STAFF.name
-      ? FREE_STAFF.name
-      : normalizeSalonStaffName(requestedStaffName);
-  const staffKey = salonStaffKey(normalizedStaffName);
-  if (!normalizedStaffName || !staffKey) throw new Error("登録済みのスタッフを選択してください。");
+  if (!requestedStaffKey && !requestedStaffName) {
+    throw new Error("登録済みのスタッフを選択してください。");
+  }
 
   const scheduledAt = dateAtTokyoMinutes(date, startMinutes);
   if (Number.isNaN(scheduledAt.getTime()) || scheduleDateKey(scheduledAt) !== date) {
@@ -83,10 +85,12 @@ async function updateSchedule(
         throw new Error("別の端末で予約が更新されました。画面を再読み込みしてください。");
       }
 
-      const [setting, capacityOverrides] = await Promise.all([
-        tx.staffBookingSetting.findUnique({
-          where: { organizationId_staffKey: { organizationId, staffKey } },
+      const [staffSettings, capacityOverrides] = await Promise.all([
+        tx.staffBookingSetting.findMany({
+          where: { organizationId },
           select: {
+            staffKey: true,
+            staffName: true,
             maxConcurrentAppointments: true,
             workStartMinutes: true,
             workEndMinutes: true
@@ -97,6 +101,21 @@ async function updateSchedule(
           select: { slotStartMinutes: true, capacity: true }
         })
       ]);
+      const configuredStaff = staffSettings.map((item) => ({
+        key: item.staffKey,
+        name: item.staffName
+      }));
+      const staffCandidates = configuredStaff.length > 0 ? configuredStaff : SALON_STAFF;
+      const staff = resolveScheduleStaffIdentity(
+        { staffKey: requestedStaffKey, staffName: requestedStaffName },
+        staffCandidates.some((member) => member.key === FREE_STAFF.key)
+          ? staffCandidates
+          : [...staffCandidates, FREE_STAFF]
+      );
+      if (!staff) throw new Error("登録済みのスタッフを選択してください。");
+      const staffKey = staff.key;
+      const normalizedStaffName = staff.name;
+      const setting = staffSettings.find((item) => item.staffKey === staffKey);
       const maxConcurrentAppointments = setting?.maxConcurrentAppointments ?? (staffKey === "tanizaki" ? 2 : 1);
       const workStartMinutes = setting?.workStartMinutes ?? 10 * 60;
       const workEndMinutes = setting?.workEndMinutes ?? 19 * 60;
@@ -116,8 +135,8 @@ async function updateSchedule(
         select: { scheduledAt: true, durationMinutes: true, staffName: true }
       });
       const sameStaff = nearby.filter((item) => {
-        const assigned = normalizeSalonStaffName(item.staffName) ?? FREE_STAFF.name;
-        return assigned === normalizedStaffName;
+        return canonicalScheduleStaffIdentity(item.staffName ?? FREE_STAFF.name) ===
+          canonicalScheduleStaffIdentity(normalizedStaffName);
       });
 
       const totalExisting = nearby
@@ -164,7 +183,7 @@ async function updateSchedule(
         throw new Error("予約の更新が競合しました。画面を再読み込みしてください。");
       }
 
-      return tx.appointment.findUniqueOrThrow({
+      const updated = await tx.appointment.findUniqueOrThrow({
         where: { id: appointmentId },
         select: {
           id: true,
@@ -174,6 +193,7 @@ async function updateSchedule(
           updatedAt: true
         }
       });
+      return { ...updated, staffKey };
     },
     { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
   );

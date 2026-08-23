@@ -5,6 +5,10 @@ import { hasValidRequestOrigin } from "@/lib/auth/request-security";
 import { BOOKING_PROVIDERS, type BookingProvider } from "@/lib/appointments/booking-provider";
 import { isBookingRangeWithinCapacityOverrides } from "@/lib/appointments/booking-capacity";
 import {
+  canonicalScheduleStaffIdentity,
+  resolveScheduleStaffIdentity
+} from "@/lib/appointments/staff-identity";
+import {
   appointmentMinutes,
   dateAtTokyoMinutes,
   scheduleDateKey,
@@ -12,7 +16,7 @@ import {
   validateScheduleRange
 } from "@/lib/appointments/schedule";
 import { prisma } from "@/lib/prisma";
-import { FREE_STAFF, normalizeSalonStaffName, salonStaffKey } from "@/lib/salon/staff";
+import { FREE_STAFF, SALON_STAFF } from "@/lib/salon/staff";
 
 export const runtime = "nodejs";
 
@@ -21,6 +25,7 @@ type ManualAppointmentBody = {
   date?: unknown;
   startMinutes?: unknown;
   durationMinutes?: unknown;
+  staffKey?: unknown;
   staffName?: unknown;
   menu?: unknown;
   estimatedPrice?: unknown;
@@ -61,6 +66,7 @@ export async function POST(request: NextRequest) {
     const date = typeof body.date === "string" ? body.date : "";
     const startMinutes = Number(body.startMinutes);
     const durationMinutes = Number(body.durationMinutes);
+    const requestedStaffKey = typeof body.staffKey === "string" ? body.staffKey.trim() : "";
     const requestedStaffName = typeof body.staffName === "string" ? body.staffName.trim() : "";
     const menu = optionalText(body.menu, 120);
     const note = optionalText(body.note, 500);
@@ -83,12 +89,9 @@ export async function POST(request: NextRequest) {
     }
     const bookingProvider = providerValue as BookingProvider;
 
-    const normalizedStaffName =
-      requestedStaffName === FREE_STAFF.name
-        ? FREE_STAFF.name
-        : normalizeSalonStaffName(requestedStaffName);
-    const staffKey = salonStaffKey(normalizedStaffName);
-    if (!normalizedStaffName || !staffKey) throw new Error("登録済みのスタッフを選択してください。");
+    if (!requestedStaffKey && !requestedStaffName) {
+      throw new Error("登録済みのスタッフを選択してください。");
+    }
 
     const scheduledAt = dateAtTokyoMinutes(date, startMinutes);
     if (Number.isNaN(scheduledAt.getTime()) || scheduleDateKey(scheduledAt) !== date) {
@@ -103,10 +106,12 @@ export async function POST(request: NextRequest) {
         });
         if (!customer) throw new AuthorizationError("お客様が見つかりません。", 404);
 
-        const [setting, capacityOverrides] = await Promise.all([
-          tx.staffBookingSetting.findUnique({
-            where: { organizationId_staffKey: { organizationId, staffKey } },
+        const [staffSettings, capacityOverrides] = await Promise.all([
+          tx.staffBookingSetting.findMany({
+            where: { organizationId },
             select: {
+              staffKey: true,
+              staffName: true,
               maxConcurrentAppointments: true,
               workStartMinutes: true,
               workEndMinutes: true
@@ -117,6 +122,21 @@ export async function POST(request: NextRequest) {
             select: { slotStartMinutes: true, capacity: true }
           })
         ]);
+        const configuredStaff = staffSettings.map((item) => ({
+          key: item.staffKey,
+          name: item.staffName
+        }));
+        const staffCandidates = configuredStaff.length > 0 ? configuredStaff : SALON_STAFF;
+        const staff = resolveScheduleStaffIdentity(
+          { staffKey: requestedStaffKey, staffName: requestedStaffName },
+          staffCandidates.some((member) => member.key === FREE_STAFF.key)
+            ? staffCandidates
+            : [...staffCandidates, FREE_STAFF]
+        );
+        if (!staff) throw new Error("登録済みのスタッフを選択してください。");
+        const staffKey = staff.key;
+        const normalizedStaffName = staff.name;
+        const setting = staffSettings.find((item) => item.staffKey === staffKey);
         const maxConcurrentAppointments = setting?.maxConcurrentAppointments ?? (staffKey === "tanizaki" ? 2 : 1);
         const workStartMinutes = setting?.workStartMinutes ?? 10 * 60;
         const workEndMinutes = setting?.workEndMinutes ?? 19 * 60;
@@ -135,8 +155,8 @@ export async function POST(request: NextRequest) {
           select: { scheduledAt: true, durationMinutes: true, staffName: true }
         });
         const sameStaff = nearby.filter((item) => {
-          const assigned = normalizeSalonStaffName(item.staffName) ?? FREE_STAFF.name;
-          return assigned === normalizedStaffName;
+          return canonicalScheduleStaffIdentity(item.staffName ?? FREE_STAFF.name) ===
+            canonicalScheduleStaffIdentity(normalizedStaffName);
         });
 
         const totalExisting = nearby
@@ -200,7 +220,7 @@ export async function POST(request: NextRequest) {
           }
         });
 
-        return { created, customerName: customer.name };
+        return { created, customerName: customer.name, staffKey };
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
     );
@@ -214,6 +234,7 @@ export async function POST(request: NextRequest) {
         scheduledAt: appointment.created.scheduledAt.toISOString(),
         durationMinutes: appointment.created.durationMinutes ?? durationMinutes,
         menu: appointment.created.menu,
+        staffKey: appointment.staffKey,
         staffName: appointment.created.staffName ?? FREE_STAFF.name,
         status: appointment.created.status,
         source: appointment.created.source,

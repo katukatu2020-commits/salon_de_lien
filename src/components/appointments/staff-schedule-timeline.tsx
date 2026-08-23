@@ -12,6 +12,7 @@ import {
 import { BookingCapacityEditor } from "@/components/appointments/booking-capacity-editor";
 import { BOOKING_PROVIDERS, inferBookingProvider } from "@/lib/appointments/booking-provider";
 import type { BookingCapacityOverrideValue } from "@/lib/appointments/booking-capacity";
+import { resolveScheduleStaffIdentity } from "@/lib/appointments/staff-identity";
 import {
   appointmentMinutes,
   assignScheduleLanes,
@@ -34,6 +35,7 @@ export type ScheduleTimelineAppointment = {
   scheduledAt: string;
   durationMinutes: number;
   menu: string | null;
+  staffKey?: string;
   staffName: string;
   status: string;
   source: string | null;
@@ -70,6 +72,7 @@ type Interaction = {
   originClientY: number;
   originStartMinutes: number;
   originDurationMinutes: number;
+  originStaffKey?: string;
   originStaffName: string;
   moved: boolean;
 };
@@ -165,7 +168,7 @@ export function StaffScheduleTimeline({
     const result = new Map<string, ScheduleTimelineAppointment[]>();
     for (const member of staff) result.set(member.name, []);
     for (const appointment of appointments) {
-      const assigned = result.has(appointment.staffName) ? appointment.staffName : "フリー";
+      const assigned = resolveScheduleStaffIdentity(appointment, staff)?.name ?? "フリー";
       result.set(assigned, [...(result.get(assigned) ?? []), appointment]);
     }
     return result;
@@ -231,6 +234,7 @@ export function StaffScheduleTimeline({
           date,
           startMinutes: appointmentMinutes(appointment.scheduledAt),
           durationMinutes: appointment.durationMinutes,
+          staffKey: appointment.staffKey,
           staffName: appointment.staffName,
           updatedAt: appointment.updatedAt
         })
@@ -240,6 +244,7 @@ export function StaffScheduleTimeline({
         appointment?: {
           scheduledAt: string;
           durationMinutes: number;
+          staffKey?: string;
           staffName: string;
           updatedAt: string;
         };
@@ -334,6 +339,7 @@ export function StaffScheduleTimeline({
       originClientY: event.clientY,
       originStartMinutes: appointmentMinutes(appointment.scheduledAt),
       originDurationMinutes: appointment.durationMinutes,
+      originStaffKey: appointment.staffKey,
       originStaffName: appointment.staffName,
       moved: false
     };
@@ -389,11 +395,13 @@ export function StaffScheduleTimeline({
     const target = document
       .elementsFromPoint(event.clientX, event.clientY)
       .find((element) => element instanceof HTMLElement && element.dataset.staffName) as HTMLElement | undefined;
+    const staffKey = target?.dataset.staffKey || interaction.originStaffKey;
     const staffName = target?.dataset.staffName || interaction.originStaffName;
     const hour = Math.floor(startMinutes / 60);
     const minute = startMinutes % 60;
     updateLocal(current.id, {
       scheduledAt: `${date}T${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00+09:00`,
+      staffKey,
       staffName
     });
   }
@@ -411,10 +419,12 @@ export function StaffScheduleTimeline({
     event: React.KeyboardEvent<HTMLButtonElement>
   ) {
     if (!isAppointmentActive(appointment) || savingIds.includes(appointment.id)) return;
-    const staffIndex = staff.findIndex((member) => member.name === appointment.staffName);
+    const assignedStaff = resolveScheduleStaffIdentity(appointment, staff);
+    const staffIndex = assignedStaff ? staff.findIndex((member) => member.key === assignedStaff.key) : -1;
     const startMinutes = appointmentMinutes(appointment.scheduledAt);
     let nextStart = startMinutes;
     let nextDuration = appointment.durationMinutes;
+    let nextStaffKey = assignedStaff?.key ?? appointment.staffKey;
     let nextStaff = appointment.staffName;
 
     if (event.key === "Enter") {
@@ -428,8 +438,10 @@ export function StaffScheduleTimeline({
       if (event.shiftKey) nextDuration = Math.min(SCHEDULE_END_MINUTES - nextStart, nextDuration + SCHEDULE_SNAP_MINUTES);
       else nextStart = Math.min(SCHEDULE_END_MINUTES - nextDuration, nextStart + SCHEDULE_SNAP_MINUTES);
     } else if (event.key === "ArrowUp" && staffIndex > 0) {
+      nextStaffKey = staff[staffIndex - 1].key;
       nextStaff = staff[staffIndex - 1].name;
     } else if (event.key === "ArrowDown" && staffIndex < staff.length - 1) {
+      nextStaffKey = staff[staffIndex + 1].key;
       nextStaff = staff[staffIndex + 1].name;
     } else {
       return;
@@ -443,6 +455,7 @@ export function StaffScheduleTimeline({
       ...appointment,
       scheduledAt: `${date}T${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00+09:00`,
       durationMinutes: nextDuration,
+      staffKey: nextStaffKey,
       staffName: nextStaff
     };
     updateLocal(appointment.id, updated);
@@ -565,7 +578,7 @@ export function StaffScheduleTimeline({
                     <span className="mt-1 block truncate text-[9px] text-[color:var(--lien-muted)] sm:text-[10px]">受付: {member.maxConcurrentAppointments}</span>
                   </Link>
                 </div>
-                <div className="relative min-w-0 overflow-hidden bg-white" data-staff-name={member.name} style={{ height: rowHeight }}>
+                <div className="relative min-w-0 overflow-hidden bg-white" data-staff-key={member.key} data-staff-name={member.name} style={{ height: rowHeight }}>
                   <div className="pointer-events-none absolute inset-y-0 left-0 bg-[repeating-linear-gradient(135deg,#f5f1ec_0,#f5f1ec_6px,#fbf8f3_6px,#fbf8f3_12px)]" style={{ width: Math.max(0, member.workStartMinutes - SCHEDULE_START_MINUTES) * pixelsPerMinute }} />
                   <div className="pointer-events-none absolute inset-y-0 right-0 bg-[repeating-linear-gradient(135deg,#f5f1ec_0,#f5f1ec_6px,#fbf8f3_6px,#fbf8f3_12px)]" style={{ width: Math.max(0, SCHEDULE_END_MINUTES - member.workEndMinutes) * pixelsPerMinute }} />
                   {displaySlots.map((slotStart) => (

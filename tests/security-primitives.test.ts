@@ -63,6 +63,58 @@ import {
 } from "../src/lib/auth/customer-withdrawal";
 import { calculateSquareCropRegion } from "../src/lib/image/square-crop";
 import { organizationPublicCode } from "../src/lib/organizations/public-code";
+import {
+  canonicalScheduleStaffIdentity,
+  resolveScheduleStaffIdentity
+} from "../src/lib/appointments/staff-identity";
+
+test("schedule staff identity uses the tenant roster instead of a fixed salon list", () => {
+  const tenantStaff = [
+    { key: "stylist-custom-1", name: "雨宮 透" },
+    { key: "free", name: "フリー" }
+  ];
+
+  assert.deepEqual(
+    resolveScheduleStaffIdentity({ staffName: "雨宮　透" }, tenantStaff),
+    tenantStaff[0]
+  );
+});
+
+test("schedule staff identity treats Watanabe character variants as the same staff", () => {
+  const tenantStaff = [
+    { key: "watanabe", name: "渡邉 浩明" },
+    { key: "free", name: "フリー" }
+  ];
+
+  assert.equal(
+    canonicalScheduleStaffIdentity("渡邊 浩明"),
+    canonicalScheduleStaffIdentity("渡辺　浩明")
+  );
+  assert.deepEqual(
+    resolveScheduleStaffIdentity({ staffName: "渡邊 浩明" }, tenantStaff),
+    tenantStaff[0]
+  );
+});
+
+test("schedule staff identity prioritizes a stable staff key and rejects unknown staff", () => {
+  const tenantStaff = [
+    { key: "staff-1", name: "同名 スタッフ" },
+    { key: "staff-2", name: "同名スタッフ" },
+    { key: "free", name: "フリー" }
+  ];
+
+  assert.deepEqual(
+    resolveScheduleStaffIdentity(
+      { staffKey: "staff-2", staffName: "同名 スタッフ" },
+      tenantStaff
+    ),
+    tenantStaff[1]
+  );
+  assert.equal(
+    resolveScheduleStaffIdentity({ staffName: "別店舗のスタッフ" }, tenantStaff),
+    null
+  );
+});
 
 test("customer portal tokens are opaque, random and stored as SHA-256 hashes", () => {
   const first = generateCustomerPortalToken();

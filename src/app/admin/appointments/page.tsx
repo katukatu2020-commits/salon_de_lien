@@ -17,7 +17,8 @@ import { BrandVisual } from "@/components/lien/brand-visual";
 import { requireBackofficeSession } from "@/lib/auth/authorization";
 import { prisma } from "@/lib/prisma";
 import { OWNER_DASHBOARD_SIMULATION_SOURCE } from "@/lib/reports/owner-dashboard";
-import { FREE_STAFF, normalizeSalonStaffName, salonStaffKey, SALON_STAFF } from "@/lib/salon/staff";
+import { resolveScheduleStaffIdentity } from "@/lib/appointments/staff-identity";
+import { FREE_STAFF, resolveSalonStaffByKey, SALON_STAFF } from "@/lib/salon/staff";
 
 export const dynamic = "force-dynamic";
 
@@ -207,18 +208,37 @@ export default async function AppointmentsPage({ searchParams }: AppointmentsPag
 
   const selectedAppointments = selectedDate ? appointmentsByDate.get(selectedDate) ?? [] : [];
   const mobileAppointments = selectedDate ? selectedAppointments : appointments;
-  const bookingSettingByKey = new Map(bookingSettings.map((setting) => [setting.staffKey, setting]));
-  const timelineStaff = [...SALON_STAFF, FREE_STAFF].map((staff) => {
-    const setting = bookingSettingByKey.get(staff.key);
+  const configuredTimelineStaff = bookingSettings.map((setting) => {
+    const legacyStaff = resolveSalonStaffByKey(setting.staffKey);
     return {
-      key: staff.key,
-      name: staff.name,
-      role: staff.role,
-      maxConcurrentAppointments: setting?.maxConcurrentAppointments ?? (staff.key === "tanizaki" ? 2 : 1),
-      workStartMinutes: setting?.workStartMinutes ?? 600,
-      workEndMinutes: setting?.workEndMinutes ?? 1140
+      key: setting.staffKey,
+      name: setting.staffName,
+      role: legacyStaff?.role ?? "スタイリスト",
+      maxConcurrentAppointments: setting.maxConcurrentAppointments,
+      workStartMinutes: setting.workStartMinutes,
+      workEndMinutes: setting.workEndMinutes
     };
   });
+  const timelineStaff = configuredTimelineStaff.length > 0
+    ? configuredTimelineStaff
+    : [...SALON_STAFF, FREE_STAFF].map((staff) => ({
+        key: staff.key,
+        name: staff.name,
+        role: staff.role,
+        maxConcurrentAppointments: staff.key === "tanizaki" ? 2 : 1,
+        workStartMinutes: 600,
+        workEndMinutes: 1140
+      }));
+  if (!timelineStaff.some((staff) => staff.key === FREE_STAFF.key)) {
+    timelineStaff.push({
+      key: FREE_STAFF.key,
+      name: FREE_STAFF.name,
+      role: FREE_STAFF.role,
+      maxConcurrentAppointments: 1,
+      workStartMinutes: 600,
+      workEndMinutes: 1140
+    });
+  }
 
   function calendarHref(date: string) {
     const targetMonth = date.slice(0, 7);
@@ -405,10 +425,10 @@ export default async function AppointmentsPage({ searchParams }: AppointmentsPag
               staff={timelineStaff}
               customers={customerOptions}
               appointments={selectedAppointments.map((appointment) => {
-                const normalizedStaff = normalizeSalonStaffName(
-                  appointment.staffName ?? noteLine(appointment.note, "担当")
+                const assignedStaff = resolveScheduleStaffIdentity(
+                  { staffName: appointment.staffName ?? noteLine(appointment.note, "担当") },
+                  timelineStaff
                 );
-                const assignedStaff = normalizedStaff && salonStaffKey(normalizedStaff) ? normalizedStaff : FREE_STAFF.name;
                 return {
                   id: appointment.id,
                   customerId: appointment.customerId,
@@ -416,7 +436,8 @@ export default async function AppointmentsPage({ searchParams }: AppointmentsPag
                   scheduledAt: appointment.scheduledAt.toISOString(),
                   durationMinutes: appointmentDurationMinutes(appointment),
                   menu: appointment.menu,
-                  staffName: assignedStaff,
+                  staffKey: assignedStaff?.key ?? FREE_STAFF.key,
+                  staffName: assignedStaff?.name ?? FREE_STAFF.name,
                   status: appointment.status,
                   source: appointment.source,
                   bookingProvider: appointment.bookingProvider,
