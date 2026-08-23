@@ -61,6 +61,7 @@ import {
   hashCustomerWithdrawalToken,
   isCustomerWithdrawalToken
 } from "../src/lib/auth/customer-withdrawal";
+import { calculateSquareCropRegion } from "../src/lib/image/square-crop";
 
 test("customer portal tokens are opaque, random and stored as SHA-256 hashes", () => {
   const first = generateCustomerPortalToken();
@@ -651,4 +652,45 @@ test("manual reception capacity overrides apply across all staff", () => {
     }),
     true
   );
+});
+
+test("profile image crop keeps a square region inside the source image", () => {
+  assert.deepEqual(
+    calculateSquareCropRegion({
+      imageWidth: 1200,
+      imageHeight: 800,
+      zoom: 1,
+      positionX: 50,
+      positionY: 50
+    }),
+    { sourceX: 200, sourceY: 0, sourceSize: 800 }
+  );
+  assert.deepEqual(
+    calculateSquareCropRegion({
+      imageWidth: 1200,
+      imageHeight: 800,
+      zoom: 2,
+      positionX: 100,
+      positionY: 0
+    }),
+    { sourceX: 800, sourceY: 0, sourceSize: 400 }
+  );
+});
+
+test("customer profile image upload is session-scoped and preserves signed image URLs", () => {
+  const componentSource = readFileSync(
+    new URL("../src/components/customers/profile-image-uploader.tsx", import.meta.url),
+    "utf8"
+  );
+  const routeSource = readFileSync(
+    new URL("../src/app/api/customer/profile-image/route.ts", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(componentSource, /fetch\("\/api\/customer\/profile-image"/);
+  assert.doesNotMatch(componentSource, /imageUrl[^\n]*\?v=/);
+  assert.match(routeSource, /getCurrentCustomerSession\(\)/);
+  assert.match(routeSource, /id:\s*session\.customerId/);
+  assert.match(routeSource, /organizationId:\s*session\.organizationId/);
+  assert.doesNotMatch(routeSource, /formData\.get\("customerId"\)/);
 });
