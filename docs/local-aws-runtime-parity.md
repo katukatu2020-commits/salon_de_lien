@@ -1,6 +1,6 @@
 # AWS本番runtimeのローカル照合
 
-2026-08-23時点の照合対象は、ECS task definition `salon-de-lien-staging-web:394`、ECR digest `sha256:4315f38197acbc6bdab7e38eda70028ff640f0e8d7b8d492f16f6e10d65a542e` です。
+2026-08-23時点の照合対象は、ECS task definition `salon-de-lien-staging-web:400`、ECR digest `sha256:c3862bee5b29d8e5bf015e617c8511b9907c7b612f996cb329b32a8fe6767286` です。
 
 ```powershell
 npm run local:aws-pull

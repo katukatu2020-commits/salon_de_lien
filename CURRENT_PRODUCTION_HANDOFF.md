@@ -9,12 +9,12 @@
 - AWS region: `ap-northeast-1`
 - ECS cluster: `salon-de-lien-staging-cluster`
 - ECS service: `salon-de-lien-staging-web`
-- ECS task definition: `salon-de-lien-staging-web:394`
+- ECS task definition: `salon-de-lien-staging-web:400`
 - ECR repository: `salon-de-lien-staging-app`
-- ECR tag: `shift-staff-drop-v394`
-- immutable digest: `sha256:4315f38197acbc6bdab7e38eda70028ff640f0e8d7b8d492f16f6e10d65a542e`
+- ECR tag: `customer-store-session-isolation-v400`
+- immutable digest: `sha256:c3862bee5b29d8e5bf015e617c8511b9907c7b612f996cb329b32a8fe6767286`
 - production URL: `https://salon-de-lien.com`
-- handoff tag: `aws-production-v394-20260823-portable`
+- local recovery tag: `aws-production-v400-20260823-recovered`
 
 このdigestを本番コードの正とします。可変タグではなく、必ず上記digestで照合してください。
 
@@ -34,7 +34,7 @@ npm run local:aws-verify
 
 ## GitHubに保存した復旧用スナップショット
 
-`aws-runtime-recovery/2026-08-23/runtime-root/` にECS revision 394の実行コードを保存し、Next.js `.next` ビルド成果物はWindowsでも確実にcheckoutできる `next-build.tar.gz` に保存しています。
+`aws-runtime-recovery/2026-08-23/runtime-root/` はECS revision 394のportable baselineです。revision 395〜400は `scripts/aws/runtime-patches/` の連続パッチで再現し、v400のECR immutable digestをローカル照合の正本とします。
 
 含むもの:
 
