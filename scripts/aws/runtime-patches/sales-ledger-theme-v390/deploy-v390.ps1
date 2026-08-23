@@ -9,15 +9,42 @@ $Cluster = 'salon-de-lien-staging-cluster'
 $Service = 'salon-de-lien-staging-web'
 $Family = 'salon-de-lien-staging-web'
 
-aws ecr get-login-password --region $Region | docker login --username AWS --password-stdin "$AccountId.dkr.ecr.$Region.amazonaws.com"
-if ($LASTEXITCODE -ne 0) { throw 'ECR login failed' }
+$Registry = "$AccountId.dkr.ecr.$Region.amazonaws.com"
+$DockerConfig = $null
+aws ecr get-login-password --region $Region | docker login --username AWS --password-stdin $Registry
+if ($LASTEXITCODE -ne 0) {
+  # Docker Desktop can route registry login through a proxy that rejects ECR's
+  # /v2/ challenge even while the ECR token itself is valid. Use an isolated,
+  # short-lived Docker config as a fallback and remove it after the push.
+  $Authorization = aws ecr get-authorization-token --region $Region | ConvertFrom-Json
+  $Token = $Authorization.authorizationData[0].authorizationToken
+  if (-not $Token) { throw 'ECR authorization token was not returned' }
+  $DockerConfig = Join-Path $env:TEMP ("salon-ecr-v390-" + [Guid]::NewGuid().ToString('N'))
+  New-Item -ItemType Directory -Path $DockerConfig | Out-Null
+  $DockerAuth = @{ auths = @{ $Registry = @{ auth = $Token } } } | ConvertTo-Json -Depth 5 -Compress
+  [System.IO.File]::WriteAllText(
+    (Join-Path $DockerConfig 'config.json'),
+    $DockerAuth,
+    (New-Object System.Text.UTF8Encoding($false))
+  )
+}
 docker build -f scripts/aws/runtime-patches/sales-ledger-theme-v390/Dockerfile -t $Image .
 if ($LASTEXITCODE -ne 0) { throw 'Docker build failed' }
 
 $ExistingImage = aws ecr describe-images --repository-name $Repository --image-ids "imageTag=$Tag" --region $Region 2>$null
 if ($LASTEXITCODE -ne 0) {
-  docker push $Image
-  if ($LASTEXITCODE -ne 0) { throw 'Docker push failed' }
+  try {
+    if ($DockerConfig) {
+      docker --config $DockerConfig push $Image
+    } else {
+      docker push $Image
+    }
+    if ($LASTEXITCODE -ne 0) { throw 'Docker push failed' }
+  } finally {
+    if ($DockerConfig -and (Test-Path -LiteralPath $DockerConfig)) {
+      Remove-Item -LiteralPath $DockerConfig -Recurse -Force
+    }
+  }
 }
 
 $Current = aws ecs describe-task-definition --task-definition $Family --region $Region | ConvertFrom-Json
