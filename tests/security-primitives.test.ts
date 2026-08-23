@@ -733,4 +733,16 @@ test("organization public codes are deterministic and compatible with store link
   assert.match(ledgerUiParity, /background: var\(--lien-primary, #8f4f42\)/);
   assert.match(ledgerUiParity, /font-family: var\(--font-noto-sans-jp\)/);
   assert.match(ledgerUiParity, /\.sl-hero-mark[\s\S]*display: none/);
+
+  const storeHomeCodePatch = readFileSync(
+    new URL("../scripts/aws/runtime-patches/customer-store-home-code-v407/patch-runtime.mjs", import.meta.url),
+    "utf8"
+  );
+  assert.match(storeHomeCodePatch, /membership code belongs to the platform customer account/);
+  assert.match(storeHomeCodePatch, /WHERE \"id\"=\$1 AND \"role\"/);
+  const storeHomeCodeVerify = readFileSync(
+    new URL("../scripts/aws/runtime-patches/customer-store-home-code-v407/verify-runtime.mjs", import.meta.url),
+    "utf8"
+  );
+  assert.match(storeHomeCodeVerify, /store-specific membership lookup is still present/);
 });
