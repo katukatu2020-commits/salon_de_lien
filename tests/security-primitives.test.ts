@@ -745,4 +745,17 @@ test("organization public codes are deterministic and compatible with store link
     "utf8"
   );
   assert.match(storeHomeCodeVerify, /store-specific membership lookup is still present/);
+
+  const mergePlacementPatch = readFileSync(
+    new URL("../scripts/aws/runtime-patches/customer-record-merge-placement-v408/patch-runtime.mjs", import.meta.url),
+    "utf8"
+  );
+  assert.match(mergePlacementPatch, /customer's management tab/);
+  assert.match(mergePlacementPatch, /if \(!dangerSection \|\| !managementPanel\) return/);
+  assert.match(mergePlacementPatch, /managementPanel\.insertBefore\(card, dangerSection\)/);
+  const mergePlacementVerify = readFileSync(
+    new URL("../scripts/aws/runtime-patches/customer-record-merge-placement-v408/verify-runtime.mjs", import.meta.url),
+    "utf8"
+  );
+  assert.match(mergePlacementVerify, /detached page-root merge card fallback remains/);
 });
