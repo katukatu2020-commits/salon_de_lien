@@ -5,11 +5,22 @@ import { FormEvent, useState } from "react";
 import type { CommunityActor, CommunityPostView } from "@/lib/community/visit-community";
 
 function formatVisitDate(value: string) {
-  return new Intl.DateTimeFormat("ja-JP", { year: "numeric", month: "long", day: "numeric" }).format(new Date(value));
+  return new Intl.DateTimeFormat("ja-JP", {
+    timeZone: "Asia/Tokyo",
+    year: "numeric",
+    month: "long",
+    day: "numeric"
+  }).format(new Date(value));
 }
 
 function formatCommentDate(value: string) {
-  return new Intl.DateTimeFormat("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(value));
+  return new Intl.DateTimeFormat("ja-JP", {
+    timeZone: "Asia/Tokyo",
+    month: "numeric",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  }).format(new Date(value));
 }
 
 export function CommunityFeed({ initialPosts, actor }: { initialPosts: CommunityPostView[]; actor: CommunityActor }) {
