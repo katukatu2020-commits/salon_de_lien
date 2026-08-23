@@ -4,8 +4,8 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$ExpectedDigest = "sha256:86666c3c87bb8e4161a11a242e04b2ff6db4797a1f2f982bde00e836816dabd2"
-$ExpectedTaskRevision = 417
+$ExpectedDigest = "sha256:cbb0fa3c9a17400d9a43c4d47e8cd2769fd6da4ee56b694660f04b4e7f599eba"
+$ExpectedTaskRevision = 418
 $ContainerName = "salon_de_lien_aws_parity"
 
 $container = docker inspect $ContainerName 2>$null | ConvertFrom-Json

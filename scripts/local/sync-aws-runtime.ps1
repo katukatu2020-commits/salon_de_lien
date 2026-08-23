@@ -4,8 +4,8 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$ExpectedImage = "009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app@sha256:86666c3c87bb8e4161a11a242e04b2ff6db4797a1f2f982bde00e836816dabd2"
-$ExpectedDigest = "sha256:86666c3c87bb8e4161a11a242e04b2ff6db4797a1f2f982bde00e836816dabd2"
+$ExpectedImage = "009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app@sha256:cbb0fa3c9a17400d9a43c4d47e8cd2769fd6da4ee56b694660f04b4e7f599eba"
+$ExpectedDigest = "sha256:cbb0fa3c9a17400d9a43c4d47e8cd2769fd6da4ee56b694660f04b4e7f599eba"
 $RepositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot "../..")).Path
 $OutputBase = [IO.Path]::GetFullPath((Join-Path $RepositoryRoot $OutputRoot))
 
@@ -46,7 +46,7 @@ try {
   $metadata = [ordered]@{
     capturedAt = (Get-Date).ToString("o")
     source = "approved AWS ECS runtime image"
-    taskDefinitionRevision = 417
+    taskDefinitionRevision = 418
     image = $ExpectedImage
     digest = $ExpectedDigest
     localImageId = $imageId
@@ -54,13 +54,7 @@ try {
   }
   $metadata | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $destination "runtime-identity.json") -Encoding utf8
 
-  $checksumCommand = @'
-cd /app
-{
-  find .next public prisma scripts src -type f
-  find . -maxdepth 1 -type f -printf '%P\n'
-} | sort | while IFS= read -r file; do sha256sum "$file"; done
-'@
+  $checksumCommand = "cd /app; { find .next public prisma scripts src -type f; find . -maxdepth 1 -type f -printf '%P\n'; } | sort | while IFS= read -r file; do sha256sum `"`$file`"; done"
   $checksums = docker run --rm --entrypoint sh $ExpectedImage -c $checksumCommand
   if ($LASTEXITCODE -ne 0 -or -not $checksums) {
     throw "Failed to calculate checksums inside the approved runtime image."
