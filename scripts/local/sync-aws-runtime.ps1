@@ -4,8 +4,8 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$ExpectedImage = "009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app@sha256:51884dfb47f7a8b9adaacb1f0350e890d8a577fb17047c5c00e0ade8681d7170"
-$ExpectedDigest = "sha256:51884dfb47f7a8b9adaacb1f0350e890d8a577fb17047c5c00e0ade8681d7170"
+$ExpectedImage = "009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app@sha256:0b8770fb0e6348a09f7b3669a1e5146133386ccdbae41b38ad139fedd656dd80"
+$ExpectedDigest = "sha256:0b8770fb0e6348a09f7b3669a1e5146133386ccdbae41b38ad139fedd656dd80"
 $RepositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot "../..")).Path
 $OutputBase = [IO.Path]::GetFullPath((Join-Path $RepositoryRoot $OutputRoot))
 
