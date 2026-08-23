@@ -805,6 +805,35 @@ test("organization public codes are deterministic and compatible with store link
   assert.match(ledgerUiParity, /font-family: var\(--font-noto-sans-jp\)/);
   assert.match(ledgerUiParity, /\.sl-hero-mark[\s\S]*display: none/);
 
+  const ledgerVisualParity = readFileSync(
+    new URL(
+      "../scripts/aws/runtime-patches/sales-ledger-visual-parity-v413/sales-ledger-visual-parity-v413.css",
+      import.meta.url
+    ),
+    "utf8"
+  );
+  const ledgerVisualPatch = readFileSync(
+    new URL(
+      "../scripts/aws/runtime-patches/sales-ledger-visual-parity-v413/patch-runtime.mjs",
+      import.meta.url
+    ),
+    "utf8"
+  );
+  const ledgerVisualDockerfile = readFileSync(
+    new URL(
+      "../scripts/aws/runtime-patches/sales-ledger-visual-parity-v413/Dockerfile",
+      import.meta.url
+    ),
+    "utf8"
+  );
+  assert.match(ledgerVisualParity, /\.sl-tabs a\.active,[\s\S]*background: #fbe7ee;/);
+  assert.match(ledgerVisualParity, /color: #a93659;/);
+  assert.match(ledgerVisualParity, /font-family: "Yu Mincho", "Hiragino Mincho ProN"/);
+  assert.match(ledgerVisualParity, /linear-gradient\(135deg, rgba\(255, 253, 249, 0\.94\), rgba\(246, 239, 230, 0\.86\)\)/);
+  assert.match(ledgerVisualPatch, /salon-lien:theme-change/);
+  assert.match(ledgerVisualPatch, /sales-ledger-v318\.js\?v=413/);
+  assert.match(ledgerVisualDockerfile, /sha256:ed957d178c4c5a5725db062bd1818d88cee8f45d547257212b1c888df94bd5ae/);
+
   const storeHomeCodePatch = readFileSync(
     new URL("../scripts/aws/runtime-patches/customer-store-home-code-v407/patch-runtime.mjs", import.meta.url),
     "utf8"
