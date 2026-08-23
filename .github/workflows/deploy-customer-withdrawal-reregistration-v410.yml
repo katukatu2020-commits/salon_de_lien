@@ -3,7 +3,7 @@ name: Deploy customer withdrawal re-registration v410
 on:
   push:
     branches:
-      - fix/store-public-code-v402
+      - recovery/aws-canonical-20260815
     paths:
       - .github/workflows/deploy-customer-withdrawal-reregistration-v410.yml
       - scripts/aws/runtime-patches/customer-withdrawal-reregistration-v410/**
