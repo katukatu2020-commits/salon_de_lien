@@ -720,6 +720,27 @@ test("customer profile image upload is session-scoped and preserves signed image
   assert.doesNotMatch(routeSource, /formData\.get\("customerId"\)/);
 });
 
+test("customer mobile bottom navigation uses one safe-area-aware layout contract", () => {
+  const shell = readFileSync(
+    new URL("../src/components/customer-app/customer-account-shell.tsx", import.meta.url),
+    "utf8"
+  );
+  const runtime = readFileSync(
+    new URL("../scripts/aws/runtime-patches/customer-mobile-bottom-nav-v411/customer-experience-v395.js", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(shell, /data-customer-bottom-nav/);
+  assert.match(shell, /data-customer-bottom-nav-inner/);
+  assert.match(shell, /data-customer-bottom-nav-item/);
+  assert.match(shell, /h-\[calc\(64px\+env\(safe-area-inset-bottom\)\)\]/);
+  assert.match(runtime, /flex-direction:column!important/);
+  assert.match(runtime, /box-sizing:border-box!important/);
+  assert.match(runtime, /label: 'チャット相談'/);
+  assert.match(runtime, /applyCustomerConsistency\(\); normalizeBottomNavigation\(\);/);
+  assert.doesNotMatch(runtime, /\.cx-customer-nav-active\{background:#f7e7e1/);
+});
+
 test("organization public codes are deterministic and compatible with store linking", () => {
   const code = organizationPublicCode("org_265d45f302de499cacad7c4dff101a9c");
   assert.equal(code, organizationPublicCode("org_265d45f302de499cacad7c4dff101a9c"));

@@ -117,23 +117,28 @@ export function CustomerAccountShell({ customerName, children }: { customerName:
         </div>
       </div>
 
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-[#e8ded2] bg-white/96 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden" aria-label="お客様アプリメニュー">
-        <div className="mx-auto grid h-16 w-full max-w-xl grid-cols-4 px-1">
+      <nav
+        className="fixed inset-x-0 bottom-0 z-40 box-border h-[calc(64px+env(safe-area-inset-bottom))] border-t border-[#eadfd4] bg-[#fffdf9]/[0.97] pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_24px_rgba(62,42,35,0.07)] backdrop-blur md:hidden"
+        aria-label="お客様アプリメニュー"
+        data-customer-bottom-nav
+      >
+        <div className="grid h-16 w-full grid-cols-4 p-0" data-customer-bottom-nav-inner>
           {navigation.map((item) => {
             const { active, Icon } = item;
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex min-w-0 flex-col items-center justify-center gap-1 rounded-xl text-[11px] font-semibold transition ${
+                className={`box-border flex h-16 min-h-16 min-w-0 flex-col items-center justify-center gap-1 px-0.5 py-1.5 text-[10px] font-semibold leading-[1.15] transition ${
                   active
-                    ? "bg-[#f7e7e1] text-[#8f4f42] shadow-[inset_0_0_0_1px_#ead0c7]"
+                    ? "text-[#d85d79]"
                     : "text-[#8b8178] hover:bg-[#f6efe6] hover:text-[#5b332c]"
                 }`}
                 aria-current={active ? "page" : undefined}
+                data-customer-bottom-nav-item
               >
-                <Icon className={`h-5 w-5 ${active ? "stroke-[2.4]" : ""}`} />
-                <span>{item.label}</span>
+                <Icon className={`h-5 w-5 shrink-0 ${active ? "stroke-[2.4]" : ""}`} />
+                <span className="max-w-full overflow-hidden text-ellipsis whitespace-nowrap">{item.label}</span>
               </Link>
             );
           })}
