@@ -4,7 +4,7 @@ $ErrorActionPreference = "Stop"
 
 $Region = "ap-northeast-1"
 $Registry = "009293460979.dkr.ecr.ap-northeast-1.amazonaws.com"
-$Image = "$Registry/salon-de-lien-staging-app@sha256:0b8770fb0e6348a09f7b3669a1e5146133386ccdbae41b38ad139fedd656dd80"
+$Image = "$Registry/salon-de-lien-staging-app@sha256:86666c3c87bb8e4161a11a242e04b2ff6db4797a1f2f982bde00e836816dabd2"
 
 if (-not (Get-Command aws -ErrorAction SilentlyContinue)) {
   throw "AWS CLI is required. Install it and authenticate account 009293460979 first."
@@ -28,7 +28,7 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 $actualDigest = (docker image inspect $Image --format "{{.Id}}").Trim()
-if ($actualDigest -ne "sha256:0b8770fb0e6348a09f7b3669a1e5146133386ccdbae41b38ad139fedd656dd80") {
+if ($actualDigest -ne "sha256:86666c3c87bb8e4161a11a242e04b2ff6db4797a1f2f982bde00e836816dabd2") {
   throw "Pulled image digest mismatch: $actualDigest"
 }
 

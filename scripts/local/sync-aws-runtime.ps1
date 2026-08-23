@@ -4,8 +4,8 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$ExpectedImage = "009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app@sha256:0b8770fb0e6348a09f7b3669a1e5146133386ccdbae41b38ad139fedd656dd80"
-$ExpectedDigest = "sha256:0b8770fb0e6348a09f7b3669a1e5146133386ccdbae41b38ad139fedd656dd80"
+$ExpectedImage = "009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app@sha256:86666c3c87bb8e4161a11a242e04b2ff6db4797a1f2f982bde00e836816dabd2"
+$ExpectedDigest = "sha256:86666c3c87bb8e4161a11a242e04b2ff6db4797a1f2f982bde00e836816dabd2"
 $RepositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot "../..")).Path
 $OutputBase = [IO.Path]::GetFullPath((Join-Path $RepositoryRoot $OutputRoot))
 
@@ -46,7 +46,7 @@ try {
   $metadata = [ordered]@{
     capturedAt = (Get-Date).ToString("o")
     source = "approved AWS ECS runtime image"
-    taskDefinitionRevision = 414
+    taskDefinitionRevision = 417
     image = $ExpectedImage
     digest = $ExpectedDigest
     localImageId = $imageId
