@@ -1,0 +1,22 @@
+@media (max-width: 767px) {
+  input.customer-profile-birth-date-v426[type="date"] {
+    display: flex !important;
+    min-height: 48px !important;
+    align-items: center !important;
+    padding-block: 0 !important;
+    line-height: normal !important;
+  }
+
+  input.customer-profile-birth-date-v426[type="date"]::-webkit-date-and-time-value,
+  input.customer-profile-birth-date-v426[type="date"]::-webkit-datetime-edit,
+  input.customer-profile-birth-date-v426[type="date"]::-webkit-datetime-edit-fields-wrapper {
+    display: flex !important;
+    box-sizing: border-box !important;
+    height: 100% !important;
+    min-height: 48px !important;
+    align-items: center !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: normal !important;
+  }
+}

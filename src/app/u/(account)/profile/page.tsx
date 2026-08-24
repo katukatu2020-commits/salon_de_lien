@@ -12,7 +12,6 @@ import {
   SERVICE_PREFERENCE_OPTIONS
 } from "@/lib/customer-profile-options";
 import { prisma } from "@/lib/prisma";
-import { SALON_STAFF_NAMES, normalizeSalonStaffName } from "@/lib/salon/staff";
 import { resolveCustomerPhotoReference } from "@/lib/storage/customer-photo";
 import { birthDateInputValue } from "@/lib/customer-age";
 
@@ -69,11 +68,10 @@ export default async function CustomerProfilePage({
   ]);
   if (!customer || !appUser) return null;
 
-  const normalizedStaff =
-    customer.staffAssignmentType === "assigned"
-      ? normalizeSalonStaffName(customer.assignedStaffName)
-      : null;
-  const staffSelection = SALON_STAFF_NAMES.find((name) => name === normalizedStaff) ?? "free";
+  const staffSelection =
+    customer.staffAssignmentType === "assigned" && customer.assignedStaffName
+      ? customer.assignedStaffName
+      : "free";
   const recoveryEmail = isDeliverableRecoveryEmail(appUser.email) ? appUser.email : "";
   const profileImageUrl = await resolveCustomerPhotoReference(customer.profileImageUrl);
   const accountErrors: Record<string, string> = {
@@ -175,20 +173,10 @@ export default async function CustomerProfilePage({
                 min="1900-01-01"
                 autoComplete="bday"
                 defaultValue={birthDateInputValue(customer.birthDate)}
-                className={`${fieldClassName} appearance-none`}
+                className={`${fieldClassName} customer-profile-birth-date-v426 appearance-none`}
               />
             </label>
-            <label className="grid gap-1.5 text-sm font-semibold text-[#4f463f] sm:col-span-2">
-              担当者・指名
-              <select name="assignedStaffSelection" defaultValue={staffSelection} className={fieldClassName}>
-                <option value="free">フリー（指名なし）</option>
-                {SALON_STAFF_NAMES.map((staff) => (
-                  <option key={staff} value={staff}>
-                    {staff}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <input type="hidden" name="assignedStaffSelection" value={staffSelection} />
             <div className="rounded-xl bg-[#f8f3ed] px-4 py-3 sm:col-span-2">
               <p className="text-xs font-semibold text-[#8b8178]">ログインID</p>
               <p className="mt-1 text-sm font-semibold">{appUser.loginId}</p>
