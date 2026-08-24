@@ -1,0 +1,40 @@
+import fs from 'node:fs'
+
+function assertIncludes(source, expected, label) {
+  if (!source.includes(expected)) throw new Error(`${label}: verification failed`)
+}
+
+const server = fs.readFileSync('/app/server.js', 'utf8')
+const client = fs.readFileSync('/app/.next/static/chunks/app/u/(account)/layout-customer-experience-v424.js', 'utf8')
+const serverChunk = fs.readFileSync('/app/.next/server/chunks/1597.js', 'utf8')
+const manifest = fs.readFileSync('/app/.next/app-build-manifest.json', 'utf8')
+const experience = fs.readFileSync('/app/customer-experience-v424.js', 'utf8')
+const service = fs.readFileSync('/app/customer-profile-image-service-v424.js', 'utf8')
+const customerLink = fs.readFileSync('/app/customer-link-ui-v424.js', 'utf8')
+
+assertIncludes(server, "['news','店舗からのお知らせ','NEWS & EVENTS','/u/news']", 'home announcement shortcut')
+assertIncludes(server, 'const announcementSection =', 'home announcement data section')
+assertIncludes(server, '/u/chat?productId=${encodeURIComponent(product.id)}', 'item consultation action')
+assertIncludes(server, "customerProfileImage.handle(req, res, url)", 'profile image route')
+assertIncludes(server, '/customer-experience-v424.js', 'customer experience cache bust')
+assertIncludes(server, 'customer-app-experience-v424-runtime', 'customer experience static route')
+assertIncludes(server, 'customer-link-ui-v424-runtime', 'customer link static route')
+assertIncludes(server, '/customer-link-ui-v424.js?v=424-1', 'customer link cache bust')
+if (server.includes('/customer-experience-v395.js')) throw new Error('old customer experience script is still referenced')
+assertIncludes(client, 'M3 11 12 4l9 7v9a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z', 'client home icon')
+assertIncludes(client, 'M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z', 'client chat icon')
+assertIncludes(client, '/customer-experience-v424.js', 'client customer experience runtime')
+if (client.includes('/customer-experience-v395.js')) throw new Error('old customer experience client runtime is still active')
+assertIncludes(serverChunk, 'M3 11 12 4l9 7v9a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z', 'server home icon')
+assertIncludes(manifest, 'layout-customer-experience-v424.js', 'active customer layout chunk')
+if (manifest.includes('layout-customer-profile-v395.js')) throw new Error('old customer layout chunk is still active')
+assertIncludes(experience, 'window.__lienCustomerExperienceV424', 'experience runtime id')
+assertIncludes(experience, '-webkit-appearance:none', 'mobile Safari date input')
+assertIncludes(experience, 'window.__lienCustomerProfileUploadV424', 'profile image upload bridge')
+assertIncludes(experience, "fetch('/api/customer/profile-image'", 'profile image API submission')
+assertIncludes(service, "url.pathname !== '/api/customer/profile-image'", 'profile image service endpoint')
+assertIncludes(customerLink, 'window.__lienCustomerLinkV424', 'customer link runtime id')
+assertIncludes(customerLink, 'let settled = false', 'crop settlement guard')
+assertIncludes(customerLink, "input.dataset.lienCroppedV401 = '1'", 'single profile crop guard')
+
+console.log('customer app experience v424 verified')
