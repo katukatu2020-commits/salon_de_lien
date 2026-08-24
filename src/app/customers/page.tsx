@@ -3043,6 +3043,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
             <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[color:var(--lien-muted)]" />
             <input
               name="q"
+              aria-label="顧客名・電話・メモで検索"
               defaultValue={keyword}
               placeholder="顧客名・電話・メモで検索"
               className="h-12 w-full rounded-full border border-[color:var(--lien-border)] bg-white pl-11 pr-4 text-sm text-[color:var(--lien-ink)] shadow-sm outline-none transition placeholder:text-[#A69A90] focus:border-[color:var(--lien-primary)] focus:ring-4 focus:ring-[#E9C9BE]/40"

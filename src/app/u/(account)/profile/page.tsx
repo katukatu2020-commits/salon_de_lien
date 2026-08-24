@@ -292,6 +292,7 @@ export default async function CustomerProfilePage({
         >
           <input
             name="email"
+            aria-label="復旧用メールアドレス"
             type="email"
             required
             autoComplete="email"
