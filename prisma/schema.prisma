@@ -36,6 +36,7 @@ model Organization {
   ChatThread                   ChatThread[]
   customers                    Customer[]
   customerBroadcasts           CustomerBroadcast[]
+  customerCampaigns            CustomerCampaign[]
   customerRegistrationInvites  CustomerRegistrationInvite[]
   customerStoreLinks           CustomerStoreLink[]
   billing                      OrganizationBilling?
@@ -63,6 +64,7 @@ model AppUser {
   customer            Customer?               @relation(fields: [customerId], references: [id])
   organization        Organization?           @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   customerBroadcasts  CustomerBroadcast[]
+  customerCampaigns   CustomerCampaign[]
   customerStoreLinks  CustomerStoreLink[]
   passwordResetTokens PasswordResetToken[]
   withdrawalRequests  CustomerWithdrawalRequest[]
@@ -178,6 +180,7 @@ model Customer {
   courseRecommendations    CourseRecommendation[]
   organization             Organization                 @relation(fields: [organizationId], references: [id])
   broadcastRecipients      CustomerBroadcastRecipient[]
+  campaignRecipients       CustomerCampaignRecipient[]
   customerOffers           CustomerOffer[]
   storeLink                CustomerStoreLink?
   phoneIdentity            CustomerPhoneIdentity?
@@ -965,6 +968,46 @@ model CustomerBroadcastRecipient {
   @@unique([broadcastId, customerId])
   @@index([customerId, deliveredAt])
   @@index([couponIssueId])
+}
+
+model CustomerCampaign {
+  id                   String                      @id @default(cuid())
+  organizationId       String
+  createdByStaffId     String?
+  title                String
+  summary              String
+  body                 String
+  imageKey             String?
+  targetMenu           String?
+  discountRate         Int?
+  startsAt             DateTime
+  endsAt               DateTime
+  status               String                      @default("published")
+  audienceGender       String?
+  audienceMinAge       Int?
+  audienceMaxAge       Int?
+  audienceMatchedCount Int                         @default(0)
+  createdAt            DateTime                    @default(now())
+  updatedAt            DateTime                    @updatedAt
+  createdByStaff       AppUser?                    @relation(fields: [createdByStaffId], references: [id])
+  organization         Organization                @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  recipients           CustomerCampaignRecipient[]
+
+  @@index([organizationId, status, startsAt, endsAt])
+  @@index([createdByStaffId, createdAt])
+}
+
+model CustomerCampaignRecipient {
+  id          String           @id @default(cuid())
+  campaignId  String
+  customerId  String
+  deliveredAt DateTime         @default(now())
+  viewedAt    DateTime?
+  campaign    CustomerCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  customer    Customer         @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, customerId])
+  @@index([customerId, deliveredAt])
 }
 
 model ProposalResponse {
