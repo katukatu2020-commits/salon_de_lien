@@ -7,7 +7,7 @@ services:
       retries: 20
 
   app:
-    image: 009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app@sha256:b09fa7cae06ea82834e03394295ae2bbe10eb29ee45e7706553b6a9ff81cca95
+    image: 009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app@sha256:2064f62ccdc0abce453d8d44ee733a27a1a2e9dd112796e2c1c350582214356b
     pull_policy: never
     container_name: salon_de_lien_aws_parity
     restart: unless-stopped
