@@ -22,7 +22,7 @@ export function CustomerAccountShell({ customerName, children }: { customerName:
 
   return (
     <div className="min-h-screen bg-[#fbf7f0] text-[#2f2a25]">
-      <header className="sticky top-0 z-40 border-b border-[#eadfd4] bg-[#fffdf9]/95 backdrop-blur md:hidden">
+      <header className="customer-account-mobile-header-removed hidden">
         <div className="mx-auto flex h-16 w-full max-w-xl items-center justify-between gap-3 px-4">
           <Link href="/u/profile" className="flex min-w-0 items-center gap-3" aria-label="プロフィールとアカウント設定を開く">
             <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#8f4f42] text-white shadow-sm">
