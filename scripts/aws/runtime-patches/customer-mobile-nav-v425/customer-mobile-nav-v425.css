@@ -1,0 +1,153 @@
+:root {
+  --customer-mobile-nav-height: 64px;
+}
+
+@media (max-width: 767px) {
+  body {
+    padding-bottom: calc(var(--customer-mobile-nav-height) + env(safe-area-inset-bottom)) !important;
+  }
+
+  /* The repeated ID intentionally outranks legacy compiled customer-nav rules. */
+  html body nav#customer-mobile-bottom-nav#customer-mobile-bottom-nav#customer-mobile-bottom-nav.customer-mobile-nav-v425 {
+    position: fixed !important;
+    z-index: 80 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    display: block !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    max-width: none !important;
+    height: calc(var(--customer-mobile-nav-height) + env(safe-area-inset-bottom)) !important;
+    min-height: calc(var(--customer-mobile-nav-height) + env(safe-area-inset-bottom)) !important;
+    margin: 0 !important;
+    padding: 0 0 env(safe-area-inset-bottom) !important;
+    border: 0 !important;
+    border-top: 1px solid #eadfd4 !important;
+    border-radius: 0 !important;
+    background: rgba(255, 253, 249, 0.97) !important;
+    box-shadow: 0 -8px 24px rgba(62, 42, 35, 0.07) !important;
+    -webkit-backdrop-filter: blur(14px) !important;
+    backdrop-filter: blur(14px) !important;
+  }
+
+  html body nav#customer-mobile-bottom-nav#customer-mobile-bottom-nav#customer-mobile-bottom-nav.customer-mobile-nav-v425 > .customer-mobile-nav-v425-inner {
+    display: grid !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    max-width: none !important;
+    height: var(--customer-mobile-nav-height) !important;
+    min-height: var(--customer-mobile-nav-height) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    align-items: stretch !important;
+  }
+
+  html body nav#customer-mobile-bottom-nav#customer-mobile-bottom-nav#customer-mobile-bottom-nav.customer-mobile-nav-v425 .customer-mobile-nav-v425-link {
+    display: flex !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    height: var(--customer-mobile-nav-height) !important;
+    min-width: 0 !important;
+    min-height: var(--customer-mobile-nav-height) !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    margin: 0 !important;
+    padding: 6px 2px !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: #938780 !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif !important;
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    line-height: 1.15 !important;
+    text-align: center !important;
+    text-decoration: none !important;
+    white-space: nowrap !important;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html body nav#customer-mobile-bottom-nav#customer-mobile-bottom-nav#customer-mobile-bottom-nav.customer-mobile-nav-v425 .customer-mobile-nav-v425-link.active,
+  html body nav#customer-mobile-bottom-nav#customer-mobile-bottom-nav#customer-mobile-bottom-nav.customer-mobile-nav-v425 .customer-mobile-nav-v425-link[aria-current="page"] {
+    color: #d85d79 !important;
+  }
+
+  html body nav#customer-mobile-bottom-nav#customer-mobile-bottom-nav#customer-mobile-bottom-nav.customer-mobile-nav-v425 .customer-mobile-nav-v425-icon,
+  html body nav#customer-mobile-bottom-nav#customer-mobile-bottom-nav#customer-mobile-bottom-nav.customer-mobile-nav-v425 .customer-mobile-nav-v425-link > svg {
+    display: block !important;
+    width: 20px !important;
+    height: 20px !important;
+    min-width: 20px !important;
+    min-height: 20px !important;
+    flex: 0 0 20px !important;
+    margin: 0 !important;
+    fill: none !important;
+    stroke: currentColor !important;
+    stroke-width: 2 !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  html body nav#customer-mobile-bottom-nav#customer-mobile-bottom-nav#customer-mobile-bottom-nav.customer-mobile-nav-v425 .customer-mobile-nav-v425-link span {
+    display: block !important;
+    overflow: hidden !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+}
+
+@media (min-width: 768px) {
+  html body nav#customer-mobile-bottom-nav#customer-mobile-bottom-nav#customer-mobile-bottom-nav.customer-mobile-nav-next {
+    display: none !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  html body nav#customer-mobile-bottom-nav#customer-mobile-bottom-nav#customer-mobile-bottom-nav.customer-mobile-nav-home {
+    position: fixed !important;
+    z-index: 40 !important;
+    top: 0 !important;
+    right: auto !important;
+    bottom: 0 !important;
+    left: max(0px, calc(50% - 720px)) !important;
+    display: block !important;
+    width: 238px !important;
+    max-width: 238px !important;
+    height: 100dvh !important;
+    padding: 104px 18px 24px !important;
+    border: 0 !important;
+    border-right: 1px solid #eaded9 !important;
+    background: rgba(255, 250, 247, 0.96) !important;
+  }
+
+  html body nav#customer-mobile-bottom-nav#customer-mobile-bottom-nav#customer-mobile-bottom-nav.customer-mobile-nav-home .customer-mobile-nav-v425-inner {
+    display: grid !important;
+    height: auto !important;
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  html body nav#customer-mobile-bottom-nav#customer-mobile-bottom-nav#customer-mobile-bottom-nav.customer-mobile-nav-home .customer-mobile-nav-v425-link {
+    min-height: 52px !important;
+    flex-direction: row !important;
+    justify-content: flex-start !important;
+    gap: 13px !important;
+    padding: 0 16px !important;
+    border-radius: 12px !important;
+    color: #938780 !important;
+    font-size: 12px !important;
+  }
+
+  html body nav#customer-mobile-bottom-nav#customer-mobile-bottom-nav#customer-mobile-bottom-nav.customer-mobile-nav-home .customer-mobile-nav-v425-link.active,
+  html body nav#customer-mobile-bottom-nav#customer-mobile-bottom-nav#customer-mobile-bottom-nav.customer-mobile-nav-home .customer-mobile-nav-v425-link[aria-current="page"] {
+    background: #fceaf0 !important;
+    color: #bc4966 !important;
+  }
+}
