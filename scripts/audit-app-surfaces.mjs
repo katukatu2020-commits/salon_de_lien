@@ -308,10 +308,14 @@ async function capturePage(client, audience, viewportName, route) {
   return { route, screenshotPath, ...inspection, ...events };
 }
 
-async function discoverRoutes(client, prefixes, routes) {
+async function discoverRoutes(client, prefixes, routes, sourceRoute, discoveredFrom) {
   const discovered = await evaluate(client, `([...new Set([...document.querySelectorAll('a[href]')].map(link=>new URL(link.href,location.href)).filter(url=>url.origin===location.origin).map(url=>url.pathname+url.search))])`);
   for (const route of discovered) {
-    if (prefixes.some((prefix) => route.startsWith(prefix)) && !/logout|password-reset|register|withdrawal|receipt|print/.test(route)) routes.add(route);
+    if (prefixes.some((prefix) => route.startsWith(prefix)) && !/logout|password-reset|register|withdrawal|receipt|print/.test(route)) {
+      routes.add(route);
+      if (!discoveredFrom.has(route)) discoveredFrom.set(route, new Set());
+      discoveredFrom.get(route).add(sourceRoute);
+    }
   }
 }
 
@@ -362,9 +366,10 @@ async function auditAdmin() {
       "/admin/account",
     ]);
     const results = [];
+    const discoveredFrom = new Map();
     for (const route of [...routes]) {
       results.push(await capturePage(client, "admin", "desktop", route));
-      await discoverRoutes(client, ["/admin/customers/", "/admin/appointments/", "/admin/community/", "/admin/owner-analytics"], routes);
+      await discoverRoutes(client, ["/admin/customers/", "/admin/appointments/", "/admin/community/", "/admin/owner-analytics"], routes, route, discoveredFrom);
     }
     const captured = new Set(results.map((result) => result.route));
     const dynamic = sampleRoutesByKind([...routes], captured, [
@@ -373,7 +378,11 @@ async function auditAdmin() {
       { matches: (route) => /^\/admin\/community\/[^/?]+/.test(route), limit: 2 },
       { matches: (route) => route.startsWith("/admin/owner-analytics"), limit: 2 },
     ]);
-    for (const route of dynamic) results.push(await capturePage(client, "admin", "desktop", route));
+    for (const route of dynamic) {
+      const result = await capturePage(client, "admin", "desktop", route);
+      result.discoveredFrom = [...(discoveredFrom.get(route) ?? [])];
+      results.push(result);
+    }
     return results;
   } finally {
     await browser.close();
@@ -399,9 +408,10 @@ async function auditCustomer(viewportName, viewport, port) {
       "/u/campaigns",
     ]);
     const results = [];
+    const discoveredFrom = new Map();
     for (const route of [...routes]) {
       results.push(await capturePage(client, "customer", viewportName, route));
-      await discoverRoutes(client, ["/u/"], routes);
+      await discoverRoutes(client, ["/u/"], routes, route, discoveredFrom);
     }
     const captured = new Set(results.map((result) => result.route));
     const dynamic = sampleRoutesByKind([...routes], captured, [
@@ -410,7 +420,11 @@ async function auditCustomer(viewportName, viewport, port) {
       { matches: (route) => /^\/u\/community\/[^/?]+/.test(route), limit: 2 },
       { matches: (route) => /^\/u\/catalog\/[^/?]+/.test(route), limit: 2 },
     ]);
-    for (const route of dynamic) results.push(await capturePage(client, "customer", viewportName, route));
+    for (const route of dynamic) {
+      const result = await capturePage(client, "customer", viewportName, route);
+      result.discoveredFrom = [...(discoveredFrom.get(route) ?? [])];
+      results.push(result);
+    }
     return results;
   } finally {
     await browser.close();
@@ -420,12 +434,13 @@ async function auditCustomer(viewportName, viewport, port) {
 await fs.rm(outputRoot, { recursive: true, force: true });
 await fs.mkdir(outputRoot, { recursive: true });
 
+const audience = process.env.AUDIT_AUDIENCE || "all";
 const report = {
   generatedAt: new Date().toISOString(),
   baseUrl,
-  admin: await auditAdmin(),
-  customerDesktop: await auditCustomer("desktop", { width: 1440, height: 1000, deviceScaleFactor: 1, mobile: false }, 9342),
-  customerMobile: await auditCustomer("iphone15", { width: 393, height: 852, deviceScaleFactor: 3, mobile: true, screenWidth: 393, screenHeight: 852 }, 9343),
+  admin: audience === "all" || audience === "admin" ? await auditAdmin() : [],
+  customerDesktop: audience === "all" || audience === "customer" ? await auditCustomer("desktop", { width: 1440, height: 1000, deviceScaleFactor: 1, mobile: false }, 9342) : [],
+  customerMobile: audience === "all" || audience === "customer" ? await auditCustomer("iphone15", { width: 393, height: 852, deviceScaleFactor: 3, mobile: true, screenWidth: 393, screenHeight: 852 }, 9343) : [],
 };
 
 const navSignatures = report.customerMobile.map((page) => page.nav && JSON.stringify(page.nav.items.map(({ text, y, width, height, iconWidth, iconHeight }) => ({ text, y, width, height, iconWidth, iconHeight }))));
