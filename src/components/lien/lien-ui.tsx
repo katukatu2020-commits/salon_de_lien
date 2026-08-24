@@ -127,15 +127,15 @@ export function MetricCard({
   return (
     <LienCard tone={tone} className="p-4 sm:p-5">
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <p className="text-xs font-semibold text-[color:var(--lien-muted)]">{label}</p>
-          <div className="mt-2 flex items-baseline gap-1 text-[color:var(--lien-ink)]">
-            <span className="tabular-nums text-2xl font-semibold sm:text-3xl">{value}</span>
+          <div className="mt-2 flex min-w-0 flex-nowrap items-baseline gap-1 whitespace-nowrap text-[color:var(--lien-ink)]">
+            <span className="tabular-nums text-2xl font-semibold leading-none 2xl:text-3xl">{value}</span>
             {unit ? <span className="text-xs font-semibold text-[color:var(--lien-muted)]">{unit}</span> : null}
           </div>
         </div>
         {Icon ? (
-          <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/80 text-[color:var(--lien-primary)] shadow-sm">
+          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/80 text-[color:var(--lien-primary)] shadow-sm">
             <Icon className="h-5 w-5" />
           </span>
         ) : null}
