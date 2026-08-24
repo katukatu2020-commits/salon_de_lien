@@ -62,7 +62,7 @@ import {
   reviewRequestStatusLabel
 } from "@/lib/products/product-review";
 import { normalizeSalonStaffName, SALON_STAFF_NAMES } from "@/lib/salon/staff";
-import { requireCustomerAccess } from "@/lib/auth/authorization";
+import { AuthorizationError, requireCustomerAccess } from "@/lib/auth/authorization";
 import {
   birthDateInputValue,
   customerAgeLabel,
@@ -413,7 +413,18 @@ function nextActionStatus({
 }
 
 export default async function CustomerDetailPage({ params, searchParams }: CustomerDetailPageProps) {
-  const { session } = await requireCustomerAccess(params.id);
+  let session;
+
+  try {
+    ({ session } = await requireCustomerAccess(params.id));
+  } catch (error) {
+    if (error instanceof AuthorizationError && error.status === 404) {
+      notFound();
+    }
+
+    throw error;
+  }
+
   await expirePointsForCustomer(params.id);
 
   const customer = await prisma.customer.findFirst({

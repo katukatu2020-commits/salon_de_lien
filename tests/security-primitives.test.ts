@@ -67,6 +67,27 @@ import {
   canonicalScheduleStaffIdentity,
   resolveScheduleStaffIdentity
 } from "../src/lib/appointments/staff-identity";
+import { resolveCustomerPhotoReference } from "../src/lib/storage/customer-photo-core";
+
+test("an unavailable private customer photo does not fail the surrounding page", async () => {
+  const previousBucket = process.env.S3_PRIVATE_ASSETS_BUCKET;
+  const previousConsoleError = console.error;
+  delete process.env.S3_PRIVATE_ASSETS_BUCKET;
+  console.error = () => undefined;
+
+  try {
+    assert.equal(
+      await resolveCustomerPhotoReference(
+        "s3-private://private/customer-photos/org/customer/visit/profile.jpg"
+      ),
+      null
+    );
+  } finally {
+    console.error = previousConsoleError;
+    if (previousBucket === undefined) delete process.env.S3_PRIVATE_ASSETS_BUCKET;
+    else process.env.S3_PRIVATE_ASSETS_BUCKET = previousBucket;
+  }
+});
 
 test("schedule staff identity uses the tenant roster instead of a fixed salon list", () => {
   const tenantStaff = [
@@ -784,6 +805,17 @@ test("customer profile image upload is session-scoped and preserves signed image
   assert.match(routeSource, /id:\s*session\.customerId/);
   assert.match(routeSource, /organizationId:\s*session\.organizationId/);
   assert.doesNotMatch(routeSource, /formData\.get\("customerId"\)/);
+});
+
+test("customer detail converts an inaccessible tenant record into a not-found response", () => {
+  const pageSource = readFileSync(
+    new URL("../src/app/customers/[id]/page.tsx", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(pageSource, /error instanceof AuthorizationError && error\.status === 404/);
+  assert.match(pageSource, /notFound\(\)/);
+  assert.match(pageSource, /throw error/);
 });
 
 test("customer mobile bottom navigation uses one safe-area-aware layout contract", () => {

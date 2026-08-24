@@ -150,7 +150,15 @@ export async function storeCustomerPhotoBuffer({
 export async function resolveCustomerPhotoReference(reference: string | null | undefined) {
   if (!reference) return null;
   if (!isPrivateS3Reference(reference)) return reference;
-  return new S3PrivateStorageProvider().getReadUrl(reference);
+  try {
+    return await new S3PrivateStorageProvider().getReadUrl(reference);
+  } catch (error) {
+    // A stale or malformed photo must not take down the entire customer record.
+    console.error("[customer-photo] Failed to resolve a private photo reference", {
+      errorName: error instanceof Error ? error.name : "UnknownError"
+    });
+    return null;
+  }
 }
 
 export async function deleteCustomerPhotoReference(reference: string | null | undefined) {
