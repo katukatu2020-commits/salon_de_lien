@@ -1,0 +1,166 @@
+name: Deploy owner billing header first paint v423
+
+on:
+  push:
+    branches:
+      - recovery/aws-canonical-20260815
+    paths:
+      - .github/workflows/deploy-owner-billing-header-first-paint-v423.yml
+      - scripts/aws/runtime-patches/owner-billing-header-first-paint-v423/**
+      - scripts/aws/approve-and-deploy-protected-release.ps1
+      - scripts/aws/register-release-task.ps1
+
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
+  group: salon-de-lien-protected-release
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: ap-northeast-1
+  AWS_ACCOUNT_ID: "009293460979"
+  ECR_REPOSITORY: salon-de-lien-staging-app
+  ECS_CLUSTER: salon-de-lien-staging-cluster
+  ECS_SERVICE: salon-de-lien-staging-web
+  RELEASE_DIR: scripts/aws/runtime-patches/owner-billing-header-first-paint-v423
+  PARENT_DIGEST: sha256:547fea950214892c065af2a709b6ebf0754a11fb53449e02d27fdfca86aebca4
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out the release branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure temporary AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::009293460979:role/SalonDeLienGitHubDeployRole
+          role-session-name: GitHubActions
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Verify protected automation identity
+        shell: pwsh
+        run: |
+          $identity = aws sts get-caller-identity --output json --no-cli-pager | ConvertFrom-Json
+          if ($identity.Account -ne $env:AWS_ACCOUNT_ID -or $identity.Arn -notmatch ':assumed-role/SalonDeLienGitHubDeployRole/') {
+            throw 'Unexpected AWS deployment identity.'
+          }
+
+      - name: Validate runtime patch syntax
+        shell: pwsh
+        run: |
+          node --check (Join-Path $env:RELEASE_DIR 'patch-runtime.mjs')
+          node --check (Join-Path $env:RELEASE_DIR 'verify-runtime.mjs')
+
+      - name: Log in to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Install the pinned registry export tool
+        uses: imjasonh/setup-crane@31b88efe9de28ae0ffa220711af4b60be9435f6e
+
+      - name: Resolve the currently running release
+        shell: pwsh
+        run: |
+          $task = (aws ecs describe-services --cluster $env:ECS_CLUSTER --services $env:ECS_SERVICE --region $env:AWS_REGION --query 'services[0].taskDefinition' --output text --no-cli-pager).Trim()
+          $image = (aws ecs describe-task-definition --task-definition $task --region $env:AWS_REGION --query "taskDefinition.containerDefinitions[?name=='Web'].image | [0]" --output text --no-cli-pager).Trim()
+          if (-not $task -or -not $image) { throw 'Current ECS release could not be resolved.' }
+          if ($image -match '@(sha256:[a-f0-9]{64})$') { $digest = $Matches[1] }
+          else {
+            $currentTag = $image.Substring($image.LastIndexOf(':') + 1)
+            $digest = (aws ecr describe-images --repository-name $env:ECR_REPOSITORY --image-ids "imageTag=$currentTag" --region $env:AWS_REGION --query 'imageDetails[0].imageDigest' --output text --no-cli-pager).Trim()
+          }
+          if ($digest -ne $env:PARENT_DIGEST) {
+            throw "Production moved from the reviewed parent image. Expected $($env:PARENT_DIGEST), found $digest."
+          }
+          "PREVIOUS_TASK=$task" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+          "PREVIOUS_IMAGE=$image" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+          "PREVIOUS_DIGEST=$digest" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Build and push immutable child image
+        shell: pwsh
+        run: |
+          $shortSha = $env:GITHUB_SHA.Substring(0, 12)
+          $tag = "owner-billing-header-first-paint-v423-$shortSha"
+          $image = "$($env:AWS_ACCOUNT_ID).dkr.ecr.$($env:AWS_REGION).amazonaws.com/$($env:ECR_REPOSITORY):$tag"
+          $baseImage = "$($env:AWS_ACCOUNT_ID).dkr.ecr.$($env:AWS_REGION).amazonaws.com/$($env:ECR_REPOSITORY)@$($env:PARENT_DIGEST)"
+          $rootfs = Join-Path $env:RUNNER_TEMP 'salon-v422-rootfs.tar'
+          $flatBase = "salon-de-lien-v422-flat:$shortSha"
+          crane export $baseImage $rootfs
+          if ($LASTEXITCODE -ne 0) { throw 'Base image export failed.' }
+          docker import `
+            --change 'USER nextjs' `
+            --change 'ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin' `
+            --change 'ENV NODE_VERSION=20.20.2' `
+            --change 'ENV YARN_VERSION=1.22.22' `
+            --change 'ENV NODE_ENV=production' `
+            --change 'ENV NEXT_TELEMETRY_DISABLED=1' `
+            --change 'WORKDIR /app' `
+            --change 'ENTRYPOINT ["lien-entrypoint"]' `
+            --change 'CMD ["node","server.js"]' `
+            $rootfs $flatBase | Out-Null
+          if ($LASTEXITCODE -ne 0) { throw 'Flattened base image import failed.' }
+          docker build --build-arg "BASE_IMAGE=$flatBase" --tag $image $env:RELEASE_DIR
+          if ($LASTEXITCODE -ne 0) { throw 'Docker build failed.' }
+          docker push $image
+          if ($LASTEXITCODE -ne 0) { throw 'ECR push failed.' }
+          $digest = (aws ecr describe-images --repository-name $env:ECR_REPOSITORY --image-ids "imageTag=$tag" --region $env:AWS_REGION --query 'imageDetails[0].imageDigest' --output text --no-cli-pager).Trim()
+          if (-not $digest -or $digest -eq 'None') { throw 'Release digest was not resolved.' }
+          "RELEASE_TAG=$tag" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+          "RELEASE_IMAGE=$image" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+          "RELEASE_DIGEST=$digest" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Register the application task definition
+        shell: pwsh
+        run: |
+          $newTask = (& ./scripts/aws/register-release-task.ps1 -CurrentTaskDefinition $env:PREVIOUS_TASK -Image $env:RELEASE_IMAGE -Profile '' | Select-Object -Last 1).Trim()
+          if (-not $newTask) { throw 'Release task definition was not registered.' }
+          "RELEASE_TASK=$newTask" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Approve and deploy with automatic rollback
+        shell: pwsh
+        run: |
+          & ./scripts/aws/approve-and-deploy-protected-release.ps1 `
+            -PreviousTaskDefinitionArn $env:PREVIOUS_TASK `
+            -PreviousImage $env:PREVIOUS_IMAGE `
+            -PreviousImageDigest $env:PREVIOUS_DIGEST `
+            -NewTaskDefinitionArn $env:RELEASE_TASK `
+            -NewImage $env:RELEASE_IMAGE `
+            -NewImageDigest $env:RELEASE_DIGEST `
+            -Profile ''
+
+      - name: Verify public readiness
+        shell: pwsh
+        run: |
+          $ready = $false
+          for ($attempt = 1; $attempt -le 30; $attempt += 1) {
+            try {
+              $response = Invoke-WebRequest -Uri 'https://salon-de-lien.com/api/health/ready' -TimeoutSec 10 -UseBasicParsing
+              if ($response.StatusCode -eq 200) { $ready = $true; break }
+            } catch { Start-Sleep -Seconds 10 }
+          }
+          if (-not $ready) { throw 'Production readiness did not recover.' }
+          $actualTask = (aws ecs describe-services --cluster $env:ECS_CLUSTER --services $env:ECS_SERVICE --region $env:AWS_REGION --query 'services[0].taskDefinition' --output text --no-cli-pager).Trim()
+          if ($actualTask -ne $env:RELEASE_TASK) { throw 'ECS did not settle on the approved release.' }
+
+      - name: Record the approved release lock
+        shell: pwsh
+        run: |
+          $lockPath = 'infrastructure/deployment-protection/staging-lock.json'
+          $lock = Get-Content -Raw $lockPath | ConvertFrom-Json
+          $lock.taskDefinitionArn = $env:RELEASE_TASK
+          $lock.imageUri = $env:RELEASE_IMAGE
+          $lock.imageDigest = $env:RELEASE_DIGEST
+          $lock.canonicalCommit = $env:GITHUB_SHA
+          $lock.runtimePatchId = $env:RELEASE_TAG
+          [IO.File]::WriteAllText((Resolve-Path $lockPath), ($lock | ConvertTo-Json -Depth 20) + "`n", [Text.UTF8Encoding]::new($false))
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add $lockPath
+          git commit -m 'chore: record protected runtime release [skip ci]'
+          git push origin "HEAD:$($env:GITHUB_REF_NAME)"
