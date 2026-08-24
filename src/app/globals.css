@@ -611,6 +611,28 @@ tbody tr:hover {
   }
 }
 
+@media (max-width: 767px) {
+  input.customer-profile-birth-date-v426[type="date"] {
+    display: flex;
+    min-height: 3rem;
+    align-items: center;
+    padding-block: 0;
+    line-height: normal;
+  }
+
+  input.customer-profile-birth-date-v426[type="date"]::-webkit-date-and-time-value,
+  input.customer-profile-birth-date-v426[type="date"]::-webkit-datetime-edit,
+  input.customer-profile-birth-date-v426[type="date"]::-webkit-datetime-edit-fields-wrapper {
+    display: flex;
+    height: 100%;
+    min-height: 3rem;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+    line-height: normal;
+  }
+}
+
 @media print {
   @page {
     size: A4;
