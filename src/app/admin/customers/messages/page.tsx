@@ -84,6 +84,17 @@ export default async function CustomerMessagesPage({ searchParams }: PageProps) 
 
       {searchParams?.notice === "sent" ? <div role="status" className="flex items-center gap-3 rounded-[18px] border border-[#cbdcc8] bg-[#eef5ed] px-4 py-3 text-sm font-semibold text-[#405d41]"><CheckCircle2 className="h-5 w-5" />{sentCount.toLocaleString("ja-JP")}名へ配信しました。</div> : null}
 
+      <section className="flex flex-col gap-4 rounded-[20px] border border-[#ead8d0] bg-gradient-to-br from-[#fff8f7] to-[#f7eee8] p-5 shadow-lien-sm sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-xs font-semibold text-[#a34b60]">EVENT &amp; CAMPAIGN</p>
+          <h2 className="mt-1 text-lg font-semibold text-[#3d302b]">広告付きキャンペーンは専用ページから配信</h2>
+          <p className="mt-1 text-sm text-[#786b64]">通常のお知らせと分けて、期間限定メニューや店舗イベントを掲載します。</p>
+        </div>
+        <Link href="/admin/customers/messages/campaigns" className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-full bg-[#8f4f42] px-5 text-sm font-semibold text-white shadow-sm">
+          キャンペーンを作成
+        </Link>
+      </section>
+
       <section className="grid gap-3 sm:grid-cols-4">
         {[['登録顧客', customers.length], ['女性', femaleCount], ['男性', maleCount], ['年齢登録済み', ageKnownCount]].map(([label, value]) => <div key={String(label)} className="rounded-[18px] border border-lien bg-white p-4 shadow-lien-sm"><p className="text-xs font-semibold text-lien-muted">{label}</p><p className="mt-2 text-2xl font-semibold tabular-nums">{Number(value).toLocaleString("ja-JP")}<span className="ml-1 text-xs">名</span></p></div>)}
       </section>
