@@ -76,7 +76,7 @@ export async function CustomerPointsOverview() {
 
   return (
     <div className="mx-auto grid max-w-6xl gap-6">
-      <CustomerWorkspaceTabs active="points" />
+      <CustomerWorkspaceTabs active="customers" />
 
       <PageHeader
         eyebrow="Point Management"
