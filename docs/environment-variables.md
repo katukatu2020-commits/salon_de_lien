@@ -44,6 +44,7 @@ production起動時に`prisma migrate dev`を使わない。one-off taskの`pris
 | `ADMIN_EMAIL` | sensitive | 単一owner login |
 | `ADMIN_PASSWORD_HASH` | yes | scrypt hash |
 | `ADMIN_AUTH_SECRET` | yes | HMAC session secret、32 byte以上 |
+| `INTEGRATION_SECRET_ENCRYPTION_KEY` | yes | 店舗別LINE連携資格情報のAES-256-GCM暗号化キー、32文字以上 |
 | `ADMIN_SESSION_HOURS` | no | 1〜24 |
 | `DEFAULT_ORGANIZATION_ID` | no | 単一店舗互換用の既定組織 |
 | `ALLOW_LEGACY_CUSTOMER_ID_PORTAL` | no | development限定。staging/productionはfalse |
@@ -113,7 +114,20 @@ API keyはSecrets Manager、feature flag/model名はtask envを基本とする�
 
 AWSではprocess内timerを使用しない。継続する場合はEventBridgeから`GMAIL_SYNC_CRON_SECRET`で認証された処理を呼ぶ。Chrome bridgeは店舗PC依存の暫定integrationとして扱い、production backendの可用性要件に含めない。
 
-## 9. Environment validation target
+## 9. LINE reservation integration
+
+店舗ごとのMessaging APIチャネルシークレットとチャネルアクセストークンはDBへ暗号化保存する。平文を環境変数やtask definitionへ店舗ごとに追加しない。
+
+| 変数 | secret | 保存先 | 用途 |
+| --- | --- | --- | --- |
+| `INTEGRATION_SECRET_ENCRYPTION_KEY` | yes | Secrets Manager | 店舗別LINE資格情報の暗号化 |
+| `APP_URL` | no | task env / application secret | Webhook URLとLIFF Endpoint URLの生成 |
+
+既存環境への段階導入中は`INTEGRATION_SECRET_ENCRYPTION_KEY`未設定時に`ADMIN_AUTH_SECRET`から暗号化キーを導出する。正式運用では独立した値をSecrets Managerへ追加し、既存データを再暗号化してから切り替える。
+
+Messaging APIチャネルID、LINE LoginチャネルID、LIFF IDは店舗運用設定から保存する。チャネルシークレットとチャネルアクセストークンは保存後に画面・APIへ返さない。
+
+## 10. Environment validation target
 
 Phase 1で起動時validationを追加する。
 

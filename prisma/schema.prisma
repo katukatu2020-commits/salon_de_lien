@@ -1228,6 +1228,71 @@ model OrganizationGmailConnection {
   updatedAt             DateTime  @default(now()) @db.Timestamptz(6)
 }
 
+model OrganizationLineConnection {
+  organizationId         String    @id
+  messagingChannelId     String
+  lineLoginChannelId     String
+  liffId                 String
+  encryptedChannelSecret String
+  encryptedAccessToken   String
+  webhookKey             String    @unique
+  status                 String    @default("active")
+  botUserId              String?
+  basicId                String?
+  displayName            String?
+  lastVerifiedAt         DateTime?
+  lastWebhookAt          DateTime?
+  lastError              String?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @default(now())
+
+  @@index([status])
+}
+
+model CustomerLineIdentity {
+  id             String   @id
+  organizationId String
+  customerId     String?
+  lineUserId     String
+  displayName    String?
+  pictureUrl     String?
+  followed       Boolean  @default(true)
+  lastSeenAt     DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now())
+
+  @@unique([organizationId, lineUserId])
+  @@index([customerId])
+}
+
+model LineWebhookEvent {
+  webhookEventId String    @id
+  organizationId String
+  eventType      String
+  lineUserId     String?
+  status         String    @default("received")
+  error          String?
+  receivedAt     DateTime  @default(now())
+  processedAt    DateTime?
+
+  @@index([organizationId, receivedAt])
+}
+
+model LineBookingRequest {
+  id             String   @id
+  organizationId String
+  lineUserId     String
+  idempotencyKey String
+  appointmentId  String?
+  status         String   @default("processing")
+  error          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now())
+
+  @@unique([organizationId, lineUserId, idempotencyKey])
+  @@index([organizationId, createdAt])
+}
+
 model OrganizationInboundEmail {
   organizationId String    @id
   localPart      String    @unique
