@@ -13,6 +13,8 @@ export default async function CustomerCommunityDetailPage({ params }: { params: 
   const post = await loadVisitCommunityPostDetail({
     organizationId: session.organizationId,
     currentUserId: session.userId,
+    currentCustomerId: session.customerId,
+    actor: "customer",
     postId: params.postId
   });
   if (!post) notFound();

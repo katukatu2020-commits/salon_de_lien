@@ -26,9 +26,15 @@ export async function POST(request: NextRequest, { params }: { params: { postId:
       authorRole: "CUSTOMER",
       body
     },
-    select: { id: true, authorDisplayName: true, authorRole: true, isStylistComment: true, isAiAssistant: true, body: true, createdAt: true }
+    select: { id: true, authorDisplayName: true, authorRole: true, isStylistComment: true, isAiAssistant: true, body: true, createdAt: true, updatedAt: true }
   });
   revalidatePath("/u/community");
   revalidatePath("/admin/community");
-  return NextResponse.json({ ...comment, createdAt: comment.createdAt.toISOString() }, { status: 201 });
+  return NextResponse.json({
+    ...comment,
+    createdAt: comment.createdAt.toISOString(),
+    updatedAt: comment.updatedAt.toISOString(),
+    canEdit: true,
+    canDelete: true
+  }, { status: 201 });
 }

@@ -30,10 +30,15 @@ export type CommunityCommentView = {
   isAiAssistant: boolean;
   body: string;
   createdAt: string;
+  updatedAt: string;
+  canEdit: boolean;
+  canDelete: boolean;
 };
 
 export type CommunityPostView = {
   id: string;
+  postKind: string;
+  caption: string | null;
   customerName: string;
   visitDate: string;
   menu: string;
@@ -43,6 +48,8 @@ export type CommunityPostView = {
   likedByCurrentUser: boolean;
   comments: CommunityCommentView[];
   publishedAt: string;
+  canEdit: boolean;
+  canDelete: boolean;
 };
 
 export type CommunityListPostView = {
@@ -97,6 +104,13 @@ export function normalizeCommunityComment(value: unknown) {
   if (typeof value !== "string") return null;
   const normalized = value.replace(/\r\n/g, "\n").trim();
   if (normalized.length < 1 || normalized.length > 300) return null;
+  return normalized;
+}
+
+export function normalizeCommunityCaption(value: unknown) {
+  if (typeof value !== "string") return null;
+  const normalized = value.replace(/\r\n/g, "\n").trim();
+  if (normalized.length > 300) return null;
   return normalized;
 }
 
@@ -260,10 +274,14 @@ export async function loadVisitCommunityPostList({
 export async function loadVisitCommunityPostDetail({
   organizationId,
   currentUserId,
+  currentCustomerId,
+  actor,
   postId
 }: {
   organizationId: string;
   currentUserId: string | null;
+  currentCustomerId?: string | null;
+  actor: CommunityActor;
   postId: string;
 }): Promise<CommunityPostView | null> {
   const post = await prisma.visitCommunityPost.findFirst({
@@ -278,6 +296,7 @@ export async function loadVisitCommunityPostDetail({
     },
     select: {
       id: true,
+      customerId: true,
       publishedAt: true,
       postKind: true,
       caption: true,
@@ -308,12 +327,18 @@ export async function loadVisitCommunityPostDetail({
           isStylistComment: true,
           isAiAssistant: true,
           body: true,
-          createdAt: true
+          createdAt: true,
+          updatedAt: true,
+          appUserId: true
         }
       }
     }
   });
   if (!post) return null;
+
+  const canManagePost = actor === "staff"
+    ? post.postKind === "STORE"
+    : post.postKind === "VISIT" && Boolean(currentCustomerId && post.customerId === currentCustomerId);
 
   const photos = post.postKind === "STORE"
     ? await Promise.all(post.photoReferences.map(async (reference, index) => ({
@@ -329,6 +354,8 @@ export async function loadVisitCommunityPostDetail({
 
   return {
     id: post.id,
+    postKind: post.postKind,
+    caption: post.caption,
     customerName: post.postKind === "STORE" ? "Salon de Lien" : communityDisplayName(post.customer?.name ?? ""),
     visitDate: (post.visit?.visitedAt ?? post.publishedAt).toISOString(),
     menu: post.postKind === "STORE" ? "店舗スタイル" : post.visit?.performedStyle ?? post.visit?.requestedStyle ?? "施術記録",
@@ -336,7 +363,15 @@ export async function loadVisitCommunityPostDetail({
     photos: photos.filter((photo): photo is { id: string; url: string; caption: string | null } => Boolean(photo.url)),
     likeCount: post.likes.length,
     likedByCurrentUser: Boolean(currentUserId && post.likes.some((like) => like.appUserId === currentUserId)),
-    comments: post.comments.map((comment) => ({ ...comment, createdAt: comment.createdAt.toISOString() })),
-    publishedAt: post.publishedAt.toISOString()
+    comments: post.comments.map(({ appUserId, ...comment }) => ({
+      ...comment,
+      createdAt: comment.createdAt.toISOString(),
+      updatedAt: comment.updatedAt.toISOString(),
+      canEdit: Boolean(currentUserId && appUserId === currentUserId),
+      canDelete: Boolean(currentUserId && appUserId === currentUserId)
+    })),
+    publishedAt: post.publishedAt.toISOString(),
+    canEdit: canManagePost,
+    canDelete: canManagePost
   };
 }
