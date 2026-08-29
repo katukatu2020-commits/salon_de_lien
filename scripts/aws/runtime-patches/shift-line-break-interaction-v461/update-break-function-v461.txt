@@ -1,0 +1,61 @@
+  async function updateBreak(req, res, id) {
+    if (!sameOrigin(req)) throw new RequestError('不正なリクエストです。', 403)
+    const session = await actor(req)
+    const body = await readJson(req)
+    const date = validDateKey(body.date)
+    const startMinutes = validMinutes(body.startMinutes, '開始時刻', { min: 0, max: 1425, step: 15 })
+    const durationMinutes = validMinutes(body.durationMinutes, '休憩時間', { min: 15, max: 720, step: 15 })
+    if (startMinutes + durationMinutes > 1440) throw new RequestError('休憩の終了時刻を確認してください。')
+    const requestedKey = String(body.staffKey || '').trim()
+    const requestedName = String(body.staffName || '').trim()
+    if (!requestedKey && !requestedName) throw new RequestError('スタッフを選択してください。')
+
+    const result = await prisma.$transaction(async tx => {
+      await tx.$executeRawUnsafe('SELECT pg_advisory_xact_lock(hashtext($1))', `staff-break:${session.organizationId}:${date}`)
+      const current = await tx.$queryRawUnsafe(`SELECT "id","organizationId" FROM "StaffScheduleBreak"
+        WHERE "id"=$1 AND "organizationId"=$2 FOR UPDATE`, id, session.organizationId)
+      if (!current[0]) throw new RequestError('休憩が見つかりません。', 404)
+
+      const rows = await staffRows(tx, session.organizationId)
+      const staff = rows.find(row => requestedKey && normalizeStaff(row.staffKey) === normalizeStaff(requestedKey))
+        || rows.find(row => normalizeStaff(row.staffName) === normalizeStaff(requestedName))
+      if (!staff || normalizeStaff(staff.staffKey) === 'free' || normalizeStaff(staff.staffName) === normalizeStaff('フリー')) {
+        throw new RequestError('休憩を登録するスタッフを選択してください。')
+      }
+      if (startMinutes < Number(staff.workStartMinutes) || startMinutes + durationMinutes > Number(staff.workEndMinutes)) {
+        throw new RequestError(`${staff.staffName}の受付時間内で休憩を設定してください。`)
+      }
+
+      const existing = await tx.$queryRawUnsafe(`SELECT "id","startMinutes","durationMinutes" FROM "StaffScheduleBreak"
+        WHERE "organizationId"=$1 AND "staffKey"=$2 AND "dateKey"=$3 AND "id"<>$4 FOR UPDATE`,
+      session.organizationId, staff.staffKey, date, id)
+      if (existing.some(row => rangesOverlap(startMinutes, durationMinutes, Number(row.startMinutes), Number(row.durationMinutes)))) {
+        throw new RequestError('同じ時間帯に休憩が登録済みです。')
+      }
+
+      const dayStart = new Date(`${date}T00:00:00+09:00`)
+      const dayEnd = new Date(`${date}T24:00:00+09:00`)
+      const appointments = await tx.appointment.findMany({
+        where: {
+          scheduledAt: { gte: dayStart, lt: dayEnd },
+          status: { notIn: [...CLOSED_APPOINTMENT_STATUSES] },
+          customer: { organizationId: session.organizationId, deletedAt: null },
+        },
+        select: { scheduledAt: true, durationMinutes: true, staffName: true },
+      })
+      const conflict = appointments.some(appointment =>
+        normalizeStaff(appointment.staffName) === normalizeStaff(staff.staffName)
+        && rangesOverlap(startMinutes, durationMinutes, appointmentMinutes(appointment.scheduledAt), Number(appointment.durationMinutes || 60)),
+      )
+      if (conflict) throw new RequestError('この時間帯には予約があります。予約と重ならない時間を選択してください。')
+
+      const updated = await tx.$queryRawUnsafe(`UPDATE "StaffScheduleBreak"
+        SET "staffKey"=$1,"staffName"=$2,"dateKey"=$3,"startMinutes"=$4,"durationMinutes"=$5,"updatedAt"=CURRENT_TIMESTAMP
+        WHERE "id"=$6 AND "organizationId"=$7
+        RETURNING "id","staffKey","staffName","dateKey","startMinutes","durationMinutes","note","createdAt"`,
+      staff.staffKey, staff.staffName, date, startMinutes, durationMinutes, id, session.organizationId)
+      return updated[0]
+    }, { isolationLevel: 'Serializable' })
+
+    sendJson(res, 200, { success: true, break: breakJson(result) })
+  }
