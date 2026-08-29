@@ -17,11 +17,11 @@ function replaceSection(source, section, replacement) {
 function replacementAdminCssV429() {
     return `/* campaign-admin-shell-v458 */
 [data-campaign-admin]{min-width:0}
-[data-campaign-admin] .hero{border:1px solid var(--lien-border,#e8ded2);border-radius:24px;background:linear-gradient(145deg,#fffaf8,#f8f0e9);padding:24px;box-shadow:0 10px 30px rgba(47,42,37,.05)}
+[data-campaign-admin] .campaign-page-header{border:1px solid var(--lien-border,#e8ded2);border-radius:24px;background:linear-gradient(145deg,#fffaf8,#f8f0e9);padding:24px;box-shadow:0 10px 30px rgba(47,42,37,.05)}
 [data-campaign-admin] .eyebrow{display:inline-flex;align-items:center;gap:8px;border:1px solid #eab8c5;border-radius:999px;background:#fff;padding:7px 12px;color:#a23f59;font-size:12px;font-weight:700}
 [data-campaign-admin] .eyebrow svg{width:16px;height:16px;flex:0 0 16px}
-[data-campaign-admin] .hero h1{margin:12px 0 0;color:var(--lien-ink,#2f2a25);font-family:inherit;font-size:30px;font-weight:600;line-height:1.35;letter-spacing:0}
-[data-campaign-admin] .hero p{max-width:800px;margin:10px 0 0;color:var(--lien-muted,#7c7168);font-size:14px;line-height:1.75}
+[data-campaign-admin] .campaign-page-header h1{margin:12px 0 0;color:var(--lien-ink,#2f2a25);font-family:inherit;font-size:30px;font-weight:600;line-height:1.35;letter-spacing:0}
+[data-campaign-admin] .campaign-page-header p{max-width:800px;margin:10px 0 0;color:var(--lien-muted,#7c7168);font-size:14px;line-height:1.75}
 [data-campaign-admin] .grid{display:grid;grid-template-columns:minmax(0,1fr) 352px;gap:24px;align-items:start;margin-top:24px}
 [data-campaign-admin] .card{min-width:0;border:1px solid var(--lien-border,#e8ded2);border-radius:22px;background:#fff;padding:24px;box-shadow:0 8px 24px rgba(47,42,37,.06)}
 [data-campaign-admin] .card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
@@ -66,7 +66,7 @@ function replacementAdminCssV429() {
 [data-campaign-admin] .empty{border:1px dashed var(--lien-border,#e8ded2);border-radius:14px;padding:28px 16px;color:var(--lien-muted,#7c7168);font-size:12px;text-align:center}
 .campaign-workspace-tabs svg{width:16px;height:16px;flex:0 0 16px}
 .admin-desktop-sidebar .lien-nav-item>svg,.admin-desktop-sidebar form button>svg{width:16px;height:16px;flex:0 0 16px}
-html[data-ca-theme="dark"] [data-campaign-admin] .hero{border-color:var(--border,#483a34);background:linear-gradient(145deg,#211b18,#2a221e)}
+html[data-ca-theme="dark"] [data-campaign-admin] .campaign-page-header{border-color:var(--border,#483a34);background:linear-gradient(145deg,#211b18,#2a221e)}
 html[data-ca-theme="dark"] [data-campaign-admin] .card,html[data-ca-theme="dark"] [data-campaign-admin] .history article{border-color:var(--border,#483a34);background:#211b18;color:#f4ece7}
 html[data-ca-theme="dark"] [data-campaign-admin] .input{border-color:#53433c;background:#191513;color:#f4ece7}
 @media(max-width:1279px){[data-campaign-admin] .grid{grid-template-columns:minmax(0,1fr) 320px}}
@@ -109,6 +109,11 @@ source = replaceSection(source, cssSection, cssReplacement)
 const shellSection = boundedSection(source, '  function adminShellV429', '  async function adminPageV429', 'campaign admin shell')
 const shellReplacement = replacementAdminShellV429.toString().replace('replacementAdminShellV429', 'adminShellV429') + '\n\n'
 source = replaceSection(source, shellSection, shellReplacement)
+
+const campaignHeaderToken = 'const content = `<section class="hero">'
+const campaignHeaderCount = source.split(campaignHeaderToken).length - 1
+if (campaignHeaderCount !== 1) throw new Error(`${marker}: expected one campaign page header, found ${campaignHeaderCount}`)
+source = source.replace(campaignHeaderToken, 'const content = `<section class="campaign-page-header">')
 
 const campaignIconToken = `      campaign: '<path d="M3 11v2a2 2 0 0 0 2 2h2l4 5h3l-2-5 7-3V6l-12 4H5a2 2 0 0 0-2 1Z"/><path d="M19 8a3 3 0 0 0 0-6"/>',`
 const iconCount = source.split(campaignIconToken).length - 1

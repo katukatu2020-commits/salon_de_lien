@@ -16,6 +16,8 @@ const assertions = [
   [source.includes('/commercial-admin-v136.js?v=20260829-449'), 'the shared header runtime is loaded'],
   [source.includes('campaign-workspace-tabs inline-grid w-full grid-cols-4'), 'the shared four-tab workspace is used'],
   [source.includes('data-campaign-admin'), 'campaign-only styling is scoped to campaign content'],
+  [source.includes('<section class="campaign-page-header">'), 'the campaign header uses its collision-free page-header class'],
+  [!source.includes('const content = `<section class="hero">'), 'the generic hero class cannot be restyled by shared runtime CSS'],
   [!source.includes('<div class="shell"><aside class="side">'), 'the legacy custom shell is gone'],
   [!source.includes('<header class="top">'), 'the legacy custom header is gone'],
   [source.includes('function adminShell(session, content) { return adminShellV429'), 'the legacy shell entry delegates to the rebuilt shared shell'],
