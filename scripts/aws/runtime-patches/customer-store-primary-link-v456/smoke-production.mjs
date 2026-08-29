@@ -12,7 +12,7 @@ const stores = await fetch(`${baseUrl}/u/stores`, {
   redirect: 'manual',
   headers: { 'Cache-Control': 'no-cache' },
 })
-if (![302, 303, 307, 308].includes(stores.status)) {
+if (![401, 302, 303, 307, 308].includes(stores.status)) {
   throw new Error(`/u/stores unauthenticated guard failed: ${stores.status}`)
 }
 
