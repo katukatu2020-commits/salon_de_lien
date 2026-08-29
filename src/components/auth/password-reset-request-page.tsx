@@ -4,10 +4,12 @@ import type { PasswordResetAudience } from "@/lib/auth/password-reset";
 
 export function PasswordResetRequestPage({
   audience,
-  sent = false
+  sent = false,
+  accountNotFound = false
 }: {
   audience: PasswordResetAudience;
   sent?: boolean;
+  accountNotFound?: boolean;
 }) {
   const isAdmin = audience === "admin";
   const loginHref = isAdmin ? "/admin/login" : "/u/login";
@@ -26,7 +28,15 @@ export function PasswordResetRequestPage({
 
         {sent ? (
           <div role="status" className="mt-5 rounded-2xl border border-[#bfd5c1] bg-[#f2f8f2] px-4 py-4 text-sm leading-6 text-[#3f6144]">
-            該当するアカウントがある場合、再設定メールを送信しました。受信箱と迷惑メールをご確認ください。
+            {isAdmin
+              ? "該当するアカウントがある場合、再設定メールを送信しました。受信箱と迷惑メールをご確認ください。"
+              : "再設定メールを送信しました。受信箱と迷惑メールをご確認ください。"}
+          </div>
+        ) : null}
+
+        {accountNotFound ? (
+          <div role="alert" className="mt-5 rounded-2xl border border-[#efb9b2] bg-[#fff4f2] px-4 py-4 text-sm leading-6 text-[#8a3f35]">
+            このメールアドレスに一致する登録情報はありません。入力内容をご確認ください。
           </div>
         ) : null}
 
@@ -53,7 +63,9 @@ export function PasswordResetRequestPage({
 
         <div className="mt-5 flex gap-2 rounded-2xl bg-[#f6efe6] px-4 py-3 text-xs leading-5 text-[#6b5f56]">
           <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#718b72]" />
-          メールアドレスが登録されているかどうかは画面上に表示しません。再設定URLは30分間、一度だけ有効です。
+          {isAdmin
+            ? "メールアドレスが登録されているかどうかは画面上に表示しません。再設定URLは30分間、一度だけ有効です。"
+            : "有効な登録情報があるメールアドレスにのみ再設定URLを送信します。再設定URLは30分間、一度だけ有効です。"}
         </div>
         <Link href={loginHref} className="mt-5 inline-flex min-h-11 w-full items-center justify-center text-sm font-semibold text-[#8f4f42] hover:text-[#5b332c]">
           ログイン画面に戻る

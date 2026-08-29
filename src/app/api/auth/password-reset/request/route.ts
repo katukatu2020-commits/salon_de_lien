@@ -35,6 +35,16 @@ function genericSuccess(request: NextRequest, audience: PasswordResetAudience) {
   return response;
 }
 
+function accountNotFound(request: NextRequest, audience: PasswordResetAudience) {
+  if (audience === "admin") return genericSuccess(request, audience);
+
+  const url = getExternalRequestUrl(request, requestPage(audience));
+  url.searchParams.set("error", "account-not-found");
+  const response = NextResponse.redirect(url, 303);
+  response.headers.set("Cache-Control", "no-store");
+  return response;
+}
+
 function clientKey(request: NextRequest, email: string, audience: PasswordResetAudience) {
   const address = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
   return `${address}:${audience}:${email}`;
@@ -53,7 +63,23 @@ export async function POST(request: NextRequest) {
   const audience = audienceValue;
   const email = normalizeRecoveryEmail(String(formData.get("email") || ""));
   const success = () => genericSuccess(request, audience);
-  if (!isDeliverableRecoveryEmail(email)) return success();
+  const notFound = () => accountNotFound(request, audience);
+  if (!isDeliverableRecoveryEmail(email)) return notFound();
+
+  const appUser = await prisma.appUser.findFirst({
+    where: {
+      email: { equals: email, mode: "insensitive" },
+      active: true,
+      ...(audience === "customer"
+        ? {
+            role: "CUSTOMER" as const,
+            customer: { is: { deletedAt: null } }
+          }
+        : { role: { in: ["ADMIN", "STAFF", "MANUFACTURER"] as const } })
+    },
+    select: { id: true, email: true, loginId: true, role: true }
+  });
+  if (!appUser || !isDeliverableRecoveryEmail(appUser.email)) return notFound();
 
   const key = clientKey(request, email, audience);
   const now = Date.now();
@@ -63,16 +89,6 @@ export async function POST(request: NextRequest) {
     count: (attempt?.resetAt ?? 0) > now ? attempt!.count + 1 : 1,
     resetAt: (attempt?.resetAt ?? 0) > now ? attempt!.resetAt : now + ATTEMPT_WINDOW_MS
   });
-
-  const appUser = await prisma.appUser.findFirst({
-    where: {
-      email: { equals: email, mode: "insensitive" },
-      active: true,
-      role: audience === "customer" ? "CUSTOMER" : { in: ["ADMIN", "STAFF", "MANUFACTURER"] }
-    },
-    select: { id: true, email: true, loginId: true, role: true }
-  });
-  if (!appUser || !isDeliverableRecoveryEmail(appUser.email)) return success();
 
   const token = generatePasswordResetToken();
   const expiresAt = passwordResetExpiresAt();

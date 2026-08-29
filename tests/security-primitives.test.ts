@@ -766,6 +766,24 @@ test("withdrawn customer credentials are released without deleting business hist
   assert.doesNotMatch(withdrawalRoute, /tx\.customer\.delete(?:Many)?\s*\(/);
 });
 
+test("customer password reset rejects unregistered and withdrawn accounts explicitly", () => {
+  const requestRoute = readFileSync(
+    new URL("../src/app/api/auth/password-reset/request/route.ts", import.meta.url),
+    "utf8"
+  );
+  const requestPage = readFileSync(
+    new URL("../src/components/auth/password-reset-request-page.tsx", import.meta.url),
+    "utf8"
+  );
+  const customerPage = readFileSync(new URL("../src/app/u/password-reset/page.tsx", import.meta.url), "utf8");
+
+  assert.match(requestRoute, /customer:\s*\{\s*is:\s*\{\s*deletedAt:\s*null/);
+  assert.match(requestRoute, /url\.searchParams\.set\("error",\s*"account-not-found"\)/);
+  assert.match(requestRoute, /if \(!appUser \|\| !isDeliverableRecoveryEmail\(appUser\.email\)\) return notFound\(\)/);
+  assert.match(requestPage, /このメールアドレスに一致する登録情報はありません/);
+  assert.match(customerPage, /accountNotFound=\{searchParams\?\.error === "account-not-found"\}/);
+});
+
 test("profile image crop keeps a square region inside the source image", () => {
   assert.deepEqual(
     calculateSquareCropRegion({
