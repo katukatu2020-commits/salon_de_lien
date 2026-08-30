@@ -466,7 +466,7 @@ export async function createPublicConsultationLead(formData: FormData) {
   const registrationErrorPath = (error: string) => `${registrationPath}?error=${encodeURIComponent(error)}`;
   const registrationInvite = await prisma.customerRegistrationInvite.findUnique({
     where: { tokenHash: hashCustomerRegistrationToken(registrationInviteToken) },
-    select: { id: true, email: true, expiresAt: true, usedAt: true }
+    select: { id: true, organizationId: true, email: true, expiresAt: true, usedAt: true }
   });
   if (!registrationInvite || registrationInvite.usedAt || registrationInvite.expiresAt <= new Date()) {
     redirect(registrationErrorPath("invite"));
@@ -499,7 +499,7 @@ export async function createPublicConsultationLead(formData: FormData) {
   const phoneE164 = normalizeJapaneseMobilePhone(submittedPhone);
   const phoneVerificationId = nullableString(formData, "phoneVerificationId");
   const phoneVerificationToken = nullableString(formData, "phoneVerificationToken");
-  const organizationId = process.env.DEFAULT_ORGANIZATION_ID ?? "org_salon_de_lien";
+  const organizationId = registrationInvite.organizationId;
   if (!phoneE164) redirect(registrationErrorPath("profile"));
   if (!phoneVerificationId || !phoneVerificationToken) redirect(registrationErrorPath("sms"));
   if (await hasExistingCustomerAccount(organizationId, phoneE164)) redirect(registrationErrorPath("phone"));

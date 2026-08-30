@@ -766,6 +766,32 @@ test("withdrawn customer credentials are released without deleting business hist
   assert.doesNotMatch(withdrawalRoute, /tx\.customer\.delete(?:Many)?\s*\(/);
 });
 
+test("new customer registration defaults to LIEN-SALON and keeps the invitation tenant", () => {
+  const registrationRoute = readFileSync(
+    new URL("../src/app/api/customer-auth/registration-link/request/route.ts", import.meta.url),
+    "utf8"
+  );
+  const phoneRequestRoute = readFileSync(
+    new URL("../src/app/api/customer-auth/phone-verification/request/route.ts", import.meta.url),
+    "utf8"
+  );
+  const registrationAction = readFileSync(new URL("../src/lib/actions/index.ts", import.meta.url), "utf8");
+
+  assert.match(
+    registrationRoute,
+    /process\.env\.DEFAULT_ORGANIZATION_ID\s*\?\?\s*"org_salon_de_lien"/
+  );
+  assert.match(
+    phoneRequestRoute,
+    /process\.env\.DEFAULT_ORGANIZATION_ID\s*\|\|\s*"org_salon_de_lien"/
+  );
+  assert.doesNotMatch(registrationRoute, /org_showcase_yohaku|LIEN-YOHAKU/);
+  assert.doesNotMatch(phoneRequestRoute, /org_showcase_yohaku|LIEN-YOHAKU/);
+  assert.match(registrationAction, /select:\s*\{\s*id:\s*true,\s*organizationId:\s*true,/);
+  assert.match(registrationAction, /const organizationId = registrationInvite\.organizationId;/);
+  assert.match(registrationAction, /lockedRegistrationInvite\.organizationId !== organizationId/);
+});
+
 test("customer password reset rejects unregistered and withdrawn accounts explicitly", () => {
   const requestRoute = readFileSync(
     new URL("../src/app/api/auth/password-reset/request/route.ts", import.meta.url),
