@@ -29,6 +29,7 @@ type CustomersPageProps = {
     section?: string;
     view?: string;
     page?: string;
+    registration?: string;
   };
 };
 
@@ -1112,6 +1113,10 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
 
   const keyword = searchParams.q?.trim() ?? "";
   const view = allowedViews.has(searchParams.view ?? "") ? searchParams.view ?? "" : "";
+  const registrationFilter =
+    searchParams.registration === "registered" || searchParams.registration === "provisional"
+      ? searchParams.registration
+      : "all";
   const googleReviewUrl = googleReviewShareUrl();
 
   if (view === "settings") {
@@ -1228,6 +1233,37 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
     },
     orderBy: { updatedAt: "desc" }
   });
+  const registeredCustomerRows =
+    customers.length > 0 && session.organizationId
+      ? await prisma.$queryRawUnsafe<Array<{ id: string }>>(
+          `SELECT c."id"
+             FROM "Customer" c
+            WHERE c."organizationId" = $1
+              AND c."id" = ANY($2::text[])
+              AND (
+                EXISTS (
+                  SELECT 1
+                    FROM "AppUser" directUser
+                   WHERE directUser."customerId" = c."id"
+                     AND directUser."organizationId" = c."organizationId"
+                     AND directUser."role" = 'CUSTOMER'
+                     AND directUser."active" = TRUE
+                )
+                OR EXISTS (
+                  SELECT 1
+                    FROM "CustomerStoreLink" link
+                    JOIN "AppUser" linkedUser ON linkedUser."id" = link."appUserId"
+                   WHERE link."customerId" = c."id"
+                     AND link."organizationId" = c."organizationId"
+                     AND linkedUser."role" = 'CUSTOMER'
+                     AND linkedUser."active" = TRUE
+                )
+              )`,
+          session.organizationId,
+          customers.map((customer) => customer.id)
+        )
+      : [];
+  const registeredCustomerIds = new Set(registeredCustomerRows.map((customer) => customer.id));
   const referralLogs = await prisma.contactLog.findMany({
     where: { purpose: "紹介発生" },
     orderBy: { createdAt: "desc" },
@@ -2990,20 +3026,41 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
       className: "border-stone-200 bg-white text-stone-900"
     }
   ];
-  const totalCustomerPages = Math.max(1, Math.ceil(commercialRows.length / CUSTOMER_PAGE_SIZE));
+  const registeredCustomerCount = commercialRows.filter((row) => registeredCustomerIds.has(row.customer.id)).length;
+  const provisionalCustomerCount = commercialRows.length - registeredCustomerCount;
+  const customerListRows = commercialRows.filter((row) => {
+    if (registrationFilter === "registered") {
+      return registeredCustomerIds.has(row.customer.id);
+    }
+    if (registrationFilter === "provisional") {
+      return !registeredCustomerIds.has(row.customer.id);
+    }
+    return true;
+  });
+  const totalCustomerPages = Math.max(1, Math.ceil(customerListRows.length / CUSTOMER_PAGE_SIZE));
   const requestedCustomerPage = Number.parseInt(searchParams.page ?? "1", 10);
   const currentCustomerPage = Math.min(
     totalCustomerPages,
     Number.isFinite(requestedCustomerPage) && requestedCustomerPage > 0 ? requestedCustomerPage : 1
   );
   const customerPageStart = (currentCustomerPage - 1) * CUSTOMER_PAGE_SIZE;
-  const visibleCommercialRows = commercialRows.slice(customerPageStart, customerPageStart + CUSTOMER_PAGE_SIZE);
+  const visibleCommercialRows = customerListRows.slice(customerPageStart, customerPageStart + CUSTOMER_PAGE_SIZE);
 
   function customerPageHref(page: number) {
     const params = new URLSearchParams();
     if (keyword) params.set("q", keyword);
     if (view) params.set("view", view);
+    if (registrationFilter !== "all") params.set("registration", registrationFilter);
     if (page > 1) params.set("page", String(page));
+    const query = params.toString();
+    return `/admin/customers${query ? `?${query}` : ""}#customer-list`;
+  }
+
+  function customerRegistrationHref(registration: "all" | "registered" | "provisional") {
+    const params = new URLSearchParams();
+    if (keyword) params.set("q", keyword);
+    if (view) params.set("view", view);
+    if (registration !== "all") params.set("registration", registration);
     const query = params.toString();
     return `/admin/customers${query ? `?${query}` : ""}#customer-list`;
   }
@@ -3039,6 +3096,9 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
 
       <LienCard className="p-4">
         <form className="flex flex-col gap-3 sm:flex-row">
+          {registrationFilter !== "all" ? (
+            <input type="hidden" name="registration" value={registrationFilter} />
+          ) : null}
           <label className="relative min-w-0 flex-1">
             <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[color:var(--lien-muted)]" />
             <input
@@ -5493,14 +5553,42 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
       ) : null}
 
       <section id="customer-list" className="scroll-mt-24 overflow-hidden rounded-lg border border-stone-200 bg-white shadow-sm">
-        <div className="flex items-center justify-between border-b border-stone-100 px-5 py-4">
-          <div className="flex items-center gap-2">
-            <UsersRound className="h-5 w-5 text-teal-800" />
-            <h2 className="font-semibold text-stone-950">顧客リスト</h2>
+        <div className="border-b border-stone-100 px-5 py-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <UsersRound className="h-5 w-5 text-teal-800" />
+              <h2 className="font-semibold text-stone-950">顧客リスト</h2>
+            </div>
+            <span className="text-sm text-stone-500">
+              {customerListRows.length}件中 {customerListRows.length === 0 ? 0 : customerPageStart + 1}〜{Math.min(customerPageStart + CUSTOMER_PAGE_SIZE, customerListRows.length)}件
+            </span>
           </div>
-          <span className="text-sm text-stone-500">
-            {commercialRows.length}件中 {commercialRows.length === 0 ? 0 : customerPageStart + 1}〜{Math.min(customerPageStart + CUSTOMER_PAGE_SIZE, commercialRows.length)}件
-          </span>
+          <nav
+            className="mt-4 grid grid-cols-3 gap-1 rounded-lg border border-[color:var(--lien-border)] bg-[color:var(--lien-surface-soft)] p-1 sm:inline-grid"
+            aria-label="顧客登録状態で絞り込み"
+          >
+            {[
+              { value: "all" as const, label: "すべて", count: commercialRows.length },
+              { value: "registered" as const, label: "アプリ登録済み", count: registeredCustomerCount },
+              { value: "provisional" as const, label: "仮カルテ", count: provisionalCustomerCount }
+            ].map((option) => (
+              <Link
+                key={option.value}
+                href={customerRegistrationHref(option.value)}
+                aria-current={registrationFilter === option.value ? "page" : undefined}
+                className={`inline-flex min-h-10 min-w-0 items-center justify-center gap-1.5 rounded-md px-3 text-xs font-semibold transition sm:min-w-36 sm:text-sm ${
+                  registrationFilter === option.value
+                    ? "bg-white text-[color:var(--lien-primary-dark)] shadow-sm"
+                    : "text-[color:var(--lien-muted)] hover:bg-white/70 hover:text-[color:var(--lien-ink)]"
+                }`}
+              >
+                <span className="truncate">{option.label}</span>
+                <span className="shrink-0 rounded-full bg-[color:var(--lien-surface-soft)] px-1.5 py-0.5 text-[10px] tabular-nums">
+                  {option.count}
+                </span>
+              </Link>
+            ))}
+          </nav>
         </div>
 
         <div className="grid gap-3 p-4 md:hidden">
@@ -5514,6 +5602,15 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
                 <div className="min-w-0">
                   <p className="truncate text-base font-semibold text-[color:var(--lien-ink)]">{row.customer.name}</p>
                   <p className="mt-1 text-xs font-semibold text-[color:var(--lien-primary)]">{customerCode(row.customer.id)}</p>
+                  <span
+                    className={`mt-2 inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
+                      registeredCustomerIds.has(row.customer.id)
+                        ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                        : "border-amber-200 bg-amber-50 text-amber-800"
+                    }`}
+                  >
+                    {registeredCustomerIds.has(row.customer.id) ? "アプリ登録済み" : "仮カルテ"}
+                  </span>
                   <p className="mt-2 flex items-center gap-1.5 text-xs text-[color:var(--lien-muted)]">
                     <UserRound className="h-3.5 w-3.5 shrink-0" />
                     {customerPaidAttendantSummary(row.customer)}
@@ -5543,9 +5640,9 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
               </div>
             </Link>
           ))}
-          {customers.length === 0 ? (
+          {customerListRows.length === 0 ? (
             <div className="rounded-[22px] border border-dashed border-[color:var(--lien-border)] bg-[color:var(--lien-surface-soft)] p-5 text-center text-sm text-[color:var(--lien-muted)]">
-              顧客が見つかりません。検索条件を変えてください。
+              該当する顧客がいません。絞り込み条件を変更してください。
             </div>
           ) : null}
         </div>
@@ -5574,6 +5671,15 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
                       {row.customer.name}
                     </Link>
                     <div className="mt-1 text-xs font-medium text-teal-800">{customerCode(row.customer.id)}</div>
+                    <span
+                      className={`mt-2 inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
+                        registeredCustomerIds.has(row.customer.id)
+                          ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                          : "border-amber-200 bg-amber-50 text-amber-800"
+                      }`}
+                    >
+                      {registeredCustomerIds.has(row.customer.id) ? "アプリ登録済み" : "仮カルテ"}
+                    </span>
                     <div className="mt-2 flex items-center gap-1.5 text-xs text-stone-500">
                       <UserRound className="h-3.5 w-3.5 shrink-0" />
                       {customerPaidAttendantSummary(row.customer)}
@@ -5630,10 +5736,10 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
                   </td>
                 </tr>
               ))}
-              {customers.length === 0 ? (
+              {customerListRows.length === 0 ? (
                 <tr>
                   <td colSpan={10} className="px-5 py-12 text-center text-sm text-stone-500">
-                    顧客が見つかりません。検索条件を変えてください。
+                    該当する顧客がいません。絞り込み条件を変更してください。
                   </td>
                 </tr>
               ) : null}
