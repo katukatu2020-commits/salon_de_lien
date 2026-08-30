@@ -1,0 +1,321 @@
+'use strict'
+
+function json(res, status, payload) {
+  res.statusCode = status
+  res.setHeader('Content-Type', 'application/json; charset=utf-8')
+  res.setHeader('Cache-Control', 'private, no-store, max-age=0')
+  res.setHeader('X-Content-Type-Options', 'nosniff')
+  res.end(JSON.stringify(payload))
+}
+
+async function readJson(req, limit = 65536) {
+  let raw = ''
+  for await (const chunk of req) {
+    raw += chunk
+    if (Buffer.byteLength(raw, 'utf8') > limit) {
+      throw Object.assign(new Error('入力内容が大きすぎます。'), { status: 413 })
+    }
+  }
+  try {
+    return raw ? JSON.parse(raw) : {}
+  } catch {
+    throw Object.assign(new Error('入力内容を確認してください。'), { status: 400 })
+  }
+}
+
+function sameOrigin(req) {
+  const origin = String(req.headers.origin || '')
+  if (!origin) return false
+  const host = String(req.headers['x-forwarded-host'] || req.headers.host || '').split(',')[0].trim()
+  const protocol = String(req.headers['x-forwarded-proto'] || 'https').split(',')[0].trim()
+  return origin === `${protocol}://${host}` || origin === 'https://salon-de-lien.com'
+}
+
+function tokyoDate(value = new Date()) {
+  return new Intl.DateTimeFormat('sv-SE', {
+    timeZone: 'Asia/Tokyo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(value)
+}
+
+function tokyoDateTime(value) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Tokyo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(value)
+  const part = type => parts.find(item => item.type === type)?.value || ''
+  return `${part('year')}-${part('month')}-${part('day')}T${part('hour')}:${part('minute')}`
+}
+
+function validMonth(value) {
+  const month = String(value || '')
+  return /^20\d{2}-(0[1-9]|1[0-2])$/.test(month) ? month : tokyoDate().slice(0, 7)
+}
+
+function parseTokyoDateTime(value, label) {
+  const input = String(value || '').trim()
+  if (!/^20\d{2}-(0[1-9]|1[0-2])-([0-2]\d|3[01])T([01]\d|2[0-3]):[0-5]\d$/.test(input)) {
+    throw Object.assign(new Error(`${label}を確認してください。`), { status: 400 })
+  }
+  const parsed = new Date(`${input}:00+09:00`)
+  if (!Number.isFinite(parsed.getTime()) || tokyoDateTime(parsed) !== input) {
+    throw Object.assign(new Error(`${label}を確認してください。`), { status: 400 })
+  }
+  return parsed
+}
+
+function validateClosedInterval(clockInLocal, clockOutLocal, now = new Date()) {
+  const clockInAt = parseTokyoDateTime(clockInLocal, '出勤時刻')
+  const clockOutAt = parseTokyoDateTime(clockOutLocal, '退勤時刻')
+  const durationMs = clockOutAt.getTime() - clockInAt.getTime()
+  if (durationMs <= 0) {
+    throw Object.assign(new Error('退勤時刻は出勤時刻より後にしてください。'), { status: 400 })
+  }
+  if (durationMs > 72 * 60 * 60 * 1000) {
+    throw Object.assign(new Error('勤務時間は72時間以内で入力してください。'), { status: 400 })
+  }
+  if (clockOutAt.getTime() > now.getTime() + 5 * 60 * 1000) {
+    throw Object.assign(new Error('未来の退勤時刻は登録できません。'), { status: 400 })
+  }
+  return { clockInAt, clockOutAt, workDate: tokyoDate(clockInAt) }
+}
+
+function createAttendanceNotificationProductService({ prisma, crypto, sessionProvider }) {
+  async function ensureSchema() {
+    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "StaffAttendanceRecord" (
+      "id" TEXT PRIMARY KEY,
+      "organizationId" TEXT NOT NULL,
+      "staffKey" TEXT NOT NULL,
+      "staffName" TEXT NOT NULL,
+      "recordedByUserId" TEXT,
+      "workDate" TEXT NOT NULL,
+      "clockInAt" TIMESTAMPTZ NOT NULL,
+      "breakStartedAt" TIMESTAMPTZ,
+      "breakEndedAt" TIMESTAMPTZ,
+      "clockOutAt" TIMESTAMPTZ,
+      "note" TEXT,
+      "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`)
+    await prisma.$executeRawUnsafe(`DO $$ BEGIN IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='StaffAttendanceRecord' AND column_name='userId') AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='StaffAttendanceRecord' AND column_name='staffKey') THEN ALTER TABLE "StaffAttendanceRecord" RENAME COLUMN "userId" TO "staffKey"; END IF; END $$`)
+    await prisma.$executeRawUnsafe('ALTER TABLE "StaffAttendanceRecord" ADD COLUMN IF NOT EXISTS "staffName" TEXT')
+    await prisma.$executeRawUnsafe('ALTER TABLE "StaffAttendanceRecord" ADD COLUMN IF NOT EXISTS "recordedByUserId" TEXT')
+    await prisma.$executeRawUnsafe('UPDATE "StaffAttendanceRecord" r SET "staffName"=COALESCE(r."staffName",s."staffName",r."staffKey") FROM "StaffBookingSetting" s WHERE s."organizationId"=r."organizationId" AND s."staffKey"=r."staffKey" AND r."staffName" IS NULL')
+    await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS "StaffAttendanceRecord_org_date_idx" ON "StaffAttendanceRecord"("organizationId","workDate","clockInAt")')
+    await prisma.$executeRawUnsafe('DROP INDEX IF EXISTS "StaffAttendanceRecord_org_user_date_key"')
+    await prisma.$executeRawUnsafe('DROP INDEX IF EXISTS "StaffAttendanceRecord_open_shift_key"')
+    await prisma.$executeRawUnsafe('DROP INDEX IF EXISTS "StaffAttendanceRecord_org_staff_date_key"')
+    await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS "StaffAttendanceRecord_org_staff_date_idx" ON "StaffAttendanceRecord"("organizationId","staffKey","workDate","clockInAt")')
+    await prisma.$executeRawUnsafe('CREATE UNIQUE INDEX IF NOT EXISTS "StaffAttendanceRecord_open_staff_key" ON "StaffAttendanceRecord"("organizationId","staffKey") WHERE "clockOutAt" IS NULL')
+    await prisma.$executeRawUnsafe('ALTER TABLE "StaffAttendanceRecord" ADD COLUMN IF NOT EXISTS "breakStartedAt" TIMESTAMPTZ')
+    await prisma.$executeRawUnsafe('ALTER TABLE "StaffAttendanceRecord" ADD COLUMN IF NOT EXISTS "breakEndedAt" TIMESTAMPTZ')
+    await prisma.$executeRawUnsafe('ALTER TABLE "StaffAttendanceRecord" ADD COLUMN IF NOT EXISTS "note" TEXT')
+    await prisma.$executeRawUnsafe('ALTER TABLE "StaffAttendanceRecord" ADD COLUMN IF NOT EXISTS "breakSeconds" INTEGER NOT NULL DEFAULT 0')
+    await prisma.$executeRawUnsafe('ALTER TABLE "StaffAttendanceRecord" ADD COLUMN IF NOT EXISTS "legacyBreakMigrated" BOOLEAN NOT NULL DEFAULT FALSE')
+    await prisma.$executeRawUnsafe('ALTER TABLE "StaffAttendanceRecord" ADD COLUMN IF NOT EXISTS "manuallyEditedAt" TIMESTAMPTZ')
+    await prisma.$executeRawUnsafe('ALTER TABLE "StaffAttendanceRecord" ADD COLUMN IF NOT EXISTS "manuallyEditedByUserId" TEXT')
+    await prisma.$executeRawUnsafe('UPDATE "StaffAttendanceRecord" SET "breakSeconds"=GREATEST(0,EXTRACT(EPOCH FROM ("breakEndedAt"-"breakStartedAt"))::INTEGER),"legacyBreakMigrated"=TRUE WHERE "legacyBreakMigrated"=FALSE AND "breakStartedAt" IS NOT NULL AND "breakEndedAt" IS NOT NULL')
+    await prisma.$executeRawUnsafe('UPDATE "StaffAttendanceRecord" SET "legacyBreakMigrated"=TRUE WHERE "legacyBreakMigrated"=FALSE AND ("breakStartedAt" IS NULL OR "breakEndedAt" IS NULL)')
+    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "StaffAttendancePolicy" (
+      "organizationId" TEXT NOT NULL,
+      "staffKey" TEXT NOT NULL,
+      "plannedStart" TEXT NOT NULL DEFAULT '10:00',
+      "plannedEnd" TEXT NOT NULL DEFAULT '19:00',
+      "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      PRIMARY KEY ("organizationId","staffKey")
+    )`)
+    await prisma.$executeRawUnsafe(`DO $$ BEGIN IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='StaffAttendancePolicy' AND column_name='userId') AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='StaffAttendancePolicy' AND column_name='staffKey') THEN ALTER TABLE "StaffAttendancePolicy" RENAME COLUMN "userId" TO "staffKey"; END IF; END $$`)
+    await prisma.$executeRawUnsafe('ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "imageUrl" TEXT')
+  }
+
+  async function getAttendance(res, url, session) {
+    const month = validMonth(url.searchParams.get('month'))
+    const todayDate = tokyoDate()
+    const people = await prisma.$queryRawUnsafe(
+      'SELECT "staffKey" AS "id","staffKey","staffName" AS "displayName" FROM "StaffBookingSetting" WHERE "organizationId"=$1 AND "active"=TRUE AND "onLeave"=FALSE ORDER BY "createdAt","staffName"',
+      session.organizationId,
+    )
+    const records = await prisma.$queryRawUnsafe(`SELECT r.*,r."staffName" AS "displayName",
+      GREATEST(0,FLOOR(EXTRACT(EPOCH FROM (COALESCE(r."clockOutAt",NOW())-r."clockInAt"))/60)::INTEGER) AS "grossMinutes",
+      GREATEST(0,FLOOR((r."breakSeconds" + CASE WHEN r."breakStartedAt" IS NOT NULL AND r."breakEndedAt" IS NULL THEN EXTRACT(EPOCH FROM (NOW()-r."breakStartedAt")) ELSE 0 END)/60)::INTEGER) AS "breakMinutes",
+      GREATEST(0,FLOOR((EXTRACT(EPOCH FROM (COALESCE(r."clockOutAt",NOW())-r."clockInAt"))-r."breakSeconds"-CASE WHEN r."breakStartedAt" IS NOT NULL AND r."breakEndedAt" IS NULL THEN EXTRACT(EPOCH FROM (NOW()-r."breakStartedAt")) ELSE 0 END)/60)::INTEGER) AS "workMinutes"
+      FROM "StaffAttendanceRecord" r WHERE r."organizationId"=$1 AND r."workDate" LIKE $2 ORDER BY r."clockInAt" DESC`, session.organizationId, month + '%')
+    const summaries = await prisma.$queryRawUnsafe(`SELECT r."staffKey",MAX(r."staffName") AS "displayName",r."workDate",MIN(r."clockInAt") AS "clockInAt",MAX(r."clockOutAt") AS "clockOutAt",COUNT(*)::INTEGER AS "shiftCount",BOOL_OR(r."clockOutAt" IS NULL) AS "isWorking",
+      GREATEST(0,FLOOR(SUM(EXTRACT(EPOCH FROM (COALESCE(r."clockOutAt",NOW())-r."clockInAt"))-r."breakSeconds"-CASE WHEN r."breakStartedAt" IS NOT NULL AND r."breakEndedAt" IS NULL THEN EXTRACT(EPOCH FROM (NOW()-r."breakStartedAt")) ELSE 0 END)/60)::INTEGER) AS "totalWorkMinutes",
+      GREATEST(0,FLOOR(SUM(r."breakSeconds"+CASE WHEN r."breakStartedAt" IS NOT NULL AND r."breakEndedAt" IS NULL THEN EXTRACT(EPOCH FROM (NOW()-r."breakStartedAt")) ELSE 0 END)/60)::INTEGER) AS "totalBreakMinutes"
+      FROM "StaffAttendanceRecord" r WHERE r."organizationId"=$1 AND r."workDate" LIKE $2 GROUP BY r."staffKey",r."workDate" ORDER BY r."workDate" DESC,MIN(r."clockInAt") DESC`, session.organizationId, month + '%')
+    const today = await prisma.$queryRawUnsafe(`SELECT s."staffKey" AS "userId",s."staffKey",s."staffName" AS "displayName",r."id",r."workDate",r."clockInAt",r."breakStartedAt",r."breakEndedAt",r."clockOutAt",r."note",
+      (CASE WHEN r."id" IS NOT NULL AND r."clockOutAt" IS NULL AND r."workDate"<>$2 THEN 1 ELSE COALESCE(a."shiftCount",0) END)::INTEGER AS "shiftCount",
+      (CASE WHEN r."id" IS NOT NULL AND r."clockOutAt" IS NULL AND r."workDate"<>$2 THEN GREATEST(0,FLOOR((EXTRACT(EPOCH FROM (NOW()-r."clockInAt"))-r."breakSeconds"-CASE WHEN r."breakStartedAt" IS NOT NULL AND r."breakEndedAt" IS NULL THEN EXTRACT(EPOCH FROM (NOW()-r."breakStartedAt")) ELSE 0 END)/60)) ELSE COALESCE(a."totalWorkMinutes",0) END)::INTEGER AS "totalWorkMinutes",
+      (CASE WHEN r."id" IS NOT NULL AND r."clockOutAt" IS NULL AND r."workDate"<>$2 THEN GREATEST(0,FLOOR((r."breakSeconds"+CASE WHEN r."breakStartedAt" IS NOT NULL AND r."breakEndedAt" IS NULL THEN EXTRACT(EPOCH FROM (NOW()-r."breakStartedAt")) ELSE 0 END)/60)) ELSE COALESCE(a."totalBreakMinutes",0) END)::INTEGER AS "totalBreakMinutes",
+      COALESCE(p."plannedStart",'10:00') AS "plannedStart",COALESCE(p."plannedEnd",'19:00') AS "plannedEnd"
+      FROM "StaffBookingSetting" s
+      LEFT JOIN LATERAL (SELECT x.* FROM "StaffAttendanceRecord" x WHERE x."organizationId"=s."organizationId" AND x."staffKey"=s."staffKey" AND (x."clockOutAt" IS NULL OR x."workDate"=$2) ORDER BY (x."clockOutAt" IS NULL) DESC,x."clockInAt" DESC LIMIT 1) r ON TRUE
+      LEFT JOIN LATERAL (SELECT COUNT(*)::INTEGER AS "shiftCount",
+        GREATEST(0,FLOOR(SUM(EXTRACT(EPOCH FROM (COALESCE(x."clockOutAt",NOW())-x."clockInAt"))-x."breakSeconds"-CASE WHEN x."breakStartedAt" IS NOT NULL AND x."breakEndedAt" IS NULL THEN EXTRACT(EPOCH FROM (NOW()-x."breakStartedAt")) ELSE 0 END)/60)::INTEGER) AS "totalWorkMinutes",
+        GREATEST(0,FLOOR(SUM(x."breakSeconds"+CASE WHEN x."breakStartedAt" IS NOT NULL AND x."breakEndedAt" IS NULL THEN EXTRACT(EPOCH FROM (NOW()-x."breakStartedAt")) ELSE 0 END)/60)::INTEGER) AS "totalBreakMinutes"
+        FROM "StaffAttendanceRecord" x WHERE x."organizationId"=s."organizationId" AND x."staffKey"=s."staffKey" AND x."workDate"=$2) a ON TRUE
+      LEFT JOIN "StaffAttendancePolicy" p ON p."organizationId"=s."organizationId" AND p."staffKey"=s."staffKey" WHERE s."organizationId"=$1 AND s."active"=TRUE AND s."onLeave"=FALSE ORDER BY s."createdAt",s."staffName"`, session.organizationId, todayDate)
+    const policies = await prisma.$queryRawUnsafe('SELECT "staffKey" AS "userId","staffKey","plannedStart","plannedEnd" FROM "StaffAttendancePolicy" WHERE "organizationId"=$1', session.organizationId)
+    return json(res, 200, {
+      ok: true,
+      month,
+      todayDate,
+      canViewAll: true,
+      canEditRecords: true,
+      people,
+      records,
+      summaries,
+      today,
+      policies,
+      serverTime: new Date().toISOString(),
+    })
+  }
+
+  async function saveRecord(input, res, session, staff) {
+    const recordId = String(input.recordId || '').trim()
+    const { clockInAt, clockOutAt, workDate } = validateClosedInterval(input.clockInLocal, input.clockOutLocal)
+    let existing = null
+    if (recordId) {
+      const rows = await prisma.$queryRawUnsafe('SELECT "id","staffKey","breakStartedAt","breakEndedAt","breakSeconds" FROM "StaffAttendanceRecord" WHERE "id"=$1 AND "organizationId"=$2 AND "staffKey"=$3 LIMIT 1', recordId, session.organizationId, staff.staffKey)
+      if (!rows.length) return json(res, 404, { ok: false, error: '勤務記録が見つかりません。' })
+      existing = rows[0]
+      const breakStartedAt = existing.breakStartedAt ? new Date(existing.breakStartedAt) : null
+      const breakEndedAt = existing.breakEndedAt ? new Date(existing.breakEndedAt) : null
+      if (breakStartedAt && breakStartedAt < clockInAt) return json(res, 400, { ok: false, error: '出勤時刻は記録済みの休憩開始より前にしてください。' })
+      if (breakEndedAt && breakEndedAt > clockOutAt) return json(res, 400, { ok: false, error: '退勤時刻は記録済みの休憩終了より後にしてください。' })
+      if (Number(existing.breakSeconds || 0) * 1000 >= clockOutAt.getTime() - clockInAt.getTime()) {
+        return json(res, 400, { ok: false, error: '勤務時間が休憩時間より短くならないようにしてください。' })
+      }
+    }
+
+    const conflicts = await prisma.$queryRawUnsafe(`SELECT "id" FROM "StaffAttendanceRecord" WHERE "organizationId"=$1 AND "staffKey"=$2 AND "id"<>$3 AND "clockInAt"<$5::timestamptz AND COALESCE("clockOutAt",'infinity'::timestamptz)>$4::timestamptz LIMIT 1`, session.organizationId, staff.staffKey, recordId || '', clockInAt.toISOString(), clockOutAt.toISOString())
+    if (conflicts.length) return json(res, 409, { ok: false, error: '同じスタッフの勤務時間が重複しています。' })
+
+    if (existing) {
+      let breakSeconds = Number(existing.breakSeconds || 0)
+      let breakEndedAt = existing.breakEndedAt ? new Date(existing.breakEndedAt) : null
+      if (existing.breakStartedAt && !existing.breakEndedAt) {
+        const breakStartedAt = new Date(existing.breakStartedAt)
+        breakSeconds += Math.max(0, Math.floor((clockOutAt.getTime() - breakStartedAt.getTime()) / 1000))
+        breakEndedAt = clockOutAt
+      }
+      if (breakSeconds * 1000 >= clockOutAt.getTime() - clockInAt.getTime()) {
+        return json(res, 400, { ok: false, error: '勤務時間が休憩時間より短くならないようにしてください。' })
+      }
+      const rows = await prisma.$queryRawUnsafe(`UPDATE "StaffAttendanceRecord" SET "workDate"=$4,"clockInAt"=$5::timestamptz,"clockOutAt"=$6::timestamptz,"breakEndedAt"=$7::timestamptz,"breakSeconds"=$8,"recordedByUserId"=$9,"manuallyEditedAt"=NOW(),"manuallyEditedByUserId"=$9,"updatedAt"=NOW() WHERE "id"=$1 AND "organizationId"=$2 AND "staffKey"=$3 RETURNING "id"`, recordId, session.organizationId, staff.staffKey, workDate, clockInAt.toISOString(), clockOutAt.toISOString(), breakEndedAt ? breakEndedAt.toISOString() : null, breakSeconds, session.userId)
+      if (!rows.length) return json(res, 409, { ok: false, error: '勤務記録を更新できませんでした。' })
+      return json(res, 200, { ok: true, id: rows[0].id, message: '勤務時間を更新しました。' })
+    }
+
+    const id = 'attendance-' + crypto.randomUUID()
+    await prisma.$executeRawUnsafe(`INSERT INTO "StaffAttendanceRecord" ("id","organizationId","staffKey","staffName","recordedByUserId","workDate","clockInAt","clockOutAt","breakSeconds","legacyBreakMigrated","manuallyEditedAt","manuallyEditedByUserId") VALUES ($1,$2,$3,$4,$5,$6,$7::timestamptz,$8::timestamptz,0,TRUE,NOW(),$5)`, id, session.organizationId, staff.staffKey, staff.staffName, session.userId, workDate, clockInAt.toISOString(), clockOutAt.toISOString())
+    return json(res, 201, { ok: true, id, message: '勤務時間を追加しました。' })
+  }
+
+  async function postAttendance(req, res, session) {
+    if (!sameOrigin(req)) return json(res, 403, { ok: false, error: '安全性を確認できませんでした。' })
+    const input = await readJson(req)
+    const action = String(input.action || '')
+    const staffKey = String(input.staffKey || '').trim()
+    const staffRows = await prisma.$queryRawUnsafe('SELECT "staffKey","staffName" FROM "StaffBookingSetting" WHERE "organizationId"=$1 AND "staffKey"=$2 AND "active"=TRUE AND "onLeave"=FALSE LIMIT 1', session.organizationId, staffKey)
+    if (action !== 'save_policy' && !staffRows.length) return json(res, 404, { ok: false, error: '対象スタッフを選択してください。' })
+    const staff = staffRows[0]
+
+    if (action === 'clock_in') {
+      const existing = await prisma.$queryRawUnsafe('SELECT "id","workDate","clockInAt" FROM "StaffAttendanceRecord" WHERE "organizationId"=$1 AND "staffKey"=$2 AND "clockOutAt" IS NULL LIMIT 1', session.organizationId, staffKey)
+      if (existing.length) return json(res, 409, { ok: false, error: `${existing[0].workDate}から勤務中です。先に退勤してください。` })
+      const id = 'attendance-' + crypto.randomUUID()
+      await prisma.$executeRawUnsafe('INSERT INTO "StaffAttendanceRecord" ("id","organizationId","staffKey","staffName","recordedByUserId","workDate","clockInAt") VALUES ($1,$2,$3,$4,$5,$6,NOW())', id, session.organizationId, staffKey, staff.staffName, session.userId, tokyoDate())
+      return json(res, 201, { ok: true, id, message: '出勤を記録しました。' })
+    }
+    if (action === 'clock_out') {
+      const rows = await prisma.$queryRawUnsafe('UPDATE "StaffAttendanceRecord" SET "breakSeconds"="breakSeconds"+CASE WHEN "breakStartedAt" IS NOT NULL AND "breakEndedAt" IS NULL THEN GREATEST(0,EXTRACT(EPOCH FROM (NOW()-"breakStartedAt"))::INTEGER) ELSE 0 END,"breakEndedAt"=CASE WHEN "breakStartedAt" IS NOT NULL AND "breakEndedAt" IS NULL THEN NOW() ELSE "breakEndedAt" END,"clockOutAt"=NOW(),"recordedByUserId"=$3,"updatedAt"=NOW() WHERE "id"=(SELECT "id" FROM "StaffAttendanceRecord" WHERE "organizationId"=$1 AND "staffKey"=$2 AND "clockOutAt" IS NULL ORDER BY "clockInAt" DESC LIMIT 1) RETURNING "id","workDate"', session.organizationId, staffKey, session.userId)
+      if (!rows.length) return json(res, 409, { ok: false, error: '出勤中の記録がありません。' })
+      return json(res, 200, { ok: true, id: rows[0].id, message: '退勤を記録しました。' })
+    }
+    if (action === 'break_start') {
+      const rows = await prisma.$queryRawUnsafe('UPDATE "StaffAttendanceRecord" SET "breakStartedAt"=NOW(),"breakEndedAt"=NULL,"recordedByUserId"=$3,"updatedAt"=NOW() WHERE "id"=(SELECT "id" FROM "StaffAttendanceRecord" WHERE "organizationId"=$1 AND "staffKey"=$2 AND "clockOutAt" IS NULL AND ("breakStartedAt" IS NULL OR "breakEndedAt" IS NOT NULL) ORDER BY "clockInAt" DESC LIMIT 1) RETURNING "id"', session.organizationId, staffKey, session.userId)
+      if (!rows.length) return json(res, 409, { ok: false, error: '休憩を開始できる出勤記録がありません。' })
+      return json(res, 200, { ok: true, id: rows[0].id, message: '休憩開始を記録しました。' })
+    }
+    if (action === 'break_end') {
+      const rows = await prisma.$queryRawUnsafe('UPDATE "StaffAttendanceRecord" SET "breakSeconds"="breakSeconds"+GREATEST(0,EXTRACT(EPOCH FROM (NOW()-"breakStartedAt"))::INTEGER),"breakEndedAt"=NOW(),"recordedByUserId"=$3,"updatedAt"=NOW() WHERE "id"=(SELECT "id" FROM "StaffAttendanceRecord" WHERE "organizationId"=$1 AND "staffKey"=$2 AND "clockOutAt" IS NULL AND "breakStartedAt" IS NOT NULL AND "breakEndedAt" IS NULL ORDER BY "clockInAt" DESC LIMIT 1) RETURNING "id"', session.organizationId, staffKey, session.userId)
+      if (!rows.length) return json(res, 409, { ok: false, error: '休憩中の記録がありません。' })
+      return json(res, 200, { ok: true, id: rows[0].id, message: '休憩終了を記録しました。' })
+    }
+    if (action === 'save_record') return saveRecord(input, res, session, staff)
+    if (action === 'save_policy') {
+      if (session.role !== 'ADMIN') return json(res, 403, { ok: false, error: '標準勤務時間を変更できるのはオーナーだけです。' })
+      const policyStaffKey = String(input.staffKey || input.userId || '')
+      const plannedStart = String(input.plannedStart || '')
+      const plannedEnd = String(input.plannedEnd || '')
+      if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(plannedStart) || !/^([01]\d|2[0-3]):[0-5]\d$/.test(plannedEnd) || plannedStart >= plannedEnd) return json(res, 400, { ok: false, error: '始業・終業時刻を確認してください。' })
+      const owned = await prisma.$queryRawUnsafe('SELECT "staffKey" FROM "StaffBookingSetting" WHERE "staffKey"=$1 AND "organizationId"=$2 AND "active"=TRUE AND "onLeave"=FALSE LIMIT 1', policyStaffKey, session.organizationId)
+      if (!owned.length) return json(res, 404, { ok: false, error: 'スタッフが見つかりません。' })
+      await prisma.$executeRawUnsafe('INSERT INTO "StaffAttendancePolicy" ("organizationId","staffKey","plannedStart","plannedEnd","updatedAt") VALUES ($1,$2,$3,$4,NOW()) ON CONFLICT ("organizationId","staffKey") DO UPDATE SET "plannedStart"=EXCLUDED."plannedStart","plannedEnd"=EXCLUDED."plannedEnd","updatedAt"=NOW()', session.organizationId, policyStaffKey, plannedStart, plannedEnd)
+      return json(res, 200, { ok: true, message: '標準勤務時間を保存しました。' })
+    }
+    return json(res, 400, { ok: false, error: '出退勤の操作を確認してください。' })
+  }
+
+  async function attendance(req, res, url, session) {
+    if (req.method === 'GET') return getAttendance(res, url, session)
+    if (req.method === 'POST') return postAttendance(req, res, session)
+    res.statusCode = 405
+    res.setHeader('Allow', 'GET, POST')
+    res.end()
+  }
+
+  async function productImages(res, session) {
+    const rows = await prisma.$queryRawUnsafe('SELECT "id","imageUrl" FROM "Product" WHERE "organizationId"=$1 AND "active"=TRUE AND "imageUrl" IS NOT NULL', session.organizationId)
+    return json(res, 200, { ok: true, images: rows })
+  }
+
+  async function handle(req, res, url) {
+    if (!['/api/admin/attendance', '/api/admin/catalog/product-images'].includes(url.pathname)) return false
+    const session = await sessionProvider(req)
+    if (!session) {
+      json(res, 401, { ok: false, error: 'ログインしてください。' })
+      return true
+    }
+    try {
+      if (url.pathname === '/api/admin/catalog/product-images') {
+        if (req.method !== 'GET') {
+          res.statusCode = 405
+          res.setHeader('Allow', 'GET')
+          res.end()
+          return true
+        }
+        await productImages(res, session)
+      } else {
+        await attendance(req, res, url, session)
+      }
+    } catch (error) {
+      console.error('[attendance-history-editor-v497]', {
+        organizationId: session.organizationId,
+        path: url.pathname,
+        error: error && error.message,
+      })
+      json(res, Number(error.status) || 500, {
+        ok: false,
+        error: Number(error.status) ? error.message : '処理できませんでした。時間をおいてもう一度お試しください。',
+      })
+    }
+    return true
+  }
+
+  return { ensureSchema, handle }
+}
+
+module.exports = {
+  createAttendanceNotificationProductService,
+  __test: { parseTokyoDateTime, tokyoDate, tokyoDateTime, validMonth, validateClosedInterval },
+}
