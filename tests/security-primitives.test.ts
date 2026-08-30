@@ -1018,3 +1018,18 @@ test("organization public codes are deterministic and compatible with store link
   );
   assert.match(mergePlacementVerify, /detached page-root merge card fallback remains/);
 });
+
+test("staff customer-code linking cannot remain pending or report an unpersisted store link", () => {
+  const patch = readFileSync(
+    new URL("../scripts/aws/runtime-patches/customer-code-link-v474/patch-runtime.mjs", import.meta.url),
+    "utf8"
+  );
+
+  assert.match(patch, /SELECT 1 FROM \"CustomerStoreLink\" LIMIT 0/);
+  assert.match(patch, /JOIN LATERAL/);
+  assert.match(patch, /link\.\"appUserId\"=u\.\"id\"/);
+  assert.match(patch, /const persisted = await tx\.\$queryRawUnsafe/);
+  assert.match(patch, /new AbortController\(\)/);
+  assert.match(patch, /controller\.abort\(\), 12000/);
+  assert.match(patch, /finally \{ lookupButton\.disabled = false \}/);
+});
