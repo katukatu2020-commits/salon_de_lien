@@ -33,7 +33,13 @@ const settings = await fetch(`${baseUrl}/api/lien-line-settings`, {
 assert.equal(settings.status, 200)
 const payload = await settings.json()
 assert.equal(payload.connected, true)
-assert.equal(payload.storeCode, 'LIEN-YOHAKU')
 assert.ok(payload.liffId)
+assert.equal(new URL(payload.liffEndpointUrl).pathname, '/line/booking/LIEN-YOHAKU')
 
-console.log(JSON.stringify({ ready: ready.status, page: page.status, unauthenticated: unauthenticated.status, connected: payload.connected, storeCode: payload.storeCode }))
+console.log(JSON.stringify({
+  ready: ready.status,
+  page: page.status,
+  unauthenticated: unauthenticated.status,
+  connected: payload.connected,
+  liffEndpointPath: new URL(payload.liffEndpointUrl).pathname,
+}))
