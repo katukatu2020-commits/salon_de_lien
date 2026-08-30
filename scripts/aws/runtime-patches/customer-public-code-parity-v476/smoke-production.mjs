@@ -65,8 +65,8 @@ const customerCookie = sessionCookie(customerLogin)
 const customerHome = await fetchBound(`${baseUrl}/u/home?smoke=v476`, {
   headers: { cookie: customerCookie, 'Cache-Control': 'no-cache' },
 })
-if (!customerHome.ok || !(await customerHome.text()).includes('C-R-055')) {
-  throw new Error('customer app does not show the expected public code')
+if (!customerHome.ok || !(await customerHome.text()).includes('C-R-056')) {
+  throw new Error('demo customer app does not show its expected public code')
 }
 
 console.log('customer public code parity production smoke passed')
