@@ -17,9 +17,9 @@ const attempts = new Map<string, Attempt>();
 const ATTEMPT_WINDOW_MS = 15 * 60 * 1000;
 const MAX_ATTEMPTS = 5;
 
-function clientKey(request: NextRequest, loginId: string) {
+function clientKey(request: NextRequest, loginIdentifier: string) {
   const address = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-  return `${address}:${loginId}`;
+  return `${address}:${loginIdentifier}`;
 }
 
 function safeReturnPath(value: FormDataEntryValue | null) {
@@ -27,11 +27,11 @@ function safeReturnPath(value: FormDataEntryValue | null) {
   return typeof value === "string" && (allowed.has(value) || /^\/u\/reviews\/[a-z0-9_-]+$/i.test(value)) ? value : "/u/home";
 }
 
-function loginRedirect(request: NextRequest, error: string, nextPath: string, loginId = "") {
+function loginRedirect(request: NextRequest, error: string, nextPath: string, loginIdentifier = "") {
   const url = getExternalRequestUrl(request, "/u/login");
   url.searchParams.set("error", error);
   url.searchParams.set("next", nextPath);
-  if (loginId) url.searchParams.set("loginId", loginId);
+  if (loginIdentifier && !loginIdentifier.includes("@")) url.searchParams.set("loginId", loginIdentifier);
   return NextResponse.redirect(url, 303);
 }
 
@@ -42,27 +42,34 @@ export async function POST(request: NextRequest) {
 
   const formData = await request.formData();
   const nextPath = safeReturnPath(formData.get("next"));
-  const loginId = normalizeCustomerLoginId(String(formData.get("loginId") || ""));
+  const loginIdentifier = normalizeCustomerLoginId(String(formData.get("loginId") || ""));
   const password = String(formData.get("password") || "");
   const secret = customerAuthSecret();
 
   if (!secret || secret.length < 32) {
-    return loginRedirect(request, "config", nextPath, loginId);
+    return loginRedirect(request, "config", nextPath, loginIdentifier);
   }
 
-  const key = clientKey(request, loginId);
+  const key = clientKey(request, loginIdentifier);
   const now = Date.now();
   const attempt = attempts.get(key);
   if (attempt && attempt.resetAt > now && attempt.count >= MAX_ATTEMPTS) {
-    return loginRedirect(request, "locked", nextPath, loginId);
+    return loginRedirect(request, "locked", nextPath, loginIdentifier);
   }
   if (attempt && attempt.resetAt <= now) attempts.delete(key);
 
   const appUser = await prisma.appUser.findFirst({
-    where: { loginId, role: "CUSTOMER" },
+    where: {
+      role: "CUSTOMER",
+      OR: [
+        { loginId: { equals: loginIdentifier, mode: "insensitive" } },
+        { email: { equals: loginIdentifier, mode: "insensitive" } }
+      ]
+    },
     select: {
       id: true,
       loginId: true,
+      email: true,
       passwordHash: true,
       role: true,
       active: true,
@@ -75,7 +82,7 @@ export async function POST(request: NextRequest) {
   const valid = Boolean(
     appUser?.active &&
     appUser.role === "CUSTOMER" &&
-    appUser.loginId &&
+    (appUser.loginId || appUser.email) &&
     appUser.passwordHash &&
     appUser.customerId &&
     appUser.organizationId &&
@@ -93,13 +100,13 @@ export async function POST(request: NextRequest) {
       count: (current?.count ?? 0) + 1,
       resetAt: current?.resetAt && current.resetAt > now ? current.resetAt : now + ATTEMPT_WINDOW_MS
     });
-    return loginRedirect(request, "credentials", nextPath, loginId);
+    return loginRedirect(request, "credentials", nextPath, loginIdentifier);
   }
 
   attempts.delete(key);
   const sessionDays = getCustomerSessionDays();
   const token = await createCustomerSessionToken({
-    loginId: appUser!.loginId!,
+    loginId: appUser!.loginId || appUser!.email,
     customerId: appUser!.customerId!,
     organizationId: appUser!.organizationId!,
     userId: appUser!.id,

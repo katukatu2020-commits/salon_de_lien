@@ -288,6 +288,23 @@ test("customer account pages accept a canonical or registered store session", ()
   assert.doesNotMatch(source, /organizationId:\s*session\.organizationId/);
 });
 
+test("customer login accepts either login ID or registered email", () => {
+  const loginRoute = readFileSync(
+    new URL("../src/app/api/customer-auth/login/route.ts", import.meta.url),
+    "utf8"
+  );
+  const loginPage = readFileSync(new URL("../src/app/u/login/page.tsx", import.meta.url), "utf8");
+
+  assert.match(loginRoute, /OR:\s*\[/);
+  assert.match(loginRoute, /loginId:\s*\{\s*equals:\s*loginIdentifier,\s*mode:\s*"insensitive"/);
+  assert.match(loginRoute, /email:\s*\{\s*equals:\s*loginIdentifier,\s*mode:\s*"insensitive"/);
+  assert.match(loginRoute, /email:\s*true/);
+  assert.match(loginRoute, /loginId:\s*appUser!\.loginId \|\| appUser!\.email/);
+  assert.match(loginRoute, /!loginIdentifier\.includes\("@"\)/);
+  assert.match(loginPage, /ログインIDまたはメールアドレス/);
+  assert.match(loginPage, /ID または登録メールアドレス/);
+});
+
 test("purchased-product survey expires after 30 days and awarded points after 40 days", () => {
   const visitedAt = new Date("2026-08-03T00:00:00.000Z");
   const awardedAt = new Date("2026-08-20T00:00:00.000Z");
