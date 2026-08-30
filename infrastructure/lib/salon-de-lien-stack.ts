@@ -230,7 +230,7 @@ export class SalonDeLienStack extends Stack {
         GMAIL_BROWSER_INGEST_ORGANIZATION_ID: "org_salon_de_lien",
         GMAIL_SYNC_ORGANIZATION_ID: "org_salon_de_lien",
         OPENAI_MODEL: "gpt-4.1-mini",
-        PASSWORD_RESET_MAIL_FROM_NAME: "Salon de Lien",
+        PASSWORD_RESET_MAIL_FROM_NAME: "ORIMIA",
         CUSTOMER_REGISTRATION_TOKEN_MINUTES: "60",
         STORE_REGISTRATION_TOKEN_MINUTES: "60",
         ALLOW_DEMO_DATA: "false",

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, CalendarDays, Clock3, Home, LogOut, MessageCircle, Sparkles } from "lucide-react";
+import { Bell, CalendarDays, Clock3, Home, LogOut, MessageCircle } from "lucide-react";
 
 const navItems = [
   { href: "/u/home", label: "ホーム", icon: Home },
@@ -24,15 +24,13 @@ export function CustomerAccountShell({ customerName, children }: { customerName:
     <div className="min-h-screen bg-[#fbf7f0] text-[#2f2a25]">
       <header className="customer-account-mobile-header-removed hidden">
         <div className="mx-auto flex h-16 w-full max-w-xl items-center justify-between gap-3 px-4">
-          <Link href="/u/profile" className="flex min-w-0 items-center gap-3" aria-label="プロフィールとアカウント設定を開く">
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#8f4f42] text-white shadow-sm">
-              <Sparkles className="h-5 w-5" />
-            </span>
+          <a href="https://salon-de-lien.com/" className="flex min-w-0 items-center gap-3" aria-label="ORIMIAトップへ">
+            <span className="h-10 w-10 shrink-0 rounded-full bg-white bg-cover bg-center shadow-sm" style={{ backgroundImage: "url(/brand/orimia-icon-192.png)" }} />
             <span className="min-w-0">
-              <span className="block text-sm font-semibold">Salon de Lien</span>
+              <span className="block text-sm font-semibold">ORIMIA</span>
               <span className="block truncate text-xs text-[#7c7168]">{customerName}様のアプリ</span>
             </span>
-          </Link>
+          </a>
           <div className="flex items-center gap-2">
             <Link href="/u/messages" className="lien-icon-button text-[#8f4f42] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#e9c9be]/50" aria-label="サロンからのお知らせ" title="お知らせ">
               <Bell className="h-4 w-4" />
@@ -53,15 +51,13 @@ export function CustomerAccountShell({ customerName, children }: { customerName:
 
       <div className="mx-auto min-h-screen w-full md:grid md:max-w-none md:grid-cols-[220px_minmax(0,1fr)] md:gap-5 md:px-4 lg:grid-cols-[250px_minmax(0,1fr)] lg:gap-8 lg:px-6 xl:max-w-[1600px]">
         <aside className="sticky top-0 hidden h-screen flex-col border-r border-[#e8ded2] py-7 pr-5 md:flex lg:pr-6">
-          <Link href="/u/home" className="flex items-center gap-3 px-2" aria-label="お客様アプリのホーム">
-            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#8f4f42] text-white shadow-sm">
-              <Sparkles className="h-5 w-5" />
-            </span>
+          <a href="https://salon-de-lien.com/" className="flex items-center gap-3 px-2" aria-label="ORIMIAトップへ">
+            <span className="h-11 w-11 shrink-0 rounded-full bg-white bg-cover bg-center shadow-sm" style={{ backgroundImage: "url(/brand/orimia-icon-192.png)" }} />
             <span>
-              <span className="block text-base font-semibold">Salon de Lien</span>
+              <span className="block text-base font-semibold">ORIMIA</span>
               <span className="mt-0.5 block text-xs text-[#7c7168]">お客様アプリ</span>
             </span>
-          </Link>
+          </a>
 
           <nav className="mt-10 grid gap-2" aria-label="お客様アプリメニュー">
             {navigation.map(({ href, label, active, Icon }) => (
@@ -100,7 +96,7 @@ export function CustomerAccountShell({ customerName, children }: { customerName:
         <div className="min-w-0">
           <header className="hidden h-20 items-center justify-between border-b border-[#eadfd4] md:flex">
             <div>
-              <p className="text-xs font-semibold text-[#8f4f42]">Salon de Lien Customer Portal</p>
+              <p className="text-xs font-semibold text-[#8f4f42]">ORIMIA Customer Portal</p>
               <p className="mt-1 text-sm text-[#7c7168]">{customerName}様のサロン記録</p>
             </div>
             <div className="flex items-center gap-2">

@@ -48,7 +48,7 @@ export function renderTransactionalEmail(input: TransactionalEmailInput) {
         <td align="center" style="padding:28px 14px 36px;">
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:600px;">
             <tr>
-              <td style="padding:0 4px 16px;color:#5b332c;font-size:18px;font-weight:700;letter-spacing:0;">Salon de Lien</td>
+              <td style="padding:0 4px 16px;color:#5b332c;font-size:18px;font-weight:700;letter-spacing:0;">ORIMIA</td>
             </tr>
             <tr>
               <td style="overflow:hidden;border:1px solid #e8ded2;border-radius:20px;background:#ffffff;box-shadow:0 12px 32px rgba(47,42,37,.06);">
@@ -83,7 +83,7 @@ export function renderTransactionalEmail(input: TransactionalEmailInput) {
               </td>
             </tr>
             <tr>
-              <td style="padding:18px 8px 0;text-align:center;color:#8b8178;font-size:11px;line-height:1.7;">このメールはSalon de Lienの手続きに伴い自動送信されています。<br>このメールへの返信ではお手続きを承れません。</td>
+              <td style="padding:18px 8px 0;text-align:center;color:#8b8178;font-size:11px;line-height:1.7;">このメールはORIMIAの手続きに伴い自動送信されています。<br>このメールへの返信ではお手続きを承れません。</td>
             </tr>
           </table>
         </td>

@@ -1,6 +1,6 @@
 {
   "schema_version": "coupon_text_layer_v2.0",
-  "purpose": "Salon de Lien coupon: replace only the specified variable text regions without changing layout, surrounding design, or fixed text.",
+  "purpose": "ORIMIA coupon: replace only the specified variable text regions without changing layout, surrounding design, or fixed text.",
   "coordinate_system": {
     "origin": "top_left",
     "unit": "px",

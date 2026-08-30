@@ -131,7 +131,7 @@ export default async function CarePlanPage({ params, searchParams, portalToken }
             priority
           />
           <div className="p-5 sm:p-6">
-            <p className="text-sm font-semibold text-teal-800">Salon de Lien</p>
+            <p className="text-sm font-semibold text-teal-800">ORIMIA</p>
             <h1 className="mt-2 text-3xl font-semibold text-stone-950">{customer.name}様のホームケアメモ</h1>
             <p className="mt-3 text-sm leading-7 text-stone-600">
               今日の仕上がりを家でも保ちやすくするための、乾かし方・次回目安・相談リンクをまとめています。

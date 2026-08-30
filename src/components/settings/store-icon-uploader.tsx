@@ -53,7 +53,7 @@ export function StoreIconUploader({ imageUrl }: { imageUrl: string | null }) {
         <div>
           <p className="text-sm font-semibold text-[color:var(--lien-ink)]">店舗プロフィール画像</p>
           <p className="mt-1 text-xs leading-5 text-[color:var(--lien-muted)]">
-            店舗一覧やお客様画面に表示する店舗固有の画像です。左上のSalon de Lienサービスロゴは変更されません。
+            店舗一覧やお客様画面に表示する店舗固有の画像です。左上のORIMIAサービスロゴは変更されません。
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">

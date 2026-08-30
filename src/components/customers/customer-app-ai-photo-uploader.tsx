@@ -300,7 +300,7 @@ export function CustomerAppAiPhotoUploader({
           <div>
             <p className="text-sm font-semibold text-stone-950">写真利用の同意</p>
             <p className="mt-1 text-xs leading-5 text-stone-600">
-              登録写真はSalon de Lienでの髪型提案と仕上がりイメージ作成に使います。
+              登録写真はORIMIAでの髪型提案と仕上がりイメージ作成に使います。
             </p>
           </div>
           <div className="flex flex-wrap gap-2">

@@ -19,7 +19,7 @@ export default async function CustomerWithdrawalConfirmationPage({ params }: { p
   return (
     <main className="min-h-screen bg-[#fbf7f2] px-5 py-12 text-[#2f2a25]">
       <section className="mx-auto max-w-xl rounded-[28px] border border-[#eadfd5] bg-white p-7 shadow-[0_20px_60px_rgba(96,67,54,.10)] sm:p-10">
-        <p className="text-xs font-semibold tracking-[.18em] text-[#a35a4a]">SALON DE LIEN</p>
+        <p className="text-xs font-semibold tracking-[.18em] text-[#a35a4a]">ORIMIA</p>
         <h1 className="mt-3 font-serif text-3xl">{valid ? "退会手続きの確認" : "リンクを確認できません"}</h1>
         {valid ? (
           <>

@@ -16,14 +16,14 @@ export function sendCustomerWithdrawalMail({
   expiresInMinutes: number;
   customerId: string;
 }) {
-  const subject = "【Salon de Lien】退会手続きの確認";
+  const subject = "【ORIMIA】退会手続きの確認";
   return sendPostmarkMessage({
     to,
     subject,
     tag: "customer-withdrawal",
     metadata: { customerId },
     textBody: [
-      "Salon de Lien お客様アプリ",
+      "ORIMIA お客様アプリ",
       "━━━━━━━━━━━━━━━━━━━━",
       "退会手続きの確認",
       "",
@@ -39,7 +39,7 @@ export function sendCustomerWithdrawalMail({
       "",
       "このメールに心当たりがない場合は、URLを開かずにこのメールを削除してください。お客様のアカウントはそのままご利用いただけます。",
       "",
-      "Salon de Lien"
+      "ORIMIA"
     ].join("\r\n"),
     htmlBody: renderTransactionalEmail({
       preheader: "退会申請を受け付けました。内容をご確認ください。",

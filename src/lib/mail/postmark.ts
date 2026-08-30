@@ -22,7 +22,7 @@ export async function sendPostmarkMessage(message: PostmarkMessage) {
       "X-Postmark-Server-Token": token
     },
     body: JSON.stringify({
-      From: `${process.env.POSTMARK_FROM_NAME?.trim() || "Salon de Lien"} <${from}>`,
+      From: `${process.env.POSTMARK_FROM_NAME?.trim() || "ORIMIA"} <${from}>`,
       To: message.to,
       ReplyTo: process.env.POSTMARK_REPLY_TO?.trim() || undefined,
       Subject: message.subject,

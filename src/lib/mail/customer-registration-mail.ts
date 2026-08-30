@@ -9,7 +9,7 @@ type CustomerRegistrationMailInput = {
 
 export async function sendCustomerRegistrationMail(input: CustomerRegistrationMailInput) {
   const body = [
-    "Salon de Lien お客様アプリ",
+    "ORIMIA お客様アプリ",
     "━━━━━━━━━━━━━━━━━━━━",
     "登録手続きを完了してください",
     "",
@@ -24,12 +24,12 @@ export async function sendCustomerRegistrationMail(input: CustomerRegistrationMa
     "このメールに心当たりがない場合は、URLを開かずにこのメールを削除してください。",
     "URLは登録完了後、または有効期限を過ぎると利用できなくなります。",
     "",
-    "Salon de Lien"
+    "ORIMIA"
   ].join("\r\n");
 
   await sendPostmarkMessage({
     to: input.to,
-    subject: "【Salon de Lien】お客様アプリの登録手続きをお願いします",
+    subject: "【ORIMIA】お客様アプリの登録手続きをお願いします",
     textBody: body,
     htmlBody: renderTransactionalEmail({
       preheader: `お客様アプリの登録手続きを${input.expiresInMinutes}分以内に完了してください。`,

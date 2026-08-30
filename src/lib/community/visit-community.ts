@@ -356,7 +356,7 @@ export async function loadVisitCommunityPostDetail({
     id: post.id,
     postKind: post.postKind,
     caption: post.caption,
-    customerName: post.postKind === "STORE" ? "Salon de Lien" : communityDisplayName(post.customer?.name ?? ""),
+    customerName: post.postKind === "STORE" ? "ORIMIA" : communityDisplayName(post.customer?.name ?? ""),
     visitDate: (post.visit?.visitedAt ?? post.publishedAt).toISOString(),
     menu: post.postKind === "STORE" ? "店舗スタイル" : post.visit?.performedStyle ?? post.visit?.requestedStyle ?? "施術記録",
     stylistName: post.postKind === "STORE" ? post.publishedByName?.trim() || "店舗スタッフ" : normalizeSalonStaffName(post.visit?.stylistName) ?? "フリー",

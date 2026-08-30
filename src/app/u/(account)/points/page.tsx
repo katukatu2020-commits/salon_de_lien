@@ -57,7 +57,7 @@ export default async function CustomerPointsPage() {
         variant="points"
         eyebrow="Point wallet"
         title="ポイント"
-        description="Salon de Lienで使えるポイントと履歴です。"
+        description="ORIMIAで使えるポイントと履歴です。"
         imageClassName="object-[50%_48%]"
       />
       <section className="rounded-[24px] bg-[#5b332c] p-6 text-white shadow-[0_18px_50px_rgba(91,51,44,0.18)]">

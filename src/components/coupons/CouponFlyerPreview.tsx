@@ -29,7 +29,7 @@ export function CouponFlyerPreview({ issue, className = "" }: CouponFlyerPreview
         aspectRatio: `${COUPON_TEMPLATE.designWidth} / ${COUPON_TEMPLATE.designHeight}`,
         backgroundColor: "#fffaf5"
       }}
-      aria-label="Salon de Lien 限定クーポンチラシ"
+      aria-label="ORIMIA 限定クーポンチラシ"
     >
       <svg
         viewBox={`0 0 ${COUPON_TEMPLATE.designWidth} ${COUPON_TEMPLATE.designHeight}`}

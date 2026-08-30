@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 const BRAND_VISUALS = {
   workflow: {
     src: "/brand/salon-interior-illustrated.png",
-    alt: "Salon de Lienの明るい施術スペースを描いたイラスト"
+    alt: "ORIMIAの明るい施術スペースを描いたイラスト"
   },
   customerCrm: {
     src: "/brand/customer-crm.webp",
@@ -12,7 +12,7 @@ const BRAND_VISUALS = {
   },
   points: {
     src: "/brand/points-management.webp",
-    alt: "Salon de Lienの会員カードとポイントを表現したイラスト"
+    alt: "ORIMIAの会員カードとポイントを表現したイラスト"
   },
   customerCare: {
     src: "/brand/customer-hair-care.webp",
@@ -24,15 +24,15 @@ const BRAND_VISUALS = {
   },
   products: {
     src: "/brand/salon-product-shelf-illustrated.png",
-    alt: "Salon de Lien店内の商品棚を描いたイラスト"
+    alt: "ORIMIA店内の商品棚を描いたイラスト"
   },
   consultation: {
     src: "/brand/consultation.webp",
-    alt: "Salon de Lienで行うヘアカウンセリング"
+    alt: "ORIMIAで行うヘアカウンセリング"
   },
   insights: {
     src: "/brand/salon-style-short-dark.jpg",
-    alt: "Salon de Lienのショートスタイル"
+    alt: "ORIMIAのショートスタイル"
   },
   reviews: {
     src: "/brand/product-collection.webp",

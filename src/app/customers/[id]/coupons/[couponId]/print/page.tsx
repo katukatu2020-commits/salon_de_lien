@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { CouponPrintButton } from "@/components/customers/coupon-print-button";
@@ -158,7 +158,7 @@ function FlyerPhotoTemplate({
     >
       <img
         src={couponTemplateImageSrc}
-        alt="Salon de Lien クーポンチラシテンプレート"
+        alt="ORIMIA クーポンチラシテンプレート"
         className="absolute inset-0 z-0 h-full w-full object-cover"
         style={{
           position: "absolute",

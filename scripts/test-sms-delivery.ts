@@ -13,7 +13,7 @@ async function main() {
 
   const result = await sendTransactionalSms({
     phoneE164,
-    message: "【Salon de Lien】SMS認証の実送信テストです。このメッセージへの返信は不要です。"
+    message: "【ORIMIA】SMS認証の実送信テストです。このメッセージへの返信は不要です。"
   });
   console.log(`SMS accepted by ${result.provider}: ${result.messageId ? "message id received" : "no message id"}`);
 }

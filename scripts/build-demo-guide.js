@@ -132,8 +132,8 @@ function cover(manifest) {
   const customers = shot(manifest, "admin-customers-desktop");
   return `<section class="slide cover">
     <div class="cover-copy">
-      <p class="eyebrow">Salon de Lien 操作説明資料</p>
-      <h1>実機画面で見る Salon de Lien の使い方</h1>
+      <p class="eyebrow">ORIMIA 操作説明資料</p>
+      <h1>実機画面で見る ORIMIA の使い方</h1>
       <p>既存客の再来店・店販・レビュー・紹介を、接客の流れに組み込む操作デモ</p>
       <div class="cover-meta">
         <span>対象: オーナー・スタッフ向け</span>
@@ -337,7 +337,7 @@ function slides(manifest) {
       <div class="slide-head">
         <div>
           <p class="eyebrow">まとめ</p>
-          <h1>Salon de Lien は、接客の流れの中で既存客を動かす</h1>
+          <h1>ORIMIA は、接客の流れの中で既存客を動かす</h1>
         </div>
         <span class="page-no">18</span>
       </div>
@@ -366,7 +366,7 @@ function html(manifest) {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>実機画面で見る Salon de Lien の使い方</title>
+  <title>実機画面で見る ORIMIA の使い方</title>
   <style>
     @page { size: 16in 9in; margin: 0; }
     :root {
@@ -700,10 +700,10 @@ function buildScriptMarkdown() {
     ["15. フィードバック・紹介につなげる", "/u/[token]/feedback / /referral/[code]", "施術後アンケートと紹介コードを案内。", "満足度が高いお客様から、次回予約や紹介につながる流れを作ります。", "周りで美容室を探している方がいたら、この紹介リンクを送っていただけます。", "オーナー向けレポートへ進む。"],
     ["16. 販促CRMレポートを見る", "/admin/reports/offers", "クーポン、レビュー、ポイント、紹介、未対応タスクを確認。", "オーナーは既存客施策が回っているかを確認できます。", "今週はレビュー未回答とポイント失効予定のお客様を先に動かします。", "メーカー向け集計へ進む。"],
     ["17. メーカー向け商品集計を見る", "/admin/reports/manufacturer-products", "メーカー、期間を選び、商品別集計を見る。", "顧客個人情報を出さず、現場の商品反応をメーカーに返せます。", "この商品は手触り評価が高く、価格面の声が出ています。", "全体の流れをまとめる。"],
-    ["18. まとめ: 既存客との関係を動かす", "資料まとめページ", "顧客詳細、商品提案、レビュー、ポイント、クーポン、紹介、レポートの一連の流れを振り返る。", "Salon de Lienは顧客を登録するだけでなく、既存客の再来店・店販・レビュー・紹介が回る状態を見える化します。", "顧客を登録するシステムではなく、既存客との関係を動かすCRMです。", "必要に応じて実機デモに戻る。"]
+    ["18. まとめ: 既存客との関係を動かす", "資料まとめページ", "顧客詳細、商品提案、レビュー、ポイント、クーポン、紹介、レポートの一連の流れを振り返る。", "ORIMIAは顧客を登録するだけでなく、既存客の再来店・店販・レビュー・紹介が回る状態を見える化します。", "顧客を登録するシステムではなく、既存客との関係を動かすCRMです。", "必要に応じて実機デモに戻る。"]
   ];
 
-  return `# Salon de Lien 操作デモ台本\n\n対象: オーナー・スタッフ向け\n\n${chapters
+  return `# ORIMIA 操作デモ台本\n\n対象: オーナー・スタッフ向け\n\n${chapters
     .map(
       ([title, route, operation, explanation, talk, next]) => `## ${title}\n\n見せる画面:\n${route}\n\n操作:\n${operation}\n\n説明トーク:\n${explanation}\n\n接客トーク:\n${talk}\n\n次の画面:\n${next}\n`
     )
@@ -971,8 +971,8 @@ function renderCoverSvg(manifest) {
     <rect width="1440" height="810" fill="#FBF7F0"/>
     <circle cx="1160" cy="60" r="260" fill="#F4E7C7" opacity=".7"/>
     <rect x="40" y="40" width="1360" height="730" rx="34" fill="none" stroke="#E8DED2"/>
-    ${svgText(["Salon de Lien 操作説明資料"], 76, 108, { size: 22, fill: "#8F4F42", weight: 700 })}
-    ${svgText(["実機画面で見る", "Salon de Lien の使い方"], 76, 190, { size: 48, fill: "#2F2A25", weight: 700, lineHeight: 1.2 })}
+    ${svgText(["ORIMIA 操作説明資料"], 76, 108, { size: 22, fill: "#8F4F42", weight: 700 })}
+    ${svgText(["実機画面で見る", "ORIMIA の使い方"], 76, 190, { size: 48, fill: "#2F2A25", weight: 700, lineHeight: 1.2 })}
     ${svgText(["既存客の再来店・店販・レビュー・紹介を、", "接客の流れに組み込む操作デモ"], 76, 420, { size: 25, fill: "#7C7168", weight: 500, lineHeight: 1.5 })}
     <rect x="76" y="590" width="250" height="46" rx="23" fill="#fff" stroke="#E8DED2"/>
     ${svgText(["対象: オーナー・スタッフ向け"], 100, 620, { size: 16, fill: "#5B332C", weight: 700 })}
@@ -1014,7 +1014,7 @@ function renderSummarySvg() {
     <rect width="1440" height="810" fill="#FBF7F0"/>
     <rect x="24" y="24" width="1392" height="762" rx="30" fill="none" stroke="#E8DED2"/>
     ${svgText(["まとめ"], 58, 72, { size: 18, fill: "#8F4F42", weight: 700 })}
-    ${svgText(wrapText("Salon de Lien は、接客の流れの中で既存客を動かす", 31, 2), 58, 124, { size: 40, fill: "#2F2A25", weight: 700, lineHeight: 1.2 })}
+    ${svgText(wrapText("ORIMIA は、接客の流れの中で既存客を動かす", 31, 2), 58, 124, { size: 40, fill: "#2F2A25", weight: 700, lineHeight: 1.2 })}
     ${items
       .map((item, index) => {
         const col = index % 4;

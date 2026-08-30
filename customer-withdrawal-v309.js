@@ -38,7 +38,7 @@ function createCustomerWithdrawalService({ prisma, crypto, sessionProvider }) {
     res.setHeader('X-Content-Type-Options', 'nosniff')
     res.setHeader('Referrer-Policy', 'no-referrer')
     res.setHeader('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'")
-    res.end(`<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(title)} | Salon de Lien</title><style>*{box-sizing:border-box}body{margin:0;background:#fbf7f2;color:#2f2a25;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.wrap{min-height:100vh;padding:48px 20px}.card{max-width:600px;margin:0 auto;background:#fff;border:1px solid #eadfd5;border-radius:28px;padding:40px;box-shadow:0 20px 60px rgba(96,67,54,.1)}.brand{margin:0 0 10px;color:#a35a4a;font-size:12px;font-weight:700;letter-spacing:.18em}.title{margin:0;font-family:Georgia,"Yu Mincho",serif;font-size:32px;line-height:1.35}.lead{margin:22px 0 0;color:#655b54;line-height:1.9}.notice{margin-top:24px;border:1px solid #f3d2d5;border-radius:18px;background:#fff5f5;padding:16px;color:#7b353a;font-size:14px;line-height:1.8}.button{display:flex;min-height:50px;width:100%;margin-top:28px;align-items:center;justify-content:center;border:0;border-radius:999px;background:#9f3f44;color:#fff;text-decoration:none;font-size:15px;font-weight:700;cursor:pointer}.secondary{border:1px solid #dfd1c5;background:#fff;color:#3f3731;margin-top:12px}@media(max-width:520px){.wrap{padding:24px 14px}.card{padding:28px 22px;border-radius:24px}.title{font-size:27px}}</style></head><body><main class="wrap"><section class="card"><p class="brand">SALON DE LIEN</p>${body}</section></main></body></html>`)
+    res.end(`<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(title)} | ORIMIA</title><style>*{box-sizing:border-box}body{margin:0;background:#fbf7f2;color:#2f2a25;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.wrap{min-height:100vh;padding:48px 20px}.card{max-width:600px;margin:0 auto;background:#fff;border:1px solid #eadfd5;border-radius:28px;padding:40px;box-shadow:0 20px 60px rgba(96,67,54,.1)}.brand{margin:0 0 10px;color:#a35a4a;font-size:12px;font-weight:700;letter-spacing:.18em}.title{margin:0;font-family:Georgia,"Yu Mincho",serif;font-size:32px;line-height:1.35}.lead{margin:22px 0 0;color:#655b54;line-height:1.9}.notice{margin-top:24px;border:1px solid #f3d2d5;border-radius:18px;background:#fff5f5;padding:16px;color:#7b353a;font-size:14px;line-height:1.8}.button{display:flex;min-height:50px;width:100%;margin-top:28px;align-items:center;justify-content:center;border:0;border-radius:999px;background:#9f3f44;color:#fff;text-decoration:none;font-size:15px;font-weight:700;cursor:pointer}.secondary{border:1px solid #dfd1c5;background:#fff;color:#3f3731;margin-top:12px}@media(max-width:520px){.wrap{padding:24px 14px}.card{padding:28px 22px;border-radius:24px}.title{font-size:27px}}</style></head><body><main class="wrap"><section class="card"><p class="brand">ORIMIA</p>${body}</section></main></body></html>`)
   }
   async function readForm(req) {
     let body = ''
@@ -55,19 +55,19 @@ function createCustomerWithdrawalService({ prisma, crypto, sessionProvider }) {
     const token = String(process.env.POSTMARK_SERVER_TOKEN || '').trim()
     const from = String(process.env.POSTMARK_FROM_EMAIL || '').trim()
     if (!token || !from) throw new Error('Postmark is not configured')
-    const subject = '【Salon de Lien】退会手続きの確認'
+    const subject = '【ORIMIA】退会手続きの確認'
     const safeName = escapeHtml(customerName)
     const safeUrl = escapeHtml(confirmationUrl)
     const response = await fetch('https://api.postmarkapp.com/email', {
       method: 'POST',
       headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'X-Postmark-Server-Token': token },
       body: JSON.stringify({
-        From: `${String(process.env.POSTMARK_FROM_NAME || 'Salon de Lien').trim()} <${from}>`,
+        From: `${String(process.env.POSTMARK_FROM_NAME || 'ORIMIA').trim()} <${from}>`,
         To: email,
         ReplyTo: String(process.env.POSTMARK_REPLY_TO || '').trim() || undefined,
         Subject: subject,
-        TextBody: `${customerName} 様\n\nSalon de Lienの退会申請を受け付けました。\n以下のリンクを開き、表示された「退会を確定する」を押してください。\n\n${confirmationUrl}\n\nこのリンクは${TOKEN_MINUTES}分間有効です。心当たりがない場合は、このメールを破棄してください。`,
-        HtmlBody: `<!doctype html><html lang="ja"><body style="margin:0;background:#fbf7f2;color:#2f2a25;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"><div style="max-width:600px;margin:0 auto;padding:36px 20px"><div style="background:#fff;border:1px solid #eadfd5;border-radius:24px;padding:32px"><p style="margin:0 0 8px;color:#a35a4a;font-size:12px;letter-spacing:.12em">SALON DE LIEN</p><h1 style="margin:0 0 20px;font-family:serif;font-size:26px">退会手続きの確認</h1><p>${safeName} 様</p><p style="line-height:1.8">退会申請を受け付けました。下のボタンから確認画面を開き、表示された「退会を確定する」を押してください。</p><p style="margin:28px 0"><a href="${safeUrl}" style="display:inline-block;border-radius:999px;background:#8f4f42;color:#fff;text-decoration:none;padding:14px 24px;font-weight:700">退会手続きを確認する</a></p><p style="color:#766b63;font-size:13px;line-height:1.7">リンクは${TOKEN_MINUTES}分間有効です。心当たりがない場合は、このメールを破棄してください。</p></div></div></body></html>`,
+        TextBody: `${customerName} 様\n\nORIMIAの退会申請を受け付けました。\n以下のリンクを開き、表示された「退会を確定する」を押してください。\n\n${confirmationUrl}\n\nこのリンクは${TOKEN_MINUTES}分間有効です。心当たりがない場合は、このメールを破棄してください。`,
+        HtmlBody: `<!doctype html><html lang="ja"><body style="margin:0;background:#fbf7f2;color:#2f2a25;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"><div style="max-width:600px;margin:0 auto;padding:36px 20px"><div style="background:#fff;border:1px solid #eadfd5;border-radius:24px;padding:32px"><p style="margin:0 0 8px;color:#a35a4a;font-size:12px;letter-spacing:.12em">ORIMIA</p><h1 style="margin:0 0 20px;font-family:serif;font-size:26px">退会手続きの確認</h1><p>${safeName} 様</p><p style="line-height:1.8">退会申請を受け付けました。下のボタンから確認画面を開き、表示された「退会を確定する」を押してください。</p><p style="margin:28px 0"><a href="${safeUrl}" style="display:inline-block;border-radius:999px;background:#8f4f42;color:#fff;text-decoration:none;padding:14px 24px;font-weight:700">退会手続きを確認する</a></p><p style="color:#766b63;font-size:13px;line-height:1.7">リンクは${TOKEN_MINUTES}分間有効です。心当たりがない場合は、このメールを破棄してください。</p></div></div></body></html>`,
         MessageStream: String(process.env.POSTMARK_TRANSACTIONAL_STREAM || 'outbound').trim(),
         Tag: 'customer-withdrawal',
         Metadata: { customerId }
@@ -178,7 +178,7 @@ function createCustomerWithdrawalService({ prisma, crypto, sessionProvider }) {
       return true
     }
     if (url.pathname === '/u/withdrawal/completed' && req.method === 'GET') {
-      render(res, '退会完了', '<h1 class="title">退会が完了しました</h1><p class="lead">これまでSalon de Lienをご利用いただき、ありがとうございました。</p><a class="button" href="/">トップページへ</a>')
+      render(res, '退会完了', '<h1 class="title">退会が完了しました</h1><p class="lead">これまでORIMIAをご利用いただき、ありがとうございました。</p><a class="button" href="/">トップページへ</a>')
       return true
     }
     if (url.pathname.startsWith('/u/withdrawal/') && req.method === 'GET') {

@@ -55,7 +55,7 @@ export function CustomerRegistrationPage({
         </Link>
         <header className="grid overflow-hidden rounded-[26px] border border-lien bg-white shadow-lien-sm sm:grid-cols-[minmax(0,1fr)_15rem]">
           <div className="p-5 sm:p-6">
-            <p className="text-sm font-semibold text-lien-primary">Salon de Lien</p>
+            <p className="text-sm font-semibold text-lien-primary">ORIMIA</p>
             <h1 className="mt-2 text-2xl font-semibold">はじめてのお客様登録</h1>
             <p className="mt-3 text-sm leading-7 text-lien-muted">初回来店を心地よく過ごしていただくため、基本情報と髪の特徴を教えてください。</p>
           </div>
@@ -134,7 +134,7 @@ export function CustomerRegistrationPage({
           </section>
 
           <button type="submit" className="lien-button-primary min-h-12 w-full text-base">登録する</button>
-          <p className="pb-4 text-center text-xs leading-5 text-lien-muted">入力内容とログイン情報はSalon de Lienの顧客プロフィールとして安全に保存されます。</p>
+          <p className="pb-4 text-center text-xs leading-5 text-lien-muted">入力内容とログイン情報はORIMIAの顧客プロフィールとして安全に保存されます。</p>
         </form>
       </section>
     </main>

@@ -90,7 +90,7 @@ export async function requestCustomerPhoneVerification(input: {
   try {
     smsResult = await sendTransactionalSms({
       phoneE164,
-      message: `Salon de Lien 認証コード: ${code}（${SMS_CODE_TTL_MINUTES}分有効）。心当たりがなければ無視してください。`
+      message: `ORIMIA 認証コード: ${code}（${SMS_CODE_TTL_MINUTES}分有効）。心当たりがなければ無視してください。`
     });
   } catch (error) {
     await prisma.smsVerificationChallenge.delete({ where: { id: challengeId } }).catch(() => undefined);

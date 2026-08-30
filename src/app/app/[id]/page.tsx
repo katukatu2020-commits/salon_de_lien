@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CalendarDays, Camera, CheckCircle2, ChevronRight, Gift, Handshake, Heart, MessageCircle, Scissors, Sparkles, TicketPercent } from "lucide-react";
 import { CustomerAppAiPhotoUploader } from "@/components/customers/customer-app-ai-photo-uploader";
@@ -215,7 +215,7 @@ export default async function CustomerAppPage({ params, searchParams, portalToke
           >
             <div className="flex h-full items-start justify-between gap-3 bg-gradient-to-r from-[#fffdf9]/95 via-[#fffdf9]/58 to-transparent p-5">
               <div>
-                <p className="text-2xl font-semibold tracking-normal text-[#342b25]">Salon de Lien</p>
+                <p className="text-2xl font-semibold tracking-normal text-[#342b25]">ORIMIA</p>
                 <p className="mt-1 text-xs font-semibold text-[#6f6157]">{customer.name}様のアプリ</p>
                 <p className="mt-4 max-w-44 text-sm font-semibold leading-6 text-[#5b352d]">今日のきれいを、次の来店まで心地よく。</p>
               </div>

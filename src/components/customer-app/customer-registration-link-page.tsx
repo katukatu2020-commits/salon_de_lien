@@ -23,7 +23,7 @@ export function CustomerRegistrationLinkPage({ searchParams }: { searchParams?: 
         <BrandVisual variant="consultation" className="h-48 overflow-hidden rounded-[24px] border border-lien shadow-lien-sm" imageClassName="object-[70%_52%]" sizes="448px" priority overlay="none">
           <div className="flex h-full items-end bg-gradient-to-r from-white/95 via-white/65 to-transparent p-6">
             <div>
-              <p className="text-sm font-semibold text-lien-primary">Salon de Lien</p>
+              <p className="text-sm font-semibold text-lien-primary">ORIMIA</p>
               <h1 className="mt-1 text-2xl font-semibold">お客様アプリ初回登録</h1>
             </div>
           </div>

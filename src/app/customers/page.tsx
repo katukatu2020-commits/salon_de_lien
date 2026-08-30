@@ -1143,7 +1143,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
     return (
       <div className="mx-auto w-full max-w-5xl">
         <StoreSettingsPanel
-          storeName={organization?.name ?? "Salon de Lien"}
+          storeName={organization?.name ?? "ORIMIA"}
           gmailEmail={process.env.GMAIL_RESERVATION_EMAIL?.trim() || null}
           latestGmailImportedAt={latestGmailAppointment?.updatedAt ?? null}
           googleReviewUrl={googleReviewUrl}
@@ -2652,7 +2652,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
     }
   ];
   const ownerWeeklyReportMessage = [
-    "【Salon de Lien 週次オーナーレポート】",
+    "【ORIMIA 週次オーナーレポート】",
     `累計売上: ${totalServiceRevenue.toLocaleString("ja-JP")}円 / 直近30日: ${recentServiceRevenue.toLocaleString("ja-JP")}円`,
     `平均客単価: ${averageTicket.toLocaleString("ja-JP")}円 / 直近平均: ${recentAverageTicket.toLocaleString("ja-JP")}円`,
     `有効予約: ${activeAppointmentCount}件 / 予約リスク: 高リスク${highRiskAppointmentRows.length}件・規約未確認${policyUnconfirmedAppointmentRows.length}件`,

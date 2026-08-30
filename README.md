@@ -1,4 +1,4 @@
-# Salon de Lien
+# ORIMIA
 
 > 最新AWS本番環境から別PCへ引き継ぐ場合は、[CURRENT_PRODUCTION_HANDOFF.md](CURRENT_PRODUCTION_HANDOFF.md) を最初に確認してください。
 
@@ -293,7 +293,7 @@ AIシミュレーション用写真は、正面写真2枚以上・横顔写真2�
 
 ## FaceID基準 + 髪型編集方式
 
-Salon de Lienでは、本人性を高めるために外部生成Providerを利用できます。Vercel Environment Variables に以下を追加してください。
+ORIMIAでは、本人性を高めるために外部生成Providerを利用できます。Vercel Environment Variables に以下を追加してください。
 
 ```env
 STYLE_SIMULATION_PROVIDER="fal-photomaker-openai-edit"

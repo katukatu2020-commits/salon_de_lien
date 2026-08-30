@@ -89,7 +89,7 @@ export default async function AppointmentConfirmPage({ params, searchParams }: A
     <main className="min-h-screen bg-[#f8f5ef] text-stone-900">
       <section className="mx-auto grid w-full max-w-3xl gap-5 px-4 py-6 sm:px-6 lg:px-8">
         <div className="rounded-lg border border-stone-200 bg-white p-5 shadow-sm">
-          <p className="text-sm font-semibold text-teal-800">Salon de Lien</p>
+          <p className="text-sm font-semibold text-teal-800">ORIMIA</p>
           <h1 className="mt-2 text-3xl font-semibold text-stone-950">ご予約の確認</h1>
           <p className="mt-3 text-sm leading-7 text-stone-600">
             {appointment.customer.name}様、ご予約ありがとうございます。来店可否や変更希望、当日前に確認したいことを送ってください。

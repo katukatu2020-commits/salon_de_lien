@@ -59,10 +59,10 @@ export function FriendReferralCard({
   async function shareReferral() {
     if (!referral) return;
     const url = absoluteReferralUrl(referral.referralUrl);
-    const text = `Salon de Lienの友達紹介クーポンです。紹介された方は初回のお会計が${discountRates.referredCustomer}%OFF、紹介者はその会計完了後の次回お会計が${discountRates.referrer}%OFFになります。`;
+    const text = `ORIMIAの友達紹介クーポンです。紹介された方は初回のお会計が${discountRates.referredCustomer}%OFF、紹介者はその会計完了後の次回お会計が${discountRates.referrer}%OFFになります。`;
     try {
       if (navigator.share) {
-        await navigator.share({ title: "Salon de Lien 友達紹介クーポン", text, url });
+        await navigator.share({ title: "ORIMIA 友達紹介クーポン", text, url });
         setMessage("紹介クーポンを共有しました。");
       } else {
         await copyText(`${text}\n${url}`);

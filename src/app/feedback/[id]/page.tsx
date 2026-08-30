@@ -85,7 +85,7 @@ export default async function FeedbackPage({ params, searchParams, portalToken }
             priority
           />
           <div className="p-5">
-            <p className="text-sm font-semibold text-[color:var(--lien-primary-dark)]">Salon de Lien</p>
+            <p className="text-sm font-semibold text-[color:var(--lien-primary-dark)]">ORIMIA</p>
             <h1 className="mt-2 text-2xl font-semibold">仕上がり確認</h1>
             <p className="mt-3 text-sm leading-7 text-lien-muted">
               {customer.name}様、本日はご来店ありがとうございました。仕上がりや家での扱いやすさを確認し、必要なフォローや次回の目安をご案内します。

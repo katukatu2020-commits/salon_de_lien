@@ -5,14 +5,31 @@ import { prisma } from "@/lib/prisma";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Salon de Lien",
-  description: "美容室の顧客カルテから再来店、商品提案、ポイント、紹介までつなげるCRM"
+  title: "ORIMIA",
+  description: "美容室の顧客カルテから再来店、商品提案、ポイント、紹介までつなげるCRM",
+  applicationName: "ORIMIA",
+  manifest: "/orimia.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "ORIMIA",
+    statusBarStyle: "default"
+  },
+  icons: {
+    icon: [
+      { url: "/brand/orimia-icon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/brand/orimia-icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/brand/orimia-icon-512.png", sizes: "512x512", type: "image/png" }
+    ],
+    apple: [{ url: "/brand/orimia-icon-180.png", sizes: "180x180", type: "image/png" }],
+    shortcut: [{ url: "/brand/orimia-icon-48.png", sizes: "48x48", type: "image/png" }]
+  }
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  viewportFit: "cover"
+  viewportFit: "cover",
+  themeColor: "#fffdf9"
 };
 
 async function currentShellData() {

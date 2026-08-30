@@ -147,7 +147,7 @@ export async function generateCourseRecommendations(
   > = [
     {
       type: "input_text",
-      text: `Salon de Lienのスタッフ向けに、おすすめ施術コースを3件作成してください。
+      text: `ORIMIAのスタッフ向けに、おすすめ施術コースを3件作成してください。
 
 目的:
 - 押し売りではなく、顧客の希望・髪質・悩みに対して自然に提案できるコースにする

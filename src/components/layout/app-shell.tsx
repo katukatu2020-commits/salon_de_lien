@@ -76,11 +76,11 @@ function ServiceMark({ compact = false }: { compact?: boolean }) {
   return (
     <span
       role="img"
-      aria-label="Salon de Lien サービスアイコン"
+      aria-label="ORIMIA サービスアイコン"
       className={`${compact ? "h-8 w-8 rounded-full text-sm" : "h-11 w-11 rounded-2xl text-lg"} inline-flex shrink-0 items-center justify-center border border-[#ead8ca] bg-[#fff7ef] bg-cover bg-center font-semibold text-[color:var(--lien-primary-dark)] shadow-sm`}
-      style={{ backgroundImage: "url(/brand/salon-customer-service-mark.svg)" }}
+      style={{ backgroundImage: "url(/brand/orimia-icon-192.png)" }}
     >
-      <span className="sr-only">Salon de Lien</span>
+      <span className="sr-only">ORIMIA</span>
     </span>
   );
 }
@@ -163,7 +163,7 @@ export function AppShell({
     ? "店舗運用設定"
     : pathname === "/admin/account"
       ? "アカウント設定"
-    : visibleNavItems.find((item) => isActivePath(pathname, currentView, item.href))?.label ?? "Salon CRM";
+    : visibleNavItems.find((item) => isActivePath(pathname, currentView, item.href))?.label ?? "ORIMIA CRM";
 
   const filteredCommands = visibleCommandItems.filter((item) => {
     const query = commandQuery.trim().toLowerCase();
@@ -184,13 +184,13 @@ export function AppShell({
     <div className="flex h-[100dvh] min-h-0 flex-col bg-[#fffdf9] text-lien-ink md:h-full">
       <div className="border-b border-lien px-4 py-4">
         <div className="flex items-center justify-between gap-3">
-          <Link href="/admin/customers" className="flex min-w-0 items-center gap-3 text-lien-ink">
+          <a href="https://salon-de-lien.com/" className="flex min-w-0 items-center gap-3 text-lien-ink">
             <ServiceMark />
             <span className="min-w-0">
-              <span className="block truncate text-lg font-semibold tracking-normal">Salon de Lien</span>
+              <span className="block truncate text-lg font-semibold tracking-normal">ORIMIA</span>
               <span className="block truncate text-[11px] font-semibold text-lien-muted">既存客を動かす美容室CRM</span>
             </span>
-          </Link>
+          </a>
           <button
             type="button"
             className="inline-flex h-10 w-10 items-center justify-center rounded-full text-lien-muted hover:bg-lien-soft md:hidden"
@@ -289,10 +289,10 @@ export function AppShell({
       <div className="min-w-0 md:pl-64">
         <header className="sticky top-0 z-40 border-b border-lien bg-[#fffdf9]/92 backdrop-blur-xl">
           <div className="flex h-14 items-center justify-between px-4 md:hidden">
-            <Link href="/admin/customers" className="flex min-w-0 items-center gap-2 font-semibold text-lien-ink">
+            <a href="https://salon-de-lien.com/" className="flex min-w-0 items-center gap-2 font-semibold text-lien-ink">
               <ServiceMark compact />
-              <span className="truncate">Salon de Lien</span>
-            </Link>
+              <span className="truncate">ORIMIA</span>
+            </a>
             <div className="flex items-center gap-2">
               <AccountBadge displayName={backofficeDisplayName} compact />
               <Link
@@ -317,7 +317,7 @@ export function AppShell({
 
           <div className="hidden min-h-16 min-w-0 items-center gap-3 px-5 py-3 md:flex lg:px-8">
             <div className="min-w-0">
-              <p className="text-[11px] font-semibold text-lien-muted">Salon de Lien</p>
+              <p className="text-[11px] font-semibold text-lien-muted">ORIMIA</p>
               <p className="truncate text-sm font-semibold text-lien-ink">{pageLabel}</p>
             </div>
             <form action="/admin/customers" className="relative ml-2 min-w-0 flex-1 max-w-xl">

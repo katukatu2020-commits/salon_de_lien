@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { KeyRound, LockKeyhole, Sparkles, UserPlus } from "lucide-react";
+import { KeyRound, LockKeyhole, UserPlus } from "lucide-react";
 import { BrandVisual } from "@/components/lien/brand-visual";
 import { getCurrentCustomerSession } from "@/lib/auth/current-customer";
 
@@ -25,7 +25,7 @@ export default async function CustomerLoginPage({
     <main className="min-h-screen bg-[#fbf7f0] px-4 py-6 text-[#2f2a25] sm:py-10 lg:grid lg:place-items-center lg:px-8">
       <section className="mx-auto grid w-full max-w-5xl gap-5 lg:grid-cols-[minmax(0,1.1fr)_minmax(400px,0.9fr)] lg:items-stretch">
         <BrandVisual variant="customerCare" className="h-56 overflow-hidden rounded-[24px] border border-[#e8ded2] shadow-[0_18px_50px_rgba(47,42,37,0.08)] lg:h-auto lg:min-h-[640px]" imageClassName="object-[62%_50%]" sizes="(max-width: 1023px) 100vw, 560px" priority overlay="none">
-          <div className="flex h-full flex-col justify-between bg-gradient-to-r from-[#fffdf9]/95 via-[#fffdf9]/70 to-transparent p-6"><span className="grid h-11 w-11 place-items-center rounded-full bg-[#8f4f42] text-white shadow-sm"><Sparkles className="h-5 w-5" /></span><div><p className="text-2xl font-semibold">Salon de Lien</p><p className="mt-2 max-w-52 text-sm font-medium leading-6 text-[#5b5149]">髪の記録とポイントを、いつでもあなたの手元に。</p></div></div>
+          <div className="flex h-full flex-col justify-between bg-gradient-to-r from-[#fffdf9]/95 via-[#fffdf9]/70 to-transparent p-6"><a href="https://salon-de-lien.com/" aria-label="ORIMIAトップへ" className="block h-11 w-11 rounded-full bg-white bg-cover bg-center shadow-sm" style={{ backgroundImage: "url(/brand/orimia-icon-192.png)" }} /><div><p className="text-2xl font-semibold">ORIMIA</p><p className="mt-2 max-w-52 text-sm font-medium leading-6 text-[#5b5149]">髪の記録とポイントを、いつでもあなたの手元に。</p></div></div>
         </BrandVisual>
         <section className="rounded-[24px] border border-[#e8ded2] bg-white p-5 shadow-[0_18px_50px_rgba(47,42,37,0.07)] sm:p-6 lg:flex lg:flex-col lg:justify-center lg:p-10">
           <p className="text-sm font-semibold text-[#8f4f42]">お客様専用</p><h1 className="mt-1 text-2xl font-semibold">ログイン</h1><p className="mt-2 text-sm leading-6 text-[#7c7168]">登録したログインIDまたはメールアドレスとパスワードを入力してください。</p>

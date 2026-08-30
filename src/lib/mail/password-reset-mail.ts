@@ -52,7 +52,7 @@ async function gmailAccessToken() {
 export async function sendGmailTextMail(input: GmailTextMailInput) {
   const from = process.env.GMAIL_RESERVATION_EMAIL?.trim();
   if (!from) throw new Error("GMAIL_RESERVATION_EMAILが設定されていません。");
-  const senderName = process.env.PASSWORD_RESET_MAIL_FROM_NAME?.trim() || "Salon de Lien";
+  const senderName = process.env.PASSWORD_RESET_MAIL_FROM_NAME?.trim() || "ORIMIA";
   const accessToken = await gmailAccessToken();
   const headers = [
     `From: ${encodeSubject(senderName)} <${from}>`,
@@ -103,7 +103,7 @@ export async function sendGmailTextMail(input: GmailTextMailInput) {
 
 export async function sendPasswordResetMail(input: PasswordResetMailInput) {
   const body = [
-    "Salon de Lien",
+    "ORIMIA",
     "━━━━━━━━━━━━━━━━━━━━",
     "ログイン情報を再設定してください",
     "",
@@ -119,12 +119,12 @@ export async function sendPasswordResetMail(input: PasswordResetMailInput) {
     "",
     "このメールに心当たりがない場合は、URLを開かずにこのメールを削除してください。",
     "",
-    "Salon de Lien"
+    "ORIMIA"
   ].join("\r\n");
 
   await sendGmailTextMail({
     to: input.to,
-    subject: "【Salon de Lien】ログイン情報の再設定",
+    subject: "【ORIMIA】ログイン情報の再設定",
     body,
     htmlBody: renderTransactionalEmail({
       preheader: `${input.audienceLabel}のログイン情報を${input.expiresInMinutes}分以内に再設定してください。`,

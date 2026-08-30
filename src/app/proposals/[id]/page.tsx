@@ -1,4 +1,4 @@
-﻿import { notFound } from "next/navigation";
+import { notFound } from "next/navigation";
 import { CalendarDays, CheckCircle2, Clock3, MessageCircle, Scissors, Sparkles } from "lucide-react";
 import { redirect } from "next/navigation";
 import { createProposalResponse } from "@/lib/actions";
@@ -170,7 +170,7 @@ export default async function ProposalPage({ params, searchParams, portalToken }
     <main className="min-h-screen bg-[#f7f3ec] text-stone-950">
       <section className="mx-auto grid w-full max-w-5xl gap-4 px-4 py-4 sm:px-6 lg:px-8">
         <header className="flex items-center justify-between gap-3">
-          <p className="font-serif text-xl font-semibold tracking-normal">Salon de Lien</p>
+          <p className="font-serif text-xl font-semibold tracking-normal">ORIMIA</p>
           <div className="flex items-center gap-2">
             <span className="rounded border border-teal-200 bg-white px-3 py-1 text-xs font-semibold text-teal-900">
               {displaySuggestionLabel(suggestion.label)}

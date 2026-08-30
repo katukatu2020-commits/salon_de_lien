@@ -45,7 +45,7 @@ export default async function ReferralPage({ params }: ReferralPageProps) {
             <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-lien-soft text-[color:var(--lien-primary)]">
               <HeartHandshake className="h-6 w-6" />
             </span>
-            <p className="mt-4 text-sm font-semibold text-[color:var(--lien-primary-dark)]">Salon de Lien</p>
+            <p className="mt-4 text-sm font-semibold text-[color:var(--lien-primary-dark)]">ORIMIA</p>
             <h1 className="mt-2 text-2xl font-semibold">友達紹介クーポン</h1>
             <p className="mt-3 text-sm leading-7 text-lien-muted">
               {referral.referrerCustomer.name}様からの紹介コードです。ご来店予定のお名前と連絡先を登録してください。

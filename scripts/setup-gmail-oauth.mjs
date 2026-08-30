@@ -128,7 +128,7 @@ if (!clientId || !clientSecret) {
         GMAIL_SYNC_CRON_SECRET: env.GMAIL_SYNC_CRON_SECRET?.trim() || randomBytes(32).toString("hex")
       });
       response.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
-      response.end("<h1>Gmail連携が完了しました</h1><p>この画面を閉じ、Salon de Lienサーバーを再起動してください。</p>");
+      response.end("<h1>Gmail連携が完了しました</h1><p>この画面を閉じ、ORIMIAサーバーを再起動してください。</p>");
       console.log(`Gmail連携が完了しました: ${profile.emailAddress}`);
       console.log("更新トークンは .env.local に保存しました。サーバーを再起動してください。");
     } catch (error) {
