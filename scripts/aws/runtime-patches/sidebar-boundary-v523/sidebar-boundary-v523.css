@@ -1,0 +1,23 @@
+/* sidebar-boundary-v523 */
+@media (min-width: 768px) {
+  html body .admin-app-shell > button.orimia-admin-sidebar-toggle-v518,
+  html body .admin-app-shell.admin-staff-unified-v48 > button[aria-label="サイドバーを閉じる"],
+  html body .admin-app-shell.admin-staff-unified-v48 > button[aria-label="サイドバーを開く"] {
+    box-sizing: border-box !important;
+    width: 38px !important;
+    min-width: 38px !important;
+    max-width: 38px !important;
+    height: 38px !important;
+    min-height: 38px !important;
+    max-height: 38px !important;
+    right: auto !important;
+  }
+
+  html body .admin-app-shell > button[aria-label="サイドバーを閉じる"] {
+    left: calc(var(--orimia-admin-sidebar-width-v518, 18rem) - 19px) !important;
+  }
+
+  html body .admin-app-shell > button[aria-label="サイドバーを開く"] {
+    left: .75rem !important;
+  }
+}
