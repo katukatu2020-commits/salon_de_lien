@@ -85,6 +85,12 @@ export function CustomerRegistrationPage({
           {searchParams?.error === "profile" ? (
             <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm leading-6 text-red-800">入力内容を確認してください。プロフィールの各項目を選択してから登録してください。</p>
           ) : null}
+          {searchParams?.error === "phoneFormat" ? (
+            <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm leading-6 text-red-800">携帯電話番号を確認してください。全角数字にも対応しています。070・080・090から始まる11桁の番号を入力してください。</p>
+          ) : null}
+          {searchParams?.error === "birthDate" ? (
+            <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm leading-6 text-red-800">生年月日を確認してください。1900年以降の実在する日付を入力してください。</p>
+          ) : null}
           {searchParams?.error === "sms" ? (
             <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm leading-6 text-red-800">携帯電話番号のSMS認証を完了してから登録してください。</p>
           ) : null}

@@ -51,6 +51,15 @@ import {
   secureHashMatches
 } from "../src/lib/auth/phone-verification";
 import {
+  CUSTOMER_GENDER_OPTIONS,
+  HAIR_CURL_OPTIONS,
+  HAIR_TEXTURE_OPTIONS,
+  HAIR_THICKNESS_OPTIONS,
+  HAIR_VOLUME_OPTIONS,
+  SERVICE_PREFERENCE_OPTIONS,
+  normalizeProfileOption
+} from "../src/lib/customer-profile-options";
+import {
   generateCustomerRegistrationToken,
   hashCustomerRegistrationToken,
   isCustomerRegistrationTokenFormat,
@@ -210,6 +219,8 @@ test("customer registration accepts only Japanese mobile numbers and binds one-t
   const challengeId = "challenge-01";
   const phoneE164 = normalizeJapaneseMobilePhone("090-1234-5678");
   assert.equal(phoneE164, "+819012345678");
+  assert.equal(normalizeJapaneseMobilePhone("０９０ー１２３４ー５６７８"), "+819012345678");
+  assert.equal(normalizeJapaneseMobilePhone("＋８１ ９０ １２３４ ５６７８"), "+819012345678");
   assert.equal(normalizeJapaneseMobilePhone("03-1234-5678"), null);
   assert.equal(normalizeJapaneseMobilePhone("090-1234-567"), null);
   assert.equal(formatJapaneseMobilePhone(phoneE164!), "090-1234-5678");
@@ -230,6 +241,18 @@ test("customer registration accepts only Japanese mobile numbers and binds one-t
     ),
     true
   );
+});
+
+test("customer registration canonicalizes cached profile option labels without blocking optional fields", () => {
+  assert.equal(normalizeProfileOption(CUSTOMER_GENDER_OPTIONS, "ｆｅｍａｌｅ"), "女性");
+  assert.equal(normalizeProfileOption(CUSTOMER_GENDER_OPTIONS, " 回答しない "), "未回答");
+  assert.equal(normalizeProfileOption(HAIR_TEXTURE_OPTIONS, "やわらかい"), "柔らかい");
+  assert.equal(normalizeProfileOption(HAIR_THICKNESS_OPTIONS, "太め"), "太い");
+  assert.equal(normalizeProfileOption(HAIR_VOLUME_OPTIONS, "標準"), "普通");
+  assert.equal(normalizeProfileOption(HAIR_CURL_OPTIONS, "直毛"), "なし（直毛）");
+  assert.equal(normalizeProfileOption(SERVICE_PREFERENCE_OPTIONS, "会話したい"), "適度に会話したい");
+  assert.equal(normalizeProfileOption(HAIR_CURL_OPTIONS, null), null);
+  assert.equal(normalizeProfileOption(HAIR_CURL_OPTIONS, "保存されていない旧選択肢"), null);
 });
 
 test("backoffice session preserves role and tenant and expires", async () => {

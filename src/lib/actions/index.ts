@@ -65,7 +65,7 @@ import {
   HAIR_THICKNESS_OPTIONS,
   HAIR_VOLUME_OPTIONS,
   SERVICE_PREFERENCE_OPTIONS,
-  isProfileOption
+  normalizeProfileOption
 } from "@/lib/customer-profile-options";
 import { birthYearFromDate, parseBirthDateInput } from "@/lib/customer-age";
 
@@ -500,14 +500,15 @@ export async function createPublicConsultationLead(formData: FormData) {
   const phoneVerificationId = nullableString(formData, "phoneVerificationId");
   const phoneVerificationToken = nullableString(formData, "phoneVerificationToken");
   const organizationId = registrationInvite.organizationId;
-  if (!phoneE164) redirect(registrationErrorPath("profile"));
+  if (!phoneE164) redirect(registrationErrorPath("phoneFormat"));
   if (!phoneVerificationId || !phoneVerificationToken) redirect(registrationErrorPath("sms"));
   if (await hasExistingCustomerAccount(organizationId, phoneE164)) redirect(registrationErrorPath("phone"));
   const phone = formatJapaneseMobilePhone(phoneE164);
-  const gender = nullableString(formData, "gender");
+  const gender = normalizeProfileOption(CUSTOMER_GENDER_OPTIONS, nullableString(formData, "gender"));
   const birthDate = parseBirthDateInput(nullableString(formData, "birthDate") ?? "");
+  if (!birthDate) redirect(registrationErrorPath("birthDate"));
   const birthYear = birthDate instanceof Date ? birthYearFromDate(birthDate) : null;
-  const servicePreference = nullableString(formData, "servicePreference");
+  const servicePreference = normalizeProfileOption(SERVICE_PREFERENCE_OPTIONS, nullableString(formData, "servicePreference"));
   const assignedStaffSelection = nullableString(formData, "assignedStaffSelection");
   const hasAssignedStaff = Boolean(assignedStaffSelection && assignedStaffSelection !== "free");
   const preferredDate = nullableDateTime(formData, "preferredDate");
@@ -520,21 +521,10 @@ export async function createPublicConsultationLead(formData: FormData) {
   const preferredStyle = nullableString(formData, "preferredStyle");
   const colorPreference = nullableString(formData, "colorPreference");
   const maintenanceLevel = nullableString(formData, "maintenanceLevel");
-  const hairTexture = nullableString(formData, "hairTexture");
-  const hairThickness = nullableString(formData, "hairThickness");
-  const hairVolume = nullableString(formData, "hairVolume");
-  const hairCurl = nullableString(formData, "hairCurl");
-  if (
-    !isProfileOption(CUSTOMER_GENDER_OPTIONS, gender) ||
-    !birthDate ||
-    !isProfileOption(SERVICE_PREFERENCE_OPTIONS, servicePreference) ||
-    !isProfileOption(HAIR_TEXTURE_OPTIONS, hairTexture) ||
-    !isProfileOption(HAIR_THICKNESS_OPTIONS, hairThickness) ||
-    !isProfileOption(HAIR_VOLUME_OPTIONS, hairVolume) ||
-    !isProfileOption(HAIR_CURL_OPTIONS, hairCurl)
-  ) {
-    redirect(registrationErrorPath("profile"));
-  }
+  const hairTexture = normalizeProfileOption(HAIR_TEXTURE_OPTIONS, nullableString(formData, "hairTexture"));
+  const hairThickness = normalizeProfileOption(HAIR_THICKNESS_OPTIONS, nullableString(formData, "hairThickness"));
+  const hairVolume = normalizeProfileOption(HAIR_VOLUME_OPTIONS, nullableString(formData, "hairVolume"));
+  const hairCurl = normalizeProfileOption(HAIR_CURL_OPTIONS, nullableString(formData, "hairCurl"));
   const stylingTimeMinutes = nullableInt(formData, "stylingTimeMinutes");
   const addOnInterests = formData
     .getAll("addOnInterest")

@@ -6,7 +6,7 @@ export const PHONE_REGISTRATION_TTL_MINUTES = 30;
 export const SMS_MAX_VERIFY_ATTEMPTS = 5;
 
 export function normalizeJapaneseMobilePhone(rawValue: string) {
-  const compact = rawValue.trim().replace(/[\s()-]/g, "");
+  const compact = rawValue.normalize("NFKC").trim().replace(/[\s()-]/g, "");
   const digits = compact.replace(/\D/g, "");
   let e164 = "";
 
