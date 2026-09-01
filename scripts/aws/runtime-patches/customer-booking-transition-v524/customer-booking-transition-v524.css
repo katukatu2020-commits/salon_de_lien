@@ -1,0 +1,54 @@
+/* customer-booking-transition-v524 */
+html[data-orimia-customer-booking-gate-v524]:not([data-orimia-ui-ready="v516"]) {
+  background: #fff !important;
+}
+
+html[data-orimia-customer-booking-gate-v524]:not([data-orimia-ui-ready="v516"]) body {
+  position: relative;
+  min-height: 100dvh !important;
+  max-height: 100dvh !important;
+  overflow: hidden !important;
+  background: #fff !important;
+  cursor: progress;
+}
+
+html[data-orimia-customer-booking-gate-v524]:not([data-orimia-ui-ready="v516"]) body > :not(script):not(style) {
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
+html[data-orimia-customer-booking-gate-v524]:not([data-orimia-ui-ready="v516"]) body::before {
+  content: "";
+  position: fixed;
+  z-index: 2147483646;
+  inset: 0;
+  visibility: visible !important;
+  opacity: 1 !important;
+  background: #fff;
+}
+
+html[data-orimia-customer-booking-gate-v524]:not([data-orimia-ui-ready="v516"]) body::after {
+  content: "";
+  position: fixed;
+  z-index: 2147483647;
+  top: 50%;
+  left: 50%;
+  width: 58px;
+  height: 58px;
+  visibility: visible !important;
+  opacity: 1 !important;
+  background: url("/brand/orimia-icon-192.png?v=524") center / contain no-repeat;
+  transform: translate(-50%, -50%);
+  animation: orimia-customer-booking-preparing-v524 1.1s ease-in-out infinite alternate;
+}
+
+@keyframes orimia-customer-booking-preparing-v524 {
+  from { opacity: .58; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-orimia-customer-booking-gate-v524]:not([data-orimia-ui-ready="v516"]) body::after {
+    animation: none;
+  }
+}
