@@ -1,0 +1,976 @@
+<!doctype html>
+<html lang="ja" data-line-booking-ui-parity="v527">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#fffdf9">
+  <meta name="color-scheme" content="light">
+  <link rel="icon" href="/brand/orimia-icon-32.png?v=527" sizes="32x32">
+  <link rel="apple-touch-icon" href="/brand/orimia-icon-180.png?v=527">
+  <title>サロン予約 | ORIMIA for Salon</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    :root {
+      color-scheme: light;
+      --page: #fffaf7;
+      --surface: #ffffff;
+      --surface-soft: #fffdf9;
+      --surface-muted: #f8f4ef;
+      --ink: #382f2a;
+      --ink-soft: #504740;
+      --muted: #7c7168;
+      --muted-light: #9a8d84;
+      --line: #e8ded2;
+      --line-strong: #d9d2ca;
+      --accent: #c94f6d;
+      --accent-dark: #ad3d5a;
+      --accent-soft: #fff4f7;
+      --brand: #8f4f42;
+      --success: #32724a;
+      --success-soft: #edf7ef;
+      --danger: #a83f38;
+      --danger-soft: #fff4f2;
+      --shadow: 0 14px 36px rgba(76, 51, 39, .07);
+    }
+    * { box-sizing: border-box; }
+    html { min-width: 320px; background: var(--page); scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--page);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      letter-spacing: 0;
+    }
+    body.dialog-open { overflow: hidden; }
+    button, input, select, textarea { color: inherit; font: inherit; letter-spacing: 0; }
+    button { -webkit-tap-highlight-color: transparent; }
+    button:focus-visible, input:focus-visible, textarea:focus-visible {
+      outline: 3px solid rgba(201, 79, 109, .24);
+      outline-offset: 2px;
+    }
+    .is-hidden { display: none !important; }
+    .app-shell { min-height: 100dvh; padding-bottom: calc(92px + env(safe-area-inset-bottom)); }
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      height: calc(78px + env(safe-area-inset-top));
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 253, 249, .96);
+      padding: env(safe-area-inset-top) 16px 0;
+      backdrop-filter: blur(16px);
+    }
+    .header-inner {
+      display: grid;
+      grid-template-columns: 88px minmax(0, 1fr) 88px;
+      align-items: center;
+      width: min(100%, 1040px);
+      height: 78px;
+      margin: 0 auto;
+    }
+    .header-actions { display: flex; justify-content: flex-end; gap: 4px; }
+    .icon-button {
+      display: inline-grid;
+      width: 44px;
+      height: 44px;
+      place-items: center;
+      border: 0;
+      border-radius: 50%;
+      background: transparent;
+      color: #6f6259;
+      cursor: pointer;
+    }
+    .icon-button:hover { background: #f6efe9; }
+    .icon { width: 23px; height: 23px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2; }
+    .brand-link { min-width: 0; color: var(--ink); text-align: center; text-decoration: none; }
+    .brand-title { display: block; overflow: hidden; font-family: Georgia, "Yu Mincho", serif; font-size: 19px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+    .brand-subtitle { display: block; margin-top: 2px; color: var(--muted-light); font-size: 10px; font-weight: 700; text-transform: uppercase; }
+    .page { width: min(100%, 1040px); min-width: 0; margin: 0 auto; padding: 34px 20px 50px; }
+    .page-intro { border-bottom: 1px solid var(--line); padding: 0 4px 26px; }
+    .eyebrow { margin: 0; color: var(--accent); font-size: 13px; font-weight: 800; }
+    .page-intro h1 {
+      margin: 8px 0 0;
+      font-family: Georgia, "Yu Mincho", serif;
+      font-size: 34px;
+      font-weight: 600;
+      line-height: 1.35;
+    }
+    .page-intro p:last-child { max-width: 760px; margin: 14px 0 0; color: var(--muted); font-size: 15px; line-height: 1.9; }
+    .booking-flow { display: grid; min-width: 0; gap: 22px; margin-top: 28px; }
+    .booking-card {
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: var(--surface);
+      padding: 24px;
+      box-shadow: var(--shadow);
+    }
+    .step-heading { border-left: 4px solid #c7b8ad; padding-left: 16px; }
+    .step-number { margin: 0; color: var(--accent); font-size: 12px; font-weight: 800; }
+    .step-heading h2 { margin: 4px 0 0; font-family: Georgia, "Yu Mincho", serif; font-size: 25px; font-weight: 600; line-height: 1.45; }
+    .field-label { display: flex; align-items: center; gap: 8px; margin-top: 24px; color: var(--ink-soft); font-size: 14px; font-weight: 700; }
+    .field-label .icon { width: 18px; height: 18px; color: var(--accent); }
+    .native-menu { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+    .menu-trigger {
+      display: grid;
+      grid-template-columns: 48px minmax(0, 1fr) 26px;
+      align-items: center;
+      width: min(100%, 660px);
+      min-height: 102px;
+      margin-top: 12px;
+      border: 1px solid #ddcfc4;
+      border-radius: 20px;
+      background: var(--surface);
+      padding: 16px 18px;
+      color: var(--ink);
+      text-align: left;
+      box-shadow: 0 9px 24px rgba(76, 51, 39, .06);
+      cursor: pointer;
+    }
+    .menu-trigger:hover { border-color: #cfa99c; background: #fffdfa; }
+    .menu-check {
+      display: grid;
+      width: 42px;
+      height: 42px;
+      place-items: center;
+      border-radius: 50%;
+      background: #eaf5ed;
+      color: var(--success);
+      font-size: 28px;
+      font-weight: 800;
+    }
+    .menu-copy { min-width: 0; padding: 0 12px; }
+    .menu-copy small { display: block; color: var(--accent); font-size: 12px; font-weight: 800; }
+    .menu-copy strong { display: block; overflow-wrap: anywhere; margin-top: 4px; font-size: 20px; line-height: 1.4; }
+    .menu-copy span { display: block; margin-top: 3px; color: var(--muted); font-size: 14px; }
+    .menu-chevron { color: var(--muted-light); font-size: 24px; text-align: center; }
+    .staff-pills { display: flex; gap: 10px; margin-top: 22px; overflow-x: auto; padding: 2px 2px 8px; scrollbar-width: thin; }
+    .staff-pill {
+      display: inline-flex;
+      flex: none;
+      align-items: center;
+      gap: 8px;
+      min-height: 50px;
+      border: 1px solid #ddd8d3;
+      border-radius: 999px;
+      background: var(--surface);
+      padding: 0 20px;
+      color: var(--ink-soft);
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .staff-pill:hover { background: #f8f3ee; }
+    .staff-pill.selected { border-color: #cf667e; background: #fff8fa; color: #bf3f61; box-shadow: 0 0 0 1px #cf667e; }
+    .staff-pill-mark { font-size: 17px; line-height: 1; }
+    .staff-card {
+      display: grid;
+      grid-template-columns: minmax(180px, .8fr) minmax(0, 1.7fr);
+      gap: 22px;
+      align-items: center;
+      margin-top: 18px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: var(--surface-soft);
+      padding: 20px;
+    }
+    .staff-identity { display: flex; min-width: 0; align-items: center; gap: 15px; border-right: 1px solid #e5ddd6; padding-right: 20px; }
+    .staff-avatar { display: grid; width: 64px; height: 64px; flex: none; place-items: center; border-radius: 18px; background: #f0dcd3; color: #70443b; font-family: Georgia, "Yu Mincho", serif; font-size: 25px; font-weight: 700; }
+    .staff-name { overflow: hidden; margin: 0; font-size: 19px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+    .staff-role { margin: 5px 0 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
+    .staff-guide strong { display: block; font-size: 14px; }
+    .staff-guide p { margin: 8px 0 0; color: #6f6259; font-size: 14px; line-height: 1.85; }
+    .week-toolbar { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; margin-top: 22px; border-radius: 18px; background: var(--surface-muted); padding: 10px 14px; }
+    .week-toolbar button { display: inline-flex; min-height: 44px; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: transparent; padding: 0 12px; color: #66584f; font-size: 13px; font-weight: 700; cursor: pointer; }
+    .week-toolbar button:last-child { justify-self: end; }
+    .week-toolbar button:hover:not(:disabled) { background: var(--surface); }
+    .week-toolbar button:disabled { cursor: default; opacity: .3; }
+    .week-toolbar .icon { width: 18px; height: 18px; }
+    .week-label { margin: 0; font-size: 15px; font-weight: 700; text-align: center; white-space: nowrap; }
+    .availability-wrap { width: 100%; min-width: 0; max-width: 100%; margin-top: 16px; overflow-x: auto; border: 1px solid var(--line-strong); border-radius: 18px; background: var(--line-strong); }
+    .availability-table { min-width: 620px; background: var(--line-strong); }
+    .availability-row { display: grid; grid-template-columns: 78px repeat(7, minmax(72px, 1fr)); gap: 1px; margin-top: 1px; }
+    .availability-row:first-child { margin-top: 0; }
+    .availability-cell { display: grid; min-height: 48px; place-items: center; border: 0; background: var(--surface); padding: 4px; }
+    .availability-time { position: sticky; left: 0; z-index: 4; background: #f8f6f3; font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .availability-head { min-height: 64px; color: var(--ink); font-size: 12px; font-weight: 700; text-align: center; }
+    .availability-head time { display: block; font-size: 14px; font-variant-numeric: tabular-nums; }
+    .availability-head.sunday { color: #ba4c48; }
+    .availability-head.saturday { color: #426db4; }
+    .slot {
+      min-height: 48px;
+      color: #df5474;
+      font-size: 18px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .slot:hover:not(:disabled) { background: #fff0f4; }
+    .slot:disabled { cursor: default; background: #f4f3f1; color: #8a837e; }
+    .slot.selected { background: #cf667e; color: #fff; }
+    .availability-loading { display: flex; align-items: center; justify-content: center; gap: 9px; margin-top: 14px; border-radius: 16px; background: #f6efe6; padding: 14px; color: var(--muted); font-size: 13px; }
+    .spinner { display: inline-block; width: 18px; height: 18px; flex: none; border: 2px solid #d7c6ba; border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
+    .legend { margin: 14px 0 0; color: var(--muted-light); font-size: 12px; line-height: 1.7; }
+    .selection-summary { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 18px; margin-top: 18px; border: 1px solid #e4d7ce; border-radius: 18px; background: #fff9f5; padding: 17px 19px; }
+    .selection-summary small { color: var(--brand); font-size: 12px; font-weight: 800; }
+    .selection-summary strong { display: block; margin-top: 4px; font-size: 18px; }
+    .selection-summary p { margin: 5px 0 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
+    .summary-action { min-height: 46px; border: 0; border-radius: 999px; background: var(--brand); padding: 0 22px; color: #fff; font-size: 13px; font-weight: 800; cursor: pointer; }
+    .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-top: 23px; }
+    .form-field { display: grid; gap: 8px; color: var(--ink-soft); font-size: 13px; font-weight: 700; }
+    .form-field.full { grid-column: 1 / -1; }
+    .form-field input, .form-field textarea { width: 100%; min-height: 52px; border: 1px solid #ded1c6; border-radius: 14px; background: var(--surface); padding: 12px 14px; outline: none; }
+    .form-field textarea { min-height: 104px; resize: vertical; line-height: 1.7; }
+    .form-field input:focus, .form-field textarea:focus { border-color: var(--brand); box-shadow: 0 0 0 4px rgba(233, 201, 190, .4); }
+    .final-summary { margin-top: 18px; border-radius: 16px; background: var(--surface-muted); padding: 15px 17px; }
+    .final-summary small { color: var(--muted); font-size: 12px; font-weight: 700; }
+    .final-summary strong { display: block; margin-top: 5px; font-size: 15px; line-height: 1.7; }
+    .primary, .secondary, .danger-button { display: inline-flex; min-height: 52px; align-items: center; justify-content: center; gap: 9px; border-radius: 999px; padding: 0 26px; font-weight: 800; cursor: pointer; }
+    .primary { width: 100%; margin-top: 20px; border: 0; background: var(--brand); color: #fff; box-shadow: 0 10px 25px rgba(143, 79, 66, .22); }
+    .primary:disabled { cursor: default; opacity: .48; box-shadow: none; }
+    .secondary { border: 1px solid #dfd2c7; background: var(--surface); color: var(--ink); }
+    .error { margin: 14px 0 0; border: 1px solid #e7b9b4; border-radius: 14px; background: #fff2f1; padding: 12px 14px; color: #8d3029; font-size: 13px; line-height: 1.7; }
+    .success { margin-top: 18px; border: 1px solid #b9d9c0; border-radius: 18px; background: var(--success-soft); padding: 18px; color: #315c3c; }
+    .success-heading { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 15px; font-weight: 800; }
+    .success-mark { display: grid; width: 30px; height: 30px; place-items: center; border-radius: 50%; background: #fff; color: var(--success); font-size: 20px; }
+    .success p { margin: 10px 0 0; font-size: 13px; line-height: 1.8; }
+    .success .secondary { width: 100%; margin-top: 14px; }
+    .loading-card { min-height: 310px; margin-top: 28px; }
+    .loading-copy { margin: 18px 0 0; color: var(--muted); font-size: 14px; }
+    .skeleton { display: grid; gap: 13px; margin-top: 26px; }
+    .skeleton span { height: 48px; border-radius: 14px; background: #f2ece6; animation: pulse 1.4s ease-in-out infinite; }
+    .skeleton span:nth-child(2) { width: 78%; }
+    .history-list { display: grid; gap: 14px; margin-top: 28px; }
+    .history-card { border: 1px solid var(--line); border-radius: 20px; background: var(--surface); padding: 20px; box-shadow: var(--shadow); }
+    .history-card header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+    .history-card time { color: var(--brand); font-size: 14px; font-weight: 800; line-height: 1.6; }
+    .history-status { flex: none; border-radius: 999px; background: #f6efe6; padding: 5px 10px; color: var(--muted); font-size: 11px; font-weight: 800; }
+    .history-card h2 { margin: 12px 0 0; font-size: 17px; }
+    .history-card p { margin: 7px 0 0; color: var(--muted); font-size: 13px; line-height: 1.7; }
+    .history-actions { display: flex; justify-content: flex-end; margin-top: 15px; }
+    .danger-button { min-height: 44px; border: 1px solid #d7aaa4; background: #fff; padding: 0 16px; color: var(--danger); font-size: 12px; }
+    .empty-state { border: 1px dashed #dccfc5; border-radius: 20px; background: var(--surface); padding: 42px 20px; color: var(--muted); text-align: center; }
+    .bottom-nav {
+      position: fixed;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 25;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      min-height: calc(72px + env(safe-area-inset-bottom));
+      border-top: 1px solid var(--line);
+      background: rgba(255, 253, 249, .98);
+      padding: 6px max(8px, env(safe-area-inset-right)) env(safe-area-inset-bottom) max(8px, env(safe-area-inset-left));
+      backdrop-filter: blur(16px);
+    }
+    .bottom-nav button, .bottom-nav a { display: grid; min-width: 0; place-items: center; align-content: center; gap: 3px; border: 0; background: transparent; color: #978c84; font-size: 11px; font-weight: 700; text-decoration: none; cursor: pointer; }
+    .bottom-nav .icon { width: 24px; height: 24px; }
+    .bottom-nav .active { color: var(--accent); }
+    .overlay { position: fixed; inset: 0; z-index: 80; display: grid; align-items: end; background: rgba(47, 42, 37, .42); padding: 18px; }
+    .overlay[hidden] { display: none; }
+    .dialog-panel { width: min(100%, 720px); max-height: min(86dvh, 760px); margin: 0 auto; overflow: hidden; border: 1px solid var(--line); border-radius: 24px; background: var(--surface); box-shadow: 0 30px 90px rgba(47, 42, 37, .24); }
+    .dialog-header { display: flex; align-items: center; justify-content: space-between; gap: 14px; border-bottom: 1px solid var(--line); padding: 18px 20px; }
+    .dialog-header h2 { margin: 0; font-size: 20px; }
+    .dialog-header p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+    .dialog-body { overflow-y: auto; max-height: calc(min(86dvh, 760px) - 84px); padding: 18px 20px 24px; }
+    .menu-search { display: grid; gap: 7px; color: var(--ink-soft); font-size: 12px; font-weight: 700; }
+    .menu-search input { width: 100%; min-height: 48px; border: 1px solid #ddd4cc; border-radius: 14px; padding: 10px 13px; outline: none; }
+    .menu-categories { display: flex; gap: 8px; margin-top: 14px; overflow-x: auto; padding-bottom: 4px; }
+    .menu-category { flex: none; min-height: 38px; border: 1px solid #ded5ce; border-radius: 999px; background: #fff; padding: 0 14px; color: var(--muted); font-size: 12px; font-weight: 700; cursor: pointer; }
+    .menu-category.active { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-dark); }
+    .menu-result-count { margin: 15px 0 8px; color: var(--muted); font-size: 12px; font-weight: 700; }
+    .menu-list { display: grid; gap: 8px; }
+    .menu-option { display: grid; grid-template-columns: 34px minmax(0, 1fr); align-items: center; width: 100%; min-height: 68px; border: 1px solid var(--line); border-radius: 15px; background: #fff; padding: 11px 13px; color: var(--ink); text-align: left; cursor: pointer; }
+    .menu-option:hover { background: #fffaf7; }
+    .menu-option.selected { border-color: #cf667e; background: var(--accent-soft); }
+    .menu-option-mark { display: grid; width: 27px; height: 27px; place-items: center; border-radius: 50%; background: #f4eee9; color: var(--accent); font-weight: 800; }
+    .menu-option strong { display: block; overflow-wrap: anywhere; font-size: 14px; line-height: 1.5; }
+    .menu-option small { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; }
+    .nav-sheet { display: grid; gap: 8px; padding: 18px; }
+    .nav-sheet button, .nav-sheet a { display: flex; min-height: 52px; align-items: center; border: 1px solid var(--line); border-radius: 15px; background: #fff; padding: 0 16px; color: var(--ink); font-weight: 700; text-decoration: none; cursor: pointer; }
+    .cancel-panel { padding: 22px; }
+    .cancel-panel h2 { margin: 0; font-family: Georgia, "Yu Mincho", serif; font-size: 23px; }
+    .cancel-panel p { margin: 12px 0 0; color: var(--muted); line-height: 1.75; }
+    .dialog-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+    .dialog-actions button { min-height: 48px; border-radius: 999px; font-weight: 800; cursor: pointer; }
+    .dialog-back { border: 1px solid var(--line); background: #fff; }
+    .dialog-confirm { border: 0; background: var(--danger); color: #fff; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes pulse { 50% { opacity: .5; } }
+    @media (min-width: 768px) {
+      .app-shell { padding-bottom: 50px; }
+      .bottom-nav { right: 24px; bottom: 20px; left: auto; width: 440px; min-height: 64px; border: 1px solid var(--line); border-radius: 18px; padding: 5px; box-shadow: var(--shadow); }
+      .overlay { align-items: center; }
+      .page { padding-top: 44px; }
+    }
+    @media (max-width: 640px) {
+      .app-header { height: calc(72px + env(safe-area-inset-top)); padding-inline: 8px; }
+      .header-inner { grid-template-columns: 76px minmax(0, 1fr) 76px; height: 72px; }
+      .icon-button { width: 38px; height: 38px; }
+      .header-actions { gap: 0; }
+      .brand-title { font-size: 17px; }
+      .brand-subtitle { font-size: 9px; }
+      .page { padding: 30px 14px 42px; }
+      .page-intro { padding-inline: 2px; padding-bottom: 24px; }
+      .page-intro h1 { font-size: 31px; }
+      .page-intro p:last-child { font-size: 14px; line-height: 1.85; }
+      .booking-flow { gap: 18px; margin-top: 22px; }
+      .booking-card { border-radius: 22px; padding: 19px 17px; }
+      .step-heading h2 { font-size: 23px; }
+      .menu-trigger { grid-template-columns: 44px minmax(0, 1fr) 22px; min-height: 98px; padding: 14px 13px; }
+      .menu-check { width: 40px; height: 40px; }
+      .menu-copy { padding: 0 10px; }
+      .menu-copy strong { font-size: 18px; }
+      .staff-card { grid-template-columns: 1fr; gap: 14px; padding: 17px; }
+      .staff-identity { border-right: 0; border-bottom: 1px solid #e5ddd6; padding: 0 0 14px; }
+      .staff-guide p { line-height: 1.75; }
+      .week-toolbar { gap: 3px; padding-inline: 5px; }
+      .week-toolbar button { width: 42px; padding: 0; justify-content: center; }
+      .week-toolbar button span { display: none; }
+      .week-label { font-size: 13px; }
+      .selection-summary { grid-template-columns: 1fr; }
+      .summary-action { width: 100%; }
+      .form-grid { grid-template-columns: 1fr; gap: 15px; }
+      .form-field.full { grid-column: auto; }
+      .overlay { padding: 0; }
+      .dialog-panel { width: 100%; max-height: 88dvh; border-width: 1px 0 0; border-radius: 24px 24px 0 0; }
+      .dialog-body { max-height: calc(88dvh - 84px); }
+    }
+    @media (max-width: 370px) {
+      .header-inner { grid-template-columns: 66px minmax(0, 1fr) 66px; }
+      .brand-title { font-size: 15px; }
+      .brand-subtitle { font-size: 8px; }
+      .page { padding-inline: 10px; }
+      .booking-card { padding-inline: 14px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .spinner, .skeleton span { animation: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="header-inner">
+        <button id="headerBack" class="icon-button" type="button" aria-label="戻る">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+        </button>
+        <a class="brand-link" href="https://salon-de-lien.com/" aria-label="ORIMIA for Salon ホーム">
+          <span class="brand-title">ORIMIA for Salon</span>
+          <span class="brand-subtitle">Beauty Membership</span>
+        </a>
+        <div class="header-actions">
+          <button id="headerMenu" class="icon-button" type="button" aria-label="メニューを開く">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
+          <button id="headerHistory" class="icon-button" type="button" aria-label="予約履歴">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 7-3 9h18c0-2-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="page">
+      <section id="bookingView">
+        <header class="page-intro">
+          <p class="eyebrow">Online booking</p>
+          <h1>サロン予約</h1>
+          <p>担当者とメニューを選び、実際の予約状況を反映した空き時間からご予約いただけます。</p>
+        </header>
+
+        <section id="loading" class="booking-card loading-card" aria-live="polite">
+          <div class="step-heading"><p class="step-number">ONLINE BOOKING</p><h2>予約画面を準備しています</h2></div>
+          <p class="loading-copy"><span class="spinner" aria-hidden="true"></span> LINEアカウントと空き状況を確認しています。</p>
+          <div class="skeleton" aria-hidden="true"><span></span><span></span><span></span></div>
+        </section>
+
+        <form id="booking" class="booking-flow is-hidden">
+          <section class="booking-card" id="step1">
+            <div class="step-heading"><p class="step-number">STEP 1</p><h2>メニューとスタイリストを選択</h2></div>
+            <label class="field-label" for="menu">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="7" r="3"/><path d="m8.7 8.3 10.6 6.1M8.7 15.7l10.6-6.1"/><circle cx="6" cy="17" r="3"/></svg>
+              ご希望のメニュー
+            </label>
+            <select id="menu" class="native-menu" required aria-hidden="true" tabindex="-1"></select>
+            <button id="menuTrigger" class="menu-trigger" type="button" aria-haspopup="dialog" aria-expanded="false">
+              <span class="menu-check" aria-hidden="true">✓</span>
+              <span class="menu-copy"><small>選択中のメニュー</small><strong id="selectedMenuName">読み込み中</strong><span id="selectedMenuMeta"></span></span>
+              <span class="menu-chevron" aria-hidden="true">⌄</span>
+            </button>
+            <div id="staffPills" class="staff-pills" role="group" aria-label="スタイリストを選択"></div>
+            <div class="staff-card">
+              <div class="staff-identity"><span id="staffAvatar" class="staff-avatar">空</span><div><p id="staffName" class="staff-name">指名なし</p><p id="staffRole" class="staff-role">担当者の指定なし</p></div></div>
+              <div class="staff-guide"><strong id="staffStrength">空いているスタイリストが担当</strong><p id="staffIntroduction">ご希望の日時に対応できるスタイリストをサロン側でご案内します。</p></div>
+            </div>
+          </section>
+
+          <section class="booking-card" id="step2">
+            <div class="step-heading"><p class="step-number">STEP 2</p><h2>日時を選択</h2></div>
+            <div class="week-toolbar">
+              <button id="previousWeek" type="button"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg><span>前の1週間</span></button>
+              <p id="weekLabel" class="week-label"></p>
+              <button id="nextWeek" type="button"><span>次の1週間</span><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+            </div>
+            <div class="availability-wrap"><div id="availabilityTable" class="availability-table" role="grid" aria-label="予約可能日時"></div></div>
+            <div id="availabilityLoading" class="availability-loading"><span class="spinner" aria-hidden="true"></span>空き状況を確認しています</div>
+            <p class="legend">◎は予約可能、×は満席、－は定休日・営業時間外・受付期間外です。担当者とメニューに合わせて表示しています。</p>
+            <p id="availabilityError" class="error is-hidden" role="alert"></p>
+            <div id="selectionSummary" class="selection-summary is-hidden">
+              <div><small>選択した予約内容</small><strong id="selectedDateTime"></strong><p id="selectedBookingMeta"></p></div>
+              <button id="continueButton" class="summary-action" type="button">お客様情報へ</button>
+            </div>
+          </section>
+
+          <section class="booking-card" id="step3">
+            <div class="step-heading"><p class="step-number">STEP 3</p><h2>お客様情報を入力</h2></div>
+            <div class="form-grid">
+              <label class="form-field">お名前<input id="name" autocomplete="name" maxlength="80" required></label>
+              <label class="form-field">電話番号<input id="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="32" required placeholder="例：09012345678"></label>
+              <label class="form-field full">ご要望（任意）<textarea id="note" maxlength="400" placeholder="施術に関するご希望があればご記入ください"></textarea></label>
+            </div>
+            <div class="final-summary"><small>予約内容</small><strong id="finalSummary">日時を選択してください。</strong></div>
+            <button id="submit" class="primary" type="submit" disabled>この内容で予約する</button>
+            <p id="error" class="error is-hidden" role="alert"></p>
+            <div id="complete" class="success is-hidden" role="status">
+              <p class="success-heading"><span class="success-mark" aria-hidden="true">✓</span>予約を受け付けました</p>
+              <p id="completeText"></p>
+              <button id="close" class="secondary" type="button">LINEへ戻る</button>
+            </div>
+          </section>
+        </form>
+      </section>
+
+      <section id="historyView" class="is-hidden">
+        <header class="page-intro"><p class="eyebrow">Reservation history</p><h1>予約履歴</h1><p>LINEから受け付けたご予約を確認できます。</p></header>
+        <div id="historyList" class="history-list"></div>
+        <button id="newBooking" class="primary" type="button">新しい予約をする</button>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="LINE予約ナビゲーション">
+      <a href="https://salon-de-lien.com/" aria-label="ホーム"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 9-8 9 8v10h-6v-6H9v6H3z"/></svg><span>ホーム</span></a>
+      <button id="bottomBooking" class="active" type="button"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v15H3V6a2 2 0 0 1 2-2z"/></svg><span>予約</span></button>
+      <button id="bottomHistory" type="button"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>履歴</span></button>
+      <button id="bottomChat" type="button"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/></svg><span>チャット相談</span></button>
+    </nav>
+  </div>
+
+  <div id="menuDialog" class="overlay" hidden>
+    <section class="dialog-panel" role="dialog" aria-modal="true" aria-labelledby="menuDialogTitle">
+      <header class="dialog-header"><div><h2 id="menuDialogTitle">メニューを選択</h2><p>検索またはカテゴリから絞り込めます</p></div><button id="menuClose" class="icon-button" type="button" aria-label="閉じる">×</button></header>
+      <div class="dialog-body">
+        <label class="menu-search">メニュー名で検索<input id="menuSearch" type="search" autocomplete="off" placeholder="例：カット、カラー、スパ"></label>
+        <div id="menuCategories" class="menu-categories" role="group" aria-label="メニューカテゴリ"></div>
+        <p id="menuResultCount" class="menu-result-count" aria-live="polite"></p>
+        <div id="menuList" class="menu-list" role="listbox" aria-label="メニュー一覧"></div>
+        <p id="menuEmpty" class="empty-state is-hidden">条件に合うメニューがありません。</p>
+      </div>
+    </section>
+  </div>
+
+  <div id="navDialog" class="overlay" hidden>
+    <section class="dialog-panel" role="dialog" aria-modal="true" aria-label="メニュー">
+      <header class="dialog-header"><div><h2>メニュー</h2><p>{{STORE_NAME}}</p></div><button id="navClose" class="icon-button" type="button" aria-label="閉じる">×</button></header>
+      <nav class="nav-sheet"><button id="navBooking" type="button">新しい予約</button><button id="navHistory" type="button">予約履歴</button><a href="https://salon-de-lien.com/">ORIMIA ホーム</a><button id="navLine" type="button">LINEへ戻る</button></nav>
+    </section>
+  </div>
+
+  <div id="cancelDialog" class="overlay" hidden>
+    <section class="dialog-panel cancel-panel" role="dialog" aria-modal="true" aria-labelledby="cancelTitle">
+      <h2 id="cancelTitle">予約をキャンセルしますか？</h2><p id="cancelSummary"></p><p id="cancelError" class="error is-hidden" role="alert"></p>
+      <div class="dialog-actions"><button id="cancelBack" class="dialog-back" type="button">戻る</button><button id="cancelConfirm" class="dialog-confirm" type="button">キャンセルする</button></div>
+    </section>
+  </div>
+
+  <script nonce="{{NONCE}}">
+    const STORE = {{STORE_CODE_JSON}}
+    const LIFF_ID = {{LIFF_ID_JSON}}
+    const INITIAL_VIEW = new URLSearchParams(location.search).get('view')
+    const state = {
+      token: '', config: null, selectedStaff: 'free', selectedStart: null, selectedDate: '',
+      weekStart: '', maximumDate: '', weekSlots: new Map(), weekRequestSequence: 0,
+      submitKey: '', menuCategory: 'すべて', pendingCancellation: null, currentView: 'booking'
+    }
+    const $ = selector => document.querySelector(selector)
+    const $$ = selector => Array.from(document.querySelectorAll(selector))
+
+    function replaceChildren(root) {
+      root.replaceChildren.apply(root, Array.prototype.slice.call(arguments, 1))
+    }
+
+    function textElement(tagName, className, text) {
+      const element = document.createElement(tagName)
+      if (className) element.className = className
+      element.textContent = String(text == null ? '' : text)
+      return element
+    }
+
+    function setDialog(dialog, open) {
+      dialog.hidden = !open
+      document.body.classList.toggle('dialog-open', open || $$('.overlay:not([hidden])').length > 0)
+    }
+
+    function makeSubmitKey() {
+      if (self.crypto && typeof self.crypto.randomUUID === 'function') return self.crypto.randomUUID().replace(/-/g, '')
+      const bytes = new Uint8Array(24)
+      self.crypto.getRandomValues(bytes)
+      return Array.from(bytes, value => value.toString(16).padStart(2, '0')).join('')
+    }
+
+    async function request(path, options) {
+      const requestOptions = options || {}
+      const response = await fetch(path, Object.assign({}, requestOptions, {
+        headers: Object.assign({}, requestOptions.headers || {}, { Authorization: 'Bearer ' + state.token })
+      }))
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) throw Error(data.error || '通信に失敗しました。')
+      return data
+    }
+
+    function tokyoDate(offsetDays) {
+      const date = new Date(Date.now() + (offsetDays || 0) * 86400000)
+      return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit', day: '2-digit' }).format(date)
+    }
+
+    function addDays(date, amount) {
+      const next = new Date(date + 'T00:00:00Z')
+      next.setUTCDate(next.getUTCDate() + amount)
+      return next.toISOString().slice(0, 10)
+    }
+
+    function dateObject(date) { return new Date(date + 'T00:00:00Z') }
+    function weekdayNumber(date) { return dateObject(date).getUTCDay() }
+    function weekdayLabel(date) { return new Intl.DateTimeFormat('ja-JP', { weekday: 'short', timeZone: 'UTC' }).format(dateObject(date)) }
+    function shortDateLabel(date) { return new Intl.DateTimeFormat('ja-JP', { month: 'numeric', day: 'numeric', timeZone: 'UTC' }).format(dateObject(date)) }
+    function fullDateLabel(date) { return new Intl.DateTimeFormat('ja-JP', { month: 'long', day: 'numeric', weekday: 'short', timeZone: 'UTC' }).format(dateObject(date)) }
+    function minutesLabel(minutes) { return String(Math.floor(minutes / 60)).padStart(2, '0') + ':' + String(minutes % 60).padStart(2, '0') }
+    function weekDates() { return Array.from({ length: 7 }, (_, index) => addDays(state.weekStart, index)) }
+    function weekRangeLabel() { const dates = weekDates(); return shortDateLabel(dates[0]) + ' 〜 ' + shortDateLabel(dates[6]) }
+    function selectedMenu() { return state.config && state.config.menus.find(item => String(item.id) === $('#menu').value) }
+    function selectedStaffItem() { return state.config && state.config.staff.find(item => String(item.key) === state.selectedStaff) }
+    function staffInitial(item) { return item && item.key !== 'free' ? String(item.name || 'ス').replace(/[\s　]/g, '').slice(0, 1) : '空' }
+
+    function menuTags(name) {
+      const tags = []
+      if (/カット|眉/.test(name)) tags.push('カット')
+      if (/カラー|マニキュア|ブリーチ|ホイル/.test(name)) tags.push('カラー')
+      if (/パーマ|ストレート/.test(name)) tags.push('パーマ')
+      if (/トリートメント/.test(name)) tags.push('ケア')
+      if (/スパ(?!ー)|頭皮|マッサージ/.test(name)) tags.push('スパ')
+      if (/エステ|フェイシャル/.test(name)) tags.push('エステ')
+      if (!tags.length) tags.push('その他')
+      return tags
+    }
+
+    function normalized(value) { return String(value || '').normalize('NFKC').toLowerCase().replace(/[\s　]+/g, '') }
+
+    function menuItems() {
+      return state.config.menus.map(item => ({
+        id: String(item.id), name: String(item.name), duration: Number(item.durationMinutes), price: Number(item.priceYen),
+        tags: menuTags(String(item.name)), search: normalized(String(item.name) + ' ' + String(item.category || '') + ' ' + String(item.description || ''))
+      }))
+    }
+
+    function syncMenuTrigger() {
+      const item = selectedMenu()
+      if (!item) return
+      $('#selectedMenuName').textContent = item.name
+      $('#selectedMenuMeta').textContent = Number(item.durationMinutes) + '分 ・ ' + Number(item.priceYen).toLocaleString('ja-JP') + '円'
+      $('#menuTrigger').setAttribute('aria-label', '選択中：' + item.name + '。メニューを変更')
+    }
+
+    function renderMenuDialog() {
+      const items = menuItems()
+      const categories = ['すべて', 'カット', 'カラー', 'パーマ', 'ケア', 'スパ', 'エステ', 'その他']
+      replaceChildren($('#menuCategories'))
+      categories.forEach(name => {
+        const count = name === 'すべて' ? items.length : items.filter(item => item.tags.includes(name)).length
+        if (name !== 'すべて' && count === 0) return
+        const button = textElement('button', 'menu-category' + (state.menuCategory === name ? ' active' : ''), name + ' ' + count)
+        button.type = 'button'
+        button.addEventListener('click', () => { state.menuCategory = name; renderMenuDialog() })
+        $('#menuCategories').append(button)
+      })
+      const query = normalized($('#menuSearch').value)
+      const semanticTag = categories.slice(1).find(name => normalized(name) === query)
+      const filtered = items.filter(item => {
+        const categoryMatch = state.menuCategory === 'すべて' || item.tags.includes(state.menuCategory)
+        const searchMatch = !query || (semanticTag ? item.tags.includes(semanticTag) : item.search.includes(query))
+        return categoryMatch && searchMatch
+      })
+      $('#menuResultCount').textContent = filtered.length + '件のメニュー'
+      $('#menuEmpty').classList.toggle('is-hidden', filtered.length > 0)
+      replaceChildren($('#menuList'))
+      filtered.forEach(item => {
+        const selected = $('#menu').value === item.id
+        const button = document.createElement('button')
+        button.type = 'button'
+        button.className = 'menu-option' + (selected ? ' selected' : '')
+        button.setAttribute('role', 'option')
+        button.setAttribute('aria-selected', String(selected))
+        button.append(textElement('span', 'menu-option-mark', selected ? '✓' : ''), (() => {
+          const copy = document.createElement('span')
+          copy.append(textElement('strong', '', item.name), textElement('small', '', item.duration + '分 ・ ' + item.price.toLocaleString('ja-JP') + '円'))
+          return copy
+        })())
+        button.addEventListener('click', () => chooseMenu(item.id))
+        $('#menuList').append(button)
+      })
+    }
+
+    function openMenuDialog() {
+      state.menuCategory = 'すべて'
+      $('#menuSearch').value = ''
+      renderMenuDialog()
+      setDialog($('#menuDialog'), true)
+      $('#menuTrigger').setAttribute('aria-expanded', 'true')
+      window.setTimeout(() => $('#menuSearch').focus(), 0)
+    }
+
+    function closeMenuDialog() {
+      setDialog($('#menuDialog'), false)
+      $('#menuTrigger').setAttribute('aria-expanded', 'false')
+      $('#menuTrigger').focus()
+    }
+
+    function chooseMenu(menuId) {
+      $('#menu').value = String(menuId)
+      state.selectedDate = ''
+      state.selectedStart = null
+      state.submitKey = ''
+      syncMenuTrigger()
+      closeMenuDialog()
+      updateSelectionSummary()
+      loadWeek()
+    }
+
+    function renderStaff() {
+      const root = $('#staffPills')
+      replaceChildren(root)
+      state.config.staff.forEach(item => {
+        const selected = String(item.key) === state.selectedStaff
+        const button = document.createElement('button')
+        button.type = 'button'
+        button.className = 'staff-pill' + (selected ? ' selected' : '')
+        button.setAttribute('aria-pressed', String(selected))
+        button.setAttribute('aria-label', String(item.name))
+        if (selected) button.append(textElement('span', 'staff-pill-mark', '✓'))
+        button.append(document.createTextNode(String(item.name)))
+        button.addEventListener('click', () => chooseStaff(String(item.key)))
+        root.append(button)
+      })
+      const item = selectedStaffItem() || state.config.staff[0]
+      $('#staffAvatar').textContent = staffInitial(item)
+      $('#staffName').textContent = item.name
+      $('#staffRole').textContent = item.key === 'free' ? '担当者の指定なし' : (item.roleLabel || 'スタイリスト')
+      $('#staffStrength').textContent = item.key === 'free' ? '空いているスタイリストが担当' : (item.roleLabel || 'あなたに合うスタイルをご提案')
+      $('#staffIntroduction').textContent = item.introduction || (item.key === 'free' ? 'ご希望の日時に対応できるスタイリストをサロン側でご案内します。' : '髪質とご希望を確認しながら、扱いやすいスタイルをご提案します。')
+    }
+
+    function chooseStaff(staffKey) {
+      state.selectedStaff = staffKey
+      state.selectedDate = ''
+      state.selectedStart = null
+      state.submitKey = ''
+      renderStaff()
+      updateSelectionSummary()
+      loadWeek()
+    }
+
+    function renderAvailabilityGrid() {
+      const root = $('#availabilityTable')
+      replaceChildren(root)
+      const dates = weekDates()
+      const header = document.createElement('div')
+      header.className = 'availability-row'
+      header.setAttribute('role', 'row')
+      header.append(textElement('div', 'availability-cell availability-time availability-head', '時間'))
+      dates.forEach(date => {
+        const weekday = weekdayLabel(date)
+        const cell = document.createElement('div')
+        cell.className = 'availability-cell availability-head' + (weekday === '日' ? ' sunday' : weekday === '土' ? ' saturday' : '')
+        cell.setAttribute('role', 'columnheader')
+        cell.append(textElement('time', '', shortDateLabel(date)), textElement('span', '', '（' + weekday + '）'))
+        header.append(cell)
+      })
+      root.append(header)
+      const open = Math.max(0, Math.floor(Number(state.config.store.openMinutes == null ? 600 : state.config.store.openMinutes) / 30) * 30)
+      const close = Math.min(1440, Math.ceil(Number(state.config.store.closeMinutes == null ? 1140 : state.config.store.closeMinutes) / 30) * 30)
+      for (let minutes = open; minutes < close; minutes += 30) {
+        const row = document.createElement('div')
+        row.className = 'availability-row'
+        row.setAttribute('role', 'row')
+        row.append(textElement('div', 'availability-cell availability-time', minutesLabel(minutes)))
+        dates.forEach(date => {
+          const available = (state.weekSlots.get(date) || []).some(slot => Number(slot.startMinutes) === minutes)
+          const selected = state.selectedDate === date && state.selectedStart === minutes
+          const closed = (state.config.store.closedWeekdays || []).includes(weekdayNumber(date)) || date < tokyoDate() || date > state.maximumDate
+          const button = textElement('button', 'availability-cell slot' + (selected ? ' selected' : ''), selected ? '✓' : available ? '◎' : closed ? '－' : '×')
+          button.type = 'button'
+          button.disabled = !available
+          button.setAttribute('role', 'gridcell')
+          button.setAttribute('aria-label', fullDateLabel(date) + ' ' + minutesLabel(minutes) + ' ' + (available ? '予約可能' : '受付不可'))
+          if (selected) button.setAttribute('aria-current', 'true')
+          if (available) button.addEventListener('click', () => chooseSlot(date, minutes))
+          row.append(button)
+        })
+        root.append(row)
+      }
+      $('#weekLabel').textContent = weekRangeLabel()
+      $('#previousWeek').disabled = state.weekStart <= tokyoDate()
+      $('#nextWeek').disabled = addDays(state.weekStart, 7) > state.maximumDate
+    }
+
+    async function loadWeek() {
+      if (!state.config) return
+      const sequence = ++state.weekRequestSequence
+      $('#availabilityLoading').classList.remove('is-hidden')
+      $('#availabilityError').classList.add('is-hidden')
+      try {
+        const data = await request('/api/lien-line-booking/availability?store=' + encodeURIComponent(STORE) + '&weekStart=' + encodeURIComponent(state.weekStart) + '&menuId=' + encodeURIComponent($('#menu').value) + '&staffKey=' + encodeURIComponent(state.selectedStaff))
+        if (sequence !== state.weekRequestSequence) return
+        state.weekSlots = new Map((data.days || []).map(day => [day.date, Array.isArray(day.slots) ? day.slots : []]))
+        if (data.maximumDate) state.maximumDate = data.maximumDate
+        if (state.selectedDate && !(state.weekSlots.get(state.selectedDate) || []).some(slot => Number(slot.startMinutes) === state.selectedStart)) {
+          state.selectedDate = ''
+          state.selectedStart = null
+        }
+        renderAvailabilityGrid()
+        updateSelectionSummary()
+      } catch (error) {
+        if (sequence !== state.weekRequestSequence) return
+        $('#availabilityError').textContent = error.message
+        $('#availabilityError').classList.remove('is-hidden')
+      } finally {
+        if (sequence === state.weekRequestSequence) $('#availabilityLoading').classList.add('is-hidden')
+      }
+    }
+
+    function chooseSlot(date, minutes) {
+      state.selectedDate = date
+      state.selectedStart = minutes
+      state.submitKey = ''
+      renderAvailabilityGrid()
+      updateSelectionSummary()
+    }
+
+    function bookingSummaryText() {
+      const menu = selectedMenu()
+      const staff = selectedStaffItem()
+      if (!state.selectedDate || state.selectedStart == null || !menu || !staff) return '日時を選択してください。'
+      return fullDateLabel(state.selectedDate) + ' ' + minutesLabel(state.selectedStart) + ' / ' + menu.name + '（' + Number(menu.durationMinutes) + '分） / ' + staff.name
+    }
+
+    function updateSelectionSummary() {
+      const selected = Boolean(state.selectedDate && state.selectedStart != null)
+      $('#selectionSummary').classList.toggle('is-hidden', !selected)
+      if (selected) {
+        $('#selectedDateTime').textContent = fullDateLabel(state.selectedDate) + ' ' + minutesLabel(state.selectedStart)
+        $('#selectedBookingMeta').textContent = selectedMenu().name + '（' + Number(selectedMenu().durationMinutes) + '分） / ' + selectedStaffItem().name
+      }
+      $('#finalSummary').textContent = bookingSummaryText()
+      $('#submit').disabled = !selected
+      $('#error').classList.add('is-hidden')
+    }
+
+    function showError(message) {
+      $('#error').textContent = String(message || '処理に失敗しました。')
+      $('#error').classList.remove('is-hidden')
+      $('#error').scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+    }
+
+    async function loadBookingConfig() {
+      if (state.config) return
+      state.config = await request('/api/lien-line-booking/config?store=' + encodeURIComponent(STORE))
+      if (!state.config.menus || !state.config.menus.length) throw Error('予約できるメニューが登録されていません。')
+      if (!state.config.staff || !state.config.staff.length) throw Error('予約できるスタッフが登録されていません。')
+      replaceChildren($('#menu'), ...state.config.menus.map(menu => new Option(String(menu.name), String(menu.id))))
+      state.selectedStaff = state.config.staff.some(item => String(item.key) === 'free') ? 'free' : String(state.config.staff[0].key)
+      state.weekStart = tokyoDate()
+      state.maximumDate = tokyoDate(90)
+      syncMenuTrigger()
+      renderStaff()
+      renderAvailabilityGrid()
+      const decoded = typeof liff.getDecodedIDToken === 'function' ? liff.getDecodedIDToken() : null
+      if (decoded && decoded.name) $('#name').value = String(decoded.name).slice(0, 80)
+      await loadWeek()
+    }
+
+    function setCurrentView(view) {
+      state.currentView = view
+      $('#bookingView').classList.toggle('is-hidden', view !== 'booking')
+      $('#historyView').classList.toggle('is-hidden', view !== 'history')
+      $('#bottomBooking').classList.toggle('active', view === 'booking')
+      $('#bottomHistory').classList.toggle('active', view === 'history')
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+
+    async function showBooking() {
+      closeNavDialog()
+      setCurrentView('booking')
+      try {
+        await loadBookingConfig()
+        $('#loading').classList.add('is-hidden')
+        $('#booking').classList.remove('is-hidden')
+      } catch (error) {
+        replaceChildren($('#loading'), textElement('div', 'step-heading', ''), textElement('p', 'error', error.message))
+        $('#loading').classList.remove('is-hidden')
+      }
+    }
+
+    async function renderHistory() {
+      const root = $('#historyList')
+      replaceChildren(root, (() => { const box = textElement('div', 'empty-state', '予約履歴を確認しています。'); box.prepend(textElement('span', 'spinner', '')); return box })())
+      try {
+        const data = await request('/api/lien-line-booking/history?store=' + encodeURIComponent(STORE))
+        if (!data.appointments || !data.appointments.length) {
+          replaceChildren(root, textElement('div', 'empty-state', 'LINEから受け付けた予約はまだありません。'))
+          return
+        }
+        replaceChildren(root)
+        data.appointments.forEach(item => {
+          const card = document.createElement('article')
+          card.className = 'history-card'
+          const header = document.createElement('header')
+          const date = new Date(item.scheduledAt)
+          header.append(textElement('time', '', date.toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo', year: 'numeric', month: 'long', day: 'numeric', weekday: 'short', hour: '2-digit', minute: '2-digit' })), textElement('span', 'history-status', item.status))
+          card.append(header, textElement('h2', '', item.menu), textElement('p', '', '担当: ' + item.staffName + (item.durationMinutes ? ' / ' + item.durationMinutes + '分' : '')))
+          if (item.canCancel) {
+            const actions = document.createElement('div')
+            actions.className = 'history-actions'
+            const button = textElement('button', 'danger-button', '予約をキャンセル')
+            button.type = 'button'
+            button.addEventListener('click', () => openCancelDialog(item))
+            actions.append(button)
+            card.append(actions)
+          }
+          root.append(card)
+        })
+      } catch (error) {
+        replaceChildren(root, textElement('p', 'error', error.message))
+      }
+    }
+
+    async function showHistory() {
+      closeNavDialog()
+      setCurrentView('history')
+      await renderHistory()
+    }
+
+    function openCancelDialog(item) {
+      state.pendingCancellation = item
+      const date = new Date(item.scheduledAt).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo', year: 'numeric', month: 'long', day: 'numeric', weekday: 'short', hour: '2-digit', minute: '2-digit' })
+      $('#cancelSummary').textContent = date + ' / ' + item.menu + ' / 担当: ' + item.staffName
+      $('#cancelError').classList.add('is-hidden')
+      setDialog($('#cancelDialog'), true)
+      $('#cancelBack').focus()
+    }
+
+    function closeCancelDialog() {
+      state.pendingCancellation = null
+      setDialog($('#cancelDialog'), false)
+      $('#cancelError').classList.add('is-hidden')
+      $('#cancelConfirm').disabled = false
+      $('#cancelConfirm').textContent = 'キャンセルする'
+    }
+
+    async function confirmCancellation() {
+      if (!state.pendingCancellation) return
+      const button = $('#cancelConfirm')
+      button.disabled = true
+      button.textContent = '処理しています'
+      try {
+        await request('/api/lien-line-booking/cancel', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ storeCode: STORE, appointmentId: state.pendingCancellation.id }) })
+        closeCancelDialog()
+        await renderHistory()
+      } catch (error) {
+        $('#cancelError').textContent = error.message
+        $('#cancelError').classList.remove('is-hidden')
+        button.disabled = false
+        button.textContent = 'キャンセルする'
+      }
+    }
+
+    function closeLine() {
+      if (typeof liff !== 'undefined' && liff.isInClient && liff.isInClient()) liff.closeWindow()
+      else location.href = 'https://line.me'
+    }
+
+    function openNavDialog() { setDialog($('#navDialog'), true); $('#navClose').focus() }
+    function closeNavDialog() { setDialog($('#navDialog'), false) }
+
+    async function boot() {
+      try {
+        await liff.init({ liffId: LIFF_ID })
+        if (!liff.isLoggedIn()) { liff.login({ redirectUri: location.href }); return }
+        state.token = liff.getIDToken()
+        if (!state.token) throw Error('LINEログインを確認できませんでした。')
+        if (INITIAL_VIEW === 'history') await showHistory()
+        else await showBooking()
+      } catch (error) {
+        replaceChildren($('#loading'), (() => { const wrap = document.createElement('div'); wrap.className = 'step-heading'; wrap.append(textElement('p', 'step-number', 'ONLINE BOOKING'), textElement('h2', '', '予約画面を開けませんでした')); return wrap })(), textElement('p', 'error', error.message))
+        $('#loading').classList.remove('is-hidden')
+      }
+    }
+
+    $('#booking').addEventListener('submit', async event => {
+      event.preventDefault()
+      $('#error').classList.add('is-hidden')
+      if (!state.selectedDate || state.selectedStart == null) { $('#step2').scrollIntoView({ behavior: 'smooth' }); return showError('空き時間を選択してください。') }
+      const button = $('#submit')
+      button.disabled = true
+      replaceChildren(button, textElement('span', 'spinner', ''), document.createTextNode('予約を登録しています'))
+      if (!state.submitKey) state.submitKey = makeSubmitKey()
+      try {
+        const data = await request('/api/lien-line-booking/book', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ storeCode: STORE, idempotencyKey: state.submitKey, menuId: $('#menu').value, staffKey: state.selectedStaff, date: state.selectedDate, startMinutes: state.selectedStart, customerName: $('#name').value, phone: $('#phone').value, note: $('#note').value })
+        })
+        const appointment = data.appointment
+        $('#completeText').textContent = new Date(appointment.scheduledAt).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo', dateStyle: 'long', timeStyle: 'short' }) + ' / ' + String(appointment.menu || '') + ' / 担当 ' + String(appointment.staffName || '指名なし')
+        $('#complete').classList.remove('is-hidden')
+        button.classList.add('is-hidden')
+        $('#complete').scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+      } catch (error) {
+        showError(error.message)
+        button.disabled = false
+        button.textContent = 'この内容で予約する'
+      }
+    })
+
+    $('#menuTrigger').addEventListener('click', openMenuDialog)
+    $('#menuClose').addEventListener('click', closeMenuDialog)
+    $('#menuSearch').addEventListener('input', renderMenuDialog)
+    $('#menuDialog').addEventListener('click', event => { if (event.target === $('#menuDialog')) closeMenuDialog() })
+    $('#previousWeek').addEventListener('click', () => { const candidate = addDays(state.weekStart, -7); state.weekStart = candidate < tokyoDate() ? tokyoDate() : candidate; loadWeek() })
+    $('#nextWeek').addEventListener('click', () => { state.weekStart = addDays(state.weekStart, 7); loadWeek() })
+    $('#continueButton').addEventListener('click', () => $('#step3').scrollIntoView({ behavior: 'smooth', block: 'start' }))
+    $('#close').addEventListener('click', closeLine)
+    $('#newBooking').addEventListener('click', showBooking)
+    $('#headerHistory').addEventListener('click', showHistory)
+    $('#bottomBooking').addEventListener('click', showBooking)
+    $('#bottomHistory').addEventListener('click', showHistory)
+    $('#bottomChat').addEventListener('click', closeLine)
+    $('#headerMenu').addEventListener('click', openNavDialog)
+    $('#navClose').addEventListener('click', closeNavDialog)
+    $('#navDialog').addEventListener('click', event => { if (event.target === $('#navDialog')) closeNavDialog() })
+    $('#navBooking').addEventListener('click', showBooking)
+    $('#navHistory').addEventListener('click', showHistory)
+    $('#navLine').addEventListener('click', closeLine)
+    $('#cancelBack').addEventListener('click', closeCancelDialog)
+    $('#cancelConfirm').addEventListener('click', confirmCancellation)
+    $('#cancelDialog').addEventListener('click', event => { if (event.target === $('#cancelDialog')) closeCancelDialog() })
+    $('#headerBack').addEventListener('click', () => { if (state.currentView === 'history') showBooking(); else closeLine() })
+    document.addEventListener('keydown', event => {
+      if (event.key !== 'Escape') return
+      if (!$('#menuDialog').hidden) closeMenuDialog()
+      else if (!$('#navDialog').hidden) closeNavDialog()
+      else if (!$('#cancelDialog').hidden) closeCancelDialog()
+    })
+
+    boot()
+  </script>
+</body>
+</html>
