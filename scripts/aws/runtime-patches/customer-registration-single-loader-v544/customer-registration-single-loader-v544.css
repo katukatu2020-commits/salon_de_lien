@@ -1,0 +1,26 @@
+/* customer-registration-single-loader-v544 */
+
+/*
+ * The legacy booking gate is installed before the application runtime. While
+ * it owns the first paint, suppress the generic shell fallback so that only
+ * one mark can be painted.
+ */
+html[data-orimia-customer-booking-gate-v524]:not([data-orimia-ui-ready="v516"]):not([data-orimia-loading-experience])
+  body > :is(.admin-app-shell, .app)::after {
+  content: none !important;
+  display: none !important;
+  background-image: none !important;
+  animation: none !important;
+}
+/*
+ * Once the enhanced transition runtime is mounted, it owns the complete
+ * loading treatment. Remove the legacy body mark so it cannot overlap the
+ * ORIMIA wordmark on customer registration and other customer routes.
+ */
+html[data-orimia-customer-booking-gate-v524][data-orimia-loading-experience]:not([data-orimia-ui-ready="v516"])
+  body::after {
+  content: none !important;
+  display: none !important;
+  background-image: none !important;
+  animation: none !important;
+}
