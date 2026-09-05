@@ -1,0 +1,32 @@
+import assert from 'node:assert/strict'
+import fs from 'node:fs'
+
+const service = fs.readFileSync(new URL('./wholesale-ordering-v543.js', import.meta.url), 'utf8')
+const styles = fs.readFileSync(new URL('./wholesale-ordering-v543.css', import.meta.url), 'utf8')
+const client = fs.readFileSync(new URL('./wholesale-ordering-client-v543.js', import.meta.url), 'utf8')
+
+assert.match(service, /dealer-auth-self-service-v548/)
+assert.match(service, /\/dealer\/register/)
+assert.match(service, /\/dealer\/password-reset/)
+assert.match(service, /WholesaleDealerRegistration/)
+assert.match(service, /WholesaleDealerPasswordReset/)
+assert.match(service, /"authVersion"="authVersion"\+1/)
+assert.match(service, /AUTH_TOKEN_SECONDS = 30 \* 60/)
+assert.match(service, /dealerAuthMailSender/)
+assert.match(service, /GMAIL_OAUTH_CLIENT_ID/)
+assert.match(service, /\['APP_URL', 'NEXT_PUBLIC_APP_URL'/)
+assert.match(service, /d\."email",d\."phone"/)
+assert.match(service, /cleanText\(payload\.email, 'メールアドレス', 200, true\)/)
+assert.match(service, /name="email" type="email" autocomplete="email" required/)
+assert.match(service, /"email"=\$6/)
+assert.match(service, /ログインIDまたはメールアドレス/)
+assert.match(service, /新規アカウントを設定/)
+assert.match(service, /ID・パスワードを忘れた方/)
+assert.doesNotMatch(service, /passwordHash[^\n]{0,80}json\(/i)
+assert.match(styles, /\.wo-auth-secondary-link/)
+assert.match(styles, /\.wo-auth-register/)
+assert.match(styles, /\.wo-auth-security/)
+assert.match(client, /dealer-auth-self-service-v548/)
+assert.match(client, /name="email" type="email" required/)
+
+console.log('dealer-auth-self-service-v548 source regression checks passed')
