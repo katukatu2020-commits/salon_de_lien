@@ -27,6 +27,18 @@
     return location.pathname + location.search + location.hash
   }
 
+  function routePath(route) {
+    try {
+      return new URL(route, location.origin).pathname
+    } catch {
+      return String(route || '').split(/[?#]/, 1)[0] || '/'
+    }
+  }
+
+  function samePage(left, right) {
+    return routePath(left) === routePath(right)
+  }
+
   function readStack(key) {
     try {
       const value = JSON.parse(sessionStorage.getItem(key) || '[]')
@@ -43,6 +55,9 @@
   function recordRoute(key) {
     const route = currentRoute()
     const routes = readStack(key)
+    if (key === CUSTOMER_STACK_KEY) {
+      while (routes.length && samePage(routes.at(-1), route)) routes.pop()
+    }
     if (routes.at(-1) !== route) {
       routes.push(route)
       writeStack(key, routes)
@@ -52,10 +67,17 @@
   function navigateBack(key, fallback) {
     const current = currentRoute()
     const routes = readStack(key)
-    while (routes.at(-1) === current) routes.pop()
+    while (routes.length && (
+      routes.at(-1) === current
+      || (key === CUSTOMER_STACK_KEY && samePage(routes.at(-1), current))
+    )) routes.pop()
     const target = routes.pop() || fallback
     writeStack(key, [...routes, target])
     location.assign(target)
+  }
+
+  window.__orimiaCustomerNavigateBackV546 = fallback => {
+    navigateBack(CUSTOMER_STACK_KEY, fallback || '/u/home')
   }
 
   function adminFallback() {

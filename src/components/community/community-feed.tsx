@@ -196,7 +196,9 @@ export function CommunityFeed({ initialPosts, actor }: { initialPosts: Community
                 <span className="block text-xs text-[#8b8178]">{formatVisitDate(post.visitDate)}</span>
               </span>
             </div>
-            <span className="rounded-full bg-[#eef5ee] px-3 py-1 text-[11px] font-semibold text-[#567157]">公開中</span>
+            {actor === "staff" ? (
+              <span className="rounded-full bg-[#eef5ee] px-3 py-1 text-[11px] font-semibold text-[#567157]">公開中</span>
+            ) : null}
           </header>
 
           <div className={`community-feed-media grid gap-1 bg-[#eee7df] ${post.photos.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
