@@ -1,0 +1,80 @@
+/* The screen receipt stays unchanged. This host exists only while measuring or printing. */
+#orimia-receipt-print-host-v540 {
+  display: none !important;
+}
+
+html[data-orimia-receipt-print-v540="1"] #admin-mobile-bottom-nav-v518,
+html[data-orimia-receipt-print-v540="1"] .orimia-admin-bottom-nav-v518,
+html[data-orimia-receipt-print-v540="1"] .admin-mobile-header,
+html[data-orimia-receipt-print-v540="1"] .admin-desktop-header,
+html[data-orimia-receipt-print-v540="1"] .admin-desktop-sidebar,
+html[data-orimia-receipt-print-v540="1"] #orimia-ui-loader-v536 {
+  display: none !important;
+}
+
+html[data-orimia-receipt-print-v540="1"] body {
+  padding-bottom: 0 !important;
+}
+
+html[data-orimia-receipt-print-v540="1"][data-orimia-receipt-measuring-v540="1"] #orimia-receipt-print-host-v540 {
+  display: block !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: -10000px !important;
+  width: 80mm !important;
+  height: auto !important;
+  overflow: visible !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+#orimia-receipt-print-host-v540 [data-orimia-receipt-copy-v540="1"] {
+  box-sizing: border-box !important;
+  width: 80mm !important;
+  min-width: 80mm !important;
+  max-width: 80mm !important;
+  min-height: 0 !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 5mm 4mm 6mm !important;
+  overflow: visible !important;
+  background: #fff !important;
+  color: #111 !important;
+  box-shadow: none !important;
+  break-inside: avoid !important;
+  page-break-inside: avoid !important;
+  print-color-adjust: exact !important;
+  -webkit-print-color-adjust: exact !important;
+}
+
+@media print {
+  html[data-orimia-receipt-print-v540="1"],
+  html[data-orimia-receipt-print-v540="1"] body {
+    width: 80mm !important;
+    min-width: 80mm !important;
+    max-width: 80mm !important;
+    min-height: 0 !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+
+  html[data-orimia-receipt-print-v540="1"] body > *:not(#orimia-receipt-print-host-v540) {
+    display: none !important;
+  }
+
+  html[data-orimia-receipt-print-v540="1"] #orimia-receipt-print-host-v540 {
+    display: block !important;
+    position: static !important;
+    width: 80mm !important;
+    min-width: 80mm !important;
+    max-width: 80mm !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    visibility: visible !important;
+  }
+}
