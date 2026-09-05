@@ -2,7 +2,6 @@
 
 import { AlertCircle, CheckCircle2, LoaderCircle, Upload, UserRound } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { SquareProfileImageCropper } from "@/components/customers/square-profile-image-cropper";
 
 const MAX_PROFILE_IMAGE_SIZE = 5 * 1024 * 1024;
@@ -21,28 +20,15 @@ export function ProfileImageUploader({
   customerName: string;
   profileImageUrl?: string | null;
 }) {
-  const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [savedImageUrl, setSavedImageUrl] = useState(profileImageUrl ?? "");
   const [cropSource, setCropSource] = useState<File | null>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [selectedPreviewUrl, setSelectedPreviewUrl] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [message, setMessage] = useState<UploadMessage | null>(null);
 
   useEffect(() => {
     setSavedImageUrl(profileImageUrl ?? "");
   }, [profileImageUrl]);
-
-  useEffect(() => {
-    if (!selectedFile) {
-      setSelectedPreviewUrl("");
-      return;
-    }
-    const objectUrl = URL.createObjectURL(selectedFile);
-    setSelectedPreviewUrl(objectUrl);
-    return () => URL.revokeObjectURL(objectUrl);
-  }, [selectedFile]);
 
   function chooseFile(file: File | undefined) {
     setMessage(null);
@@ -60,13 +46,13 @@ export function ProfileImageUploader({
     setCropSource(file);
   }
 
-  async function uploadImage() {
-    if (!selectedFile || isUploading) return;
+  async function uploadImage(file: File) {
+    if (isUploading) return;
     setIsUploading(true);
     setMessage(null);
 
     const formData = new FormData();
-    formData.set("profileImage", selectedFile);
+    formData.set("profileImage", file);
 
     try {
       const response = await fetch("/api/customer/profile-image", {
@@ -82,10 +68,8 @@ export function ProfileImageUploader({
       }
 
       setSavedImageUrl(result.imageUrl);
-      setSelectedFile(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
       setMessage({ tone: "success", text: result.message || "プロフィール画像を更新しました。" });
-      router.refresh();
     } catch (error) {
       setMessage({
         tone: "error",
@@ -96,14 +80,12 @@ export function ProfileImageUploader({
     }
   }
 
-  const displayedImageUrl = selectedPreviewUrl || savedImageUrl;
-
   return (
     <div className="grid justify-items-center gap-3">
       <div className="relative flex h-32 w-32 items-center justify-center overflow-hidden rounded-full bg-[#e7ebe7] text-4xl font-semibold text-teal-900 shadow-inner">
-        {displayedImageUrl ? (
+        {savedImageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={displayedImageUrl} alt={`${customerName}のプロフィール画像`} className="h-full w-full object-cover" />
+          <img src={savedImageUrl} alt={`${customerName}のプロフィール画像`} className="h-full w-full object-cover" />
         ) : (
           customerName.slice(0, 1)
         )}
@@ -114,8 +96,8 @@ export function ProfileImageUploader({
 
       <div className="grid justify-items-center gap-2">
         <label className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-full border border-[#e8ded2] bg-white px-4 text-sm font-semibold text-[#4f463f] shadow-sm transition hover:bg-[#f6efe6] focus-within:ring-4 focus-within:ring-[#e9c9be]/50">
-          <Upload className="h-4 w-4" />
-          画像を選ぶ
+          {isUploading ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+          {isUploading ? "更新中..." : "画像を選ぶ"}
           <input
             ref={fileInputRef}
             type="file"
@@ -126,21 +108,6 @@ export function ProfileImageUploader({
             onChange={(event) => chooseFile(event.target.files?.[0])}
           />
         </label>
-
-        {selectedFile ? (
-          <>
-            <p className="max-w-56 truncate text-center text-xs text-[#7c7168]">選択中: {selectedFile.name}</p>
-            <button
-              type="button"
-              onClick={uploadImage}
-              disabled={isUploading}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-[#8f4f42] px-6 text-sm font-semibold text-white shadow-sm transition hover:bg-[#7d453a] disabled:cursor-wait disabled:opacity-60"
-            >
-              {isUploading ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-              {isUploading ? "保存中..." : "プロフィール画像を保存"}
-            </button>
-          </>
-        ) : null}
 
         <p className="text-center text-[11px] leading-4 text-[#7c7168]">JPG / PNG / WebP、5MB以下</p>
         {message ? (
@@ -165,8 +132,8 @@ export function ProfileImageUploader({
             if (fileInputRef.current) fileInputRef.current.value = "";
           }}
           onConfirm={(croppedFile) => {
-            setSelectedFile(croppedFile);
             setCropSource(null);
+            void uploadImage(croppedFile);
           }}
         />
       ) : null}
