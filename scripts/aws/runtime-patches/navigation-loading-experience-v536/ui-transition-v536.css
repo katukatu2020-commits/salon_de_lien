@@ -1,0 +1,220 @@
+html:not([data-orimia-ui-ready="v516"]) {
+  background: #fff !important;
+}
+
+html:not([data-orimia-ui-ready="v516"]) body > :is(.admin-app-shell, .app) {
+  position: relative;
+  min-height: 100dvh !important;
+  max-height: 100dvh !important;
+  overflow: hidden !important;
+  background: #fff !important;
+  cursor: progress;
+}
+
+html[data-orimia-customer-standalone="v516"]:not([data-orimia-ui-ready="v516"]) body {
+  position: relative;
+  min-height: 100dvh !important;
+  max-height: 100dvh !important;
+  overflow: hidden !important;
+  background: #fff !important;
+  cursor: progress;
+}
+
+html[data-orimia-customer-standalone="v516"]:not([data-orimia-ui-ready="v516"]) body > :not(script, style) {
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
+html:not([data-orimia-ui-ready="v516"]) body > :is(.admin-app-shell, .app) > * {
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
+html:not([data-orimia-ui-ready="v516"]) body > :is(.admin-app-shell, .app)::before,
+html[data-orimia-customer-standalone="v516"]:not([data-orimia-ui-ready="v516"]) body::before {
+  content: "";
+  position: fixed;
+  z-index: 2147483646;
+  inset: 0;
+  visibility: visible !important;
+  opacity: 1 !important;
+  background: #fff;
+}
+
+html:not([data-orimia-ui-ready="v516"]) body > :is(.admin-app-shell, .app)::after,
+html[data-orimia-customer-standalone="v516"]:not([data-orimia-ui-ready="v516"]) body::after {
+  content: "";
+  position: fixed;
+  z-index: 2147483647;
+  top: 50%;
+  left: 50%;
+  width: 64px;
+  height: 64px;
+  visibility: visible !important;
+  opacity: 1 !important;
+  background: url("/brand/orimia-icon-192.png?v=536") center / contain no-repeat;
+  transform: translate(-50%, -50%);
+  animation: orimia-ui-mark-v536 1.35s cubic-bezier(.4, 0, .2, 1) infinite;
+}
+
+html[data-orimia-loading-experience="v536"]:not([data-orimia-ui-ready="v516"]) body > :is(.admin-app-shell, .app)::after,
+html[data-orimia-loading-experience="v536"][data-orimia-customer-standalone="v516"]:not([data-orimia-ui-ready="v516"]) body::after {
+  content: none;
+  animation: none;
+}
+
+#orimia-ui-loader-v536 {
+  position: fixed;
+  z-index: 2147483647;
+  top: 0;
+  bottom: auto;
+  left: 50%;
+  right: auto;
+  width: 100vw !important;
+  max-width: none !important;
+  height: 100dvh !important;
+  margin: 0 !important;
+  box-sizing: border-box;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 9px;
+  padding: 24px;
+  color: #352b27;
+  font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+  text-align: center;
+  visibility: hidden;
+  opacity: 0;
+  transform: translateX(-50%);
+  pointer-events: none;
+  transition: opacity 180ms ease, visibility 0s linear 180ms;
+}
+
+html:not([data-orimia-ui-ready="v516"]) #orimia-ui-loader-v536 {
+  visibility: visible !important;
+  opacity: 1 !important;
+  transition-delay: 0s;
+}
+
+html[data-orimia-customer-standalone="v516"]:not([data-orimia-ui-ready="v516"]) body > #orimia-ui-loader-v536 {
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+html[data-orimia-ui-ready="v516"] #orimia-ui-loader-v536 {
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.orimia-ui-loader-v536__mark {
+  width: 72px;
+  height: 72px;
+  transform-origin: center;
+  animation: orimia-ui-mark-v536 1.35s cubic-bezier(.4, 0, .2, 1) infinite;
+}
+
+.orimia-ui-loader-v536__mark img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.orimia-ui-loader-v536__brand,
+.orimia-ui-loader-v536__copy {
+  max-width: min(280px, calc(100vw - 48px));
+  margin: 0;
+  letter-spacing: 0;
+}
+
+.orimia-ui-loader-v536__brand {
+  margin-top: 3px;
+  font-family: Georgia, "Times New Roman", "Yu Mincho", serif;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.orimia-ui-loader-v536__brand span {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.orimia-ui-loader-v536__copy {
+  color: #8b7e78;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+.orimia-ui-loader-v536__rail {
+  position: relative;
+  width: 108px;
+  height: 3px;
+  margin-top: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #eee7e3;
+}
+
+.orimia-ui-loader-v536__rail > span {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 38px;
+  height: 100%;
+  border-radius: inherit;
+  background: #ca4e70;
+  transform: translateX(-42px);
+  animation: orimia-ui-progress-v536 1.15s cubic-bezier(.65, 0, .35, 1) infinite;
+}
+
+@keyframes orimia-ui-mark-v536 {
+  0%, 100% { opacity: .72; transform: translateY(2px) scale(.96); }
+  50% { opacity: 1; transform: translateY(-3px) scale(1.025); }
+}
+
+@keyframes orimia-ui-progress-v536 {
+  0% { transform: translateX(-42px); }
+  55%, 100% { transform: translateX(112px); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html:not([data-orimia-ui-ready="v516"]) #orimia-ui-loader-v536 .orimia-ui-loader-v536__mark {
+    animation: orimia-ui-mark-v536 1.35s cubic-bezier(.4, 0, .2, 1) infinite !important;
+  }
+
+  html:not([data-orimia-ui-ready="v516"]) #orimia-ui-loader-v536 .orimia-ui-loader-v536__rail > span {
+    animation: orimia-ui-progress-v536 1.15s cubic-bezier(.65, 0, .35, 1) infinite !important;
+  }
+}
+
+@media (max-width: 639px) {
+  #orimia-ui-loader-v536 {
+    gap: 8px;
+  }
+
+  .orimia-ui-loader-v536__mark {
+    width: 64px;
+    height: 64px;
+  }
+
+  .orimia-ui-loader-v536__brand {
+    font-size: 17px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-orimia-ui-ready="v516"]) body > :is(.admin-app-shell, .app)::after,
+  html[data-orimia-customer-standalone="v516"]:not([data-orimia-ui-ready="v516"]) body::after,
+  .orimia-ui-loader-v536__mark,
+  .orimia-ui-loader-v536__rail > span {
+    animation: none;
+  }
+
+  .orimia-ui-loader-v536__rail > span {
+    left: 35px;
+    transform: none;
+  }
+}
