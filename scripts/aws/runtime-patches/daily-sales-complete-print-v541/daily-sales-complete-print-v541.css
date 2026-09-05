@@ -1,0 +1,311 @@
+#orimia-daily-sales-print-host-v541 {
+  display: none !important;
+}
+
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 6mm;
+  }
+
+  html[data-orimia-daily-sales-print-v541="1"],
+  html[data-orimia-daily-sales-print-v541="1"] body {
+    width: auto !important;
+    min-width: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+
+  html[data-orimia-daily-sales-print-v541="1"] body > *:not(#orimia-daily-sales-print-host-v541) {
+    display: none !important;
+  }
+
+  html[data-orimia-daily-sales-print-v541="1"] body > #orimia-daily-sales-print-host-v541 {
+    display: block !important;
+    position: static !important;
+    inset: auto !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    color: #1f1a17 !important;
+    background: #fff !important;
+    font-family: "Noto Sans JP", "Yu Gothic", "Hiragino Kaku Gothic ProN", system-ui, sans-serif !important;
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+  }
+
+  #orimia-daily-sales-print-host-v541 .sl-daily-card {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: #fff !important;
+    box-shadow: none !important;
+  }
+
+  #orimia-daily-sales-print-host-v541 .sl-table-head {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    min-height: 0 !important;
+    padding: 0 0 3mm !important;
+    border: 0 !important;
+    background: #fff !important;
+  }
+
+  #orimia-daily-sales-print-host-v541 .sl-section-title {
+    display: flex !important;
+    align-items: center !important;
+    gap: 2.5mm !important;
+  }
+
+  #orimia-daily-sales-print-host-v541 .sl-section-title > svg {
+    display: block !important;
+    width: 5mm !important;
+    height: 5mm !important;
+    flex: 0 0 5mm !important;
+    color: #c84d70 !important;
+  }
+
+  #orimia-daily-sales-print-host-v541 .sl-section-title h2 {
+    margin: 0 !important;
+    color: #1f1a17 !important;
+    font-size: 15pt !important;
+    font-weight: 700 !important;
+    line-height: 1.2 !important;
+    letter-spacing: 0 !important;
+    text-align: left !important;
+  }
+
+  #orimia-daily-sales-print-host-v541 .sl-section-title h2::after {
+    content: none !important;
+  }
+
+  #orimia-daily-sales-print-host-v541 .sl-section-title .sl-status {
+    display: block !important;
+    margin-top: 1mm !important;
+    color: #706763 !important;
+    font-size: 7pt !important;
+    line-height: 1.3 !important;
+  }
+
+  #orimia-daily-sales-print-host-v541 .sl-summary-head-actions,
+  #orimia-daily-sales-print-host-v541 [data-sl-print] {
+    display: none !important;
+  }
+
+  #orimia-daily-sales-print-host-v541 .sl-kpi-strip {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    margin: 0 0 3mm !important;
+    border: 1px solid #cfc8c4 !important;
+    border-radius: 0 !important;
+    background: #fff !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  #orimia-daily-sales-print-host-v541 .sl-kpi {
+    display: grid !important;
+    min-width: 0 !important;
+    gap: 0.8mm !important;
+    padding: 2mm 2.5mm !important;
+    border-right: 1px solid #ded8d4 !important;
+    border-bottom: 0 !important;
+    background: #faf8f7 !important;
+  }
+
+  #orimia-daily-sales-print-host-v541 .sl-kpi:last-child {
+    border-right: 0 !important;
+  }
+
+  #orimia-daily-sales-print-host-v541 .sl-kpi span {
+    color: #625b57 !important;
+    font-size: 6pt !important;
+    font-weight: 700 !important;
+  }
+
+  #orimia-daily-sales-print-host-v541 .sl-kpi strong {
+    overflow: visible !important;
+    color: #1f1a17 !important;
+    font-size: 12pt !important;
+    font-weight: 800 !important;
+    line-height: 1.15 !important;
+    text-overflow: clip !important;
+    white-space: nowrap !important;
+  }
+
+  #orimia-daily-sales-print-host-v541 .sl-summary-wrap {
+    display: block !important;
+    position: static !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: auto !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    scrollbar-width: none !important;
+  }
+
+  #orimia-daily-sales-print-host-v541 .sl-summary-wrap::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+
+  #orimia-daily-sales-print-host-v541 .sl-daily-table {
+    display: table !important;
+    position: static !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    border-collapse: collapse !important;
+    table-layout: fixed !important;
+    color: #1f1a17 !important;
+    font-size: var(--orimia-sales-print-font, 5.2pt) !important;
+  }
+
+  #orimia-daily-sales-print-host-v541 .sl-daily-table thead {
+    display: table-header-group !important;
+  }
+
+  #orimia-daily-sales-print-host-v541 .sl-daily-table tbody {
+    display: table-row-group !important;
+  }
+
+  #orimia-daily-sales-print-host-v541 .sl-daily-table tfoot {
+    display: table-footer-group !important;
+    position: static !important;
+  }
+
+  #orimia-daily-sales-print-host-v541 .sl-daily-table thead > tr,
+  #orimia-daily-sales-print-host-v541 .sl-daily-table tbody > tr,
+  #orimia-daily-sales-print-host-v541 .sl-daily-table tfoot > tr {
+    display: table-row !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  #orimia-daily-sales-print-host-v541 .sl-daily-table th,
+  #orimia-daily-sales-print-host-v541 .sl-daily-table td,
+  #orimia-daily-sales-print-host-v541 .sl-daily-table th:first-child,
+  #orimia-daily-sales-print-host-v541 .sl-daily-table td:first-child,
+  #orimia-daily-sales-print-host-v541 .sl-daily-table th:last-child,
+  #orimia-daily-sales-print-host-v541 .sl-daily-table td:last-child,
+  #orimia-daily-sales-print-host-v541 .sl-daily-table .sl-staff-col {
+    display: table-cell !important;
+    position: static !important;
+    box-sizing: border-box !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: auto !important;
+    padding: 1mm var(--orimia-sales-print-cell-x, 0.65mm) !important;
+    overflow: hidden !important;
+    border: 0.25mm solid #b8b2ae !important;
+    color: #1f1a17 !important;
+    background: #fff !important;
+    font-size: var(--orimia-sales-print-font, 5.2pt) !important;
+    font-variant-numeric: tabular-nums !important;
+    line-height: 1.2 !important;
+    text-align: right !important;
+    text-overflow: clip !important;
+    vertical-align: middle !important;
+    white-space: nowrap !important;
+  }
+
+  #orimia-daily-sales-print-host-v541 .sl-daily-table th {
+    padding-top: 1.2mm !important;
+    padding-bottom: 1.2mm !important;
+    background: #f3efed !important;
+    font-size: calc(var(--orimia-sales-print-font, 5.2pt) - 0.2pt) !important;
+    font-weight: 800 !important;
+    text-align: center !important;
+    overflow-wrap: anywhere !important;
+    white-space: normal !important;
+  }
+
+  #orimia-daily-sales-print-host-v541 .sl-daily-table thead th:first-child,
+  #orimia-daily-sales-print-host-v541 .sl-daily-table tbody td:first-child,
+  #orimia-daily-sales-print-host-v541 .sl-daily-table tfoot th:first-child {
+    width: 6.5% !important;
+    text-align: center !important;
+  }
+
+  #orimia-daily-sales-print-host-v541 .sl-daily-table thead th:nth-child(2),
+  #orimia-daily-sales-print-host-v541 .sl-daily-table tbody td:nth-child(2),
+  #orimia-daily-sales-print-host-v541 .sl-daily-table tfoot td:nth-child(2) {
+    width: 4% !important;
+    text-align: center !important;
+  }
+
+  #orimia-daily-sales-print-host-v541 .sl-summary-date {
+    padding: 0 !important;
+    background: #fff !important;
+  }
+
+  #orimia-daily-sales-print-host-v541 .sl-summary-date button {
+    display: flex !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.7mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    color: #1f1a17 !important;
+    font: inherit !important;
+  }
+
+  #orimia-daily-sales-print-host-v541 .sl-summary-date strong,
+  #orimia-daily-sales-print-host-v541 .sl-summary-date span {
+    color: #1f1a17 !important;
+    font-size: inherit !important;
+    line-height: 1.2 !important;
+  }
+
+  #orimia-daily-sales-print-host-v541 .sl-daily-table tbody tr.active,
+  #orimia-daily-sales-print-host-v541 .sl-daily-table tbody tr.active .sl-summary-date,
+  #orimia-daily-sales-print-host-v541 .sl-daily-table tbody tr:hover {
+    background: #fff !important;
+  }
+
+  #orimia-daily-sales-print-host-v541 .sl-daily-table tfoot th,
+  #orimia-daily-sales-print-host-v541 .sl-daily-table tfoot td {
+    border-top-width: 0.5mm !important;
+    background: #ebe5e1 !important;
+    font-weight: 900 !important;
+  }
+
+  #orimia-daily-sales-print-host-v541 .sl-summary-gross {
+    color: #9f3857 !important;
+    font-weight: 900 !important;
+  }
+
+  #orimia-daily-sales-print-host-v541 .sl-negative {
+    color: #315f3d !important;
+  }
+}
