@@ -94,7 +94,7 @@ const source = await client.text();
 assert.match(source, /__lienStyleCommunityControlsV557/);
 assert.match(source, /buildCustomerCommentMenu/);
 assert.match(source, /lienCommentSignatureV557/);
-assert.match(source, /aria-haspopup', 'menu'/);
+assert.match(source, /["']aria-haspopup["'], ["']menu["']/);
 
 console.log(
   JSON.stringify({
