@@ -1,0 +1,69 @@
+/* inventory-orders-common-layout-v570 */
+html.orimia-inventory-orders-pending-v570 .admin-main-content > * {
+  visibility: hidden !important;
+}
+
+[data-orimia-inventory-orders-source-v570] {
+  display: none !important;
+}
+
+#orimia-inventory-orders-host-v570 {
+  display: grid;
+  width: 100%;
+  max-width: 80rem;
+  min-width: 0;
+  gap: 24px;
+  margin: 0 auto;
+  visibility: visible !important;
+  color: var(--wo-ink);
+  font-family: "Noto Sans JP", "Yu Gothic UI", "Yu Gothic", Meiryo, sans-serif;
+  font-synthesis: none;
+}
+
+#orimia-inventory-orders-host-v570 .wo-common-page-head-v570 {
+  padding: 10px 2px 4px;
+}
+
+#orimia-inventory-orders-host-v570 .wo-common-page-head-v570 > .wo-button {
+  flex: none;
+  min-width: max-content;
+  white-space: nowrap;
+}
+
+#orimia-inventory-orders-host-v570 .wo-app-root {
+  min-width: 0;
+}
+
+html.orimia-inventory-orders-ready-v570 .admin-main-content {
+  min-height: calc(100dvh - 74px);
+}
+
+@media (max-width: 900px) {
+  #orimia-inventory-orders-host-v570 {
+    gap: 16px;
+  }
+
+  #orimia-inventory-orders-host-v570 .wo-common-page-head-v570 {
+    padding: 4px 2px 2px;
+  }
+}
+
+@media (max-width: 620px) {
+  #orimia-inventory-orders-host-v570 {
+    gap: 12px;
+  }
+
+  #orimia-inventory-orders-host-v570 .wo-common-page-head-v570 h1 {
+    font-size: 27px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #orimia-inventory-orders-host-v570 *,
+  #orimia-inventory-orders-host-v570 *::before,
+  #orimia-inventory-orders-host-v570 *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
