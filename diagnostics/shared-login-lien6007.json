@@ -1,0 +1,12 @@
+{
+  "checkedIdentifier": "lien6007",
+  "classificationMask": 16,
+  "activeLoginSameStore": false,
+  "inactiveLoginSameStore": false,
+  "activeEmailSameStore": false,
+  "inactiveEmailSameStore": false,
+  "activeLoginOtherStore": true,
+  "inactiveLoginOtherStore": false,
+  "activeEmailOtherStore": false,
+  "inactiveEmailOtherStore": false
+}
