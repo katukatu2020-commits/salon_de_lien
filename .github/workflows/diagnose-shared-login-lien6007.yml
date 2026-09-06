@@ -1,0 +1,131 @@
+name: Diagnose shared login lien6007
+
+on:
+  push:
+    branches:
+      - recovery/aws-canonical-20260815
+    paths:
+      - .github/workflows/diagnose-shared-login-lien6007.yml
+
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
+  group: salon-de-lien-shared-login-diagnostic
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: ap-northeast-1
+  AWS_ACCOUNT_ID: "009293460979"
+  ECS_CLUSTER: salon-de-lien-staging-cluster
+  ECS_SERVICE: salon-de-lien-staging-web
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out the canonical release branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure temporary AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::009293460979:role/SalonDeLienGitHubDeployRole
+          role-session-name: GitHubActionsSharedLoginDiagnostic
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Classify the reserved identifier without reading account details
+        id: classify
+        shell: pwsh
+        run: |
+          $identity = aws sts get-caller-identity --output json --no-cli-pager | ConvertFrom-Json
+          if ($identity.Account -ne $env:AWS_ACCOUNT_ID -or $identity.Arn -notmatch ':assumed-role/SalonDeLienGitHubDeployRole/') {
+            throw 'Unexpected AWS diagnostic identity.'
+          }
+
+          $service = aws ecs describe-services --cluster $env:ECS_CLUSTER --services $env:ECS_SERVICE --region $env:AWS_REGION --output json --no-cli-pager | ConvertFrom-Json
+          $taskDefinition = [string]$service.services[0].taskDefinition
+          $network = $service.services[0].networkConfiguration.awsvpcConfiguration
+          if (-not $taskDefinition -or -not $network) { throw 'Current ECS task or network configuration was not resolved.' }
+
+          $networkJson = @{
+            awsvpcConfiguration = @{
+              subnets = @($network.subnets)
+              securityGroups = @($network.securityGroups)
+              assignPublicIp = [string]$network.assignPublicIp
+            }
+          } | ConvertTo-Json -Depth 8 -Compress
+
+          $diagnosticScript = @'
+          const { PrismaClient } = require('@prisma/client');
+          const prisma = new PrismaClient();
+          (async () => {
+            const value = 'lien6007';
+            const targetOrganization = process.env.DEFAULT_ORGANIZATION_ID || 'org_salon_de_lien';
+            const rows = await prisma.$queryRawUnsafe(
+              `SELECT "organizationId","active",LOWER(COALESCE("loginId",''))=$1 AS "loginMatch",LOWER(COALESCE("email",''))=$1 AS "emailMatch"
+               FROM "AppUser"
+               WHERE "role"::text IN ('ADMIN','STAFF','MANUFACTURER')
+                 AND (LOWER(COALESCE("loginId",''))=$1 OR LOWER(COALESCE("email",''))=$1)`,
+              value,
+            );
+            let mask = 0;
+            for (const row of rows) {
+              const sameOrganization = String(row.organizationId || '') === targetOrganization;
+              if (row.loginMatch && row.active && sameOrganization) mask |= 1;
+              if (row.loginMatch && !row.active && sameOrganization) mask |= 2;
+              if (row.emailMatch && row.active && sameOrganization) mask |= 4;
+              if (row.emailMatch && !row.active && sameOrganization) mask |= 8;
+              if (row.loginMatch && row.active && !sameOrganization) mask |= 16;
+              if (row.loginMatch && !row.active && !sameOrganization) mask |= 32;
+              if (row.emailMatch && row.active && !sameOrganization) mask |= 64;
+              if (row.emailMatch && !row.active && !sameOrganization) mask |= 128;
+            }
+            await prisma.$disconnect();
+            process.exit(mask);
+          })().catch(async () => {
+            await prisma.$disconnect().catch(() => {});
+            process.exit(255);
+          });
+          '@
+          $encodedScript = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($diagnosticScript))
+          $command = "eval(Buffer.from('$encodedScript','base64').toString('utf8'))"
+          $overridesJson = @{ containerOverrides = @(@{ name = 'Web'; command = @('node', '-e', $command) }) } | ConvertTo-Json -Depth 8 -Compress
+
+          $run = aws ecs run-task --cluster $env:ECS_CLUSTER --task-definition $taskDefinition --launch-type FARGATE --network-configuration $networkJson --overrides $overridesJson --region $env:AWS_REGION --output json --no-cli-pager | ConvertFrom-Json
+          $taskArn = [string]$run.tasks[0].taskArn
+          if (-not $taskArn) { throw "Diagnostic task did not start: $($run.failures | ConvertTo-Json -Compress)" }
+
+          aws ecs wait tasks-stopped --cluster $env:ECS_CLUSTER --tasks $taskArn --region $env:AWS_REGION --no-cli-pager
+          $stopped = aws ecs describe-tasks --cluster $env:ECS_CLUSTER --tasks $taskArn --region $env:AWS_REGION --output json --no-cli-pager | ConvertFrom-Json
+          $container = $stopped.tasks[0].containers | Where-Object { $_.name -eq 'Web' } | Select-Object -First 1
+          $mask = [int]$container.exitCode
+          if ($mask -eq 255) { throw 'The read-only identifier classification query failed.' }
+
+          $result = [ordered]@{
+            checkedIdentifier = 'lien6007'
+            classificationMask = $mask
+            activeLoginSameStore = [bool]($mask -band 1)
+            inactiveLoginSameStore = [bool]($mask -band 2)
+            activeEmailSameStore = [bool]($mask -band 4)
+            inactiveEmailSameStore = [bool]($mask -band 8)
+            activeLoginOtherStore = [bool]($mask -band 16)
+            inactiveLoginOtherStore = [bool]($mask -band 32)
+            activeEmailOtherStore = [bool]($mask -band 64)
+            inactiveEmailOtherStore = [bool]($mask -band 128)
+          }
+          New-Item -ItemType Directory -Force -Path diagnostics | Out-Null
+          [IO.File]::WriteAllText((Join-Path $PWD 'diagnostics/shared-login-lien6007.json'), ($result | ConvertTo-Json) + "`n", [Text.UTF8Encoding]::new($false))
+
+      - name: Record sanitized diagnostic result
+        shell: pwsh
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add diagnostics/shared-login-lien6007.json
+          git commit -m 'chore: record shared login identifier classification [skip ci]'
+          git push origin "HEAD:$($env:GITHUB_REF_NAME)"
