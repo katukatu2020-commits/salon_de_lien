@@ -44,7 +44,7 @@ for (const file of pageFiles) {
 }
 
 assert.match(client, /window\.__lienStyleCommunityControlsV557 = true/);
-assert.match(client, /data\.lienCustomerCommentMenu = ["']v557["']/);
+assert.match(client, /dataset\.lienCustomerCommentMenu = ["']v557["']/);
 assert.match(client, /["']aria-haspopup["'], ["']menu["']/);
 assert.match(
   client,
