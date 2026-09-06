@@ -28,17 +28,31 @@ jobs:
       - name: Read the latest dealer mail failure
         shell: pwsh
         run: |
+          function Write-SafeError([string]$title, [string]$message) {
+            $safe = $message.Replace('%', '%25').Replace("`r", '%0D').Replace("`n", '%0A')
+            Write-Output "::error title=$title::$safe"
+          }
           $task = (aws ecs describe-services --cluster salon-de-lien-staging-cluster --services salon-de-lien-staging-web --region ap-northeast-1 --query 'services[0].taskDefinition' --output text --no-cli-pager).Trim()
           $definition = aws ecs describe-task-definition --task-definition $task --region ap-northeast-1 --output json --no-cli-pager | ConvertFrom-Json
           $web = @($definition.taskDefinition.containerDefinitions | Where-Object { $_.name -eq 'Web' })[0]
           $logGroup = [string]$web.logConfiguration.options.'awslogs-group'
           if (-not $logGroup) { throw 'The Web log group could not be resolved.' }
-          $startTime = [DateTimeOffset]::UtcNow.AddMinutes(-20).ToUnixTimeMilliseconds()
+          $startTime = [DateTimeOffset]::UtcNow.AddHours(-1).ToUnixTimeMilliseconds()
           $filterPattern = '"dealer-auth"'
-          $payload = aws logs filter-log-events --log-group-name $logGroup --start-time $startTime --filter-pattern $filterPattern --region ap-northeast-1 --output json --no-cli-pager | ConvertFrom-Json
+          $queryOutput = & aws logs filter-log-events --log-group-name $logGroup --start-time $startTime --filter-pattern $filterPattern --region ap-northeast-1 --output json --no-cli-pager 2>&1
+          if ($LASTEXITCODE -ne 0) {
+            Write-SafeError 'CloudWatch query failed' (($queryOutput | Out-String).Trim())
+            exit 1
+          }
+          $payload = ($queryOutput | Out-String) | ConvertFrom-Json
           $messages = @($payload.events | ForEach-Object { [string]$_.message } | Where-Object { $_ -match '\[dealer-auth\]' } | Select-Object -Last 10)
-          if (-not $messages.Count) { throw 'No recent dealer authentication log entry was found.' }
+          if (-not $messages.Count) {
+            Write-SafeError 'Dealer mail log not found' "No dealer authentication entry was found in $logGroup during the last hour."
+            exit 1
+          }
           foreach ($message in $messages) {
             $safeMessage = $message -replace '(?i)(token|secret|authorization)\s*[=:]\s*[^,}\s]+', '$1=[redacted]'
             Write-Output $safeMessage
+            Write-SafeError 'Dealer Postmark response' $safeMessage
           }
+          exit 1
