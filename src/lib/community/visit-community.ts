@@ -2,6 +2,10 @@ import "server-only";
 
 import type { AppRole, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import {
+  canManageCommunityComment,
+  loadCommunityCustomerIdentityIds
+} from "@/lib/community/comment-ownership";
 import { normalizeSalonStaffName } from "@/lib/salon/staff";
 import { resolveCustomerPhotoReference } from "@/lib/storage/customer-photo";
 
@@ -284,56 +288,70 @@ export async function loadVisitCommunityPostDetail({
   actor: CommunityActor;
   postId: string;
 }): Promise<CommunityPostView | null> {
-  const post = await prisma.visitCommunityPost.findFirst({
-    where: {
-      id: postId,
-      organizationId,
-      published: true,
-      OR: [
-        { postKind: "STORE", photoReferences: { isEmpty: false } },
-        { postKind: "VISIT", customer: { is: { deletedAt: null } }, visit: { is: { photos: { some: {} } } } }
-      ]
-    },
-    select: {
-      id: true,
-      customerId: true,
-      publishedAt: true,
-      postKind: true,
-      caption: true,
-      photoReferences: true,
-      publishedByName: true,
-      customer: { select: { name: true } },
-      visit: {
-        select: {
-          visitedAt: true,
-          performedStyle: true,
-          requestedStyle: true,
-          stylistName: true,
-          photos: {
-            orderBy: { createdAt: "asc" },
-            select: { id: true, storageReference: true, caption: true }
+  const [post, customerIdentityIds] = await Promise.all([
+    prisma.visitCommunityPost.findFirst({
+      where: {
+        id: postId,
+        organizationId,
+        published: true,
+        OR: [
+          { postKind: "STORE", photoReferences: { isEmpty: false } },
+          { postKind: "VISIT", customer: { is: { deletedAt: null } }, visit: { is: { photos: { some: {} } } } }
+        ]
+      },
+      select: {
+        id: true,
+        customerId: true,
+        publishedAt: true,
+        postKind: true,
+        caption: true,
+        photoReferences: true,
+        publishedByName: true,
+        customer: { select: { name: true } },
+        visit: {
+          select: {
+            visitedAt: true,
+            performedStyle: true,
+            requestedStyle: true,
+            stylistName: true,
+            photos: {
+              orderBy: { createdAt: "asc" },
+              select: { id: true, storageReference: true, caption: true }
+            }
+          }
+        },
+        likes: { select: { appUserId: true } },
+        comments: {
+          where: { deletedAt: null, isAiAssistant: false },
+          orderBy: { createdAt: "asc" },
+          take: 100,
+          select: {
+            id: true,
+            authorDisplayName: true,
+            authorRole: true,
+            isStylistComment: true,
+            isAiAssistant: true,
+            body: true,
+            createdAt: true,
+            updatedAt: true,
+            appUserId: true,
+            appUser: {
+              select: {
+                customerId: true,
+                customerStoreLinks: {
+                  where: { organizationId },
+                  select: { customerId: true }
+                }
+              }
+            }
           }
         }
-      },
-      likes: { select: { appUserId: true } },
-      comments: {
-        where: { deletedAt: null, isAiAssistant: false },
-        orderBy: { createdAt: "asc" },
-        take: 100,
-        select: {
-          id: true,
-          authorDisplayName: true,
-          authorRole: true,
-          isStylistComment: true,
-          isAiAssistant: true,
-          body: true,
-          createdAt: true,
-          updatedAt: true,
-          appUserId: true
-        }
       }
-    }
-  });
+    }),
+    actor === "customer"
+      ? loadCommunityCustomerIdentityIds(prisma, organizationId, currentCustomerId)
+      : Promise.resolve(new Set<string>())
+  ]);
   if (!post) return null;
 
   const canManagePost = actor === "staff"
@@ -363,13 +381,22 @@ export async function loadVisitCommunityPostDetail({
     photos: photos.filter((photo): photo is { id: string; url: string; caption: string | null } => Boolean(photo.url)),
     likeCount: post.likes.length,
     likedByCurrentUser: Boolean(currentUserId && post.likes.some((like) => like.appUserId === currentUserId)),
-    comments: post.comments.map(({ appUserId, ...comment }) => ({
-      ...comment,
-      createdAt: comment.createdAt.toISOString(),
-      updatedAt: comment.updatedAt.toISOString(),
-      canEdit: Boolean(currentUserId && appUserId === currentUserId),
-      canDelete: Boolean(currentUserId && appUserId === currentUserId)
-    })),
+    comments: post.comments.map(({ appUserId, appUser, ...comment }) => {
+      const canManage = canManageCommunityComment({
+        actor,
+        currentUserId,
+        currentCustomerId,
+        customerIdentityIds,
+        comment: { appUserId, appUser, authorRole: comment.authorRole }
+      });
+      return {
+        ...comment,
+        createdAt: comment.createdAt.toISOString(),
+        updatedAt: comment.updatedAt.toISOString(),
+        canEdit: canManage,
+        canDelete: canManage
+      };
+    }),
     publishedAt: post.publishedAt.toISOString(),
     canEdit: canManagePost,
     canDelete: canManagePost
