@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 const messages: Record<string, string> = {
   current: "現在のパスワードが正しくありません。",
-  duplicate: "そのログインIDはすでに使用されています。",
+  duplicate: "そのログインIDは別の有効な店舗側アカウントで使用されています。",
   loginId: "ログインIDは半角英数字と . _ @ + - を使い、4〜80文字で入力してください。",
   password: "新しいパスワードは8文字以上で、確認欄と同じ内容を入力してください。",
   unchanged: "新しいログインIDまたはパスワードを入力してください。",

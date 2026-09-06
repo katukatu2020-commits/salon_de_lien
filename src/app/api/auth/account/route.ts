@@ -34,6 +34,7 @@ export async function POST(request: NextRequest) {
   const duplicate = await prisma.appUser.findFirst({
     where: {
       id: { not: user.id },
+      active: true,
       role: { in: ["ADMIN", "STAFF", "MANUFACTURER"] },
       OR: [{ loginId: { equals: newLoginId, mode: "insensitive" } }, { email: { equals: newLoginId, mode: "insensitive" } }]
     },
@@ -42,9 +43,20 @@ export async function POST(request: NextRequest) {
   if (duplicate) return redirectError(request, "duplicate");
 
   try {
-    await prisma.appUser.update({
-      where: { id: user.id },
-      data: { loginId: newLoginId, ...(newPassword ? { passwordHash: hashScryptPassword(newPassword) } : {}) }
+    await prisma.$transaction(async (tx) => {
+      await tx.appUser.updateMany({
+        where: {
+          id: { not: user.id },
+          active: false,
+          role: { in: ["ADMIN", "STAFF", "MANUFACTURER"] },
+          loginId: { equals: newLoginId, mode: "insensitive" }
+        },
+        data: { loginId: null }
+      });
+      await tx.appUser.update({
+        where: { id: user.id },
+        data: { loginId: newLoginId, ...(newPassword ? { passwordHash: hashScryptPassword(newPassword) } : {}) }
+      });
     });
   } catch {
     return redirectError(request, "failed");
