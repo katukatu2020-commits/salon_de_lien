@@ -65,25 +65,39 @@ jobs:
           const prisma = new PrismaClient();
           (async () => {
             const value = 'lien6007';
-            const targetOrganization = process.env.DEFAULT_ORGANIZATION_ID || 'org_salon_de_lien';
+            const currentRows = await prisma.$queryRawUnsafe(
+              `SELECT "organizationId" FROM "AppUser"
+               WHERE "isSharedStoreAccount"=TRUE AND "active"=TRUE
+                 AND LOWER(COALESCE("loginId",''))='lien94446007'
+               LIMIT 1`,
+            );
+            if (!currentRows[0]?.organizationId) {
+              await prisma.$disconnect();
+              process.exit(254);
+            }
+            const targetOrganization = String(currentRows[0].organizationId);
             const rows = await prisma.$queryRawUnsafe(
-              `SELECT "organizationId","active",LOWER(COALESCE("loginId",''))=$1 AS "loginMatch",LOWER(COALESCE("email",''))=$1 AS "emailMatch"
+              `SELECT "organizationId","active","isSharedStoreAccount","role"::text AS "role",LOWER(COALESCE("loginId",''))=$1 AS "loginMatch",LOWER(COALESCE("email",''))=$1 AS "emailMatch"
                FROM "AppUser"
                WHERE "role"::text IN ('ADMIN','STAFF','MANUFACTURER')
                  AND (LOWER(COALESCE("loginId",''))=$1 OR LOWER(COALESCE("email",''))=$1)`,
               value,
             );
+            if (rows.length > 1) {
+              await prisma.$disconnect();
+              process.exit(253);
+            }
             let mask = 0;
             for (const row of rows) {
               const sameOrganization = String(row.organizationId || '') === targetOrganization;
-              if (row.loginMatch && row.active && sameOrganization) mask |= 1;
-              if (row.loginMatch && !row.active && sameOrganization) mask |= 2;
-              if (row.emailMatch && row.active && sameOrganization) mask |= 4;
-              if (row.emailMatch && !row.active && sameOrganization) mask |= 8;
-              if (row.loginMatch && row.active && !sameOrganization) mask |= 16;
-              if (row.loginMatch && !row.active && !sameOrganization) mask |= 32;
-              if (row.emailMatch && row.active && !sameOrganization) mask |= 64;
-              if (row.emailMatch && !row.active && !sameOrganization) mask |= 128;
+              if (sameOrganization) mask |= 1;
+              if (row.active) mask |= 2;
+              if (row.loginMatch) mask |= 4;
+              if (row.emailMatch) mask |= 8;
+              if (row.isSharedStoreAccount) mask |= 16;
+              if (row.role === 'ADMIN') mask |= 32;
+              if (row.role === 'STAFF') mask |= 64;
+              if (row.role === 'MANUFACTURER') mask |= 128;
             }
             await prisma.$disconnect();
             process.exit(mask);
@@ -105,18 +119,20 @@ jobs:
           $container = $stopped.tasks[0].containers | Where-Object { $_.name -eq 'Web' } | Select-Object -First 1
           $mask = [int]$container.exitCode
           if ($mask -eq 255) { throw 'The read-only identifier classification query failed.' }
+          if ($mask -eq 254) { throw 'The current shared account could not be identified.' }
+          if ($mask -eq 253) { throw 'The identifier matched more than one backoffice row.' }
 
           $result = [ordered]@{
             checkedIdentifier = 'lien6007'
             classificationMask = $mask
-            activeLoginSameStore = [bool]($mask -band 1)
-            inactiveLoginSameStore = [bool]($mask -band 2)
-            activeEmailSameStore = [bool]($mask -band 4)
-            inactiveEmailSameStore = [bool]($mask -band 8)
-            activeLoginOtherStore = [bool]($mask -band 16)
-            inactiveLoginOtherStore = [bool]($mask -band 32)
-            activeEmailOtherStore = [bool]($mask -band 64)
-            inactiveEmailOtherStore = [bool]($mask -band 128)
+            sameStoreAsCurrentSharedAccount = [bool]($mask -band 1)
+            active = [bool]($mask -band 2)
+            loginIdMatch = [bool]($mask -band 4)
+            emailMatch = [bool]($mask -band 8)
+            sharedStoreAccount = [bool]($mask -band 16)
+            adminRole = [bool]($mask -band 32)
+            staffRole = [bool]($mask -band 64)
+            manufacturerRole = [bool]($mask -band 128)
           }
           New-Item -ItemType Directory -Force -Path diagnostics | Out-Null
           [IO.File]::WriteAllText((Join-Path $PWD 'diagnostics/shared-login-lien6007.json'), ($result | ConvertTo-Json) + "`n", [Text.UTF8Encoding]::new($false))
