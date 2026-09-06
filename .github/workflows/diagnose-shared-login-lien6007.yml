@@ -66,9 +66,10 @@ jobs:
           (async () => {
             const value = 'lien6007';
             const currentRows = await prisma.$queryRawUnsafe(
-              `SELECT "organizationId" FROM "AppUser"
-               WHERE "isSharedStoreAccount"=TRUE AND "active"=TRUE
-                 AND LOWER(COALESCE("loginId",''))='lien94446007'
+              `SELECT u."organizationId",o."name"
+               FROM "AppUser" u JOIN "Organization" o ON o."id"=u."organizationId"
+               WHERE u."isSharedStoreAccount"=TRUE AND u."active"=TRUE
+                 AND LOWER(COALESCE(u."loginId",''))='lien94446007'
                LIMIT 1`,
             );
             if (!currentRows[0]?.organizationId) {
@@ -77,28 +78,44 @@ jobs:
             }
             const targetOrganization = String(currentRows[0].organizationId);
             const rows = await prisma.$queryRawUnsafe(
-              `SELECT "organizationId","active","isSharedStoreAccount","role"::text AS "role",LOWER(COALESCE("loginId",''))=$1 AS "loginMatch",LOWER(COALESCE("email",''))=$1 AS "emailMatch"
-               FROM "AppUser"
-               WHERE "role"::text IN ('ADMIN','STAFF','MANUFACTURER')
-                 AND (LOWER(COALESCE("loginId",''))=$1 OR LOWER(COALESCE("email",''))=$1)`,
+              `SELECT u."organizationId",u."passwordHash" IS NOT NULL AS "hasPassword",u."updatedAt",o."name"
+               FROM "AppUser" u JOIN "Organization" o ON o."id"=u."organizationId"
+               WHERE u."active"=TRUE AND u."isSharedStoreAccount"=TRUE
+                 AND LOWER(COALESCE(u."loginId",''))=$1`,
               value,
             );
-            if (rows.length > 1) {
+            if (rows.length !== 1) {
               await prisma.$disconnect();
               process.exit(253);
             }
+            const collision = rows[0];
+            const collisionOrganization = String(collision.organizationId || '');
+            const stats = await prisma.$queryRawUnsafe(
+              `SELECT
+                 (SELECT COUNT(*)::int FROM "AppUser" WHERE "organizationId"=$1 AND "role"='ADMIN' AND "active"=TRUE) AS "activeAdmins",
+                 (SELECT COUNT(*)::int FROM "Customer" WHERE "organizationId"=$1 AND "deletedAt" IS NULL) AS "customers",
+                 (SELECT COUNT(*)::int FROM "Appointment" WHERE "organizationId"=$1) AS "appointments",
+                 (SELECT COUNT(*)::int FROM "ServiceSale" WHERE "organizationId"=$1) AS "sales",
+                 (SELECT COUNT(*)::int FROM "Customer" WHERE "organizationId"=$2 AND "deletedAt" IS NULL) AS "currentCustomers",
+                 (SELECT COUNT(*)::int FROM "Appointment" WHERE "organizationId"=$2) AS "currentAppointments",
+                 (SELECT COUNT(*)::int FROM "ServiceSale" WHERE "organizationId"=$2) AS "currentSales",
+                 (SELECT COUNT(*)::int FROM "OrganizationBilling" WHERE "organizationId"=$1 AND "subscriptionStatus" NOT IN ('none','canceled','incomplete_expired')) AS "liveBilling"`,
+              collisionOrganization,
+              targetOrganization,
+            );
+            const summary = stats[0] || {};
+            const normalizedName = input => String(input || '').normalize('NFKC').replace(/\s+/g, '').toLowerCase();
+            const collisionHasBusinessData = Number(summary.customers || 0) + Number(summary.appointments || 0) + Number(summary.sales || 0) > 0;
+            const currentHasBusinessData = Number(summary.currentCustomers || 0) + Number(summary.currentAppointments || 0) + Number(summary.currentSales || 0) > 0;
             let mask = 0;
-            for (const row of rows) {
-              const sameOrganization = String(row.organizationId || '') === targetOrganization;
-              if (sameOrganization) mask |= 1;
-              if (row.active) mask |= 2;
-              if (row.loginMatch) mask |= 4;
-              if (row.emailMatch) mask |= 8;
-              if (row.isSharedStoreAccount) mask |= 16;
-              if (row.role === 'ADMIN') mask |= 32;
-              if (row.role === 'STAFF') mask |= 64;
-              if (row.role === 'MANUFACTURER') mask |= 128;
-            }
+            if (collisionOrganization === (process.env.DEFAULT_ORGANIZATION_ID || 'org_salon_de_lien')) mask |= 1;
+            if (normalizedName(collision.name) === normalizedName(currentRows[0].name)) mask |= 2;
+            if (collision.hasPassword) mask |= 4;
+            if (Number(summary.activeAdmins || 0) > 0) mask |= 8;
+            if (collisionHasBusinessData) mask |= 16;
+            if (currentHasBusinessData) mask |= 32;
+            if (Number(summary.liveBilling || 0) > 0) mask |= 64;
+            if (Date.now() - new Date(collision.updatedAt).getTime() < 30 * 24 * 60 * 60 * 1000) mask |= 128;
             await prisma.$disconnect();
             process.exit(mask);
           })().catch(async () => {
@@ -124,15 +141,15 @@ jobs:
 
           $result = [ordered]@{
             checkedIdentifier = 'lien6007'
-            classificationMask = $mask
-            sameStoreAsCurrentSharedAccount = [bool]($mask -band 1)
-            active = [bool]($mask -band 2)
-            loginIdMatch = [bool]($mask -band 4)
-            emailMatch = [bool]($mask -band 8)
-            sharedStoreAccount = [bool]($mask -band 16)
-            adminRole = [bool]($mask -band 32)
-            staffRole = [bool]($mask -band 64)
-            manufacturerRole = [bool]($mask -band 128)
+            lifecycleMask = $mask
+            collisionIsDefaultOrganization = [bool]($mask -band 1)
+            sameNormalizedStoreName = [bool]($mask -band 2)
+            collisionAccountHasPassword = [bool]($mask -band 4)
+            collisionStoreHasActiveOwner = [bool]($mask -band 8)
+            collisionStoreHasBusinessData = [bool]($mask -band 16)
+            currentStoreHasBusinessData = [bool]($mask -band 32)
+            collisionStoreHasLiveBilling = [bool]($mask -band 64)
+            collisionAccountUpdatedWithin30Days = [bool]($mask -band 128)
           }
           New-Item -ItemType Directory -Force -Path diagnostics | Out-Null
           [IO.File]::WriteAllText((Join-Path $PWD 'diagnostics/shared-login-lien6007.json'), ($result | ConvertTo-Json) + "`n", [Text.UTF8Encoding]::new($false))
