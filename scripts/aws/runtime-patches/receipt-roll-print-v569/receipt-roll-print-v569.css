@@ -1,0 +1,105 @@
+/* Screen presentation remains unchanged; this layer exists only for receipt printing. */
+#orimia-receipt-roll-host-v569 {
+  display: none !important;
+}
+
+html[data-orimia-receipt-roll-print-v569="1"] #admin-mobile-bottom-nav-v518,
+html[data-orimia-receipt-roll-print-v569="1"] .orimia-admin-bottom-nav-v518,
+html[data-orimia-receipt-roll-print-v569="1"] .admin-mobile-header,
+html[data-orimia-receipt-roll-print-v569="1"] .admin-desktop-header,
+html[data-orimia-receipt-roll-print-v569="1"] .admin-desktop-sidebar,
+html[data-orimia-receipt-roll-print-v569="1"] #orimia-ui-loader-v536 {
+  display: none !important;
+}
+
+html[data-orimia-receipt-roll-print-v569="1"] body {
+  padding-bottom: 0 !important;
+}
+
+html[data-orimia-receipt-roll-print-v569="1"][data-orimia-receipt-roll-measuring-v569="1"] #orimia-receipt-roll-host-v569 {
+  display: flow-root !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: -10000px !important;
+  box-sizing: border-box !important;
+  width: 80mm !important;
+  min-width: 80mm !important;
+  max-width: 80mm !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+#orimia-receipt-roll-host-v569 [data-orimia-receipt-roll-copy-v569="1"] {
+  display: block !important;
+  box-sizing: border-box !important;
+  page: receipt !important;
+  width: 80mm !important;
+  min-width: 80mm !important;
+  max-width: 80mm !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 4mm 4mm 3mm !important;
+  overflow: visible !important;
+  background: #fff !important;
+  color: #111 !important;
+  box-shadow: none !important;
+  break-inside: avoid !important;
+  page-break-inside: avoid !important;
+  print-color-adjust: exact !important;
+  -webkit-print-color-adjust: exact !important;
+}
+
+@media print {
+  html[data-orimia-receipt-roll-print-v569="1"][data-orimia-receipt-roll-ready-v569="1"],
+  html[data-orimia-receipt-roll-print-v569="1"][data-orimia-receipt-roll-ready-v569="1"] body {
+    display: block !important;
+    position: static !important;
+    box-sizing: border-box !important;
+    page: receipt !important;
+    width: 80mm !important;
+    min-width: 80mm !important;
+    max-width: 80mm !important;
+    height: var(--orimia-receipt-roll-height-v569) !important;
+    min-height: var(--orimia-receipt-roll-height-v569) !important;
+    max-height: var(--orimia-receipt-roll-height-v569) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    background: #fff !important;
+  }
+
+  html[data-orimia-receipt-roll-print-v569="1"][data-orimia-receipt-roll-ready-v569="1"] body::before,
+  html[data-orimia-receipt-roll-print-v569="1"][data-orimia-receipt-roll-ready-v569="1"] body::after {
+    display: none !important;
+    content: none !important;
+  }
+
+  html[data-orimia-receipt-roll-print-v569="1"][data-orimia-receipt-roll-ready-v569="1"] body > *:not(#orimia-receipt-roll-host-v569) {
+    display: none !important;
+  }
+
+  html[data-orimia-receipt-roll-print-v569="1"][data-orimia-receipt-roll-ready-v569="1"] #orimia-receipt-roll-host-v569 {
+    display: block !important;
+    position: static !important;
+    box-sizing: border-box !important;
+    page: receipt !important;
+    width: 80mm !important;
+    min-width: 80mm !important;
+    max-width: 80mm !important;
+    height: var(--orimia-receipt-roll-height-v569) !important;
+    min-height: var(--orimia-receipt-roll-height-v569) !important;
+    max-height: var(--orimia-receipt-roll-height-v569) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    visibility: visible !important;
+  }
+}
