@@ -1,12 +1,12 @@
 {
   "checkedIdentifier": "lien6007",
-  "classificationMask": 86,
-  "sameStoreAsCurrentSharedAccount": false,
-  "active": true,
-  "loginIdMatch": true,
-  "emailMatch": false,
-  "sharedStoreAccount": true,
-  "adminRole": false,
-  "staffRole": true,
-  "manufacturerRole": false
+  "lifecycleMask": 236,
+  "collisionIsDefaultOrganization": false,
+  "sameNormalizedStoreName": false,
+  "collisionAccountHasPassword": true,
+  "collisionStoreHasActiveOwner": true,
+  "collisionStoreHasBusinessData": false,
+  "currentStoreHasBusinessData": true,
+  "collisionStoreHasLiveBilling": true,
+  "collisionAccountUpdatedWithin30Days": true
 }
