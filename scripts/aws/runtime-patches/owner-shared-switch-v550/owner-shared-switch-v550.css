@@ -1,0 +1,128 @@
+.owner-shared-switch-v550 {
+  display: inline-flex;
+  min-width: max-content;
+  min-height: 36px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid #dfc8bf;
+  border-radius: 999px;
+  background: #fffdfb;
+  padding: 0 12px;
+  color: #84483d;
+  box-shadow: 0 5px 14px rgb(91 52 37 / 8%);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1;
+  white-space: nowrap;
+  transition: border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.owner-shared-switch-v550:hover {
+  border-color: #bd7d6e;
+  background: #fff7f4;
+  box-shadow: 0 8px 18px rgb(91 52 37 / 13%);
+  transform: translateY(-1px);
+}
+
+.owner-shared-switch-v550:focus-visible {
+  outline: 3px solid rgb(207 79 114 / 20%);
+  outline-offset: 2px;
+}
+
+.owner-shared-switch-v550:disabled {
+  cursor: wait;
+  opacity: .68;
+  transform: none;
+}
+
+.owner-shared-switch-v550 svg {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 15px;
+}
+
+.owner-shared-switch-v550[aria-busy="true"] svg {
+  animation: owner-shared-switch-pulse-v550 700ms ease-in-out infinite alternate;
+}
+
+.owner-shared-switch-status-v550 {
+  position: fixed;
+  z-index: 100200;
+  right: 20px;
+  bottom: 24px;
+  max-width: min(360px, calc(100vw - 32px));
+  border: 1px solid #e2b8ae;
+  border-radius: 8px;
+  background: #fff8f5;
+  padding: 12px 15px;
+  color: #7e3f35;
+  box-shadow: 0 18px 45px rgb(53 31 25 / 18%);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.6;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(8px);
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.owner-shared-switch-status-v550.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+html.owner-shared-switching-v550 .owner-shared-switch-v550 {
+  pointer-events: none;
+}
+
+html[data-ca-theme="dark"] .owner-shared-switch-v550 {
+  border-color: #59463e;
+  background: #27201d;
+  color: #eadfd9;
+}
+
+@media (max-width: 1050px) and (min-width: 768px) {
+  .owner-shared-switch-v550 {
+    width: 36px;
+    min-width: 36px;
+    padding: 0;
+  }
+
+  .owner-shared-switch-v550 span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .owner-shared-switch-v550 {
+    display: none !important;
+  }
+}
+
+@keyframes owner-shared-switch-pulse-v550 {
+  from { opacity: .35; transform: translateX(-1px); }
+  to { opacity: 1; transform: translateX(1px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .owner-shared-switch-v550,
+  .owner-shared-switch-status-v550 {
+    transition: none;
+  }
+
+  .owner-shared-switch-v550[aria-busy="true"] svg {
+    animation: none;
+  }
+}
