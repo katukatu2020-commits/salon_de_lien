@@ -19,19 +19,19 @@ import { useEffect, useState, type ReactNode } from "react";
 import { BrandVisual } from "@/components/lien/brand-visual";
 
 const navItems = [
-  { href: "/admin/appointments", label: "予約カレンダー", icon: CalendarDays },
-  { href: "/admin/customers", label: "顧客・ポイント", icon: UsersRound },
-  { href: "/admin/products", label: "商品棚・集計", icon: PackageSearch },
-  { href: "/admin/community", label: "スタイル共有", icon: Images, staffOnly: true },
-  { href: "/admin/owner-analytics", label: "経営分析", icon: BarChart3, ownerOnly: true }
+  { href: "/admin/appointments", label: "予約・シフト・会計", icon: CalendarDays },
+  { href: "/admin/customers", label: "顧客・カルテ・配信", icon: UsersRound },
+  { href: "/admin/products", label: "メニュー・商品・在庫", icon: PackageSearch },
+  { href: "/admin/community", label: "スタイル投稿", icon: Images, staffOnly: true },
+  { href: "/admin/owner-analytics", label: "経営・会計管理", icon: BarChart3, ownerOnly: true }
 ];
 
 const commandItems = [
-  { href: "/admin/appointments", label: "予約カレンダー", hint: "Gmail予約と月間予定", icon: CalendarDays },
-  { href: "/admin/customers", label: "顧客・ポイント", hint: "顧客管理とポイント管理", icon: UsersRound },
-  { href: "/admin/products", label: "商品棚・集計", hint: "商品・在庫管理と集計", icon: PackageSearch },
-  { href: "/admin/community", label: "スタイル共有", hint: "公開された施術写真とコメント", icon: Images, staffOnly: true },
-  { href: "/admin/owner-analytics", label: "経営分析", hint: "売上・スタッフ・顧客構成", icon: BarChart3, ownerOnly: true }
+  { href: "/admin/appointments", label: "予約・シフト・会計", hint: "予約・シフト・出退勤・会計", icon: CalendarDays },
+  { href: "/admin/customers", label: "顧客・カルテ・配信", hint: "顧客カルテ・チャット・配信", icon: UsersRound },
+  { href: "/admin/products", label: "メニュー・商品・在庫", hint: "メニュー・商品・在庫・発注", icon: PackageSearch },
+  { href: "/admin/community", label: "スタイル投稿", hint: "スタイル投稿・公開・コメント管理", icon: Images, staffOnly: true },
+  { href: "/admin/owner-analytics", label: "経営・会計管理", hint: "経営分析・会計データ・利用料", icon: BarChart3, ownerOnly: true }
 ];
 
 const publicPathPrefixes = [
