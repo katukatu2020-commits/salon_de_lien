@@ -1,0 +1,28 @@
+/* admin-home-visual-v573 */
+html.orimia-admin-home-visual-pending-v573 .admin-app-shell img:is(
+  [src*="salon-interior-illustrated.png"],
+  [src*="customer-crm.webp"],
+  [src*="points-management.webp"],
+  [src*="customer-hair-care.webp"],
+  [src*="customer-hair-care-male.png"],
+  [src*="salon-product-shelf-illustrated.png"],
+  [src*="consultation.webp"],
+  [src*="salon-style-short-dark.jpg"],
+  [src*="product-collection.webp"],
+  [src*="customer-visit-history-v2.png"],
+  [src*="customer-profile-v2.png"]
+):not([data-ohb-preview-image]) {
+  opacity: 0;
+}
+
+.admin-app-shell img[data-orimia-admin-home-visual-v573="1"] {
+  object-position: center center !important;
+  opacity: 1;
+  transition: opacity 160ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-app-shell img[data-orimia-admin-home-visual-v573="1"] {
+    transition: none;
+  }
+}
