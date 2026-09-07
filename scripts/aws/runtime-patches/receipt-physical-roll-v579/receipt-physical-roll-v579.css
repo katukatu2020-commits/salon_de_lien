@@ -1,0 +1,109 @@
+/* The print copy is prepared before the native print dialog opens. */
+#orimia-receipt-roll-host-v579 {
+  display: none !important;
+}
+
+html[data-orimia-receipt-physical-roll-v579="1"] #admin-mobile-bottom-nav-v518,
+html[data-orimia-receipt-physical-roll-v579="1"] .orimia-admin-bottom-nav-v518,
+html[data-orimia-receipt-physical-roll-v579="1"] .admin-mobile-header,
+html[data-orimia-receipt-physical-roll-v579="1"] .admin-desktop-header,
+html[data-orimia-receipt-physical-roll-v579="1"] .admin-desktop-sidebar,
+html[data-orimia-receipt-physical-roll-v579="1"] #orimia-ui-loader-v536 {
+  display: none !important;
+}
+
+html[data-orimia-receipt-physical-roll-v579="1"] body {
+  padding-bottom: 0 !important;
+}
+
+html[data-orimia-receipt-physical-roll-v579="1"][data-orimia-receipt-roll-measuring-v579="1"] #orimia-receipt-roll-host-v579 {
+  display: flow-root !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: -10000px !important;
+  box-sizing: border-box !important;
+  width: 80mm !important;
+  min-width: 80mm !important;
+  max-width: 80mm !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+#orimia-receipt-roll-host-v579 [data-orimia-receipt-roll-copy-v579="1"] {
+  display: block !important;
+  position: relative !important;
+  box-sizing: border-box !important;
+  page: auto !important;
+  width: 80mm !important;
+  min-width: 80mm !important;
+  max-width: 80mm !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 2mm 4mm !important;
+  overflow: visible !important;
+  background: #fff !important;
+  color: #111 !important;
+  box-shadow: none !important;
+  break-inside: avoid !important;
+  page-break-inside: avoid !important;
+  transform: none !important;
+  print-color-adjust: exact !important;
+  -webkit-print-color-adjust: exact !important;
+}
+
+@media print {
+  html[data-orimia-receipt-physical-roll-v579="1"][data-orimia-receipt-roll-ready-v579="1"],
+  html[data-orimia-receipt-physical-roll-v579="1"][data-orimia-receipt-roll-ready-v579="1"] body {
+    display: block !important;
+    position: relative !important;
+    box-sizing: border-box !important;
+    page: auto !important;
+    width: 80mm !important;
+    min-width: 80mm !important;
+    max-width: 80mm !important;
+    height: var(--orimia-receipt-roll-height-v579) !important;
+    min-height: var(--orimia-receipt-roll-height-v579) !important;
+    max-height: var(--orimia-receipt-roll-height-v579) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    background: #fff !important;
+  }
+
+  html[data-orimia-receipt-physical-roll-v579="1"][data-orimia-receipt-roll-ready-v579="1"] body::before,
+  html[data-orimia-receipt-physical-roll-v579="1"][data-orimia-receipt-roll-ready-v579="1"] body::after {
+    display: none !important;
+    content: none !important;
+  }
+
+  html[data-orimia-receipt-physical-roll-v579="1"][data-orimia-receipt-roll-ready-v579="1"] body > *:not(#orimia-receipt-roll-host-v579) {
+    display: none !important;
+  }
+
+  html[data-orimia-receipt-physical-roll-v579="1"][data-orimia-receipt-roll-ready-v579="1"] #orimia-receipt-roll-host-v579 {
+    display: block !important;
+    position: absolute !important;
+    inset: 0 auto auto 0 !important;
+    box-sizing: border-box !important;
+    page: auto !important;
+    width: 80mm !important;
+    min-width: 80mm !important;
+    max-width: 80mm !important;
+    height: var(--orimia-receipt-roll-height-v579) !important;
+    min-height: var(--orimia-receipt-roll-height-v579) !important;
+    max-height: var(--orimia-receipt-roll-height-v579) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    visibility: visible !important;
+    transform: none !important;
+  }
+}

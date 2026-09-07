@@ -105,7 +105,7 @@ export default async function AppointmentReceiptPage({ params }: AppointmentRece
         <ReceiptPrintButton />
       </div>
 
-      <article className={styles.receipt} aria-label="会計レシート">
+      <article data-receipt-print-root className={styles.receipt} aria-label="会計レシート">
         <header className={styles.brand}>
           <p className={styles.brandName}>{appointment.customer.organization.name}</p>
           <p className={styles.brandSub}>{DEFAULT_COUPON_SALON_INFO.salonNameSub}</p>
