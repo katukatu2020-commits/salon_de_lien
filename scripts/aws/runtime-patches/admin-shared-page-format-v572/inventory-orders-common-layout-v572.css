@@ -1,0 +1,124 @@
+/* inventory-orders-common-layout-v572 */
+html.orimia-inventory-orders-pending-v572 .admin-main-content > .mx-auto.grid.max-w-7xl.gap-6 {
+  visibility: hidden !important;
+}
+
+html.orimia-inventory-orders-ready-v572 .admin-main-content > .mx-auto.grid.max-w-7xl.gap-6 {
+  visibility: visible !important;
+}
+
+.orimia-inventory-hero-image-v572 {
+  position: relative;
+  background: #efe5da;
+}
+
+.orimia-inventory-hero-image-v572 img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 58% 52%;
+}
+
+.orimia-workspace-back-v572 {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid var(--lien-border, #eaded9);
+  border-radius: 14px;
+  background: var(--lien-surface, #fff);
+  padding: 0 16px;
+  color: var(--lien-ink, #332d2a);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.orimia-workspace-back-v572:hover {
+  background: var(--lien-surface-soft, #f6efe6);
+}
+
+.orimia-workspace-back-v572 svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+}
+
+[data-orimia-admin-workspace-root-v572="inventory-orders"] #wholesale-app {
+  --wo-ink: var(--lien-ink, #342b28);
+  --wo-muted: var(--lien-muted, #81756f);
+  --wo-line: var(--lien-border, #eaded9);
+  --wo-paper: var(--lien-surface, #fff);
+  --wo-wash: var(--lien-bg, #fffaf7);
+  --wo-rose: var(--lien-primary, #c75470);
+  --wo-rose-dark: var(--lien-primary-dark, #984157);
+  --wo-rose-soft: var(--lien-surface-rose, #fceaf0);
+  display: grid;
+  min-width: 0;
+  gap: 20px;
+  color: var(--lien-ink, #342b28);
+  font-family: inherit;
+}
+
+[data-orimia-admin-workspace-root-v572="inventory-orders"] :is(.wo-contract-band, .wo-tabs) {
+  margin: 0;
+}
+
+[data-orimia-admin-workspace-root-v572="inventory-orders"] .wo-contract-band,
+[data-orimia-admin-workspace-root-v572="inventory-orders"] .wo-workspace {
+  border-color: var(--lien-border, #eaded9);
+  border-radius: 22px;
+  background: var(--lien-surface, #fff);
+  box-shadow: var(--lien-shadow-sm, 0 10px 30px rgba(47, 42, 37, .05));
+}
+
+[data-orimia-admin-workspace-root-v572="inventory-orders"] .wo-contract-band {
+  border-left: 4px solid var(--wo-amber);
+}
+
+[data-orimia-admin-workspace-root-v572="inventory-orders"] .wo-contract-band.connected {
+  border-left-color: var(--wo-sage);
+}
+
+[data-orimia-admin-workspace-root-v572="inventory-orders"] .wo-tabs {
+  gap: 4px;
+  border-color: var(--lien-border, #eaded9);
+  border-radius: 18px;
+  padding: 4px;
+  box-shadow: var(--lien-shadow-sm, 0 8px 24px rgba(47, 42, 37, .05));
+}
+
+[data-orimia-admin-workspace-root-v572="inventory-orders"] .wo-tabs button {
+  min-height: 44px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+[data-orimia-admin-workspace-root-v572="inventory-orders"] :is(.wo-button, .wo-icon-button, .wo-inline-form input, .wo-order-summary input, .wo-order-summary textarea, .wo-inventory-save input, .wo-detail-bottom textarea, .wo-dealer-select select, .wo-search input, .wo-filters select, .wo-check) {
+  border-radius: 14px;
+}
+
+[data-orimia-admin-workspace-root-v572="inventory-orders"] .wo-workspace-head {
+  min-height: 104px;
+  border-color: var(--lien-border, #eaded9);
+  background: var(--lien-surface, #fff);
+}
+
+@media (max-width: 700px) {
+  .orimia-inventory-hero-image-v572 {
+    min-height: 132px;
+  }
+
+  .orimia-workspace-back-v572 {
+    width: 100%;
+  }
+
+  [data-orimia-admin-workspace-root-v572="inventory-orders"] #wholesale-app {
+    gap: 16px;
+  }
+}

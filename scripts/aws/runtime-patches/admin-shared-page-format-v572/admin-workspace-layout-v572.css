@@ -1,0 +1,24 @@
+/* admin-workspace-layout-v572 */
+[data-orimia-admin-workspace-source-v572] {
+  display: none !important;
+}
+
+.orimia-admin-workspace-host-v572,
+.orimia-admin-workspace-content-v572 {
+  display: contents !important;
+}
+
+[data-orimia-admin-workspace-root-v572] {
+  width: 100%;
+  min-width: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-orimia-admin-workspace-root-v572] *,
+  [data-orimia-admin-workspace-root-v572] *::before,
+  [data-orimia-admin-workspace-root-v572] *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
