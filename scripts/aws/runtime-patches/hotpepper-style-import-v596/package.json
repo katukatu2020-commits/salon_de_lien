@@ -1,0 +1,6 @@
+{
+  "name": "orimia-hotpepper-style-import-v596",
+  "private": true,
+  "version": "1.0.0",
+  "dependencies": { "cheerio": "1.1.2" }
+}
