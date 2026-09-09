@@ -1,0 +1,48 @@
+name: Audit customer store availability v598
+on:
+  push:
+    branches: [recovery/aws-canonical-20260815]
+    paths:
+      - .github/workflows/audit-customer-store-availability-v598.yml
+      - scripts/aws/runtime-patches/customer-store-availability-v598/audit.cjs
+permissions:
+  contents: read
+  id-token: write
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::009293460979:role/SalonDeLienGitHubDeployRole
+          aws-region: ap-northeast-1
+      - name: Read-only membership diagnostics
+        shell: pwsh
+        run: |
+          $cluster='salon-de-lien-staging-cluster'
+          $service='salon-de-lien-staging-web'
+          $live=aws ecs describe-services --cluster $cluster --services $service --output json --no-cli-pager | ConvertFrom-Json
+          $task=$live.services[0].taskDefinition
+          if ($task -ne 'arn:aws:ecs:ap-northeast-1:009293460979:task-definition/salon-de-lien-staging-web:597') { throw 'Reviewed task changed.' }
+          $config=$live.services[0].networkConfiguration.awsvpcConfiguration
+          $network="awsvpcConfiguration={subnets=[$($config.subnets -join ',')],securityGroups=[$($config.securityGroups -join ',')],assignPublicIp=$($config.assignPublicIp)}"
+          $code=Get-Content -Raw scripts/aws/runtime-patches/customer-store-availability-v598/audit.cjs
+          $overrides=@{containerOverrides=@(@{name='Web';command=@('node','-e',$code)})}
+          $file=Join-Path $env:RUNNER_TEMP 'store-audit.json'
+          [IO.File]::WriteAllText($file,($overrides | ConvertTo-Json -Depth 8 -Compress),[Text.UTF8Encoding]::new($false))
+          $started=aws ecs run-task --cluster $cluster --task-definition $task --launch-type FARGATE --network-configuration $network --overrides "file://$file" --output json --no-cli-pager | ConvertFrom-Json
+          if (-not $started.tasks[0].taskArn) { throw 'Audit task could not start.' }
+          $arn=$started.tasks[0].taskArn
+          aws ecs wait tasks-stopped --cluster $cluster --tasks $arn
+          if ($LASTEXITCODE -ne 0) { throw 'Audit timed out.' }
+          $definition=aws ecs describe-task-definition --task-definition $task --output json --no-cli-pager | ConvertFrom-Json
+          $web=@($definition.taskDefinition.containerDefinitions | Where-Object name -eq 'Web')[0]
+          $group=$web.logConfiguration.options.'awslogs-group'
+          $stream=$web.logConfiguration.options.'awslogs-stream-prefix'+'/Web/'+$arn.Split('/')[-1]
+          $events=aws logs get-log-events --log-group-name $group --log-stream-name $stream --output json --no-cli-pager | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0) { throw 'Audit ran, but log read permission is not available.' }
+          $events.events | Where-Object { $_.message -like 'STORE_AUDIT_V598 *' } | ForEach-Object { $_.message }
+          $result=aws ecs describe-tasks --cluster $cluster --tasks $arn --output json --no-cli-pager | ConvertFrom-Json
+          if ($result.tasks[0].containers[0].exitCode -ne 0) { throw 'Read-only audit failed.' }
