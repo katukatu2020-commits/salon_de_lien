@@ -1,10 +1,5 @@
 name: Audit customer store list v595
-on:
-  push:
-    branches: [recovery/aws-canonical-20260815]
-    paths:
-      - .github/workflows/audit-customer-store-list-v595.yml
-      - scripts/aws/runtime-patches/customer-store-list-v595/audit.cjs
+on: workflow_dispatch
 permissions:
   contents: read
   id-token: write
@@ -42,6 +37,7 @@ jobs:
           $group=$web.logConfiguration.options.'awslogs-group'
           $stream=$web.logConfiguration.options.'awslogs-stream-prefix'+'/Web/'+$arn.Split('/')[-1]
           $events=aws logs get-log-events --log-group-name $group --log-stream-name $stream --output json --no-cli-pager | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0) { throw 'Audit ran, but log read permission is not available.' }
           $events.events | Where-Object { $_.message -like 'STORE_AUDIT_V595 *' } | ForEach-Object { $_.message }
           $result=aws ecs describe-tasks --cluster $cluster --tasks $arn --output json --no-cli-pager | ConvertFrom-Json
           if ($result.tasks[0].containers[0].exitCode -ne 0) { throw 'Read-only audit failed.' }
