@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
   }
 
-  const response = NextResponse.redirect(getExternalRequestUrl(request, "/admin/login?loggedOut=1"), 303);
+  const response = NextResponse.redirect(getExternalRequestUrl(request, "/business"), 303);
   response.cookies.set({
     name: ADMIN_SESSION_COOKIE,
     value: "",
