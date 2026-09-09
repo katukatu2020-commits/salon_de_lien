@@ -1,0 +1,76 @@
+/* customer-style-mobile-gallery-v608 */
+@media (max-width: 767px) {
+  body .community-detail-page article.orimia-style-detail-customer-v602 > .orimia-style-gallery-stable-v605.orimia-style-gallery-mobile-v608 {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: none !important;
+    gap: 4px !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    aspect-ratio: auto !important;
+    overflow: visible !important;
+    contain: none;
+    background: #f2ece7 !important;
+  }
+
+  body .community-detail-page article.orimia-style-detail-customer-v602 > .orimia-style-gallery-stable-v605.orimia-style-gallery-mobile-v608[data-photo-count-v602] > a.orimia-style-photo-v605 {
+    position: relative !important;
+    inset: auto !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    grid-column: auto !important;
+    grid-row: auto !important;
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    max-width: 100% !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    aspect-ratio: var(--orimia-style-photo-aspect-v608, 3 / 4) !important;
+    overflow: hidden !important;
+    contain: paint;
+    background: #f2ece7 !important;
+  }
+
+  body .community-detail-page article.orimia-style-detail-customer-v602 > .orimia-style-gallery-stable-v605.orimia-style-gallery-mobile-v608[data-photo-count-v602] > a.orimia-style-photo-v605 > span {
+    position: absolute !important;
+    inset: 0 !important;
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    max-width: none !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background-size: contain !important;
+    background-repeat: no-repeat !important;
+    background-position: center center !important;
+    transform: none !important;
+  }
+
+  body .community-detail-page article.orimia-style-detail-customer-v602 > .orimia-style-gallery-stable-v605.orimia-style-gallery-mobile-v608[data-photo-count-v602] > a.orimia-style-photo-v605 > img {
+    position: absolute !important;
+    inset: 0 !important;
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    max-width: none !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    aspect-ratio: auto !important;
+    object-fit: contain !important;
+    object-position: center center !important;
+  }
+}
