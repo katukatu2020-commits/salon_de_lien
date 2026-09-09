@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app@sha256:a890015a58d1f992d821e488574ffc06c20e55c013c454a368c2a587ecbd2085
+ARG BASE_IMAGE=009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app@sha256:a7d3e8083c94a724f021b3c4bec9ec6a4cc639c4361224aacebd249aa5a40eae
 FROM ${BASE_IMAGE}
 USER root
 WORKDIR /app

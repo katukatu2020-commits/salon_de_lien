@@ -79,14 +79,17 @@ try {
   await firstPaint.screenshot({ path: path.join(output, 'login-no-javascript.png'), fullPage: true })
   for (const route of ['/u/password-reset', '/admin/login', '/admin/register']) {
     const response = await noScript.request.get(base + route)
-    assert(!(await response.text()).includes('customer-login-visual-v593.css'), 'login CSS leaked to ' + route)
+    assert(!(await response.text()).includes('customer-login-visual-v593'), 'login CSS leaked to ' + route)
   }
   await noScript.close()
   const navigation = await browser.newPage({ viewport: { width: 1365, height: 900 } })
+  navigation.on('pageerror', error => errors.push(error.message))
+  await navigation.route('**/customer-login-visual-v593.css', route => route.abort())
   await navigation.goto(base + '/u/password-reset', { waitUntil: 'networkidle' })
   await navigation.locator('a[href="/u/login"]').first().click()
   await navigation.waitForURL('**/u/login', { waitUntil: 'networkidle' })
   await navigation.locator('figure.customer-login-visual-v593').waitFor()
+  assert.equal(await navigation.locator('style#customer-login-visual-v593').count(), 1, 'photo styling must travel inline with RSC content')
   assert.equal(await navigation.locator('figure.customer-login-visual-v593 svg').count(), 0)
   assert.equal(await navigation.locator('.customer-login-copy-v593 p').first().evaluate(element => getComputedStyle(element).color), 'rgb(255, 255, 255)')
   await navigation.screenshot({ path: path.join(output, 'login-return-from-reset.png'), fullPage: true })

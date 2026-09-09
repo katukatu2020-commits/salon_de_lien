@@ -23,7 +23,7 @@ env:
   ECS_CLUSTER: salon-de-lien-staging-cluster
   ECS_SERVICE: salon-de-lien-staging-web
   RELEASE_DIR: scripts/aws/runtime-patches/customer-login-visual-v593
-  PARENT_DIGEST: sha256:a890015a58d1f992d821e488574ffc06c20e55c013c454a368c2a587ecbd2085
+  PARENT_DIGEST: sha256:a7d3e8083c94a724f021b3c4bec9ec6a4cc639c4361224aacebd249aa5a40eae
 
 jobs:
   deploy:
