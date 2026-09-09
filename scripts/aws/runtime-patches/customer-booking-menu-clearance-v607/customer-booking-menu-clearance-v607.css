@@ -1,0 +1,25 @@
+/* customer-booking-menu-clearance-v607 */
+html[data-customer-journey="booking"] {
+  --cj-booking-bottom-nav-height: calc(64px + env(safe-area-inset-bottom));
+  --cj-booking-action-height: 67px;
+  --cj-booking-action-gap: 24px;
+  --cj-booking-bottom-clearance: calc(
+    var(--cj-booking-bottom-nav-height) +
+    var(--cj-booking-action-height) +
+    var(--cj-booking-action-gap)
+  );
+}
+
+@media (max-width: 767px) {
+  html[data-customer-journey="booking"],
+  html[data-customer-journey="booking"] body {
+    scroll-padding-bottom: var(--cj-booking-bottom-clearance);
+  }
+
+  html[data-customer-journey="booking"] body:has(.customer-premium-topbar):not(#customer-premium-shell)
+    .customer-native-route-shell main.cj-main,
+  html[data-customer-journey="booking"] body#customer-premium-shell main.cj-main {
+    padding-bottom: var(--cj-booking-bottom-clearance) !important;
+    scroll-padding-bottom: var(--cj-booking-bottom-clearance) !important;
+  }
+}
