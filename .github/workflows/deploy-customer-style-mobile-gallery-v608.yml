@@ -60,7 +60,9 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Install the pinned registry export tool
-        uses: imjasonh/setup-crane@31b88efe9de28ae0ffa220711af4b60be9435f6e
+        uses: imjasonh/setup-crane@feee3b6bb0d4c68370f256a4502498c9227e5c6b
+        with:
+          version: v0.22.1
 
       - name: Resolve and lock the currently running release
         shell: pwsh
