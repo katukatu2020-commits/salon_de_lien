@@ -1,0 +1,18 @@
+/* Scoped to the login photo; authentication and shared BrandVisual remain unchanged. */
+figure.customer-login-visual-v593 > div {
+  position: absolute;
+  inset: 0;
+  background: transparent !important;
+}
+
+figure.customer-login-visual-v593 .customer-login-copy-v593 {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  background: linear-gradient(to top, rgba(20, 22, 21, .8) 0%, rgba(20, 22, 21, .32) 28%, transparent 58%);
+}
+
+figure.customer-login-visual-v593 .customer-login-copy-v593 p {
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .25);
+}
