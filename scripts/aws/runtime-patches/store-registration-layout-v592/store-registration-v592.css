@@ -1,0 +1,83 @@
+/* Shared wo-auth layout and controls come from the dealer registration stylesheet. */
+.orimia-store-register { overflow-wrap: anywhere; }
+.orimia-store-register * { letter-spacing: 0; }
+.orimia-store-register .wo-auth-visual {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 580px;
+}
+.orimia-store-register .wo-auth-visual::before {
+  background-image: linear-gradient(145deg, rgba(29, 56, 53, .2), rgba(23, 41, 40, .82)), url('/brand/salon-interior.jpg');
+}
+.orimia-store-register .store-register-brand {
+  position: absolute;
+  top: clamp(34px, 5vw, 70px);
+  left: clamp(44px, 7vw, 100px);
+  width: 74px;
+  height: 74px;
+}
+.orimia-store-register .store-register-brand img { inset: 0; }
+.orimia-store-register .wo-auth-panel { min-width: 0; }
+.orimia-store-register .wo-auth-card { min-width: 0; }
+.orimia-store-register .wo-auth-card h2 { line-height: 1.4; }
+.orimia-store-register .wo-auth-input-icon input { width: 100%; min-width: 0; }
+.orimia-store-register .wo-button { white-space: normal; text-align: center; }
+.orimia-store-register .wo-auth-back { text-underline-offset: 3px; }
+.orimia-store-register :is(a, button, input):focus-visible { outline: 2px solid var(--wo-sage); outline-offset: 3px; }
+.orimia-store-register .store-register-message { margin: 0 0 20px; color: var(--wo-muted); font-size: 13px; line-height: 1.8; }
+.orimia-store-register .store-register-actions { display: grid; gap: 12px; }
+.orimia-store-register .store-register-action { width: 100%; }
+.orimia-store-register .store-register-setup { width: min(640px, 100%); }
+.store-register-setup .card { margin: 0 !important; padding: 24px 0; border: 0; border-top: 1px solid var(--wo-line); border-radius: 0; background: transparent; box-shadow: none; }
+.store-register-setup .sectionHeading { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 20px; }
+.store-register-setup .sectionHeading .sectionIcon { display: none; }
+.store-register-setup .sectionHeading h2 { font-size: 18px; font-family: inherit; font-weight: 700; }
+.store-register-setup .sectionHeading p, .store-register-setup .muted { margin: 6px 0 0; color: var(--wo-muted); font-size: 12px; line-height: 1.7; }
+.store-register-setup .verifiedEmail { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding: 12px; border-radius: 6px; background: var(--wo-sage-soft); color: #376d5a; }
+.store-register-setup .verifiedEmail small { display: block; margin-bottom: 4px; font-size: 11px; }
+.store-register-setup .verifiedEmail strong { font-size: 13px; }
+.store-register-setup .formGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 14px; }
+.store-register-setup .field { display: grid; align-content: start; gap: 7px; min-width: 0; }
+.store-register-setup .field label { color: #61534f; font-size: 12px; font-weight: 800; }
+.store-register-setup .field input { width: 100%; min-width: 0; }
+.store-register-setup .fieldHint { color: var(--wo-muted); font-size: 11px; line-height: 1.7; }
+.store-register-setup .grid { display: grid; gap: 12px; }
+.store-register-setup label.plan { position: relative; display: block; min-width: 0; padding: 16px 16px 16px 46px; border: 1px solid var(--wo-line); border-radius: 8px; cursor: pointer; }
+.store-register-setup .plan.selected { background: var(--wo-rose-soft); border-color: var(--wo-rose); }
+.store-register-setup .plan input { position: absolute; top: 20px; left: 16px; width: 18px; height: 18px; padding: 0; margin: 0; accent-color: var(--wo-rose); }
+.store-register-setup .planHead { display: flex; align-items: center; gap: 8px; }
+.store-register-setup .planHead h3 { margin: 0; font-size: 14px; }
+.store-register-setup .planCheck { display: none; }
+.store-register-setup .recommend { display: inline-block; margin: 8px 0; font-size: 11px; color: var(--wo-rose-dark); }
+.store-register-setup .price { margin-top: 8px; color: var(--wo-ink); font-size: 22px; font-weight: 700; }
+.store-register-setup .price small { font-size: 11px; font-weight: 400; }
+.store-register-setup .planFeatures { display: flex; flex-wrap: wrap; gap: 6px 12px; margin-top: 10px; }
+.store-register-setup .planFeatures span { display: flex; align-items: center; gap: 5px; color: var(--wo-muted); font-size: 11px; }
+.store-register-setup .planFeatures svg { width: 14px; height: 14px; color: var(--wo-sage); }
+.store-register-setup label.check { display: flex; align-items: flex-start; gap: 10px; font-size: 12px; line-height: 1.8; }
+.store-register-setup .check input { flex: none; width: 18px; height: 18px; margin: 2px 0 0; padding: 0; accent-color: var(--wo-rose); }
+.store-register-setup .summary { margin-top: 20px; }
+.store-register-setup dl { display: grid; grid-template-columns: 1fr auto; gap: 12px; margin: 0; font-size: 12px; }
+.store-register-setup dt { color: var(--wo-muted); }
+.store-register-setup dd { margin: 0; font-weight: 700; text-align: right; }
+.store-register-setup .submitBar { display: grid; gap: 16px; margin-top: 20px; }
+.store-register-setup .btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 46px; padding: 12px 16px; border: 1px solid transparent; border-radius: 8px; color: white; background: var(--wo-rose); font-size: 14px; font-weight: 700; }
+.store-register-setup .btn:hover { background: var(--wo-rose-dark); }
+.store-register-setup .notice { margin-bottom: 20px; padding: 12px; border-radius: 6px; font-size: 12px; line-height: 1.7; }
+.store-register-setup .notice.danger, .store-register-setup .notice.warn { background: #fff0f2; color: #9a3e45; }
+@media (min-width: 901px) and (max-width: 1180px) {
+  .orimia-store-register .wo-auth-visual h1 { font-size: 48px; }
+}
+@media (max-width: 900px) {
+  .orimia-store-register .wo-auth-visual { position: relative; height: auto; min-height: 310px; }
+  .orimia-store-register .store-register-brand { top: 28px; left: 34px; width: 62px; height: 62px; }
+}
+@media (max-width: 620px) {
+  .orimia-store-register .wo-auth-visual { min-height: 260px; }
+  .orimia-store-register .store-register-brand { left: 24px; }
+  .orimia-store-register .formGrid { grid-template-columns: 1fr; }
+  .orimia-store-register .wo-auth-card input:not([type="radio"], [type="checkbox"]) { font-size: 16px; }
+}
