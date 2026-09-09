@@ -1,0 +1,42 @@
+/* customer-notification-badge-v597: also applies before shell hydration. */
+:is(.customer-premium-topbar, .customer-native-route-shell header, .topbar) a[href="/u/news"] {
+  position: relative;
+  overflow: visible;
+}
+:is(.customer-premium-topbar, .customer-native-route-shell header) a[href="/u/news"] > span.absolute,
+.topbar a[href="/u/news"] > .badge,
+.customer-notification-link > .customer-notification-badge,
+.ocd-notifications > .ocd-unread {
+  position: absolute !important;
+  inset: -2px -2px auto auto !important;
+  display: flex !important;
+  box-sizing: border-box !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 20px !important;
+  width: auto !important;
+  height: 20px !important;
+  min-height: 20px !important;
+  margin: 0 !important;
+  padding: 0 4px !important;
+  border: 2px solid #fffdfb !important;
+  border-radius: 999px !important;
+  background: #c54863 !important;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+  font: 700 10px/1 -apple-system, BlinkMacSystemFont, "Yu Gothic", sans-serif !important;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0 !important;
+  white-space: nowrap !important;
+  text-indent: 0 !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
+  transform: none !important;
+  pointer-events: none;
+}
+:is(.customer-premium-topbar, .customer-native-route-shell header) a[href="/u/news"] > span.absolute:is(:empty, [hidden]),
+.topbar a[href="/u/news"] > .badge:is(:empty, [hidden]),
+.customer-notification-link > .customer-notification-badge:is(:empty, [hidden]),
+.ocd-notifications > .ocd-unread:is(:empty, [hidden]) {
+  display: none !important;
+}
