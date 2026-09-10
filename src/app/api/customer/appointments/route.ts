@@ -4,19 +4,32 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentCustomerSession } from "@/lib/auth/current-customer";
 import { hasValidRequestOrigin } from "@/lib/auth/request-security";
 import {
+  bookingCouponMatchesMenu,
   customerBookingMenu,
-  customerBookingMenuKeyFromName,
   isBookingRangeAvailable,
   isRegularClosedDate,
   type BookingCapacitySetting
 } from "@/lib/appointments/customer-booking";
+import {
+  canCustomerCancelAppointment,
+  CUSTOMER_CANCELLATION_POLICY_MESSAGE
+} from "@/lib/appointments/customer-cancellation";
 import { appointmentMinutes, dateAtTokyoMinutes, rangesOverlap, scheduleDateKey } from "@/lib/appointments/schedule";
 import { prisma } from "@/lib/prisma";
 import { SALON_STAFF, normalizeSalonStaffName } from "@/lib/salon/staff";
 
 export const runtime = "nodejs";
 
-const CANCELLED_STATUSES = ["キャンセル", "無断キャンセル"];
+const CANCELLED_STATUSES = [
+  "キャンセル",
+  "キャンセル済み",
+  "無断キャンセル",
+  "cancelled",
+  "canceled",
+  "no-show",
+  "no_show"
+];
+const COMPLETED_STATUSES = ["来店済み", "来店完了", "会計済み", "会計完了", "completed"];
 
 function bookingMaximumDate(today: string) {
   const result = dateAtTokyoMinutes(today, 0);
@@ -72,8 +85,7 @@ export async function POST(request: NextRequest) {
         const targetMenus = Array.isArray(couponIssue.targetMenusJson)
           ? couponIssue.targetMenusJson.filter((value): value is string => typeof value === "string")
           : [];
-        const targetMenuKeys = targetMenus.map(customerBookingMenuKeyFromName).filter(Boolean);
-        if (targetMenuKeys.length > 0 && !targetMenuKeys.includes(menu.key)) {
+        if (!bookingCouponMatchesMenu(targetMenus, menu.name)) {
           throw new Error("このクーポンは選択したメニューでは利用できません。");
         }
         const existingReservation = await tx.appointment.findFirst({
@@ -234,8 +246,10 @@ export async function DELETE(request: NextRequest) {
       });
       if (!appointment) throw new Error("予約が見つかりません。");
       if (CANCELLED_STATUSES.includes(appointment.status)) throw new Error("この予約はすでにキャンセル済みです。");
-      if (appointment.scheduledAt <= new Date()) throw new Error("開始時刻を過ぎた予約はアプリからキャンセルできません。店舗へお問い合わせください。");
-      if (appointment.serviceSales.length > 0 || appointment.status === "来店済み") {
+      if (!canCustomerCancelAppointment(appointment.scheduledAt)) {
+        throw new Error(CUSTOMER_CANCELLATION_POLICY_MESSAGE);
+      }
+      if (appointment.serviceSales.length > 0 || COMPLETED_STATUSES.includes(appointment.status)) {
         throw new Error("会計済みの予約はキャンセルできません。");
       }
 
@@ -244,7 +258,7 @@ export async function DELETE(request: NextRequest) {
           id: appointment.id,
           customerId: session.customerId,
           status: { notIn: CANCELLED_STATUSES },
-          scheduledAt: { gt: new Date() }
+          scheduledAt: appointment.scheduledAt
         },
         data: {
           status: "キャンセル",

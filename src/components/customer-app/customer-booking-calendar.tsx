@@ -15,7 +15,15 @@ import {
   X
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { CUSTOMER_BOOKING_MENUS, minutesText } from "@/lib/appointments/customer-booking";
+import {
+  bookingCouponMatchesMenu,
+  CUSTOMER_BOOKING_MENUS,
+  minutesText
+} from "@/lib/appointments/customer-booking";
+import {
+  canCustomerCancelAppointment,
+  CUSTOMER_CANCELLATION_POLICY_MESSAGE
+} from "@/lib/appointments/customer-cancellation";
 
 type AvailabilityDay = { date: string; available: boolean; slots: number[] };
 type AvailabilityResponse = {
@@ -28,7 +36,13 @@ type AvailabilityResponse = {
   error?: string;
 };
 type StaffOption = { key: string; name: string; role: string };
-type SelectedCoupon = { id: string; couponCode: string; discountRate: number; expiresAt: string };
+type BookingCoupon = {
+  id: string;
+  couponCode: string;
+  discountRate: number;
+  targetMenus: string[];
+  expiresAt: string;
+};
 
 const STAFF_GUIDE: Record<string, { strengths: string; message: string }> = {
   tanizaki: {
@@ -110,7 +124,8 @@ export function CustomerBookingCalendar({
   initialMenuKey = "cut",
   previousBookingRequested = false,
   previousBookingAvailable = false,
-  selectedCoupon = null,
+  coupons = [],
+  initialCouponIssueId = null,
   staff,
   upcoming,
   initialDetailAppointmentId = null
@@ -120,7 +135,8 @@ export function CustomerBookingCalendar({
   initialMenuKey?: string;
   previousBookingRequested?: boolean;
   previousBookingAvailable?: boolean;
-  selectedCoupon?: SelectedCoupon | null;
+  coupons?: BookingCoupon[];
+  initialCouponIssueId?: string | null;
   staff: StaffOption[];
   upcoming: Array<{ id: string; scheduledAt: string; menu: string | null; staffName: string | null; status: string }>;
   initialDetailAppointmentId?: string | null;
@@ -149,13 +165,29 @@ export function CustomerBookingCalendar({
   const [cancellingAppointmentId, setCancellingAppointmentId] = useState<string | null>(null);
   const [cancelError, setCancelError] = useState("");
   const [cancelSuccess, setCancelSuccess] = useState("");
+  const [selectedCouponIssueId, setSelectedCouponIssueId] = useState(initialCouponIssueId ?? "");
 
   const weekDates = useMemo(() => Array.from({ length: 7 }, (_, index) => addDays(weekStart, index)), [weekStart]);
   const months = useMemo(() => [...new Set(weekDates.map((date) => date.slice(0, 7)))], [weekDates]);
   const menu = CUSTOMER_BOOKING_MENUS.find((item) => item.key === menuKey)!;
+  const eligibleCoupons = useMemo(
+    () => coupons.filter((coupon) => bookingCouponMatchesMenu(coupon.targetMenus, menu.name)),
+    [coupons, menu.name]
+  );
+  const selectedCoupon = eligibleCoupons.find((coupon) => coupon.id === selectedCouponIssueId) ?? null;
+  const couponDiscount = selectedCoupon
+    ? Math.floor(menu.estimatedPrice * selectedCoupon.discountRate / 100)
+    : 0;
+  const estimatedTotal = Math.max(0, menu.estimatedPrice - couponDiscount);
   const selectedStaff = staffOptions.find((member) => member.key === staffKey) ?? staffOptions[0];
   const selectedGuide = STAFF_GUIDE[selectedStaff.key] ?? STAFF_GUIDE.free;
   const times = useMemo(() => Array.from({ length: 17 }, (_, index) => 600 + index * 30), []);
+
+  useEffect(() => {
+    if (selectedCouponIssueId && !eligibleCoupons.some((coupon) => coupon.id === selectedCouponIssueId)) {
+      setSelectedCouponIssueId("");
+    }
+  }, [eligibleCoupons, selectedCouponIssueId]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -281,19 +313,6 @@ export function CustomerBookingCalendar({
           {previousBookingAvailable
             ? "前回の会計済み予約と同じメニュー・担当者を選択しました。日時を選んでください。"
             : "前回の予約がありません。メニューと担当者を選んで予約してください。"}
-        </div>
-      ) : null}
-      {selectedCoupon ? (
-        <div className="flex flex-col gap-3 rounded-2xl border border-[#e5cf93] bg-[#fff9e8] px-4 py-4 text-[#6f5215] sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-start gap-3">
-            <TicketPercent className="mt-0.5 h-5 w-5 shrink-0" />
-            <div>
-              <p className="font-semibold">クーポンを予約にセットしました</p>
-              <p className="mt-1 text-sm">{selectedCoupon.discountRate}%OFF / {new Intl.DateTimeFormat("ja-JP", { month: "numeric", day: "numeric" }).format(new Date(selectedCoupon.expiresAt))}まで</p>
-              <p className="mt-1 text-xs">予約時点では使用済みになりません。会計完了時に利用が確定します。</p>
-            </div>
-          </div>
-          <span className="rounded-full bg-white px-3 py-1.5 font-mono text-xs font-semibold">{selectedCoupon.couponCode}</span>
         </div>
       ) : null}
       <section className="rounded-[24px] border border-[#e8ded2] bg-white p-5 shadow-sm sm:p-6">
@@ -437,20 +456,46 @@ export function CustomerBookingCalendar({
         <p className="mt-4 text-xs leading-5 text-[#8b8178]">◎は予約可能、×は満席、－は定休日・営業時間外・受付期間外です。担当者とメニューに合わせて表示しています。</p>
 
         {selectedDate && selectedMinutes !== null ? (
-          <div className="mt-5 grid gap-4 rounded-2xl border border-[#e4d7ce] bg-[#fff9f5] p-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center md:p-5">
-            <div>
+          <div className="mt-5 rounded-2xl border border-[#e4d7ce] bg-[#fff9f5] p-4 md:p-5">
+            <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_minmax(260px,0.8fr)] md:items-end">
+              <div>
               <p className="text-sm font-semibold text-[#8f4f42]">選択した予約内容</p>
               <p className="mt-1 text-lg font-semibold text-[#382f2a]">{dateLabel(selectedDate)} {minutesText(selectedMinutes)}</p>
               <p className="mt-1 text-sm leading-6 text-[#6f6259]">{menu.name}（{menu.durationMinutes}分） / {selectedStaff.name}</p>
+              </div>
+              <label className="grid gap-2 text-sm font-semibold text-[#4f463f]">
+                <span className="flex items-center gap-2"><TicketPercent className="h-4 w-4 text-[#bf4966]" />利用するクーポン</span>
+                <select
+                  value={selectedCouponIssueId}
+                  onChange={(event) => setSelectedCouponIssueId(event.target.value)}
+                  disabled={eligibleCoupons.length === 0}
+                  className="h-12 w-full rounded-xl border border-[#ddd4cc] bg-white px-3 text-sm outline-none focus:border-[#8f4f42] focus:ring-4 focus:ring-[#e9c9be]/40 disabled:bg-[#f3efeb] disabled:text-[#998e86]"
+                >
+                  <option value="">{eligibleCoupons.length > 0 ? "利用しない" : "利用できるクーポンはありません"}</option>
+                  {eligibleCoupons.map((coupon) => (
+                    <option key={coupon.id} value={coupon.id}>
+                      {coupon.couponCode}（{coupon.discountRate}%OFF）
+                    </option>
+                  ))}
+                </select>
+              </label>
             </div>
-            <button
-              type="button"
-              disabled={submitting}
-              onClick={() => void submitBooking()}
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#8f4f42] px-7 text-sm font-semibold text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {submitting ? <><Loader2 className="h-4 w-4 animate-spin" />予約を登録しています</> : "この日時で予約する"}
-            </button>
+            <div className="mt-5 grid gap-4 border-t border-[#e5d8ce] pt-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+              <dl className="grid gap-2 text-sm">
+                <div className="flex items-center justify-between gap-4"><dt className="text-[#7c7168]">メニュー料金</dt><dd className="font-semibold tabular-nums text-[#382f2a]">{menu.estimatedPrice.toLocaleString("ja-JP")}円</dd></div>
+                {selectedCoupon ? <div className="flex items-center justify-between gap-4 text-[#bf4966]"><dt>{selectedCoupon.discountRate}%OFF</dt><dd className="font-semibold tabular-nums">-{couponDiscount.toLocaleString("ja-JP")}円</dd></div> : null}
+                <div className="flex items-center justify-between gap-4 border-t border-[#e5d8ce] pt-2 text-base"><dt className="font-semibold text-[#382f2a]">お支払い目安</dt><dd className="font-semibold tabular-nums text-[#382f2a]">{estimatedTotal.toLocaleString("ja-JP")}円</dd></div>
+              </dl>
+              <button
+                type="button"
+                disabled={submitting}
+                onClick={() => void submitBooking()}
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#8f4f42] px-7 text-sm font-semibold text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {submitting ? <><Loader2 className="h-4 w-4 animate-spin" />予約を登録しています</> : "この日時で予約する"}
+              </button>
+            </div>
+            <p className="mt-3 text-xs leading-5 text-[#81756d]">{CUSTOMER_CANCELLATION_POLICY_MESSAGE}</p>
           </div>
         ) : null}
 
@@ -471,9 +516,10 @@ export function CustomerBookingCalendar({
             {visibleUpcoming.map((appointment) => {
               const expanded = expandedAppointmentId === appointment.id;
               const cancelling = cancellingAppointmentId === appointment.id;
+              const canCancel = canCustomerCancelAppointment(appointment.scheduledAt);
               const formattedDate = new Intl.DateTimeFormat("ja-JP", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Tokyo" }).format(new Date(appointment.scheduledAt));
               return (
-                <article key={appointment.id} data-customer-appointment-id={appointment.id} className="overflow-hidden rounded-2xl border border-[#eadfd5] bg-[#f8f3ed]">
+                <article key={appointment.id} data-customer-appointment-id={appointment.id} data-customer-appointment-at={appointment.scheduledAt} className="overflow-hidden rounded-2xl border border-[#eadfd5] bg-[#f8f3ed]">
                   <button
                     type="button"
                     onClick={() => { setExpandedAppointmentId(expanded ? null : appointment.id); setCancelError(""); }}
@@ -498,7 +544,7 @@ export function CustomerBookingCalendar({
                         <dt className="text-[#8b8178]">担当</dt><dd className="text-[#4f463f]">{appointment.staffName ?? "フリー"}</dd>
                         <dt className="text-[#8b8178]">予約状況</dt><dd className="text-[#4f463f]">{appointment.status}</dd>
                       </dl>
-                      <div className="mt-4 rounded-xl border border-[#efcbc6] bg-[#fff7f5] p-3">
+                      {canCancel ? <div className="mt-4 rounded-xl border border-[#efcbc6] bg-[#fff7f5] p-3">
                         <p className="flex items-start gap-2 text-xs leading-5 text-[#795047]"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />予約をキャンセルすると元に戻せません。内容をご確認のうえ操作してください。</p>
                         <button
                           type="button"
@@ -510,7 +556,7 @@ export function CustomerBookingCalendar({
                         >
                           {cancelling ? <><Loader2 className="h-4 w-4 animate-spin" />キャンセルしています</> : <><X className="h-4 w-4" />予約をキャンセルする</>}
                         </button>
-                      </div>
+                      </div> : <p className="mt-4 rounded-xl bg-[#f5f1ed] px-3 py-3 text-xs leading-5 text-[#74675f]">当日の変更・キャンセルは、店舗へ電話または<a href="/u/chat" className="font-semibold text-[#8f4f42] underline underline-offset-2">チャット</a>でお問い合わせください。</p>}
                       {cancelError ? <p role="alert" className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-xs font-semibold leading-5 text-red-800">{cancelError}</p> : null}
                     </div>
                   ) : null}

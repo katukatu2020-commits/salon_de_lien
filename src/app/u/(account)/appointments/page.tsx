@@ -49,7 +49,8 @@ export default async function CustomerAppointmentsPage({ searchParams }: { searc
   });
   if (!customer) redirect("/u/login");
   const repeatRequested = searchParams?.repeat === "previous" || searchParams?.repeat === "last";
-  const [savedStaff, previousSale, selectedCoupon] = await Promise.all([
+  const now = new Date();
+  const [savedStaff, previousSale, availableCoupons] = await Promise.all([
     prisma.staffBookingSetting.findMany({
       where: { organizationId: session.organizationId },
       orderBy: { createdAt: "asc" },
@@ -66,19 +67,18 @@ export default async function CustomerAppointmentsPage({ searchParams }: { searc
           select: { appointment: { select: { menu: true, staffName: true } } }
         })
       : null,
-    searchParams?.coupon
-      ? prisma.couponIssue.findFirst({
-          where: {
-            id: searchParams.coupon,
-            customerId: session.customerId,
-            status: "issued",
-            issuedAt: { lte: new Date() },
-            expiresAt: { gte: new Date() },
-            appointments: { none: { status: { notIn: ["キャンセル", "キャンセル済み", "無断キャンセル"] } } }
-          },
-          select: { id: true, couponCode: true, discountRate: true, targetMenusJson: true, expiresAt: true }
-        })
-      : null
+    prisma.couponIssue.findMany({
+      where: {
+        customerId: session.customerId,
+        customer: { organizationId: session.organizationId, deletedAt: null },
+        status: "issued",
+        issuedAt: { lte: now },
+        expiresAt: { gte: now },
+        appointments: { none: { status: { notIn: ["キャンセル", "キャンセル済み", "無断キャンセル", "cancelled", "canceled", "no-show", "no_show"] } } }
+      },
+      orderBy: [{ expiresAt: "asc" }, { createdAt: "desc" }],
+      select: { id: true, couponCode: true, discountRate: true, targetMenusJson: true, expiresAt: true }
+    })
   ]);
   const staffOptions = savedStaff.length > 0
     ? savedStaff.map((member) => ({ key: member.staffKey, name: member.staffName, role: "スタイリスト" }))
@@ -91,6 +91,7 @@ export default async function CustomerAppointmentsPage({ searchParams }: { searc
   const previousStaffKey = previousAppointment?.staffName
     ? staffOptions.find((member) => normalizedStaffName(member.name) === normalizedStaffName(previousAppointment.staffName))?.key ?? "free"
     : null;
+  const selectedCoupon = availableCoupons.find((coupon) => coupon.id === searchParams?.coupon) ?? null;
   const couponTargetMenus = Array.isArray(selectedCoupon?.targetMenusJson)
     ? selectedCoupon.targetMenusJson.filter((value): value is string => typeof value === "string")
     : [];
@@ -115,12 +116,16 @@ export default async function CustomerAppointmentsPage({ searchParams }: { searc
         initialMenuKey={initialMenuKey}
         previousBookingRequested={repeatRequested}
         previousBookingAvailable={Boolean(previousAppointment)}
-        selectedCoupon={selectedCoupon ? {
-          id: selectedCoupon.id,
-          couponCode: selectedCoupon.couponCode,
-          discountRate: selectedCoupon.discountRate,
-          expiresAt: selectedCoupon.expiresAt.toISOString()
-        } : null}
+        coupons={availableCoupons.map((coupon) => ({
+          id: coupon.id,
+          couponCode: coupon.couponCode,
+          discountRate: coupon.discountRate,
+          targetMenus: Array.isArray(coupon.targetMenusJson)
+            ? coupon.targetMenusJson.filter((value): value is string => typeof value === "string")
+            : [],
+          expiresAt: coupon.expiresAt.toISOString()
+        }))}
+        initialCouponIssueId={selectedCoupon?.id ?? null}
         staff={staffOptions}
         upcoming={customer.appointments.map((appointment) => ({ ...appointment, scheduledAt: appointment.scheduledAt.toISOString() }))}
         initialDetailAppointmentId={initialDetailAppointmentId}

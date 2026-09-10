@@ -42,6 +42,17 @@ function normalizeBookingMenuName(value: string) {
     .replace(/[\s　・･＋+／/（）()［］\[\]【】]/g, "");
 }
 
+export function bookingCouponMatchesMenu(targetMenus: readonly string[], menuName: string) {
+  if (targetMenus.length === 0) return true;
+  const normalizedMenu = normalizeBookingMenuName(menuName);
+  return targetMenus.some((targetMenu) => {
+    const normalizedTarget = normalizeBookingMenuName(targetMenu);
+    if (!normalizedTarget) return false;
+    if (["全メニュー", "すべて", "全施術", "全コース", "allmenus", "all"].includes(normalizedTarget)) return true;
+    return normalizedMenu.includes(normalizedTarget) || normalizedTarget.includes(normalizedMenu);
+  });
+}
+
 export function customerBookingMenuKeyFromName(value: string | null | undefined) {
   if (!value) return null;
   const normalized = normalizeBookingMenuName(value);

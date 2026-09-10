@@ -32,7 +32,15 @@ import {
 } from "../src/lib/appointments/reservation-email";
 import { mergeReservationEmailDetails } from "../src/lib/appointments/import-reservation-email";
 import { LONG_HAIR_FEES, longHairFee, percentageDiscountAmount } from "../src/lib/appointments/checkout-items";
-import { bookingStartTimes, isBookingRangeAvailable } from "../src/lib/appointments/customer-booking";
+import {
+  bookingCouponMatchesMenu,
+  bookingStartTimes,
+  isBookingRangeAvailable
+} from "../src/lib/appointments/customer-booking";
+import {
+  canCustomerCancelAppointment,
+  customerCancellationDeadline
+} from "../src/lib/appointments/customer-cancellation";
 import { isBookingRangeWithinCapacityOverrides } from "../src/lib/appointments/booking-capacity";
 import {
   generatePasswordResetToken,
@@ -78,6 +86,20 @@ import {
 } from "../src/lib/appointments/staff-identity";
 import { resolveCustomerPhotoReference } from "../src/lib/storage/customer-photo-core";
 import { communityPublisherName } from "../src/lib/community/publisher-name";
+
+test("booking coupons match their target menu and support all-menu labels", () => {
+  assert.equal(bookingCouponMatchesMenu([], "カット"), true);
+  assert.equal(bookingCouponMatchesMenu(["全メニュー"], "カット + カラー"), true);
+  assert.equal(bookingCouponMatchesMenu(["カラー"], "カット + カラー"), true);
+  assert.equal(bookingCouponMatchesMenu(["ヘッドスパ"], "カット + カラー"), false);
+});
+
+test("customer cancellation closes at midnight on the appointment date in Tokyo", () => {
+  const appointment = "2026-09-11T08:00:00+09:00";
+  assert.equal(customerCancellationDeadline(appointment).toISOString(), "2026-09-10T15:00:00.000Z");
+  assert.equal(canCustomerCancelAppointment(appointment, new Date("2026-09-10T14:59:59.999Z")), true);
+  assert.equal(canCustomerCancelAppointment(appointment, new Date("2026-09-10T15:00:00.000Z")), false);
+});
 
 test("community style publisher always uses the salon name", () => {
   assert.equal(communityPublisherName(" Hair Salon Lien "), "Hair Salon Lien");
