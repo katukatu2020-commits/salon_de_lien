@@ -1,7 +1,7 @@
 "use client";
 
-import { Check, Heart, Loader2, MessageCircle, Pencil, Scissors, Send, Sparkles, Trash2, UserRound, X } from "lucide-react";
-import { FormEvent, useState } from "react";
+import { Check, Ellipsis, Heart, Loader2, MessageCircle, Pencil, Scissors, Send, Sparkles, Trash2, UserRound, X } from "lucide-react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import type { CommunityActor, CommunityPostView } from "@/lib/community/visit-community";
 
 function formatVisitDate(value: string) {
@@ -30,13 +30,34 @@ export function CommunityFeed({ initialPosts, actor }: { initialPosts: Community
   const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({});
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [openCommentMenuId, setOpenCommentMenuId] = useState<string | null>(null);
   const [confirmDeleteKey, setConfirmDeleteKey] = useState<string | null>(null);
   const [confirmedDeleteKey, setConfirmedDeleteKey] = useState<string | null>(null);
   const [pendingKey, setPendingKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const openCommentMenuRef = useRef<HTMLDivElement>(null);
   const endpointPrefix = actor === "staff" ? "/api/admin/community/posts" : "/api/customer/community/posts";
 
+  useEffect(() => {
+    if (!openCommentMenuId) return;
+    const closeOnOutsidePress = (event: PointerEvent) => {
+      if (event.target instanceof Node && !openCommentMenuRef.current?.contains(event.target)) {
+        setOpenCommentMenuId(null);
+      }
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpenCommentMenuId(null);
+    };
+    document.addEventListener("pointerdown", closeOnOutsidePress);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutsidePress);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [openCommentMenuId]);
+
   function openDeleteConfirmation(key: string) {
+    setOpenCommentMenuId(null);
     setConfirmDeleteKey(key);
     setConfirmedDeleteKey(null);
   }
@@ -305,16 +326,31 @@ export function CommunityFeed({ initialPosts, actor }: { initialPosts: Community
                         {comment.updatedAt !== comment.createdAt ? <span className="text-[#9a8f86]">編集済み</span> : null}
                       </div>
                       {(comment.canEdit || comment.canDelete) && editingCommentId !== comment.id ? (
-                        <div className="flex shrink-0 items-center gap-1">
-                          {comment.canEdit ? (
-                            <button type="button" onClick={() => { setEditingCommentId(comment.id); setCommentDrafts((current) => ({ ...current, [comment.id]: comment.body })); closeDeleteConfirmation(); }} className="inline-flex h-11 w-11 items-center justify-center rounded-full text-[#6f6259] hover:bg-white/80" aria-label="コメントを編集">
-                              <Pencil className="h-4 w-4" />
-                            </button>
-                          ) : null}
-                          {comment.canDelete ? (
-                            <button type="button" onClick={() => openDeleteConfirmation(`comment:${comment.id}`)} className="inline-flex h-11 w-11 items-center justify-center rounded-full text-[#9d4a43] hover:bg-[#fff0ee]" aria-label="コメントを削除">
-                              <Trash2 className="h-4 w-4" />
-                            </button>
+                        <div ref={openCommentMenuId === comment.id ? openCommentMenuRef : undefined} className="relative shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => setOpenCommentMenuId((current) => current === comment.id ? null : comment.id)}
+                            className="inline-flex h-11 w-11 items-center justify-center rounded-full text-[#6f6259] transition hover:bg-white/80 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#e9c9be]/50"
+                            aria-label="コメントの操作"
+                            aria-haspopup="menu"
+                            aria-expanded={openCommentMenuId === comment.id}
+                            aria-controls={`comment-menu-${comment.id}`}
+                          >
+                            <Ellipsis className="h-5 w-5" />
+                          </button>
+                          {openCommentMenuId === comment.id ? (
+                            <div id={`comment-menu-${comment.id}`} role="menu" aria-label="コメントの操作" className="absolute right-0 top-full z-30 mt-1 grid min-w-36 gap-1 rounded-lg border border-[#e3d7cc] bg-white p-1.5 shadow-[0_14px_36px_rgba(47,42,37,0.18)]">
+                              {comment.canEdit ? (
+                                <button type="button" role="menuitem" onClick={() => { setOpenCommentMenuId(null); setEditingCommentId(comment.id); setCommentDrafts((current) => ({ ...current, [comment.id]: comment.body })); closeDeleteConfirmation(); }} className="inline-flex min-h-11 items-center gap-2 rounded-md px-3 text-left text-sm font-semibold text-[#3f3833] hover:bg-[#f6efe6]">
+                                  <Pencil className="h-4 w-4" />編集
+                                </button>
+                              ) : null}
+                              {comment.canDelete ? (
+                                <button type="button" role="menuitem" onClick={() => openDeleteConfirmation(`comment:${comment.id}`)} className="inline-flex min-h-11 items-center gap-2 rounded-md px-3 text-left text-sm font-semibold text-[#9d4a43] hover:bg-[#fff0ee]">
+                                  <Trash2 className="h-4 w-4" />削除
+                                </button>
+                              ) : null}
+                            </div>
                           ) : null}
                         </div>
                       ) : null}

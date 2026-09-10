@@ -6,6 +6,7 @@ import {
   canManageCommunityComment,
   loadCommunityCustomerIdentityIds
 } from "@/lib/community/comment-ownership";
+import { communityPublisherName } from "@/lib/community/publisher-name";
 import { normalizeSalonStaffName } from "@/lib/salon/staff";
 import { resolveCustomerPhotoReference } from "@/lib/storage/customer-photo";
 
@@ -307,6 +308,7 @@ export async function loadVisitCommunityPostDetail({
         caption: true,
         photoReferences: true,
         publishedByName: true,
+        organization: { select: { name: true } },
         customer: { select: { name: true } },
         visit: {
           select: {
@@ -374,7 +376,7 @@ export async function loadVisitCommunityPostDetail({
     id: post.id,
     postKind: post.postKind,
     caption: post.caption,
-    customerName: post.postKind === "STORE" ? "ORIMIA" : communityDisplayName(post.customer?.name ?? ""),
+    customerName: communityPublisherName(post.organization.name),
     visitDate: (post.visit?.visitedAt ?? post.publishedAt).toISOString(),
     menu: post.postKind === "STORE" ? "店舗スタイル" : post.visit?.performedStyle ?? post.visit?.requestedStyle ?? "施術記録",
     stylistName: post.postKind === "STORE" ? post.publishedByName?.trim() || "店舗スタッフ" : normalizeSalonStaffName(post.visit?.stylistName) ?? "フリー",

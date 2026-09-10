@@ -77,6 +77,13 @@ import {
   resolveScheduleStaffIdentity
 } from "../src/lib/appointments/staff-identity";
 import { resolveCustomerPhotoReference } from "../src/lib/storage/customer-photo-core";
+import { communityPublisherName } from "../src/lib/community/publisher-name";
+
+test("community style publisher always uses the salon name", () => {
+  assert.equal(communityPublisherName(" Hair Salon Lien "), "Hair Salon Lien");
+  assert.equal(communityPublisherName(""), "店舗");
+  assert.equal(communityPublisherName(null), "店舗");
+});
 
 test("an unavailable private customer photo does not fail the surrounding page", async () => {
   const previousBucket = process.env.S3_PRIVATE_ASSETS_BUCKET;
