@@ -1,0 +1,429 @@
+/* style-community-controls-v610 */
+.orimia-style-list-legacy-hidden-v610 {
+  display: none !important;
+}
+
+.orimia-style-community-v610 {
+  display: grid;
+  min-width: 0;
+  gap: 16px;
+  scroll-margin-top: 24px;
+}
+
+.orimia-style-community-v610.is-loading-v610 {
+  cursor: progress;
+}
+
+.orimia-style-community-v610.is-loading-v610 > :not(.orimia-style-list-loading-v610) {
+  opacity: .58;
+  pointer-events: none;
+}
+
+.orimia-style-filter-toolbar-v610 {
+  border: 1px solid #e8ded2;
+  border-radius: 8px;
+  background: #fff;
+  padding: 16px;
+  box-shadow: 0 10px 28px rgba(47, 42, 37, .045);
+}
+
+.orimia-style-filter-heading-v610,
+.orimia-style-result-meta-v610 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.orimia-style-filter-heading-v610 {
+  margin-bottom: 14px;
+  color: #2f2a25;
+  font-size: 14px;
+}
+
+.orimia-style-filter-heading-v610 button {
+  min-height: 40px;
+  border: 0;
+  background: transparent;
+  padding: 8px 10px;
+  color: #7c7168;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.orimia-style-filter-heading-v610 button:hover,
+.orimia-style-filter-heading-v610 button:focus-visible {
+  color: #8f4f42;
+  outline: 2px solid #e9c9be;
+  outline-offset: 1px;
+}
+
+.orimia-style-filter-grid-v610 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(190px, auto);
+  align-items: end;
+  gap: 12px;
+}
+
+.orimia-style-filter-field-v610 {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+}
+
+.orimia-style-filter-field-v610 > span {
+  color: #7c7168;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.orimia-style-filter-field-v610 select {
+  width: 100%;
+  min-width: 0;
+  height: 44px;
+  border: 1px solid #e3d6ca;
+  border-radius: 6px;
+  background: #fff;
+  padding: 0 34px 0 12px;
+  color: #2f2a25;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  outline: none;
+}
+
+.orimia-style-filter-field-v610 select:focus {
+  border-color: #a45a4c;
+  box-shadow: 0 0 0 3px rgba(233, 201, 190, .46);
+}
+
+.orimia-style-liked-filter-v610 {
+  display: flex;
+  min-width: 0;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid #e3d6ca;
+  border-radius: 6px;
+  background: #fffaf8;
+  padding: 0 13px;
+  color: #714339;
+  cursor: pointer;
+}
+
+.orimia-style-liked-filter-v610 input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: #c6496d;
+}
+
+.orimia-style-liked-filter-v610 span {
+  color: #c6496d;
+  font-size: 21px;
+  line-height: 1;
+}
+
+.orimia-style-liked-filter-v610 strong {
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.orimia-style-liked-filter-v610:has(input:checked) {
+  border-color: #d96b88;
+  background: #fff2f6;
+}
+
+.orimia-style-result-meta-v610 {
+  min-height: 22px;
+  color: #7c7168;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.orimia-style-grid-v610 {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.orimia-style-card-v610 {
+  position: relative;
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  aspect-ratio: 4 / 5;
+  border-radius: 8px;
+  background: #eee7df;
+  box-shadow: 0 9px 24px rgba(47, 42, 37, .08);
+  outline: none;
+}
+
+.orimia-style-card-v610 img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform .24s ease;
+}
+
+.orimia-style-card-v610:hover img {
+  transform: scale(1.025);
+}
+
+.orimia-style-card-v610:focus-visible {
+  box-shadow: 0 0 0 4px #e9c9be, 0 12px 28px rgba(47, 42, 37, .1);
+}
+
+.orimia-style-liked-badge-v610 {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, .82);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .92);
+  color: #c6496d;
+  font-size: 17px;
+  box-shadow: 0 4px 12px rgba(47, 42, 37, .16);
+}
+
+.orimia-style-empty-v610,
+.orimia-style-list-error-v610,
+.orimia-style-list-loading-v610 {
+  display: grid;
+  min-height: 180px;
+  place-content: center;
+  justify-items: center;
+  gap: 8px;
+  border: 1px dashed #d8cbbf;
+  border-radius: 8px;
+  background: #fff;
+  padding: 28px;
+  color: #7c7168;
+  text-align: center;
+}
+
+.orimia-style-empty-v610 strong,
+.orimia-style-list-error-v610 strong {
+  color: #2f2a25;
+  font-size: 14px;
+}
+
+.orimia-style-list-error-v610 button {
+  min-height: 42px;
+  margin-top: 8px;
+  border: 1px solid #d8cbbf;
+  border-radius: 6px;
+  background: #fff;
+  padding: 0 16px;
+  color: #714339;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.orimia-style-pager-v610 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding-top: 4px;
+}
+
+.orimia-style-pager-v610 button {
+  min-width: 82px;
+  height: 44px;
+  border: 1px solid #e3d6ca;
+  border-radius: 6px;
+  background: #fff;
+  color: #714339;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.orimia-style-pager-v610 button:disabled {
+  opacity: .38;
+  cursor: default;
+}
+
+.orimia-style-pager-v610 span {
+  min-width: 72px;
+  color: #2f2a25;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.orimia-style-dialog-v610 .orimia-style-dialog-body-v602 {
+  gap: 18px;
+}
+
+.orimia-style-photo-editor-v610 {
+  min-width: 0;
+  border: 1px solid #e3d6ca;
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.orimia-style-photo-editor-v610 legend {
+  padding: 0 5px;
+  color: #2f2a25;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.orimia-style-photo-row-v610 {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+}
+
+.orimia-style-photo-row-v610 > div:last-child {
+  display: grid;
+  justify-items: start;
+  gap: 9px;
+}
+
+.orimia-style-photo-row-v610 small {
+  color: #7c7168;
+  font-size: 12px;
+}
+
+.orimia-style-photo-preview-v610 {
+  display: grid;
+  width: 112px;
+  height: 112px;
+  overflow: hidden;
+  place-items: center;
+  border: 1px solid #eaded7;
+  border-radius: 8px;
+  background: #f6efe9;
+  color: #8a7c72;
+  font-size: 12px;
+}
+
+.orimia-style-photo-preview-v610 img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.orimia-style-photo-picker-v610 {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  border: 1px solid #d7c5ba;
+  border-radius: 6px;
+  background: #fff;
+  padding: 0 15px;
+  color: #714339;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.orimia-style-photo-picker-v610 input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.orimia-style-photo-picker-v610:focus-within {
+  outline: 3px solid rgba(233, 201, 190, .65);
+  outline-offset: 1px;
+}
+
+.orimia-style-photo-remove-v610 {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  gap: 6px;
+  color: #8f4f42;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.orimia-style-photo-remove-v610 input {
+  width: 17px;
+  height: 17px;
+  margin: 0;
+  accent-color: #a84646;
+}
+
+@media (max-width: 1023px) {
+  .orimia-style-filter-grid-v610 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .orimia-style-grid-v610 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+}
+
+@media (max-width: 639px) {
+  .orimia-style-community-v610 {
+    gap: 12px;
+  }
+
+  .orimia-style-filter-toolbar-v610 {
+    padding: 14px;
+  }
+
+  .orimia-style-filter-grid-v610 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .orimia-style-liked-filter-v610 {
+    grid-column: 1 / -1;
+  }
+
+  .orimia-style-filter-field-v610 select {
+    padding-left: 10px;
+    font-size: 13px;
+  }
+
+  .orimia-style-grid-v610 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .orimia-style-photo-row-v610 {
+    grid-template-columns: 92px minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .orimia-style-photo-preview-v610 {
+    width: 92px;
+    height: 92px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orimia-style-card-v610 img {
+    transition: none;
+  }
+
+  .orimia-style-card-v610:hover img {
+    transform: none;
+  }
+}
