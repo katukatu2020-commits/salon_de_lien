@@ -1,0 +1,547 @@
+.orimia-menu-import-v612,
+.orimia-menu-import-v612 * {
+  box-sizing: border-box;
+}
+
+.orimia-menu-import-v612 [hidden],
+[role="dialog"] form > [hidden] {
+  display: none !important;
+}
+
+[role="dialog"] form:has(.orimia-menu-import-mode-v612 > input:checked) > div:has(input[name="menuName"]),
+[role="dialog"] form:has(.orimia-menu-import-mode-v612 > input:checked) > footer {
+  display: none !important;
+}
+
+.orimia-menu-import-v612 {
+  margin-top: 16px;
+  border-block: 1px solid #e5d9d3;
+  color: #302b29;
+}
+
+.orimia-menu-import-mode-v612 {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 2px;
+  cursor: pointer;
+}
+
+.orimia-menu-import-mode-v612 input,
+.orimia-menu-import-consent-v612 input,
+.orimia-menu-import-select-v612 input {
+  width: 19px;
+  height: 19px;
+  flex: none;
+  margin: 1px 0 0;
+  accent-color: #bd4668;
+}
+
+.orimia-menu-import-mode-v612 strong,
+.orimia-menu-import-mode-v612 small {
+  display: block;
+}
+
+.orimia-menu-import-mode-v612 strong {
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.orimia-menu-import-mode-v612 small {
+  margin-top: 3px;
+  color: #746a66;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+.orimia-menu-import-panel-v612 {
+  padding: 18px 0 4px;
+  border-top: 1px solid #e5d9d3;
+}
+
+.orimia-menu-import-start-v612 > label:first-child {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.orimia-menu-import-url-v612 {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+}
+
+.orimia-menu-import-url-v612 input,
+.orimia-menu-import-dialog-v612 input,
+.orimia-menu-import-dialog-v612 textarea {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #d9cbc4;
+  border-radius: 6px;
+  background: #fff;
+  color: #302b29;
+  font: inherit;
+}
+
+.orimia-menu-import-url-v612 input {
+  min-height: 44px;
+  padding: 10px 12px;
+  font-size: 13px;
+}
+
+.orimia-menu-import-url-v612 input:focus,
+.orimia-menu-import-dialog-v612 input:focus,
+.orimia-menu-import-dialog-v612 textarea:focus {
+  outline: 3px solid rgba(189, 70, 104, 0.2);
+  border-color: #bd4668;
+}
+
+.orimia-menu-import-url-v612 button,
+.orimia-menu-import-primary-v612,
+.orimia-menu-import-secondary-v612,
+.orimia-menu-import-table-v612 button,
+.orimia-menu-import-dialog-v612 button {
+  min-height: 42px;
+  border: 1px solid #d9cbc4;
+  border-radius: 6px;
+  padding: 9px 14px;
+  background: #fff;
+  color: #5d4d47;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.orimia-menu-import-url-v612 button,
+.orimia-menu-import-primary-v612,
+.orimia-menu-import-dialog-v612 .orimia-menu-import-primary-v612 {
+  border-color: #bd4668;
+  background: #bd4668;
+  color: #fff;
+}
+
+.orimia-menu-import-v612 button:hover:not(:disabled),
+.orimia-menu-import-dialog-v612 button:hover:not(:disabled) {
+  filter: brightness(0.96);
+}
+
+.orimia-menu-import-v612 button:focus-visible,
+.orimia-menu-import-dialog-v612 button:focus-visible,
+.orimia-menu-import-v612 input:focus-visible {
+  outline: 3px solid rgba(189, 70, 104, 0.22);
+  outline-offset: 2px;
+}
+
+.orimia-menu-import-v612 button:disabled,
+.orimia-menu-import-dialog-v612 button:disabled,
+.orimia-menu-import-v612 input:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.orimia-menu-import-consent-v612 {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 12px;
+  color: #5f5551;
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.orimia-menu-import-feedback-v612,
+.orimia-menu-import-dialog-feedback-v612,
+.orimia-menu-import-note-v612 {
+  margin: 12px 0 0;
+  color: #a43d5c;
+  font-size: 12px;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.orimia-menu-import-loading-v612 {
+  display: grid;
+  gap: 8px;
+  margin-top: 18px;
+  padding: 16px 0;
+}
+
+.orimia-menu-import-loading-v612 strong,
+.orimia-menu-import-progress-head-v612 strong {
+  font-size: 15px;
+}
+
+.orimia-menu-import-loading-v612 span,
+.orimia-menu-import-progress-head-v612 small {
+  color: #746a66;
+  font-size: 12px;
+}
+
+.orimia-menu-import-summary-v612 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 18px;
+  border-block: 1px solid #e5d9d3;
+}
+
+.orimia-menu-import-summary-v612 > div {
+  display: grid;
+  gap: 4px;
+  padding: 13px;
+  text-align: center;
+}
+
+.orimia-menu-import-summary-v612 > div + div {
+  border-left: 1px solid #e5d9d3;
+}
+
+.orimia-menu-import-summary-v612 span,
+.orimia-menu-import-progress-label-v612,
+.orimia-menu-import-result-v612 {
+  color: #746a66;
+  font-size: 12px;
+}
+
+.orimia-menu-import-summary-v612 strong {
+  font-size: 17px;
+  font-variant-numeric: tabular-nums;
+}
+
+.orimia-menu-import-progress-head-v612,
+.orimia-menu-import-progress-label-v612,
+.orimia-menu-import-result-v612,
+.orimia-menu-import-actions-v612 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.orimia-menu-import-progress-head-v612 {
+  margin-top: 18px;
+}
+
+.orimia-menu-import-progress-head-v612 > div {
+  display: grid;
+  gap: 3px;
+}
+
+.orimia-menu-import-progress-label-v612 {
+  margin: 16px 0 7px;
+}
+
+.orimia-menu-import-progress-v612 {
+  display: block;
+  width: 100%;
+  height: 10px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 5px;
+  appearance: none;
+  -webkit-appearance: none;
+  background: #e7ece9;
+  accent-color: #3d7c69;
+}
+
+.orimia-menu-import-progress-v612::-webkit-progress-bar {
+  border-radius: 5px;
+  background: #e7ece9;
+}
+
+.orimia-menu-import-progress-v612::-webkit-progress-value {
+  border-radius: 5px;
+  background-color: #3d7c69;
+}
+
+.orimia-menu-import-progress-v612::-moz-progress-bar {
+  border-radius: 5px;
+  background-color: #3d7c69;
+}
+
+.orimia-menu-import-result-v612 {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.orimia-menu-import-result-v612 span {
+  padding-right: 12px;
+  border-right: 1px solid #dfd4ce;
+}
+
+.orimia-menu-import-table-wrap-v612 {
+  width: 100%;
+  margin-top: 16px;
+  overflow-x: auto;
+  border-block: 1px solid #e5d9d3;
+}
+
+.orimia-menu-import-table-v612 {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 12px;
+  text-align: left;
+}
+
+.orimia-menu-import-table-v612 th,
+.orimia-menu-import-table-v612 td {
+  padding: 11px 8px;
+  border-bottom: 1px solid #eee5e0;
+  vertical-align: middle;
+  overflow-wrap: anywhere;
+}
+
+.orimia-menu-import-table-v612 tr:last-child td {
+  border-bottom: 0;
+}
+
+.orimia-menu-import-table-v612 th {
+  background: #f5f2f0;
+  color: #6c615c;
+  font-weight: 700;
+}
+
+.orimia-menu-import-table-v612 th:first-child,
+.orimia-menu-import-table-v612 td:first-child {
+  width: 38px;
+  text-align: center;
+}
+
+.orimia-menu-import-table-v612 th:nth-child(3) {
+  width: 125px;
+}
+
+.orimia-menu-import-table-v612 th:last-child {
+  width: 112px;
+}
+
+.orimia-menu-import-table-v612 td strong,
+.orimia-menu-import-table-v612 td small,
+.orimia-menu-import-table-v612 td span {
+  display: block;
+}
+
+.orimia-menu-import-table-v612 td strong {
+  line-height: 1.55;
+}
+
+.orimia-menu-import-table-v612 td small {
+  margin-top: 3px;
+  color: #756b66;
+  line-height: 1.5;
+}
+
+.orimia-menu-import-table-v612 td:nth-child(3) strong {
+  margin-top: 3px;
+  color: #9f3e59;
+}
+
+.orimia-menu-import-table-v612 button {
+  min-height: 32px;
+  margin-top: 6px;
+  padding: 5px 10px;
+  font-size: 11px;
+}
+
+.orimia-menu-import-state-v612 {
+  color: #3d715f;
+  font-weight: 700;
+}
+
+.orimia-menu-import-table-v612 tr[data-status="DUPLICATE"],
+.orimia-menu-import-table-v612 tr[data-status="SKIPPED"] {
+  background: #f7f6f5;
+  color: #766e6a;
+}
+
+.orimia-menu-import-table-v612 tr[data-status="ERROR"] .orimia-menu-import-state-v612 {
+  color: #a43d5c;
+}
+
+.orimia-menu-import-actions-v612 {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  margin-top: 16px;
+  padding-bottom: 14px;
+}
+
+.orimia-menu-import-dialog-v612 {
+  width: min(520px, calc(100vw - 28px));
+  max-height: calc(100dvh - 28px);
+  margin: auto;
+  padding: 24px;
+  overflow: auto;
+  border: 1px solid #ded3cd;
+  border-radius: 8px;
+  background: #fffdfa;
+  color: #302b29;
+  box-shadow: 0 18px 60px rgba(45, 36, 32, 0.24);
+  font: 14px/1.65 sans-serif;
+}
+
+.orimia-menu-import-dialog-v612::backdrop {
+  background: rgba(28, 24, 22, 0.55);
+}
+
+.orimia-menu-import-dialog-v612 h3 {
+  margin: 0 0 12px;
+  font-size: 20px;
+}
+
+.orimia-menu-import-dialog-v612 p {
+  overflow-wrap: anywhere;
+}
+
+.orimia-menu-import-dialog-v612 dl {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 9px 14px;
+  margin: 18px 0;
+  padding: 15px 0;
+  border-block: 1px solid #e5d9d3;
+}
+
+.orimia-menu-import-dialog-v612 dd {
+  margin: 0;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.orimia-menu-import-dialog-actions-v612 {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.orimia-menu-import-editor-v612 form,
+.orimia-menu-import-editor-v612 form > label {
+  display: grid;
+  gap: 8px;
+}
+
+.orimia-menu-import-editor-v612 form {
+  gap: 14px;
+}
+
+.orimia-menu-import-editor-v612 form > label {
+  font-weight: 700;
+}
+
+.orimia-menu-import-editor-v612 input,
+.orimia-menu-import-editor-v612 textarea {
+  padding: 10px 11px;
+  font-size: 14px;
+  font-weight: 400;
+  resize: vertical;
+}
+
+.orimia-menu-import-editor-columns-v612 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.orimia-menu-import-editor-columns-v612 label {
+  display: grid;
+  gap: 8px;
+  font-weight: 700;
+}
+
+.orimia-sr-only-v612 {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 639px) {
+  .orimia-menu-import-url-v612,
+  .orimia-menu-import-editor-columns-v612 {
+    grid-template-columns: 1fr;
+  }
+
+  .orimia-menu-import-url-v612 button {
+    width: 100%;
+  }
+
+  .orimia-menu-import-summary-v612 > div {
+    padding: 11px 6px;
+  }
+
+  .orimia-menu-import-table-v612,
+  .orimia-menu-import-table-v612 tbody,
+  .orimia-menu-import-table-v612 tr,
+  .orimia-menu-import-table-v612 td {
+    display: block;
+    width: 100%;
+  }
+
+  .orimia-menu-import-table-v612 thead {
+    display: none;
+  }
+
+  .orimia-menu-import-table-v612 tr {
+    position: relative;
+    padding: 13px 10px 13px 45px;
+    border-bottom: 1px solid #e5d9d3;
+  }
+
+  .orimia-menu-import-table-v612 tr:last-child {
+    border-bottom: 0;
+  }
+
+  .orimia-menu-import-table-v612 td {
+    padding: 0;
+    border: 0;
+  }
+
+  .orimia-menu-import-table-v612 td:first-child {
+    position: absolute;
+    top: 15px;
+    left: 10px;
+    width: 24px;
+  }
+
+  .orimia-menu-import-table-v612 td:nth-child(3),
+  .orimia-menu-import-table-v612 td:nth-child(4) {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    margin-top: 7px;
+  }
+
+  .orimia-menu-import-table-v612 td:nth-child(3) strong,
+  .orimia-menu-import-table-v612 td:nth-child(3) span {
+    display: inline;
+    margin: 0;
+  }
+
+   .orimia-menu-import-table-v612 td:nth-child(4) button {
+    margin: 0 0 0 auto;
+  }
+
+  .orimia-menu-import-actions-v612,
+  .orimia-menu-import-dialog-actions-v612 {
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
+
+  .orimia-menu-import-actions-v612 button,
+  .orimia-menu-import-dialog-actions-v612 button {
+    width: 100%;
+  }
+
+  .orimia-menu-import-dialog-v612 {
+    padding: 20px;
+  }
+}
