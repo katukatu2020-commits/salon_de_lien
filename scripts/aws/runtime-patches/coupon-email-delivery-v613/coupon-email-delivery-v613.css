@@ -1,0 +1,15 @@
+#broadcast-email-eligibility-v613[data-email-mode="true"] {
+  border-color: #c9ddd5;
+  background: #f1f8f5;
+  color: #365f50;
+}
+
+.broadcast-recipient-row[data-email-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.58;
+  background: #f5f3f1;
+}
+
+.broadcast-recipient-row[data-email-disabled="true"]:hover {
+  border-color: var(--lien-border);
+}
