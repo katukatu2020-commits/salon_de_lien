@@ -1,0 +1,733 @@
+/* stamp-card-commercial-v617 */
+.sc-page-v617,
+.sc-page-v617 * {
+  box-sizing: border-box;
+  letter-spacing: 0;
+}
+
+.sc-page-v617 {
+  display: grid;
+  gap: 22px;
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  color: #292522;
+}
+
+.sc-page-head-v617 {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 420px);
+  gap: 32px;
+  align-items: end;
+  padding: 3px 2px 0;
+}
+
+.sc-page-eyebrow-v617,
+.sc-card-brand-v617 small,
+.sc-count-v617 > span,
+.sc-panel-label-v617,
+.sc-status-panel-v617 > small,
+.sc-reward-copy-v617 > small {
+  color: #c54466;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+.sc-page-head-v617 h1 {
+  margin: 5px 0 0;
+  color: #292522;
+  font-size: 30px;
+  line-height: 1.3;
+}
+
+.sc-page-head-v617 > p {
+  margin: 0;
+  color: #726a64;
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.sc-card-v617 {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid #ddd8d4;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 18px 46px rgba(48, 42, 38, .09);
+}
+
+.sc-card-head-v617 {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 24px;
+  align-items: center;
+  min-height: 128px;
+  padding: 24px 28px;
+  background: #2f2b29;
+  color: #fff;
+}
+
+.sc-brand-row-v617 {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 15px;
+}
+
+.sc-brand-mark-v617 {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, .24);
+  border-radius: 8px;
+  background: #c84a6a;
+  color: #fff;
+}
+
+.sc-brand-mark-v617 svg {
+  width: 25px;
+  height: 25px;
+}
+
+.sc-card-brand-v617 {
+  min-width: 0;
+}
+
+.sc-card-brand-v617 small {
+  color: #e8a4b7;
+}
+
+.sc-card-brand-v617 h2 {
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
+  color: #fff;
+  font-size: 22px;
+  line-height: 1.4;
+}
+
+.sc-card-brand-v617 p {
+  margin: 4px 0 0;
+  color: #cfc8c4;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.sc-count-v617 {
+  display: grid;
+  min-width: 118px;
+  justify-items: end;
+}
+
+.sc-count-v617 > span {
+  color: #cfc8c4;
+  font-size: 9px;
+}
+
+.sc-count-v617 strong {
+  margin-top: 2px;
+  color: #fff;
+  font-size: 34px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.sc-count-v617 strong small {
+  margin-left: 4px;
+  color: #e8a4b7;
+  font-size: 17px;
+}
+
+.sc-progress-v617 {
+  position: relative;
+  z-index: 1;
+  height: 6px;
+  overflow: hidden;
+  background: #e9e5e2;
+}
+
+.sc-progress-v617 > span {
+  display: block;
+  width: var(--sc-progress, 0%);
+  height: 100%;
+  background: #c84a6a;
+}
+
+.sc-card-v617.is-complete .sc-progress-v617 > span {
+  background: #27705e;
+}
+
+.sc-card-body-v617 {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 232px;
+  gap: 30px;
+  align-items: stretch;
+  padding: 28px;
+  background: #fff;
+}
+
+.sc-stamp-panel-v617 {
+  min-width: 0;
+}
+
+.sc-panel-head-v617 {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 17px;
+}
+
+.sc-panel-head-v617 strong {
+  color: #4b4541;
+  font-size: 12px;
+}
+
+.sc-stamps-v617 {
+  display: grid;
+  grid-template-columns: repeat(var(--sc-columns, 5), 52px);
+  gap: 11px 12px;
+  justify-content: start;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sc-stamp-v617 {
+  display: grid;
+  grid-template-rows: 52px 14px;
+  gap: 4px;
+  width: 52px;
+  min-width: 0;
+  justify-items: center;
+}
+
+.sc-stamp-seal-v617 {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  border: 1px solid #d8d2ce;
+  border-radius: 50%;
+  background: #f5f3f1;
+  color: #978e88;
+  font-size: 12px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.sc-stamp-v617.is-earned .sc-stamp-seal-v617 {
+  border-color: #c84a6a;
+  background: #c84a6a;
+  color: #fff;
+}
+
+.sc-stamp-v617.is-milestone .sc-stamp-seal-v617 {
+  border-color: #27705e;
+  box-shadow: inset 0 0 0 3px #fff;
+}
+
+.sc-stamp-v617.is-milestone.is-earned .sc-stamp-seal-v617 {
+  background: #27705e;
+}
+
+.sc-stamp-seal-v617 svg {
+  width: 23px;
+  height: 23px;
+}
+
+.sc-stamp-v617 > small {
+  min-height: 14px;
+  color: #27705e;
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 14px;
+}
+
+.sc-status-panel-v617 {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  border-left: 1px solid #e6e1de;
+  padding-left: 26px;
+}
+
+.sc-status-panel-v617 > small {
+  color: #817772;
+}
+
+.sc-status-panel-v617 > strong {
+  margin-top: 7px;
+  color: #292522;
+  font-size: 20px;
+  line-height: 1.45;
+}
+
+.sc-status-chip-v617 {
+  display: inline-flex;
+  min-height: 28px;
+  width: fit-content;
+  align-items: center;
+  gap: 6px;
+  margin-top: 13px;
+  border-radius: 999px;
+  background: #f5e7ec;
+  padding: 5px 10px;
+  color: #a83d5b;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.sc-status-chip-v617.is-complete {
+  background: #e6f2ed;
+  color: #1e6654;
+}
+
+.sc-status-chip-v617 svg {
+  width: 14px;
+  height: 14px;
+}
+
+.sc-metrics-v617 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 24px;
+}
+
+.sc-metric-v617 {
+  display: grid;
+  gap: 2px;
+  border-top: 1px solid #e6e1de;
+  padding-top: 10px;
+}
+
+.sc-metric-v617 strong {
+  color: #393431;
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+.sc-metric-v617 span {
+  color: #817772;
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+.sc-reward-v617 {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto auto;
+  gap: 14px;
+  align-items: center;
+  border-top: 1px solid #e2dedb;
+  background: #f5f4f2;
+  padding: 21px 28px;
+}
+
+.sc-card-v617.is-complete .sc-reward-v617 {
+  background: #edf5f1;
+}
+
+.sc-reward-icon-v617 {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  border: 1px solid #d7cdd1;
+  border-radius: 8px;
+  background: #fff;
+  color: #bb4262;
+}
+
+.sc-card-v617.is-complete .sc-reward-icon-v617 {
+  border-color: #bad6cb;
+  color: #216754;
+}
+
+.sc-reward-icon-v617 svg {
+  width: 23px;
+  height: 23px;
+}
+
+.sc-reward-copy-v617 {
+  min-width: 0;
+}
+
+.sc-card-v617.is-complete .sc-reward-copy-v617 > small {
+  color: #216754;
+}
+
+.sc-reward-copy-v617 h3 {
+  margin: 3px 0 0;
+  overflow-wrap: anywhere;
+  color: #292522;
+  font-size: 17px;
+  line-height: 1.45;
+}
+
+.sc-reward-copy-v617 p {
+  margin: 4px 0 0;
+  color: #716863;
+  font-size: 11px;
+  line-height: 1.65;
+}
+
+.sc-reward-state-v617 {
+  border: 1px solid #d7d0cc;
+  border-radius: 999px;
+  background: #fff;
+  padding: 6px 10px;
+  color: #706762;
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.sc-card-v617.is-complete .sc-reward-state-v617 {
+  border-color: #99c4b4;
+  color: #1f6754;
+}
+
+.sc-reward-link-v617 {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border: 1px solid #b83f5f;
+  border-radius: 6px;
+  background: #fff;
+  padding: 9px 14px;
+  color: #a83d5b;
+  font-size: 11px;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.sc-reward-link-v617:hover {
+  background: #fff8fa;
+}
+
+.sc-reward-link-v617:focus-visible {
+  outline: 3px solid rgba(197, 68, 102, .2);
+  outline-offset: 2px;
+}
+
+.sc-reward-link-v617 svg {
+  width: 15px;
+  height: 15px;
+}
+
+.sc-note-v617 {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin: 0;
+  border-top: 1px solid #e8e4e1;
+  background: #fff;
+  padding: 15px 28px;
+  color: #77706b;
+  font-size: 10px;
+  line-height: 1.65;
+}
+
+.sc-note-v617 svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  color: #27705e;
+}
+
+@media (max-width: 1100px) {
+  .sc-card-body-v617 {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 22px;
+  }
+
+  .sc-stamps-v617 {
+    grid-template-columns: repeat(var(--sc-mobile-columns, 5), 52px);
+  }
+
+  .sc-status-panel-v617 {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    border-top: 1px solid #e6e1de;
+    border-left: 0;
+    padding-top: 19px;
+    padding-left: 0;
+  }
+
+  .sc-status-panel-v617 > strong {
+    grid-column: 1;
+  }
+
+  .sc-status-chip-v617 {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: center;
+    margin-top: 0;
+  }
+
+  .sc-metrics-v617 {
+    grid-column: 1 / -1;
+    margin-top: 18px;
+    padding-top: 0;
+  }
+}
+
+@media (max-width: 900px) {
+  .sc-page-v617 {
+    gap: 18px;
+  }
+
+  .sc-page-head-v617 {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .sc-page-head-v617 h1 {
+    font-size: 25px;
+  }
+
+  .sc-page-head-v617 > p {
+    font-size: 12px;
+  }
+
+  .sc-card-head-v617 {
+    gap: 14px;
+    min-height: 112px;
+    padding: 20px;
+  }
+
+  .sc-brand-row-v617 {
+    gap: 11px;
+  }
+
+  .sc-brand-mark-v617 {
+    width: 42px;
+    height: 42px;
+    flex-basis: 42px;
+  }
+
+  .sc-brand-mark-v617 svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .sc-card-brand-v617 h2 {
+    font-size: 17px;
+  }
+
+  .sc-card-brand-v617 p {
+    font-size: 10px;
+  }
+
+  .sc-count-v617 {
+    min-width: 76px;
+  }
+
+  .sc-count-v617 > span {
+    font-size: 8px;
+  }
+
+  .sc-count-v617 strong {
+    font-size: 28px;
+  }
+
+  .sc-count-v617 strong small {
+    font-size: 14px;
+  }
+
+  .sc-card-body-v617 {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 22px;
+    padding: 22px 20px;
+  }
+
+  .sc-stamps-v617 {
+    grid-template-columns: repeat(var(--sc-mobile-columns, 5), 46px);
+    gap: 9px 10px;
+    justify-content: center;
+  }
+
+  .sc-stamp-v617 {
+    grid-template-rows: 46px 14px;
+    width: 46px;
+  }
+
+  .sc-stamp-seal-v617 {
+    width: 46px;
+    height: 46px;
+  }
+
+  .sc-status-panel-v617 {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    border-top: 1px solid #e6e1de;
+    border-left: 0;
+    padding-top: 19px;
+    padding-left: 0;
+  }
+
+  .sc-status-panel-v617 > strong {
+    grid-column: 1;
+    font-size: 18px;
+  }
+
+  .sc-status-chip-v617 {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: center;
+    margin-top: 0;
+  }
+
+  .sc-metrics-v617 {
+    grid-column: 1 / -1;
+    margin-top: 18px;
+    padding-top: 0;
+  }
+
+  .sc-reward-v617 {
+    grid-template-columns: 42px minmax(0, 1fr);
+    padding: 19px 20px;
+  }
+
+  .sc-reward-icon-v617 {
+    width: 42px;
+    height: 42px;
+  }
+
+  .sc-reward-state-v617 {
+    display: none;
+  }
+
+  .sc-reward-link-v617 {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .sc-note-v617 {
+    padding: 14px 20px;
+  }
+}
+
+@media (min-width: 761px) and (max-width: 900px) {
+  html.orimia-customer-shell-v518 .topbar {
+    grid-template-areas: "back brand menu news";
+    grid-template-columns: 40px minmax(0, 1fr) 40px 40px;
+    height: 68px;
+    padding: 0 12px;
+    z-index: 75;
+  }
+
+  html.orimia-customer-shell-v518 .orimia-customer-back-v518 {
+    display: grid;
+    grid-area: back;
+    align-items: center;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    padding: 0;
+    color: #6f5b53;
+  }
+
+  html.orimia-customer-shell-v518 .orimia-customer-brand-v518 {
+    grid-area: brand;
+  }
+
+  html.orimia-customer-shell-v518 .orimia-customer-menu-v518 {
+    grid-area: menu;
+  }
+
+  html.orimia-customer-shell-v518 .orimia-customer-news-v518 {
+    grid-area: news;
+  }
+
+  html.orimia-customer-shell-v518 .content {
+    padding-bottom: 88px;
+  }
+
+  html.orimia-customer-shell-v518 .customer-mobile-nav-v425 {
+    position: fixed;
+    right: auto;
+    bottom: 0;
+    left: 50%;
+    z-index: 80;
+    width: min(480px, calc(100% - 30px));
+    height: 64px;
+    background: rgba(255, 253, 249, .97);
+    box-shadow: 0 -8px 24px rgba(62, 42, 35, .07);
+    transform: translateX(-50%);
+  }
+
+  html.orimia-customer-shell-v518 .customer-mobile-nav-v425-inner {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-items: stretch;
+    height: 64px;
+  }
+
+  html.orimia-customer-shell-v518 .customer-mobile-nav-v425-link {
+    height: 64px;
+    justify-content: center;
+    padding: 6px 2px;
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 350px) {
+  .sc-page-head-v617 h1 {
+    font-size: 23px;
+  }
+
+  .sc-card-head-v617 {
+    padding: 18px 16px;
+  }
+
+  .sc-brand-mark-v617 {
+    display: none;
+  }
+
+  .sc-count-v617 strong {
+    font-size: 25px;
+  }
+
+  .sc-card-body-v617 {
+    padding: 20px 16px;
+  }
+
+  .sc-stamps-v617 {
+    grid-template-columns: repeat(var(--sc-mobile-columns, 5), 42px);
+    gap: 8px 7px;
+  }
+
+  .sc-stamp-v617 {
+    grid-template-rows: 42px 14px;
+    width: 42px;
+  }
+
+  .sc-stamp-seal-v617 {
+    width: 42px;
+    height: 42px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sc-reward-link-v617 {
+    scroll-behavior: auto;
+  }
+}
