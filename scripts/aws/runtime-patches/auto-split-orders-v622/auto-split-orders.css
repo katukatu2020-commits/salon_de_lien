@@ -1,0 +1,14 @@
+.wo-summary-split { display: grid; gap: 3px; margin: 4px 0 12px; padding: 10px 12px; border-left: 3px solid var(--wo-sage); color: #356d5b; background: var(--wo-sage-soft); }
+.wo-summary-split strong { font-size: 11px; }
+.wo-summary-split span { color: var(--wo-muted); font-size: 9px; line-height: 1.5; }
+.wo-confirm-split-note { display: grid; gap: 3px; margin-bottom: 14px; padding: 12px 14px; border: 1px solid #cfe4d8; border-radius: 7px; color: #285a4a; background: #f3faf6; }
+.wo-confirm-split-note strong { font-size: 13px; }
+.wo-confirm-split-note span { color: #5d756c; font-size: 10px; line-height: 1.5; }
+.wo-confirm-groups { display: grid; gap: 14px; }
+.wo-confirm-group { overflow: hidden; border: 1px solid var(--wo-line); border-radius: 7px; }
+.wo-confirm-group .wo-confirm-destination { border-radius: 0; }
+.wo-confirm-group .wo-confirm-list { max-height: none; padding: 4px 14px; }
+.wo-confirm-group-total { display: flex; align-items: center; justify-content: space-between; padding: 11px 14px; border-top: 1px solid var(--wo-line); background: #fffaf8; }
+.wo-confirm-group-total span { color: var(--wo-muted); font-size: 10px; }
+.wo-confirm-group-total strong { display: grid; justify-items: end; font-size: 15px; }
+.wo-confirm-group-total strong small { color: var(--wo-muted); font-size: 9px; }
