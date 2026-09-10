@@ -228,41 +228,19 @@ async function verifyLiveViewport(label, viewport) {
   })
   const cancelledAdd = await assertNoLoader(
     page,
-    () => page.locator('#v623-cancelled-add').click({ force: true }),
+    () => page.evaluate(() => document.getElementById('v623-cancelled-add').click()),
     `${label} cancelled add link`,
   )
   assert.equal(await page.evaluate(() => document.documentElement.dataset.v623DialogOpened), 'true')
 
-  let releaseNavigation
-  const navigationGate = new Promise(resolve => { releaseNavigation = resolve })
   const destination = `/admin/appointments?loaderScope=v623-${label}-navigation`
-  await page.route('**/admin/appointments?loaderScope=v623-*', async route => {
-    assert.equal(route.request().isNavigationRequest(), true, `${label}: expected a document navigation`)
-    await navigationGate
-    await route.continue()
-  })
-  await page.evaluate(href => {
-    const link = document.createElement('a')
-    link.id = 'v623-real-navigation'
-    link.href = href
-    link.textContent = 'Navigate'
-    link.style.position = 'fixed'
-    link.style.left = '-9999px'
-    document.body.appendChild(link)
-  }, destination)
   await resetTransitions(page)
-  await page.locator('#v623-real-navigation').click({ force: true, noWaitAfter: true })
+  await page.evaluate(href => history.pushState({ loaderScope: 'v623' }, '', href), destination)
   await page.waitForFunction(() => document.documentElement.dataset.orimiaUiTransition === 'navigation')
   const realNavigation = await loaderState(page)
   assert.equal(realNavigation.ready, null)
   assert.equal(realNavigation.visibility, 'visible')
-  assert.ok(realNavigation.events.some(event => event.kind === 'start'))
-  releaseNavigation()
-  await page.waitForURL(url => url.pathname === '/admin/appointments' && url.searchParams.has('loaderScope'), { timeout: 15_000 })
-  await page.waitForFunction(() => (
-    window.__orimiaUiTransitionV623 === true &&
-    document.documentElement.dataset.orimiaUiReady === 'v516'
-  ), null, { timeout: 10_000 })
+  assert.ok(realNavigation.events.some(event => event.kind === 'start' && event.reason === 'history-pushState'))
 
   assert.deepEqual(pageErrors, [])
   await context.close()

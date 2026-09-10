@@ -1,7 +1,12 @@
-name: Deploy navigation loader scope v623
+name: Deploy navigation loader verification v624
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - recovery/aws-canonical-20260815
+    paths:
+      - .github/workflows/deploy-navigation-loader-verification-v624.yml
+      - scripts/aws/runtime-patches/navigation-loader-verification-v624/**
 
 permissions:
   contents: write
@@ -17,8 +22,8 @@ env:
   ECR_REPOSITORY: salon-de-lien-staging-app
   ECS_CLUSTER: salon-de-lien-staging-cluster
   ECS_SERVICE: salon-de-lien-staging-web
-  RELEASE_DIR: scripts/aws/runtime-patches/navigation-loader-scope-v623
-  PARENT_DIGEST: sha256:3418fb85dce40730646c0807224b9fa9b9adc351f6276b52b2f3072f3d5dcbd0
+  RELEASE_DIR: scripts/aws/runtime-patches/navigation-loader-verification-v624
+  PARENT_DIGEST: sha256:0866a88cae46464546f3fb802d66cc6cca14712bd60f5eda9aadb6a330d4c9af
 
 jobs:
   deploy:
@@ -43,13 +48,15 @@ jobs:
           $identity = aws sts get-caller-identity --output json --no-cli-pager | ConvertFrom-Json
           if ($identity.Account -ne $env:AWS_ACCOUNT_ID -or $identity.Arn -notmatch ':assumed-role/SalonDeLienGitHubDeployRole/') { throw 'Unexpected AWS deployment identity.' }
 
-      - name: Validate navigation loader scope release
+      - name: Validate navigation loader verification release
         shell: pwsh
         run: |
-          foreach ($file in @('patch-runtime.mjs', 'verify-runtime.mjs', 'loader-scope-transform.mjs', 'browser-regression.mjs')) {
+          foreach ($file in @('patch-runtime.mjs', 'verify-runtime.mjs', 'browser-regression.mjs')) {
             node --check (Join-Path $env:RELEASE_DIR $file)
             if ($LASTEXITCODE -ne 0) { throw "Syntax check failed: $file" }
           }
+          node --check 'scripts/aws/runtime-patches/navigation-loader-scope-v623/browser-regression.mjs'
+          if ($LASTEXITCODE -ne 0) { throw 'Corrected browser regression syntax check failed.' }
 
       - name: Log in to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
@@ -80,12 +87,12 @@ jobs:
         shell: pwsh
         run: |
           $shortSha = $env:GITHUB_SHA.Substring(0, 12)
-          $tag = "navigation-loader-scope-v623-$shortSha"
+          $tag = "navigation-loader-verification-v624-$shortSha"
           $registry = "$($env:AWS_ACCOUNT_ID).dkr.ecr.$($env:AWS_REGION).amazonaws.com"
           $image = "$registry/$($env:ECR_REPOSITORY):$tag"
           $baseImage = "$registry/$($env:ECR_REPOSITORY)@$($env:PARENT_DIGEST)"
-          $rootfs = Join-Path $env:RUNNER_TEMP 'salon-v623-rootfs.tar'
-          $flatBase = "salon-de-lien-v623-flat:$shortSha"
+          $rootfs = Join-Path $env:RUNNER_TEMP 'salon-v624-rootfs.tar'
+          $flatBase = "salon-de-lien-v624-flat:$shortSha"
           crane export $baseImage $rootfs
           if ($LASTEXITCODE -ne 0) { throw 'Base image export failed.' }
           docker import `
@@ -102,7 +109,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Flattened base image import failed.' }
           docker build --build-arg "BASE_IMAGE=$flatBase" --tag $image $env:RELEASE_DIR
           if ($LASTEXITCODE -ne 0) { throw 'Docker build failed.' }
-          docker run --rm --entrypoint node $image /tmp/lien-v623/verify-runtime.mjs
+          docker run --rm --entrypoint node $image /tmp/lien-v624/verify-runtime.mjs
           if ($LASTEXITCODE -ne 0) { throw 'Runtime isolation verification failed.' }
           docker push $image
           if ($LASTEXITCODE -ne 0) { throw 'ECR push failed.' }
@@ -117,7 +124,7 @@ jobs:
         run: |
           $chrome = @('/usr/bin/google-chrome', '/usr/bin/google-chrome-stable', '/usr/bin/chromium') | Where-Object { Test-Path $_ } | Select-Object -First 1
           if (-not $chrome) { throw 'A Chromium executable is required for the browser tests.' }
-          $browserDependencies = Join-Path $env:RUNNER_TEMP 'lien-browser-smoke-v623'
+          $browserDependencies = Join-Path $env:RUNNER_TEMP 'lien-browser-smoke-v624'
           npm install --prefix $browserDependencies --no-save --package-lock=false --ignore-scripts playwright-core@1.62.1
           if ($LASTEXITCODE -ne 0) { throw 'Browser test dependency installation failed.' }
           "SMOKE_DEPENDENCIES_PACKAGE=$(Join-Path $browserDependencies 'package.json')" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
@@ -135,10 +142,11 @@ jobs:
         run: |
           & ./scripts/aws/approve-and-deploy-protected-release.ps1 -PreviousTaskDefinitionArn $env:PREVIOUS_TASK -PreviousImage $env:PREVIOUS_IMAGE -PreviousImageDigest $env:PREVIOUS_DIGEST -NewTaskDefinitionArn $env:RELEASE_TASK -NewImage $env:RELEASE_IMAGE -NewImageDigest $env:RELEASE_DIGEST -Profile ''
 
-      - name: Verify navigation loader scope in production
+      - name: Verify navigation loader behavior in production
         shell: pwsh
         run: |
           $required = [ordered]@{
+            'X-Lien-Navigation-Loader-Verified' = 'v624'
             'X-Lien-Navigation-Loader-Scope' = 'v623'
             'X-Lien-Auto-Split-Orders' = 'v622'
             'X-Lien-All-Dealer-Order-Filter' = 'v621'
@@ -172,9 +180,9 @@ jobs:
             } catch { $ready = $false }
             Start-Sleep -Seconds 10
           }
-          if (-not $ready) { throw 'Production readiness did not recover on navigation loader scope v623.' }
+          if (-not $ready) { throw 'Production readiness did not recover on navigation loader verification v624.' }
           $env:SMOKE_BASE_URL = 'https://salon-de-lien.com'
-          $env:SCREENSHOT_DIR = 'artifacts/navigation-loader-scope-v623/production'
+          $env:SCREENSHOT_DIR = 'artifacts/navigation-loader-verification-v624/production'
           node (Join-Path $env:RELEASE_DIR 'browser-regression.mjs')
           if ($LASTEXITCODE -ne 0) { throw 'Production navigation loader browser test failed.' }
           $actualTask = (aws ecs describe-services --cluster $env:ECS_CLUSTER --services $env:ECS_SERVICE --region $env:AWS_REGION --query 'services[0].taskDefinition' --output text --no-cli-pager).Trim()
@@ -201,6 +209,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: navigation-loader-scope-v623-verification
-          path: artifacts/navigation-loader-scope-v623/
+          name: navigation-loader-verification-v624
+          path: artifacts/navigation-loader-verification-v624/
           if-no-files-found: ignore
