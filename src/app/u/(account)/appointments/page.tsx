@@ -21,7 +21,26 @@ export default async function CustomerAppointmentsPage({ searchParams }: { searc
       staffAssignmentType: true,
       assignedStaffName: true,
       appointments: {
-        where: { scheduledAt: { gte: new Date() }, status: { notIn: ["キャンセル", "無断キャンセル"] } },
+        where: {
+          scheduledAt: { gte: new Date() },
+          status: {
+            notIn: [
+              "キャンセル",
+              "キャンセル済み",
+              "無断キャンセル",
+              "来店済み",
+              "来店完了",
+              "会計済み",
+              "会計完了",
+              "completed",
+              "cancelled",
+              "canceled",
+              "no-show",
+              "no_show"
+            ]
+          },
+          serviceSales: { none: {} }
+        },
         orderBy: { scheduledAt: "asc" },
         take: 3,
         select: { id: true, scheduledAt: true, menu: true, staffName: true, status: true }

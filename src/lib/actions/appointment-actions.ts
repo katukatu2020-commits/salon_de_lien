@@ -302,6 +302,9 @@ export async function completeAppointmentCheckoutAction(appointmentId: string, f
   revalidatePath(`/admin/appointments/${appointmentId}`);
   revalidatePath(`/admin/customers/${customerId}`);
   revalidatePath("/admin/customers?section=points");
+  revalidatePath("/u/home");
+  revalidatePath("/u/appointments");
+  revalidatePath("/u/mypage");
   revalidatePath("/u/reviews");
   redirect(`/admin/appointments/${appointmentId}/completed`);
 }

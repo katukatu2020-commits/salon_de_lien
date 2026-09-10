@@ -1783,6 +1783,9 @@ export async function createServiceSale(customerId: string, formData: FormData) 
   revalidatePath("/admin/customers?view=messages");
   revalidatePath("/admin/customers?view=analytics");
   revalidatePath(`/admin/customers/${customerId}`);
+  revalidatePath("/u/home");
+  revalidatePath("/u/appointments");
+  revalidatePath("/u/mypage");
 }
 
 export async function createCustomerOffer(customerId: string, formData: FormData) {

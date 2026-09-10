@@ -21,7 +21,26 @@ export default async function CustomerHomePage() {
       pointLots: { where: { remainingAmount: { gt: 0 } }, orderBy: { expiresAt: "asc" }, take: 1 },
       visits: { orderBy: { visitedAt: "desc" }, take: 1 },
       appointments: {
-        where: { scheduledAt: { gte: now }, status: { notIn: ["キャンセル", "無断キャンセル", "来店済み"] } },
+        where: {
+          scheduledAt: { gte: now },
+          status: {
+            notIn: [
+              "キャンセル",
+              "キャンセル済み",
+              "無断キャンセル",
+              "来店済み",
+              "来店完了",
+              "会計済み",
+              "会計完了",
+              "completed",
+              "cancelled",
+              "canceled",
+              "no-show",
+              "no_show"
+            ]
+          },
+          serviceSales: { none: {} }
+        },
         orderBy: { scheduledAt: "asc" },
         take: 1
       },
