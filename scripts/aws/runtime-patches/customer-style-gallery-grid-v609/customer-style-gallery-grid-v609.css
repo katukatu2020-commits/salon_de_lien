@@ -1,0 +1,25 @@
+/* customer-style-gallery-grid-v609 */
+@media (max-width: 767px) {
+  body .community-detail-page article.orimia-style-detail-customer-v602 > .orimia-style-gallery-stable-v605.orimia-style-gallery-mobile-v608.orimia-style-gallery-grid-v609 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-template-rows: none !important;
+    grid-auto-flow: row !important;
+    grid-auto-rows: auto !important;
+    align-items: start !important;
+  }
+
+  body .community-detail-page article.orimia-style-detail-customer-v602 > .orimia-style-gallery-stable-v605.orimia-style-gallery-mobile-v608.orimia-style-gallery-grid-v609.is-single-v609 {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  body .community-detail-page article.orimia-style-detail-customer-v602 > .orimia-style-gallery-stable-v605.orimia-style-gallery-mobile-v608.orimia-style-gallery-grid-v609[data-photo-count-v602] > a.orimia-style-photo-v605 {
+    grid-column: auto !important;
+    grid-row: auto !important;
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  body .community-detail-page article.orimia-style-detail-customer-v602 > .orimia-style-gallery-stable-v605.orimia-style-gallery-mobile-v608.orimia-style-gallery-grid-v609.is-odd-v609[data-photo-count-v602] > a.orimia-style-photo-v605:first-child {
+    grid-column: 1 / -1 !important;
+  }
+}
