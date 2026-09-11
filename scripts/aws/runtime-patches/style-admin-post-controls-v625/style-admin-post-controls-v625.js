@@ -1,4 +1,4 @@
-(() => {
+;(() => {
   'use strict'
 
   if (window.__orimiaStyleAdminPostControlsV625) return

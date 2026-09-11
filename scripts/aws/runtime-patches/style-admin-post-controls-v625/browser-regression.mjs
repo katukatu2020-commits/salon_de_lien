@@ -13,6 +13,7 @@ const executablePath = process.env.CHROME_PATH || 'C:/Program Files/Google/Chrom
 const clientPath = path.join(here, 'style-admin-post-controls-v625.js')
 const cssPath = path.join(here, 'style-admin-post-controls-v625.css')
 const baseCssPath = path.resolve(here, '..', 'style-admin-controls-v618', 'style-admin-controls-v618.css')
+const concatenatedClient = '(() => {})()\n' + fs.readFileSync(clientPath, 'utf8')
 fs.mkdirSync(output, { recursive: true })
 
 const browser = await chromium.launch({ executablePath, headless: true })
@@ -78,7 +79,7 @@ async function verifySynthetic() {
   await installFetchMock(page)
   await page.addStyleTag({ path: baseCssPath })
   await page.addStyleTag({ path: cssPath })
-  await page.addScriptTag({ path: clientPath })
+  await page.addScriptTag({ content: concatenatedClient })
 
   const wrappers = page.locator('.orimia-admin-style-managed-card-v625')
   await assert.doesNotReject(() => wrappers.nth(1).waitFor({ state: 'visible' }))
@@ -118,7 +119,7 @@ async function verifySynthetic() {
   await detail.goto('http://v625.local/admin/community/detail-style')
   await installFetchMock(detail)
   await detail.addStyleTag({ path: cssPath })
-  await detail.addScriptTag({ path: clientPath })
+  await detail.addScriptTag({ content: concatenatedClient })
   const controls = detail.locator('.orimia-style-detail-controls-v625')
   await controls.waitFor({ state: 'visible' })
   assert.equal(await controls.getByRole('button', { name: '非公開にする' }).count(), 1)

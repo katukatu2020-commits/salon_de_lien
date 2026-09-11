@@ -50,6 +50,7 @@ assert.match(service, /published: Boolean\(row\.published\)/)
 assert.match(customerService, /p\."published"=TRUE/)
 
 assert.equal(count(client, '/* style-admin-post-controls-v625 */'), 1)
+assert.match(client, /\/\* style-admin-post-controls-v625 \*\/\n;\(\(\) =>/)
 assert.match(client, /data-orimia-style-post-id-v625/)
 assert.match(client, /data-orimia-style-published-v625/)
 assert.match(client, /window\.__orimiaReloadStyleAdminV625/)
