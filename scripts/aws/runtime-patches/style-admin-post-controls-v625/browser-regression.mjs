@@ -113,25 +113,10 @@ async function verifySynthetic() {
   assert.equal(await page.locator('#orimia-ui-loader-v536').evaluate(node => getComputedStyle(node).visibility), 'hidden')
   assert.deepEqual(errors, [])
 
-  const detail = await context.newPage()
-  const detailErrors = collectErrors(detail)
-  await detail.route('http://v625.local/**', route => route.fulfill({ contentType: 'text/html; charset=utf-8', body: detailHtml() }))
-  await detail.goto('http://v625.local/admin/community/detail-style')
-  await installFetchMock(detail)
-  await detail.addStyleTag({ path: cssPath })
-  await detail.addScriptTag({ content: concatenatedClient })
-  const controls = detail.locator('.orimia-style-detail-controls-v625')
-  await controls.waitFor({ state: 'visible' })
-  assert.equal(await controls.getByRole('button', { name: '非公開にする' }).count(), 1)
-  assert.equal(await controls.getByRole('button', { name: '投稿を削除' }).count(), 1)
-  assert.deepEqual(detailErrors, [])
-  await detail.screenshot({ path: path.join(output, 'synthetic-detail-mobile.png'), fullPage: true })
-
   results.synthetic = {
     listControls: 4,
     visibilityMutation: true,
     deletionConfirmation: true,
-    detailControls: 2,
   }
   await context.close()
 }
@@ -250,22 +235,9 @@ async function verifyLiveViewport(width) {
   await wrappers.first().waitFor({ state: 'visible', timeout: 20_000 })
   await page.screenshot({ path: path.join(output, 'live-list-' + width + '.png'), fullPage: true })
 
-  const publicPost = admin.posts.find(post => post.published)
-  assert.ok(publicPost, width + ': public detail fixture is missing')
-  await page.goto(base + '/admin/community/' + encodeURIComponent(publicPost.id) + '?verify=v625-detail-' + width, { waitUntil: 'domcontentloaded', timeout: 30_000 })
-  const detailControls = page.locator('.orimia-style-detail-controls-v625')
-  await detailControls.waitFor({ state: 'visible', timeout: 30_000 })
-  assert.equal(await detailControls.getByRole('button', { name: '非公開にする' }).count(), 1)
-  assert.equal(await detailControls.getByRole('button', { name: '投稿を削除' }).count(), 1)
-  for (let check = 0; check < 4; check += 1) {
-    await page.waitForTimeout(400)
-    assert.equal(await detailControls.count(), 1, width + ': detail controls disappeared after rerender')
-    assert.equal(await detailControls.isVisible(), true)
-  }
-  await page.screenshot({ path: path.join(output, 'live-detail-' + width + '.png'), fullPage: true })
   assert.deepEqual(errors, [], width + ': unexpected browser errors')
 
-  results.live.push({ width, posts: admin.posts.length, privatePosts: privateManaged.length, layout, detailPostId: publicPost.id })
+  results.live.push({ width, posts: admin.posts.length, privatePosts: privateManaged.length, layout })
   await context.close()
 }
 

@@ -35,9 +35,16 @@ function normalizeClientBoundary() {
 
 normalizeClientBoundary()
 replaceExact(
+  'public/style-admin-controls-v618.js',
+  '    void enhanceDetail()',
+  "    document.querySelectorAll('.orimia-style-detail-controls-v625').forEach(panel => panel.remove())",
+  1,
+  'preserve the existing detail management controls',
+)
+replaceExact(
   'server.js',
-  '/style-admin-controls-v618.js?v=625-post-controls1',
   '/style-admin-controls-v618.js?v=625-post-controls2',
+  '/style-admin-controls-v618.js?v=625-post-controls3',
   1,
   'style controls client hotfix cache key',
 )

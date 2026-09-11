@@ -10,3 +10,4 @@ Restores store-side publication and deletion controls after the v618 style list 
 - Refreshes the list in place, without the full-page navigation loader.
 - Leaves customer-facing style queries restricted to published posts.
 - Uses an explicit script boundary so the controls execute after the existing list client.
+- Reuses the existing management controls on the detail page instead of duplicating them.

@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=salon-de-lien:style-admin-post-controls-v625-local
+ARG BASE_IMAGE=salon-de-lien:style-admin-post-controls-v625-hotfix-local
 FROM ${BASE_IMAGE}
 
 USER root

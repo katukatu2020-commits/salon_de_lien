@@ -285,7 +285,7 @@
   function scan() {
     scanQueued = false
     enhanceList()
-    void enhanceDetail()
+    document.querySelectorAll('.orimia-style-detail-controls-v625').forEach(panel => panel.remove())
   }
 
   function scheduleScan() {
