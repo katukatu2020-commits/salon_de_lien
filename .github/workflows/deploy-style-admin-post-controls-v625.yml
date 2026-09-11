@@ -23,7 +23,7 @@ env:
   ECS_CLUSTER: salon-de-lien-staging-cluster
   ECS_SERVICE: salon-de-lien-staging-web
   RELEASE_DIR: scripts/aws/runtime-patches/style-admin-post-controls-v625
-  PARENT_DIGEST: sha256:befb9d532316ac73f3916d9b15300a1e00403b637c7e745c44d5811b1d2eef71
+  PARENT_DIGEST: sha256:d0b1bfca414153851ff135fc1dba2673ae6b04c8bb1659e9d3cafc9196b9355d
 
 jobs:
   deploy:

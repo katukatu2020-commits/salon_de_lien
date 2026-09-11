@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=salon-de-lien:navigation-loader-verification-v624-local
+ARG BASE_IMAGE=salon-de-lien:style-admin-post-controls-v625-local
 FROM ${BASE_IMAGE}
 
 USER root

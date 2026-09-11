@@ -9,3 +9,4 @@ Restores store-side publication and deletion controls after the v618 style list 
 - Requires explicit confirmation before deletion.
 - Refreshes the list in place, without the full-page navigation loader.
 - Leaves customer-facing style queries restricted to published posts.
+- Uses an explicit script boundary so the controls execute after the existing list client.

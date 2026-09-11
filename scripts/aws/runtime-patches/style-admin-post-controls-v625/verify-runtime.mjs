@@ -18,10 +18,8 @@ const changes = JSON.parse(fs.readFileSync(manifestPath, 'utf8'))
 assert.deepEqual(
   [...new Set(changes.map(change => change.file))].sort(),
   [
-    'public/style-admin-controls-v618.css',
     'public/style-admin-controls-v618.js',
     'server.js',
-    'style-admin-controls-v618.js',
   ],
   'v625 modified an unexpected runtime file',
 )
@@ -34,7 +32,7 @@ const customerService = read('style-community-controls-v610.js')
 const contentManagement = read('content-management-v465.js')
 
 assert.match(server, /style-admin-controls-v618\.css\?v=625-post-controls1/)
-assert.match(server, /style-admin-controls-v618\.js\?v=625-post-controls1/)
+assert.match(server, /style-admin-controls-v618\.js\?v=625-post-controls2/)
 assert.match(server, /X-Lien-Style-Admin-Post-Controls', 'v625'/)
 assert.match(server, /X-Lien-Navigation-Loader-Verified', 'v624'/)
 assert.match(server, /X-Lien-Auto-Split-Orders', 'v622'/)
