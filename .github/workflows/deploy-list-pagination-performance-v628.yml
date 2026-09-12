@@ -1,4 +1,4 @@
-name: Deploy dealer pricing pagination v631
+name: Deploy list pagination performance v628
 
 on:
   workflow_dispatch:
@@ -17,8 +17,8 @@ env:
   ECR_REPOSITORY: salon-de-lien-staging-app
   ECS_CLUSTER: salon-de-lien-staging-cluster
   ECS_SERVICE: salon-de-lien-staging-web
-  RELEASE_DIR: scripts/aws/runtime-patches/dealer-pricing-pagination-v631
-  PARENT_DIGEST: sha256:6d0dd3f16159d6db83c99504d1842ec5c0032c1ae8d4306d2c63c3b2ec12116e
+  RELEASE_DIR: scripts/aws/runtime-patches/list-pagination-performance-v628
+  PARENT_DIGEST: sha256:d97bc14542ad779a63cf535c6d6fbacbb8047c32875cb60c2d885f9b76078140
 
 jobs:
   deploy:
@@ -43,10 +43,10 @@ jobs:
           $identity = aws sts get-caller-identity --output json --no-cli-pager | ConvertFrom-Json
           if ($identity.Account -ne $env:AWS_ACCOUNT_ID -or $identity.Arn -notmatch ':assumed-role/SalonDeLienGitHubDeployRole/') { throw 'Unexpected AWS deployment identity.' }
 
-      - name: Validate dealer pricing pagination release
+      - name: Validate list pagination release
         shell: pwsh
         run: |
-          foreach ($file in @('patch-runtime.mjs', 'verify-runtime.mjs', 'local-fixture.mjs', 'browser-regression.mjs', 'production-smoke.mjs')) {
+          foreach ($file in @('patch-runtime.mjs', 'verify-runtime.mjs', 'browser-regression.mjs', 'production-smoke.mjs', 'local-fixture.mjs', 'dealer-bootstrap-v628.fragment.js', 'dealer-products-v628.fragment.js', 'dealer-search-v628.fragment.js')) {
             node --check (Join-Path $env:RELEASE_DIR $file)
             if ($LASTEXITCODE -ne 0) { throw "Syntax check failed: $file" }
           }
@@ -80,12 +80,12 @@ jobs:
         shell: pwsh
         run: |
           $shortSha = $env:GITHUB_SHA.Substring(0, 12)
-          $tag = "dealer-pricing-pagination-v631-$shortSha"
+          $tag = "list-pagination-performance-v628-$shortSha"
           $registry = "$($env:AWS_ACCOUNT_ID).dkr.ecr.$($env:AWS_REGION).amazonaws.com"
           $image = "$registry/$($env:ECR_REPOSITORY):$tag"
           $baseImage = "$registry/$($env:ECR_REPOSITORY)@$($env:PARENT_DIGEST)"
-          $rootfs = Join-Path $env:RUNNER_TEMP 'salon-v631-rootfs.tar'
-          $flatBase = "salon-de-lien-v631-flat:$shortSha"
+          $rootfs = Join-Path $env:RUNNER_TEMP 'salon-v628-rootfs.tar'
+          $flatBase = "salon-de-lien-v628-flat:$shortSha"
           crane export $baseImage $rootfs
           if ($LASTEXITCODE -ne 0) { throw 'Base image export failed.' }
           docker import `
@@ -102,7 +102,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Flattened base image import failed.' }
           docker build --build-arg "BASE_IMAGE=$flatBase" --tag $image $env:RELEASE_DIR
           if ($LASTEXITCODE -ne 0) { throw 'Docker build failed.' }
-          docker run --rm --entrypoint node $image /tmp/lien-v631/verify-runtime.mjs
+          docker run --rm --entrypoint node $image /tmp/lien-v628/verify-runtime.mjs
           if ($LASTEXITCODE -ne 0) { throw 'Runtime isolation verification failed.' }
           docker push $image
           if ($LASTEXITCODE -ne 0) { throw 'ECR push failed.' }
@@ -111,6 +111,17 @@ jobs:
           "RELEASE_TAG=$tag" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
           "RELEASE_IMAGE=$image" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
           "RELEASE_DIGEST=$digest" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Prepare Chromium verification
+        shell: pwsh
+        run: |
+          $chrome = @('/usr/bin/google-chrome', '/usr/bin/google-chrome-stable', '/usr/bin/chromium') | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if (-not $chrome) { throw 'A Chromium executable is required for the browser tests.' }
+          $browserDependencies = Join-Path $env:RUNNER_TEMP 'lien-browser-smoke-v628'
+          npm install --prefix $browserDependencies --no-save --package-lock=false --ignore-scripts playwright-core@1.62.1
+          if ($LASTEXITCODE -ne 0) { throw 'Browser test dependency installation failed.' }
+          "SMOKE_DEPENDENCIES_PACKAGE=$(Join-Path $browserDependencies 'package.json')" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+          "CHROME_PATH=$chrome" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Register application task definition
         shell: pwsh
@@ -124,14 +135,35 @@ jobs:
         run: |
           & ./scripts/aws/approve-and-deploy-protected-release.ps1 -PreviousTaskDefinitionArn $env:PREVIOUS_TASK -PreviousImage $env:PREVIOUS_IMAGE -PreviousImageDigest $env:PREVIOUS_DIGEST -NewTaskDefinitionArn $env:RELEASE_TASK -NewImage $env:RELEASE_IMAGE -NewImageDigest $env:RELEASE_DIGEST -Profile ''
 
-      - name: Verify dealer pricing pagination in production
+      - name: Verify list pagination in production
         shell: pwsh
         run: |
           $required = [ordered]@{
-            'X-Lien-Dealer-Pricing-Pagination' = 'v631'
-            'X-Lien-Managed-Bank-Accounts' = 'v629'
             'X-Lien-List-Pagination' = 'v628'
             'X-Lien-Password-Visibility' = 'v627'
+            'X-Lien-Style-Detail-Cleanup' = 'v626'
+            'X-Lien-Style-Admin-Post-Controls' = 'v625'
+            'X-Lien-Navigation-Loader-Verified' = 'v624'
+            'X-Lien-Navigation-Loader-Scope' = 'v623'
+            'X-Lien-Auto-Split-Orders' = 'v622'
+            'X-Lien-All-Dealer-Order-Filter' = 'v621'
+            'X-Lien-Dealer-Code-History' = 'v620'
+            'X-Lien-Style-Admin-Rerender' = 'v619'
+            'X-Lien-Style-Admin-Controls' = 'v618'
+            'X-Lien-Stamp-Card-Commercial' = 'v617'
+            'X-Lien-Customer-Booking-Confirmation' = 'v616'
+            'X-Lien-Style-Publisher-Comments' = 'v615'
+            'X-Lien-Customer-Current-Appointment' = 'v614'
+            'X-Lien-Coupon-Email-Delivery' = 'v613'
+            'X-Lien-Hotpepper-Menu-Import' = 'v612'
+            'X-Lien-Style-Community-Rerender' = 'v611'
+            'X-Lien-Style-Community-Controls' = 'v610'
+            'X-Lien-Hotpepper-Style-Import' = 'v600'
+            'X-Lien-Business-Logout' = 'v599'
+            'X-Lien-Customer-Notification-Badge' = 'v597'
+            'X-Lien-Customer-Store-List' = 'v595'
+            'X-Lien-Daily-Sales-Print' = 'v590'
+            'X-Lien-Receipt-Pos-Direct' = 'v582'
           }
           $ready = $false
           for ($attempt = 1; $attempt -le 30; $attempt += 1) {
@@ -145,10 +177,11 @@ jobs:
             } catch { $ready = $false }
             Start-Sleep -Seconds 10
           }
-          if (-not $ready) { throw 'Production readiness did not recover on dealer pricing pagination v631.' }
+          if (-not $ready) { throw 'Production readiness did not recover on list pagination performance v628.' }
           $env:SMOKE_BASE_URL = 'https://salon-de-lien.com'
+          $env:SCREENSHOT_DIR = 'artifacts/list-pagination-performance-v628/production'
           node (Join-Path $env:RELEASE_DIR 'production-smoke.mjs')
-          if ($LASTEXITCODE -ne 0) { throw 'Production dealer pricing pagination smoke test failed.' }
+          if ($LASTEXITCODE -ne 0) { throw 'Production list pagination browser test failed.' }
           $actualTask = (aws ecs describe-services --cluster $env:ECS_CLUSTER --services $env:ECS_SERVICE --region $env:AWS_REGION --query 'services[0].taskDefinition' --output text --no-cli-pager).Trim()
           if ($actualTask -ne $env:RELEASE_TASK) { throw 'ECS did not settle on the approved release.' }
 
@@ -169,10 +202,10 @@ jobs:
           git commit -m 'chore: record protected runtime release [skip ci]'
           git push origin "HEAD:$($env:GITHUB_REF_NAME)"
 
-      - name: Preserve verification artifacts
+      - name: Preserve browser verification screenshots
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: dealer-pricing-pagination-v631
-          path: artifacts/dealer-pricing-pagination-v631/
+          name: list-pagination-performance-v628
+          path: artifacts/list-pagination-performance-v628/
           if-no-files-found: ignore
