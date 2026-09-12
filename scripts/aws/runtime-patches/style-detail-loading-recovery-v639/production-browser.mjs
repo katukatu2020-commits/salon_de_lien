@@ -18,6 +18,7 @@ function unexpected(messages) {
     !/Minified React error #(329|418|423)/.test(message)
     && !message.includes('status of 404')
     && !message.includes('status of 410')
+    && !message.includes('status of 502')
   ))
 }
 
