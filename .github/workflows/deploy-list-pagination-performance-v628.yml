@@ -1,12 +1,7 @@
 name: Deploy list pagination performance v628
 
 on:
-  push:
-    branches:
-      - recovery/aws-canonical-20260815
-    paths:
-      - .github/workflows/deploy-list-pagination-performance-v628.yml
-      - scripts/aws/runtime-patches/list-pagination-performance-v628/**
+  workflow_dispatch:
 
 permissions:
   contents: write
