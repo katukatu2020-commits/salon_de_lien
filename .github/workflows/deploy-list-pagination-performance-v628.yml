@@ -2,6 +2,12 @@ name: Import Super Yamamoto Milbon catalog v630
 
 on:
   workflow_dispatch:
+    inputs:
+      audit_only:
+        description: Verify the completed import without writing product rows
+        required: true
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -90,6 +96,7 @@ jobs:
           "IMPORT_TASK=$task" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Import the Milbon catalog
+        if: ${{ !inputs.audit_only }}
         shell: pwsh
         run: |
           $overridesPath = Join-Path $env:RUNNER_TEMP 'milbon-v630-import-overrides.json'
