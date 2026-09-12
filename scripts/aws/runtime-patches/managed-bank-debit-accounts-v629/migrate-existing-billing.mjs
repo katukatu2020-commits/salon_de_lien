@@ -41,7 +41,7 @@ export async function migrateExistingBilling({ prisma, stripe, secretKey }) {
   }
 
   await prisma.$transaction(async tx => {
-    await tx.$queryRawUnsafe("SELECT pg_advisory_xact_lock(hashtext('managed_bank_debit_migration_v629'))")
+    await tx.$queryRawUnsafe("SELECT 1::int AS locked FROM (SELECT pg_advisory_xact_lock(hashtext('managed_bank_debit_migration_v629'))) AS guard")
     await tx.$executeRawUnsafe(`UPDATE "OrganizationBilling" SET "onboardingStatus"='BANK_DEBIT_MANAGED',"subscriptionStatus"='active',"stripeCustomerId"=NULL,"stripeSubscriptionId"=NULL,"stripeCheckoutSessionId"=NULL,"paymentMethodBrand"=NULL,"paymentMethodLast4"=NULL,"paymentMethodExpMonth"=NULL,"paymentMethodExpYear"=NULL,"paymentMethodRegisteredAt"=NULL,"updatedAt"=NOW()`)
     await tx.$executeRawUnsafe(`UPDATE "WholesaleDealerBilling" SET "onboardingStatus"='BANK_DEBIT_MANAGED',"subscriptionStatus"='active',"stripeCustomerId"=NULL,"stripeSubscriptionId"=NULL,"stripeCheckoutSessionId"=NULL,"paymentMethodBrand"=NULL,"paymentMethodLast4"=NULL,"paymentMethodExpMonth"=NULL,"paymentMethodExpYear"=NULL,"paymentMethodRegisteredAt"=NULL,"updatedAt"=NOW()`)
   })
@@ -63,7 +63,7 @@ export async function migrateExistingBilling({ prisma, stripe, secretKey }) {
 }
 
 async function main() {
-  const require = createRequire(import.meta.url)
+  const require = createRequire(path.join(process.env.LIEN_RUNTIME_ROOT || '/app', 'package.json'))
   const { PrismaClient } = require('@prisma/client')
   const Stripe = require('stripe')
   const prisma = new PrismaClient()

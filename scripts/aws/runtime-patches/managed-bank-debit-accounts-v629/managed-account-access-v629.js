@@ -203,7 +203,7 @@ function createManagedAccountAccessService({ prisma, crypto, operatorSession, re
     const publicCode = 'STORE-' + crypto.randomBytes(5).toString('hex').toUpperCase()
     const hash = passwordHash(crypto, common.password)
     await prisma.$transaction(async function (tx) {
-      await tx.$queryRawUnsafe("SELECT pg_advisory_xact_lock(hashtext('managed_account_issue_v629'))")
+      await tx.$queryRawUnsafe("SELECT 1::int AS locked FROM (SELECT pg_advisory_xact_lock(hashtext('managed_account_issue_v629'))) AS guard")
       await ensureBusinessIdentityAvailable(tx, common.loginId, common.email)
       const plans = await tx.$queryRawUnsafe('SELECT "planKey" FROM "BillingPlan" WHERE "planKey"=$1 AND "active"=TRUE LIMIT 1', planKey)
       if (!plans[0]) throw new ManagedAccountError('plan')
@@ -225,7 +225,7 @@ function createManagedAccountAccessService({ prisma, crypto, operatorSession, re
     const dealerCode = 'DLR-' + crypto.randomBytes(6).toString('hex').toUpperCase()
     const hash = passwordHash(crypto, common.password)
     await prisma.$transaction(async function (tx) {
-      await tx.$queryRawUnsafe("SELECT pg_advisory_xact_lock(hashtext('managed_account_issue_v629'))")
+      await tx.$queryRawUnsafe("SELECT 1::int AS locked FROM (SELECT pg_advisory_xact_lock(hashtext('managed_account_issue_v629'))) AS guard")
       await ensureBusinessIdentityAvailable(tx, common.loginId, common.email)
       await tx.$executeRawUnsafe('INSERT INTO "WholesaleDealer" ("id","name","representativeName","loginId","email","passwordHash","dealerCode","active","authVersion","createdAt","updatedAt") VALUES ($1,$2,NULLIF($3,\'\'),$4,$5,$6,$7,TRUE,1,NOW(),NOW())', dealerId, dealerName, representativeName, common.loginId, common.email, hash, dealerCode)
       await tx.$executeRawUnsafe('INSERT INTO "WholesaleDealerBilling" ("dealerId","planKey","displayName","monthlyAmount","currency","onboardingStatus","subscriptionStatus","billingRequiredAt","createdAt","updatedAt") VALUES ($1,\'dealer\',\'ディーラープラン\',9800,\'jpy\',\'BANK_DEBIT_MANAGED\',\'active\',NOW(),NOW(),NOW())', dealerId)

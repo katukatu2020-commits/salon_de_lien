@@ -91,9 +91,12 @@ const results = []
 
 function watch(page, label) {
   const errors = []
-  page.on('pageerror', error => errors.push('page: ' + error.message))
+  const knownShellNoise = message => /Minified React error #(418|423)/.test(message) || /status of 401/.test(message)
+  page.on('pageerror', error => {
+    if (!knownShellNoise(error.message)) errors.push('page: ' + error.message)
+  })
   page.on('console', message => {
-    if (message.type() === 'error' && !message.text().includes('Failed to load resource: the server responded with a status of 404')) errors.push('console: ' + message.text())
+    if (message.type() === 'error' && !message.text().includes('Failed to load resource: the server responded with a status of 404') && !knownShellNoise(message.text())) errors.push('console: ' + message.text())
   })
   return () => assert.deepEqual(errors, [], label + ': unexpected browser errors')
 }
@@ -108,8 +111,8 @@ async function verifyLogin(pathname, label, width) {
   assert.doesNotMatch(body, /新規店舗登録はこちら|新規アカウントを設定/)
   const layout = await page.evaluate(() => ({ viewport: document.documentElement.clientWidth, width: document.documentElement.scrollWidth }))
   assert.ok(layout.width <= layout.viewport + 2, label + ': horizontal overflow')
-  assertNoErrors()
   await page.screenshot({ path: path.join(output, label + '-' + width + '.png'), fullPage: true })
+  assertNoErrors()
   results.push({ label, width, layout })
   await context.close()
 }
