@@ -330,6 +330,7 @@ model VisitCommunityPost {
   publishedByName String?
   published      Boolean                 @default(true)
   publishedAt    DateTime                @default(now())
+  displayOrder   Int?
   createdAt      DateTime                @default(now())
   updatedAt      DateTime                @updatedAt
   aiCommentDueAt DateTime?
@@ -341,6 +342,7 @@ model VisitCommunityPost {
   visit          Visit?                  @relation(fields: [visitId], references: [id], onDelete: Cascade)
 
   @@index([organizationId, published, publishedAt])
+  @@index([organizationId, displayOrder])
   @@index([customerId, publishedAt])
   @@index([organizationId, published, aiCommentDueAt, aiCommentedAt], map: "VisitCommunityPost_organizationId_published_aiCommentDueAt_aiCo")
 }

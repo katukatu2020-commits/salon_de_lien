@@ -7,13 +7,14 @@ import {
   loadCommunityCustomerIdentityIds
 } from "@/lib/community/comment-ownership";
 import { communityPublisherName } from "@/lib/community/publisher-name";
+import { normalizeCommunityDisplayOrder } from "@/lib/community/style-post-order";
 import { normalizeSalonStaffName } from "@/lib/salon/staff";
 import { resolveCustomerPhotoReference } from "@/lib/storage/customer-photo";
 
 export const COMMUNITY_PAGE_SIZE = 50;
 
 export type CommunityActor = "customer" | "staff";
-export type CommunitySort = "latest" | "oldest" | "likes";
+export type CommunitySort = "manual" | "latest" | "oldest" | "likes";
 export type CommunityAgeBand = "all" | "under20" | "20s" | "30s" | "40s" | "50s" | "60s" | "70plus";
 
 export type CommunityListFilters = {
@@ -60,6 +61,7 @@ export type CommunityPostView = {
 export type CommunityListPostView = {
   id: string;
   coverPhotoUrl: string;
+  displayOrder: number;
 };
 
 export type CommunityListResult = {
@@ -75,7 +77,7 @@ export type CommunityListResult = {
   };
 };
 
-const validSorts = new Set<CommunitySort>(["latest", "oldest", "likes"]);
+const validSorts = new Set<CommunitySort>(["manual", "latest", "oldest", "likes"]);
 const validAgeBands = new Set<CommunityAgeBand>(["all", "under20", "20s", "30s", "40s", "50s", "60s", "70plus"]);
 
 function singleQueryValue(value: string | string[] | undefined) {
@@ -87,7 +89,7 @@ export function parseCommunityListFilters(searchParams?: Record<string, string |
   const requestedAge = singleQueryValue(searchParams?.age) as CommunityAgeBand;
   const requestedPage = Number(singleQueryValue(searchParams?.page));
   return {
-    sort: validSorts.has(requestedSort) ? requestedSort : "latest",
+    sort: validSorts.has(requestedSort) ? requestedSort : "manual",
     stylist: singleQueryValue(searchParams?.stylist).trim().slice(0, 80),
     course: singleQueryValue(searchParams?.course).trim().slice(0, 120),
     gender: singleQueryValue(searchParams?.gender).trim().slice(0, 40),
@@ -187,7 +189,8 @@ function communityWhere(organizationId: string, filters: CommunityListFilters): 
 function communityOrderBy(sort: CommunitySort): Prisma.VisitCommunityPostOrderByWithRelationInput[] {
   if (sort === "oldest") return [{ publishedAt: "asc" }, { id: "asc" }];
   if (sort === "likes") return [{ likes: { _count: "desc" } }, { publishedAt: "desc" }];
-  return [{ publishedAt: "desc" }, { id: "desc" }];
+  if (sort === "latest") return [{ publishedAt: "desc" }, { id: "desc" }];
+  return [{ displayOrder: { sort: "asc", nulls: "last" } }, { publishedAt: "desc" }, { id: "desc" }];
 }
 
 async function loadCommunityFilterOptions(organizationId: string) {
@@ -231,6 +234,7 @@ export async function loadVisitCommunityPostList({
   organizationId: string;
   filters: CommunityListFilters;
 }): Promise<CommunityListResult> {
+  await normalizeCommunityDisplayOrder(organizationId);
   const where = communityWhere(organizationId, filters);
   const [totalCount, options] = await Promise.all([
     prisma.visitCommunityPost.count({ where }),
@@ -245,6 +249,7 @@ export async function loadVisitCommunityPostList({
     take: COMMUNITY_PAGE_SIZE,
     select: {
       id: true,
+      displayOrder: true,
       postKind: true,
       photoReferences: true,
       visit: {
@@ -261,6 +266,7 @@ export async function loadVisitCommunityPostList({
 
   const posts = (await Promise.all(rows.map(async (post) => ({
     id: post.id,
+    displayOrder: post.displayOrder ?? 0,
     coverPhotoUrl: await resolveCustomerPhotoReference(
       post.postKind === "STORE" ? post.photoReferences[0] : post.visit?.photos[0]?.storageReference
     )

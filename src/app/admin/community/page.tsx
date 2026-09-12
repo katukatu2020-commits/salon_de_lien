@@ -26,7 +26,7 @@ export default async function AdminCommunityPage({
         visual={<BrandVisual variant="insights" className="h-full min-h-40" imageClassName="object-[50%_32%]" sizes="360px" />}
       />
       <CommunityFilters filters={result.filters} {...result.options} />
-      <CommunityStyleGrid result={result} detailBasePath="/admin/community" />
+      <CommunityStyleGrid result={result} detailBasePath="/admin/community" canReorder />
     </div>
   );
 }

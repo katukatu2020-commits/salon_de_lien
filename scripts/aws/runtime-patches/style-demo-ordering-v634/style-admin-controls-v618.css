@@ -1,0 +1,885 @@
+/* style-admin-controls-v618 */
+.orimia-style-admin-legacy-hidden-v618 {
+  display: none !important;
+}
+
+.orimia-style-admin-v618 {
+  display: grid;
+  min-width: 0;
+  gap: 16px;
+  scroll-margin-top: 24px;
+}
+
+.orimia-style-admin-v618.is-loading-v618 {
+  cursor: progress;
+}
+
+.orimia-style-admin-v618.is-loading-v618 > * {
+  opacity: .58;
+  pointer-events: none;
+}
+
+.orimia-admin-style-toolbar-v618 {
+  border: 1px solid #e8ded2;
+  border-radius: 8px;
+  background: #fff;
+  padding: 16px;
+  box-shadow: 0 10px 28px rgba(47, 42, 37, .045);
+}
+
+.orimia-admin-style-heading-v618,
+.orimia-admin-style-result-v618 {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.orimia-admin-style-heading-v618 {
+  margin-bottom: 14px;
+  color: #2f2a25;
+  font-size: 14px;
+}
+
+.orimia-admin-style-heading-v618 strong,
+.orimia-admin-style-result-v618 > span:first-child,
+[data-orimia-style-edit-v618] {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.orimia-admin-style-heading-v618 svg,
+.orimia-admin-style-result-v618 svg,
+[data-orimia-style-edit-v618] svg {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 auto;
+}
+
+.orimia-admin-style-heading-v618 svg {
+  color: #b84969;
+}
+
+.orimia-admin-style-heading-v618 button {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  padding: 8px 10px;
+  color: #7c7168;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.orimia-admin-style-heading-v618 button:hover,
+.orimia-admin-style-heading-v618 button:focus-visible {
+  background: #f8f3ef;
+  color: #8f4f42;
+  outline: 2px solid #e9c9be;
+  outline-offset: 1px;
+}
+
+.orimia-admin-style-heading-v618 button svg {
+  width: 15px;
+  height: 15px;
+  color: currentColor;
+}
+
+.orimia-admin-style-filters-v618 {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: end;
+  gap: 12px;
+}
+
+.orimia-admin-style-filter-field-v618 {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+}
+
+.orimia-admin-style-filter-field-v618 > span {
+  color: #7c7168;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.orimia-admin-style-filter-field-v618 select {
+  width: 100%;
+  min-width: 0;
+  height: 44px;
+  border: 1px solid #e3d6ca;
+  border-radius: 6px;
+  background: #fff;
+  padding: 0 34px 0 12px;
+  color: #2f2a25;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  outline: none;
+}
+
+.orimia-admin-style-filter-field-v618 select:focus {
+  border-color: #a45a4c;
+  box-shadow: 0 0 0 3px rgba(233, 201, 190, .46);
+}
+
+.orimia-admin-style-result-v618 {
+  min-height: 22px;
+  color: #7c7168;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.orimia-admin-style-grid-v618 {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.orimia-admin-style-card-v618 {
+  display: grid;
+  min-width: 0;
+  overflow: hidden;
+  grid-template-rows: auto minmax(68px, auto);
+  border: 1px solid #e8ded2;
+  border-radius: 8px;
+  background: #fff;
+  color: #2f2a25;
+  box-shadow: 0 8px 22px rgba(47, 42, 37, .065);
+  outline: none;
+  text-decoration: none;
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.orimia-admin-style-image-v618 {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  aspect-ratio: 4 / 5;
+  background: #eee7df;
+}
+
+.orimia-admin-style-image-v618 img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform .24s ease;
+}
+
+.orimia-admin-style-card-copy-v618 {
+  display: grid;
+  min-width: 0;
+  align-content: center;
+  gap: 5px;
+  padding: 11px 12px 12px;
+}
+
+.orimia-admin-style-card-copy-v618 strong,
+.orimia-admin-style-card-copy-v618 small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.orimia-admin-style-card-copy-v618 strong {
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.orimia-admin-style-card-copy-v618 small {
+  color: #81756c;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.orimia-admin-style-engagement-v634 {
+  color: #a34a63 !important;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.orimia-admin-style-card-v618:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(47, 42, 37, .1);
+}
+
+.orimia-admin-style-card-v618:hover img {
+  transform: scale(1.025);
+}
+
+.orimia-admin-style-card-v618:focus-visible {
+  box-shadow: 0 0 0 4px #e9c9be, 0 12px 28px rgba(47, 42, 37, .1);
+}
+
+.orimia-admin-style-empty-v618,
+.orimia-admin-style-error-v618,
+.orimia-admin-style-loading-v618 {
+  display: grid;
+  min-height: 180px;
+  place-content: center;
+  justify-items: center;
+  gap: 8px;
+  border: 1px dashed #d8cbbf;
+  border-radius: 8px;
+  background: #fff;
+  padding: 28px;
+  color: #7c7168;
+  text-align: center;
+}
+
+.orimia-admin-style-empty-v618 strong,
+.orimia-admin-style-error-v618 strong {
+  color: #2f2a25;
+  font-size: 14px;
+}
+
+.orimia-admin-style-error-v618 button {
+  min-height: 42px;
+  margin-top: 8px;
+  border: 1px solid #d8cbbf;
+  border-radius: 6px;
+  background: #fff;
+  padding: 0 16px;
+  color: #714339;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.orimia-admin-style-pager-v618 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding-top: 4px;
+}
+
+.orimia-admin-style-pager-v618 button {
+  min-width: 82px;
+  height: 44px;
+  border: 1px solid #e3d6ca;
+  border-radius: 6px;
+  background: #fff;
+  color: #714339;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.orimia-admin-style-pager-v618 button:disabled {
+  opacity: .38;
+  cursor: default;
+}
+
+.orimia-admin-style-pager-v618 span {
+  min-width: 72px;
+  color: #2f2a25;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+}
+
+[data-orimia-style-edit-v618] {
+  justify-content: center;
+}
+
+.orimia-style-dialog-v618 .orimia-style-dialog-body-v602 {
+  gap: 18px;
+}
+
+.orimia-style-dialog-v618 .orimia-style-field-v602 select:required:invalid {
+  color: #91867d;
+}
+
+.orimia-style-no-staff-v618 {
+  margin: -8px 0 0;
+  border-left: 3px solid #bf4968;
+  padding: 5px 10px;
+  color: #8b3f54;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+@media (max-width: 1199px) {
+  .orimia-admin-style-grid-v618 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+}
+
+@media (max-width: 899px) {
+  .orimia-admin-style-filters-v618 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .orimia-admin-style-grid-v618 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 639px) {
+  .orimia-style-admin-v618 {
+    gap: 12px;
+  }
+
+  .orimia-admin-style-toolbar-v618 {
+    padding: 14px;
+  }
+
+  .orimia-admin-style-filters-v618 {
+    gap: 10px;
+  }
+
+  .orimia-admin-style-filter-field-v618 select {
+    padding-left: 10px;
+    font-size: 13px;
+  }
+
+  .orimia-admin-style-grid-v618 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .orimia-admin-style-card-copy-v618 {
+    min-height: 66px;
+    padding: 9px 10px 10px;
+  }
+}
+
+@media (max-width: 359px) {
+  .orimia-admin-style-filters-v618 {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orimia-admin-style-card-v618,
+  .orimia-admin-style-image-v618 img {
+    transition: none;
+  }
+
+  .orimia-admin-style-card-v618:hover {
+    transform: none;
+  }
+
+  .orimia-admin-style-card-v618:hover img {
+    transform: none;
+  }
+}
+
+/* style-admin-post-controls-v625 */
+.orimia-admin-style-managed-card-v625 {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  overflow: hidden;
+  grid-template-rows: minmax(0, 1fr) auto;
+  border: 1px solid #e8ded2;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 8px 22px rgba(47, 42, 37, .065);
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.orimia-admin-style-managed-card-v625:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(47, 42, 37, .1);
+}
+
+.orimia-admin-style-managed-card-v625 > .orimia-admin-style-card-v618 {
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  transition: none;
+}
+
+.orimia-admin-style-managed-card-v625 > .orimia-admin-style-card-v618:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.orimia-admin-style-managed-card-v625 > .orimia-admin-style-card-v618:focus-visible {
+  position: relative;
+  z-index: 2;
+  box-shadow: inset 0 0 0 3px #e9c9be;
+}
+
+.orimia-admin-style-managed-card-v625.is-private-v625 .orimia-admin-style-image-v618 img {
+  opacity: .56;
+  filter: saturate(.72);
+}
+
+.orimia-admin-style-managed-card-v625.is-private-v625 .orimia-admin-style-card-copy-v618 {
+  background: #faf8f6;
+}
+
+.orimia-admin-style-private-badge-v625 {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(255, 255, 255, .8);
+  border-radius: 999px;
+  background: rgba(47, 42, 37, .86);
+  padding: 5px 9px;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: 0 4px 12px rgba(47, 42, 37, .16);
+}
+
+.orimia-admin-style-private-badge-v625[hidden] {
+  display: none;
+}
+
+.orimia-admin-style-order-badge-v634 {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  display: inline-flex;
+  min-width: 48px;
+  min-height: 30px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, .88);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .94);
+  padding: 5px 9px;
+  color: #783d50;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  box-shadow: 0 4px 12px rgba(47, 42, 37, .14);
+  font-variant-numeric: tabular-nums;
+}
+
+.orimia-admin-style-private-badge-v625 svg,
+.orimia-admin-style-actions-v625 svg,
+.orimia-style-detail-controls-v625 svg,
+.orimia-style-delete-dialog-v625 svg {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 auto;
+}
+
+.orimia-admin-style-actions-v625 {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 38px;
+  gap: 7px;
+  border-top: 1px solid #eee4dc;
+  background: #fff;
+  padding: 8px;
+}
+
+.orimia-admin-style-order-form-v634 {
+  display: grid;
+  min-width: 0;
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 1fr) 58px;
+  gap: 7px;
+}
+
+.orimia-admin-style-order-form-v634 label {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #dacec4;
+  border-radius: 6px;
+  background: #faf8f6;
+  padding: 0 7px;
+  color: #665a52;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.orimia-admin-style-order-form-v634 input {
+  width: 100%;
+  min-width: 0;
+  height: 36px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #2f2a25;
+  font: inherit;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.orimia-admin-style-order-form-v634 label:focus-within {
+  border-color: #bd4968;
+  box-shadow: 0 0 0 2px rgba(189, 73, 104, .14);
+}
+
+.orimia-admin-style-order-form-v634 button {
+  min-height: 38px;
+  color: #8f4058 !important;
+  font-size: 11px !important;
+}
+
+.orimia-admin-style-actions-v625 button,
+.orimia-style-detail-actions-v625 button,
+.orimia-style-delete-dialog-v625 button {
+  min-width: 0;
+  border: 1px solid #dacec4;
+  border-radius: 6px;
+  background: #fff;
+  color: #594d44;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color .18s ease, background-color .18s ease, color .18s ease, opacity .18s ease;
+}
+
+.orimia-admin-style-actions-v625 button:hover,
+.orimia-admin-style-actions-v625 button:focus-visible,
+.orimia-style-detail-actions-v625 button:hover,
+.orimia-style-detail-actions-v625 button:focus-visible,
+.orimia-style-delete-dialog-v625 button:hover,
+.orimia-style-delete-dialog-v625 button:focus-visible {
+  border-color: #bd4968;
+  outline: none;
+}
+
+.orimia-admin-style-actions-v625 button:disabled,
+.orimia-style-detail-actions-v625 button:disabled,
+.orimia-style-delete-dialog-v625 button:disabled {
+  cursor: wait;
+  opacity: .5;
+}
+
+.orimia-admin-style-visibility-v625 {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 8px;
+  font-size: 11px !important;
+  line-height: 1.2;
+}
+
+.orimia-admin-style-visibility-v625 span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.orimia-admin-style-visibility-v625.is-publish-v625,
+.orimia-style-detail-visibility-v625.is-publish-v625 {
+  border-color: #b9d8ca;
+  background: #eef8f2;
+  color: #28634d;
+}
+
+.orimia-admin-style-delete-v625 {
+  display: inline-grid;
+  width: 38px;
+  min-height: 38px;
+  place-items: center;
+  color: #a9433d !important;
+}
+
+.orimia-admin-style-image-v618 {
+  position: relative;
+}
+
+.orimia-style-detail-controls-v625 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  border-top: 1px solid #eadfd5;
+  padding: 18px 0 0;
+}
+
+.orimia-style-detail-status-v625 {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  border-radius: 999px;
+  background: #eaf5ee;
+  padding: 6px 12px;
+  color: #2e684f;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.orimia-style-detail-status-v625.is-private-v625 {
+  background: #efedeb;
+  color: #665d56;
+}
+
+.orimia-style-detail-actions-v625 {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.orimia-style-detail-actions-v625 button {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 14px;
+  font-size: 13px;
+}
+
+.orimia-style-detail-delete-v625 {
+  border-color: #ebc4c0 !important;
+  color: #a9433d !important;
+}
+
+.orimia-style-delete-dialog-v625 {
+  width: min(480px, calc(100vw - 32px));
+  max-width: none;
+  border: 1px solid #e4d7cd;
+  border-radius: 8px;
+  background: #fff;
+  padding: 0;
+  color: #2f2a25;
+  box-shadow: 0 24px 70px rgba(47, 42, 37, .22);
+}
+
+.orimia-style-delete-dialog-v625::backdrop {
+  background: rgba(33, 29, 26, .42);
+  backdrop-filter: blur(2px);
+}
+
+.orimia-style-delete-dialog-v625 form {
+  display: grid;
+  gap: 18px;
+  padding: 24px;
+}
+
+.orimia-style-delete-dialog-v625 header {
+  display: grid;
+  gap: 8px;
+}
+
+.orimia-style-delete-dialog-v625 h2,
+.orimia-style-delete-dialog-v625 p {
+  margin: 0;
+}
+
+.orimia-style-delete-dialog-v625 h2 {
+  font-size: 20px;
+  line-height: 1.45;
+}
+
+.orimia-style-delete-dialog-v625 header p {
+  color: #74685f;
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.orimia-style-delete-check-v625 {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+  border: 1px solid #eadfd5;
+  border-radius: 6px;
+  background: #faf8f6;
+  padding: 13px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.55;
+  cursor: pointer;
+}
+
+.orimia-style-delete-check-v625 input {
+  width: 18px;
+  height: 18px;
+  margin: 1px 0 0;
+  accent-color: #bd4968;
+}
+
+.orimia-style-delete-feedback-v625 {
+  min-height: 18px;
+  color: #a9433d;
+  font-size: 12px;
+}
+
+.orimia-style-delete-dialog-v625 footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.orimia-style-delete-dialog-v625 footer button {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 16px;
+}
+
+.orimia-style-delete-dialog-v625 .is-danger-v625 {
+  border-color: #b64540;
+  background: #b64540;
+  color: #fff;
+}
+
+.orimia-style-delete-dialog-v625 .is-danger-v625:disabled {
+  border-color: #d7ccc6;
+  background: #d7ccc6;
+}
+
+.orimia-style-toast-v625 {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 10020;
+  max-width: min(380px, calc(100vw - 32px));
+  transform: translateY(10px);
+  border: 1px solid rgba(255, 255, 255, .16);
+  border-radius: 6px;
+  background: #332e2a;
+  padding: 12px 15px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.5;
+  opacity: 0;
+  box-shadow: 0 14px 36px rgba(47, 42, 37, .22);
+  transition: transform .18s ease, opacity .18s ease;
+}
+
+.orimia-style-toast-v625.is-visible-v625 {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+@media (max-width: 640px) {
+  .orimia-admin-style-actions-v625 {
+    grid-template-columns: minmax(0, 1fr) 36px;
+    gap: 5px;
+    padding: 6px;
+  }
+
+  .orimia-admin-style-visibility-v625 {
+    min-height: 36px;
+    padding: 6px;
+    font-size: 10px !important;
+  }
+
+  .orimia-admin-style-delete-v625 {
+    width: 36px;
+    min-height: 36px;
+  }
+
+  .orimia-admin-style-private-badge-v625 {
+    top: 7px;
+    left: 7px;
+    min-height: 27px;
+    padding: 4px 7px;
+    font-size: 10px;
+  }
+
+  .orimia-admin-style-order-badge-v634 {
+    top: 7px;
+    right: 7px;
+    min-width: 42px;
+    min-height: 27px;
+    padding: 4px 7px;
+    font-size: 10px;
+  }
+
+  .orimia-admin-style-order-form-v634 {
+    grid-template-columns: minmax(0, 1fr) 52px;
+    gap: 5px;
+  }
+
+  .orimia-admin-style-order-form-v634 button {
+    min-height: 36px;
+    padding-inline: 4px;
+    font-size: 10px !important;
+  }
+
+  .orimia-style-detail-controls-v625 {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .orimia-style-detail-actions-v625 {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .orimia-style-detail-actions-v625 button {
+    min-width: 0;
+    padding-inline: 8px;
+    font-size: 12px;
+  }
+
+  .orimia-style-delete-dialog-v625 form {
+    padding: 20px;
+  }
+
+  .orimia-style-delete-dialog-v625 footer {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .orimia-style-toast-v625 {
+    right: 16px;
+    bottom: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orimia-admin-style-managed-card-v625,
+  .orimia-admin-style-actions-v625 button,
+  .orimia-style-detail-actions-v625 button,
+  .orimia-style-toast-v625 {
+    transition: none;
+  }
+}
+
+/* list-pagination-performance-v628: style catalog */
+.orimia-admin-style-grid-v618 {
+  contain: layout style;
+}
+
+.orimia-admin-style-managed-card-v625 {
+  content-visibility: auto;
+  contain-intrinsic-size: 260px 390px;
+}
+
+.orimia-admin-style-pager-v618 {
+  min-height: 60px;
+  border-top: 1px solid #e8ded2;
+  background: #fff;
+  padding: 8px 12px 0;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 640px) {
+  .orimia-admin-style-managed-card-v625 {
+    contain-intrinsic-size: 170px 300px;
+  }
+}

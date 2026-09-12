@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { CommunityAgeBand, CommunityFilterOption, CommunityListFilters, CommunitySort } from "@/lib/community/visit-community";
 
 const sortOptions: Array<{ value: CommunitySort; label: string }> = [
+  { value: "manual", label: "おすすめ順" },
   { value: "latest", label: "新しい順" },
   { value: "likes", label: "いいねが多い順" },
   { value: "oldest", label: "古い順" }
@@ -64,7 +65,7 @@ export function CommunityFilters({
   function updateFilter(name: string, value: string) {
     const next = new URLSearchParams(searchParams.toString());
     next.delete("page");
-    if (!value || (name === "sort" && value === "latest") || (name === "age" && value === "all")) next.delete(name);
+    if (!value || (name === "sort" && value === "manual") || (name === "age" && value === "all")) next.delete(name);
     else next.set(name, value);
     const query = next.toString();
     router.push(query ? `${pathname}?${query}` : pathname, { scroll: false });
