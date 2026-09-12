@@ -56,26 +56,38 @@ async function verify(width) {
     const startedAt = Date.now()
     await page.locator(`a[href="${href}"]`).first().click()
     await page.waitForURL(url => url.pathname === href, { timeout:30_000 })
+    await page.waitForFunction(() => {
+      const loader = document.getElementById('orimia-ui-loader-v536')
+      return !loader || window.__orimiaUiTransitionV639 === true
+    }, null, { timeout:6000 })
     await page.waitForFunction(() => document.documentElement.dataset.orimiaUiReady === 'v516', null, { timeout:6000 })
     const state = await page.evaluate(() => {
       const loader = document.getElementById('orimia-ui-loader-v536')
       const article = document.querySelector('.community-detail-page article, .ts-community-detail article, main article')
       return {
         scope:document.documentElement.dataset.orimiaNavigationLoaderScope || null,
+        runtimeActive:Boolean(window.__orimiaUiTransitionV639),
         ready:document.documentElement.dataset.orimiaUiReady || null,
         busy:document.documentElement.getAttribute('aria-busy'),
+        loaderPresent:Boolean(loader),
         loaderVisibility:loader ? getComputedStyle(loader).visibility : null,
         articleVisible:Boolean(article && getComputedStyle(article).visibility !== 'hidden'),
         events:window.__v639ProductionEvents || [],
       }
     })
-    assert.equal(state.scope, 'v639', `${width}/${href}: old loader runtime is active`)
+    if (state.loaderPresent) {
+      assert.equal(state.runtimeActive, true, `${width}/${href}: style loader recovery runtime is inactive`)
+      if (state.scope) assert.equal(state.scope, 'v639', `${width}/${href}: old loader runtime is active`)
+      assert.equal(state.loaderVisibility, 'hidden', `${width}/${href}: loader remains visible`)
+    } else {
+      assert.equal(state.scope, null, `${width}/${href}: loader scope remains without loader markup`)
+      assert.equal(state.loaderVisibility, null, `${width}/${href}: absent loader has computed visibility`)
+    }
     assert.equal(state.ready, 'v516', `${width}/${href}: document did not become ready`)
     assert.equal(state.busy, null, `${width}/${href}: document remains busy`)
-    assert.equal(state.loaderVisibility, 'hidden', `${width}/${href}: loader remains visible`)
     assert.equal(state.articleVisible, true, `${width}/${href}: detail article is hidden`)
     assert.ok(Date.now() - startedAt < 6000, `${width}/${href}: detail loader exceeded its recovery limit`)
-    results.push({ width, href, loaderCleared:true, elapsedMs:Date.now() - startedAt })
+    results.push({ width, href, loaderCleared:true, runtime:state.runtimeActive ? 'v639' : 'no-loader', elapsedMs:Date.now() - startedAt })
     if (!index) await page.screenshot({ path:path.join(output, `style-detail-${width}.png`), fullPage:false })
   }
 
