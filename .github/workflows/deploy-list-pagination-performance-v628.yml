@@ -1,16 +1,10 @@
-name: Import Super Yamamoto Milbon catalog v630
+name: Deploy list pagination performance v628
 
 on:
   workflow_dispatch:
-    inputs:
-      audit_only:
-        description: Verify the completed import without writing product rows
-        required: true
-        type: boolean
-        default: false
 
 permissions:
-  contents: read
+  contents: write
   id-token: write
 
 concurrency:
@@ -23,15 +17,13 @@ env:
   ECR_REPOSITORY: salon-de-lien-staging-app
   ECS_CLUSTER: salon-de-lien-staging-cluster
   ECS_SERVICE: salon-de-lien-staging-web
-  IMPORT_DIR: scripts/aws/data-imports/super-yamamoto-milbon-v630
-  BASE_DIGEST: sha256:6d0dd3f16159d6db83c99504d1842ec5c0032c1ae8d4306d2c63c3b2ec12116e
-  IMPORT_IMAGE: 009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app:super-yamamoto-milbon-v630-af59d53
-  IMPORT_DIGEST: sha256:432e3a051a92aa4d01da2012721b0906bd7868aa6ba3ef8107e14920a987f7d9
+  RELEASE_DIR: scripts/aws/runtime-patches/list-pagination-performance-v628
+  PARENT_DIGEST: sha256:d97bc14542ad779a63cf535c6d6fbacbb8047c32875cb60c2d885f9b76078140
 
 jobs:
-  import:
+  deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 50
     steps:
       - name: Check out the canonical release branch
         uses: actions/checkout@v4
@@ -51,104 +43,169 @@ jobs:
           $identity = aws sts get-caller-identity --output json --no-cli-pager | ConvertFrom-Json
           if ($identity.Account -ne $env:AWS_ACCOUNT_ID -or $identity.Arn -notmatch ':assumed-role/SalonDeLienGitHubDeployRole/') { throw 'Unexpected AWS deployment identity.' }
 
-      - name: Validate the committed importer
+      - name: Validate list pagination release
         shell: pwsh
         run: |
-          foreach ($file in @('catalog-common.mjs', 'extract-catalog.mjs', 'import-catalog.mjs', 'audit-catalog.mjs', 'local-fixture.mjs')) {
-            node --check (Join-Path $env:IMPORT_DIR $file)
+          foreach ($file in @('patch-runtime.mjs', 'verify-runtime.mjs', 'browser-regression.mjs', 'production-smoke.mjs', 'local-fixture.mjs', 'dealer-bootstrap-v628.fragment.js', 'dealer-products-v628.fragment.js', 'dealer-search-v628.fragment.js')) {
+            node --check (Join-Path $env:RELEASE_DIR $file)
             if ($LASTEXITCODE -ne 0) { throw "Syntax check failed: $file" }
           }
-          node (Join-Path $env:IMPORT_DIR 'local-fixture.mjs')
-          if ($LASTEXITCODE -ne 0) { throw 'Importer fixture validation failed.' }
 
-      - name: Lock the production release and importer image
+      - name: Log in to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Install the pinned registry export tool
+        uses: imjasonh/setup-crane@feee3b6bb0d4c68370f256a4502498c9227e5c6b
+        with:
+          version: v0.22.1
+
+      - name: Resolve and lock the currently running release
         shell: pwsh
         run: |
-          $service = aws ecs describe-services --cluster $env:ECS_CLUSTER --services $env:ECS_SERVICE --region $env:AWS_REGION --output json --no-cli-pager | ConvertFrom-Json
-          $task = ([string]$service.services[0].taskDefinition).Trim()
+          $task = (aws ecs describe-services --cluster $env:ECS_CLUSTER --services $env:ECS_SERVICE --region $env:AWS_REGION --query 'services[0].taskDefinition' --output text --no-cli-pager).Trim()
           $definition = aws ecs describe-task-definition --task-definition $task --region $env:AWS_REGION --output json --no-cli-pager | ConvertFrom-Json
           $web = @($definition.taskDefinition.containerDefinitions | Where-Object { $_.name -eq 'Web' })[0]
           $image = ([string]$web.image).Trim()
           if (-not $task -or -not $image) { throw 'Current ECS release could not be resolved.' }
-          if ($image -match '@(sha256:[a-f0-9]{64})$') {
-            $digest = $Matches[1]
-          } else {
+          if ($image -match '@(sha256:[a-f0-9]{64})$') { $digest = $Matches[1] } else {
             $currentTag = $image.Substring($image.LastIndexOf(':') + 1)
             $digest = (aws ecr describe-images --repository-name $env:ECR_REPOSITORY --image-ids "imageTag=$currentTag" --region $env:AWS_REGION --query 'imageDetails[0].imageDigest' --output text --no-cli-pager).Trim()
           }
-          if ($digest -ne $env:BASE_DIGEST) { throw "Production moved from the reviewed image. Expected $($env:BASE_DIGEST), found $digest." }
-
-          $importTag = $env:IMPORT_IMAGE.Substring($env:IMPORT_IMAGE.LastIndexOf(':') + 1)
-          $importDigest = (aws ecr describe-images --repository-name $env:ECR_REPOSITORY --image-ids "imageTag=$importTag" --region $env:AWS_REGION --query 'imageDetails[0].imageDigest' --output text --no-cli-pager).Trim()
-          if ($importDigest -ne $env:IMPORT_DIGEST) { throw "Importer image digest mismatch. Expected $($env:IMPORT_DIGEST), found $importDigest." }
-
-          $networkPath = Join-Path $env:RUNNER_TEMP 'milbon-v630-network.json'
-          [IO.File]::WriteAllText($networkPath, ($service.services[0].networkConfiguration | ConvertTo-Json -Depth 20 -Compress), [Text.UTF8Encoding]::new($false))
+          if ($digest -ne $env:PARENT_DIGEST) { throw "Production moved from the reviewed parent image. Expected $($env:PARENT_DIGEST), found $digest." }
           "PREVIOUS_TASK=$task" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
           "PREVIOUS_IMAGE=$image" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
-          "NETWORK_PATH=$networkPath" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+          "PREVIOUS_DIGEST=$digest" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
 
-      - name: Register the transient importer task
+      - name: Build, test, and push immutable child image
         shell: pwsh
         run: |
-          $task = (& ./scripts/aws/register-release-task.ps1 -CurrentTaskDefinition $env:PREVIOUS_TASK -Image $env:IMPORT_IMAGE -Profile '' | Select-Object -Last 1).Trim()
-          if (-not $task) { throw 'Transient importer task definition was not registered.' }
-          "IMPORT_TASK=$task" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+          $shortSha = $env:GITHUB_SHA.Substring(0, 12)
+          $tag = "list-pagination-performance-v628-$shortSha"
+          $registry = "$($env:AWS_ACCOUNT_ID).dkr.ecr.$($env:AWS_REGION).amazonaws.com"
+          $image = "$registry/$($env:ECR_REPOSITORY):$tag"
+          $baseImage = "$registry/$($env:ECR_REPOSITORY)@$($env:PARENT_DIGEST)"
+          $rootfs = Join-Path $env:RUNNER_TEMP 'salon-v628-rootfs.tar'
+          $flatBase = "salon-de-lien-v628-flat:$shortSha"
+          crane export $baseImage $rootfs
+          if ($LASTEXITCODE -ne 0) { throw 'Base image export failed.' }
+          docker import `
+            --change 'USER nextjs' `
+            --change 'ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin' `
+            --change 'ENV NODE_VERSION=20.20.2' `
+            --change 'ENV YARN_VERSION=1.22.22' `
+            --change 'ENV NODE_ENV=production' `
+            --change 'ENV NEXT_TELEMETRY_DISABLED=1' `
+            --change 'WORKDIR /app' `
+            --change 'ENTRYPOINT ["lien-entrypoint"]' `
+            --change 'CMD ["node","server.js"]' `
+            $rootfs $flatBase | Out-Null
+          if ($LASTEXITCODE -ne 0) { throw 'Flattened base image import failed.' }
+          docker build --build-arg "BASE_IMAGE=$flatBase" --tag $image $env:RELEASE_DIR
+          if ($LASTEXITCODE -ne 0) { throw 'Docker build failed.' }
+          docker run --rm --entrypoint node $image /tmp/lien-v628/verify-runtime.mjs
+          if ($LASTEXITCODE -ne 0) { throw 'Runtime isolation verification failed.' }
+          docker push $image
+          if ($LASTEXITCODE -ne 0) { throw 'ECR push failed.' }
+          $digest = (aws ecr describe-images --repository-name $env:ECR_REPOSITORY --image-ids "imageTag=$tag" --region $env:AWS_REGION --query 'imageDetails[0].imageDigest' --output text --no-cli-pager).Trim()
+          if (-not $digest -or $digest -eq 'None') { throw 'Release digest was not resolved.' }
+          "RELEASE_TAG=$tag" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+          "RELEASE_IMAGE=$image" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+          "RELEASE_DIGEST=$digest" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
 
-      - name: Import the Milbon catalog
-        if: ${{ !inputs.audit_only }}
+      - name: Prepare Chromium verification
         shell: pwsh
         run: |
-          $overridesPath = Join-Path $env:RUNNER_TEMP 'milbon-v630-import-overrides.json'
-          $overrides = @{ containerOverrides = @(@{ name = 'Web'; command = @('node', '/tmp/lien-v630/import-catalog.mjs') }) }
-          [IO.File]::WriteAllText($overridesPath, ($overrides | ConvertTo-Json -Depth 20 -Compress), [Text.UTF8Encoding]::new($false))
-          $run = aws ecs run-task --cluster $env:ECS_CLUSTER --launch-type FARGATE --task-definition $env:IMPORT_TASK --network-configuration "file://$($env:NETWORK_PATH)" --overrides "file://$overridesPath" --started-by super-yamamoto-milbon-v630-import --count 1 --region $env:AWS_REGION --output json --no-cli-pager | ConvertFrom-Json
-          if ($LASTEXITCODE -ne 0 -or @($run.failures).Count -gt 0 -or @($run.tasks).Count -ne 1) { throw 'The Milbon import task could not be started.' }
-          $taskArn = [string]$run.tasks[0].taskArn
-          aws ecs wait tasks-stopped --cluster $env:ECS_CLUSTER --tasks $taskArn --region $env:AWS_REGION --no-cli-pager
-          if ($LASTEXITCODE -ne 0) { throw 'Timed out waiting for the Milbon import task.' }
-          $description = aws ecs describe-tasks --cluster $env:ECS_CLUSTER --tasks $taskArn --region $env:AWS_REGION --output json --no-cli-pager | ConvertFrom-Json
-          $task = $description.tasks[0]
-          $web = @($task.containers | Where-Object { $_.name -eq 'Web' })[0]
-          if ($null -eq $web.exitCode -or [int]$web.exitCode -ne 0) { throw "Milbon import failed: exit=$($web.exitCode), reason=$($web.reason), stopped=$($task.stoppedReason)" }
-          Write-Host "Milbon import task completed: $taskArn"
+          $chrome = @('/usr/bin/google-chrome', '/usr/bin/google-chrome-stable', '/usr/bin/chromium') | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if (-not $chrome) { throw 'A Chromium executable is required for the browser tests.' }
+          $browserDependencies = Join-Path $env:RUNNER_TEMP 'lien-browser-smoke-v628'
+          npm install --prefix $browserDependencies --no-save --package-lock=false --ignore-scripts playwright-core@1.62.1
+          if ($LASTEXITCODE -ne 0) { throw 'Browser test dependency installation failed.' }
+          "SMOKE_DEPENDENCIES_PACKAGE=$(Join-Path $browserDependencies 'package.json')" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+          "CHROME_PATH=$chrome" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
 
-      - name: Independently audit the imported catalog
+      - name: Register application task definition
         shell: pwsh
         run: |
-          $overridesPath = Join-Path $env:RUNNER_TEMP 'milbon-v630-audit-overrides.json'
-          $overrides = @{ containerOverrides = @(@{ name = 'Web'; command = @('node', '/tmp/lien-v630/audit-catalog.mjs') }) }
-          [IO.File]::WriteAllText($overridesPath, ($overrides | ConvertTo-Json -Depth 20 -Compress), [Text.UTF8Encoding]::new($false))
-          $run = aws ecs run-task --cluster $env:ECS_CLUSTER --launch-type FARGATE --task-definition $env:IMPORT_TASK --network-configuration "file://$($env:NETWORK_PATH)" --overrides "file://$overridesPath" --started-by super-yamamoto-milbon-v630-audit --count 1 --region $env:AWS_REGION --output json --no-cli-pager | ConvertFrom-Json
-          if ($LASTEXITCODE -ne 0 -or @($run.failures).Count -gt 0 -or @($run.tasks).Count -ne 1) { throw 'The independent catalog audit task could not be started.' }
-          $taskArn = [string]$run.tasks[0].taskArn
-          aws ecs wait tasks-stopped --cluster $env:ECS_CLUSTER --tasks $taskArn --region $env:AWS_REGION --no-cli-pager
-          if ($LASTEXITCODE -ne 0) { throw 'Timed out waiting for the independent catalog audit.' }
-          $description = aws ecs describe-tasks --cluster $env:ECS_CLUSTER --tasks $taskArn --region $env:AWS_REGION --output json --no-cli-pager | ConvertFrom-Json
-          $task = $description.tasks[0]
-          $web = @($task.containers | Where-Object { $_.name -eq 'Web' })[0]
-          if ($null -eq $web.exitCode -or [int]$web.exitCode -ne 0) { throw "Independent catalog audit failed: exit=$($web.exitCode), reason=$($web.reason), stopped=$($task.stoppedReason)" }
-          Write-Host "Independent catalog audit completed: $taskArn"
+          $newTask = (& ./scripts/aws/register-release-task.ps1 -CurrentTaskDefinition $env:PREVIOUS_TASK -Image $env:RELEASE_IMAGE -Profile '' | Select-Object -Last 1).Trim()
+          if (-not $newTask) { throw 'Release task definition was not registered.' }
+          "RELEASE_TASK=$newTask" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
 
-      - name: Verify the web service remained unchanged
+      - name: Approve and deploy with automatic rollback
         shell: pwsh
         run: |
-          $service = aws ecs describe-services --cluster $env:ECS_CLUSTER --services $env:ECS_SERVICE --region $env:AWS_REGION --output json --no-cli-pager | ConvertFrom-Json
-          $actualTask = ([string]$service.services[0].taskDefinition).Trim()
-          if ($actualTask -ne $env:PREVIOUS_TASK) { throw "The web service task definition changed unexpectedly: $actualTask" }
+          & ./scripts/aws/approve-and-deploy-protected-release.ps1 -PreviousTaskDefinitionArn $env:PREVIOUS_TASK -PreviousImage $env:PREVIOUS_IMAGE -PreviousImageDigest $env:PREVIOUS_DIGEST -NewTaskDefinitionArn $env:RELEASE_TASK -NewImage $env:RELEASE_IMAGE -NewImageDigest $env:RELEASE_DIGEST -Profile ''
 
-          $definition = aws ecs describe-task-definition --task-definition $actualTask --region $env:AWS_REGION --output json --no-cli-pager | ConvertFrom-Json
-          $web = @($definition.taskDefinition.containerDefinitions | Where-Object { $_.name -eq 'Web' })[0]
-          $image = ([string]$web.image).Trim()
-          if ($image -ne $env:PREVIOUS_IMAGE) { throw "The web service image changed unexpectedly: $image" }
-          if ($image -match '@(sha256:[a-f0-9]{64})$') {
-            $digest = $Matches[1]
-          } else {
-            $imageTag = $image.Substring($image.LastIndexOf(':') + 1)
-            $digest = (aws ecr describe-images --repository-name $env:ECR_REPOSITORY --image-ids "imageTag=$imageTag" --region $env:AWS_REGION --query 'imageDetails[0].imageDigest' --output text --no-cli-pager).Trim()
+      - name: Verify list pagination in production
+        shell: pwsh
+        run: |
+          $required = [ordered]@{
+            'X-Lien-List-Pagination' = 'v628'
+            'X-Lien-Password-Visibility' = 'v627'
+            'X-Lien-Style-Detail-Cleanup' = 'v626'
+            'X-Lien-Style-Admin-Post-Controls' = 'v625'
+            'X-Lien-Navigation-Loader-Verified' = 'v624'
+            'X-Lien-Navigation-Loader-Scope' = 'v623'
+            'X-Lien-Auto-Split-Orders' = 'v622'
+            'X-Lien-All-Dealer-Order-Filter' = 'v621'
+            'X-Lien-Dealer-Code-History' = 'v620'
+            'X-Lien-Style-Admin-Rerender' = 'v619'
+            'X-Lien-Style-Admin-Controls' = 'v618'
+            'X-Lien-Stamp-Card-Commercial' = 'v617'
+            'X-Lien-Customer-Booking-Confirmation' = 'v616'
+            'X-Lien-Style-Publisher-Comments' = 'v615'
+            'X-Lien-Customer-Current-Appointment' = 'v614'
+            'X-Lien-Coupon-Email-Delivery' = 'v613'
+            'X-Lien-Hotpepper-Menu-Import' = 'v612'
+            'X-Lien-Style-Community-Rerender' = 'v611'
+            'X-Lien-Style-Community-Controls' = 'v610'
+            'X-Lien-Hotpepper-Style-Import' = 'v600'
+            'X-Lien-Business-Logout' = 'v599'
+            'X-Lien-Customer-Notification-Badge' = 'v597'
+            'X-Lien-Customer-Store-List' = 'v595'
+            'X-Lien-Daily-Sales-Print' = 'v590'
+            'X-Lien-Receipt-Pos-Direct' = 'v582'
           }
-          if ($digest -ne $env:BASE_DIGEST) { throw "The web service image digest changed unexpectedly: $digest" }
+          $ready = $false
+          for ($attempt = 1; $attempt -le 30; $attempt += 1) {
+            try {
+              $response = Invoke-WebRequest -Uri 'https://salon-de-lien.com/api/health/ready' -TimeoutSec 10 -UseBasicParsing
+              $ready = $response.StatusCode -eq 200
+              foreach ($entry in $required.GetEnumerator()) {
+                if ($response.Headers[$entry.Key] -ne $entry.Value) { $ready = $false; break }
+              }
+              if ($ready) { break }
+            } catch { $ready = $false }
+            Start-Sleep -Seconds 10
+          }
+          if (-not $ready) { throw 'Production readiness did not recover on list pagination performance v628.' }
+          $env:SMOKE_BASE_URL = 'https://salon-de-lien.com'
+          $env:SCREENSHOT_DIR = 'artifacts/list-pagination-performance-v628/production'
+          node (Join-Path $env:RELEASE_DIR 'production-smoke.mjs')
+          if ($LASTEXITCODE -ne 0) { throw 'Production list pagination browser test failed.' }
+          $actualTask = (aws ecs describe-services --cluster $env:ECS_CLUSTER --services $env:ECS_SERVICE --region $env:AWS_REGION --query 'services[0].taskDefinition' --output text --no-cli-pager).Trim()
+          if ($actualTask -ne $env:RELEASE_TASK) { throw 'ECS did not settle on the approved release.' }
 
-          $response = Invoke-WebRequest -Uri 'https://salon-de-lien.com/api/health/ready' -TimeoutSec 15 -UseBasicParsing
-          if ($response.StatusCode -ne 200 -or $response.Headers['X-Lien-Managed-Bank-Accounts'] -ne 'v629') { throw 'Production readiness verification failed after the data import.' }
-          Write-Host "Web service unchanged on $actualTask with digest $($env:BASE_DIGEST)."
+      - name: Record approved release lock
+        shell: pwsh
+        run: |
+          $lockPath = 'infrastructure/deployment-protection/staging-lock.json'
+          $lock = Get-Content -Raw $lockPath | ConvertFrom-Json
+          $lock.taskDefinitionArn = $env:RELEASE_TASK
+          $lock.imageUri = $env:RELEASE_IMAGE
+          $lock.imageDigest = $env:RELEASE_DIGEST
+          $lock.canonicalCommit = $env:GITHUB_SHA
+          $lock.runtimePatchId = $env:RELEASE_TAG
+          [IO.File]::WriteAllText((Resolve-Path $lockPath), ($lock | ConvertTo-Json -Depth 20) + "`n", [Text.UTF8Encoding]::new($false))
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add $lockPath
+          git commit -m 'chore: record protected runtime release [skip ci]'
+          git push origin "HEAD:$($env:GITHUB_REF_NAME)"
+
+      - name: Preserve browser verification screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: list-pagination-performance-v628
+          path: artifacts/list-pagination-performance-v628/
+          if-no-files-found: ignore
