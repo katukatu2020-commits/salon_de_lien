@@ -62,6 +62,38 @@ replaceExact(
 )
 
 replaceExact(
+  'server.js',
+  `    const params = await readStorePlatformFormV503(req)
+    const name = String(params.get('name') || '').trim()
+    const nickname = String(params.get('nickname') || '').trim()`,
+  `    const params = await readStorePlatformFormV503(req)
+    const profileNameV636 = require('/app/customer-profile-name-v636.js').parseCustomerProfileNameV636({
+      lastName: params.get('lastName'),
+      firstName: params.get('firstName'),
+      lastNameKana: params.get('lastNameKana'),
+      firstNameKana: params.get('firstNameKana'),
+    })
+    if (!profileNameV636) return redirectCustomerProfileV503(res, 'name')
+    const name = profileNameV636.fullName
+    const nickname = String(params.get('nickname') || '').trim()`,
+  1,
+  'parse separated names in the priority profile handler',
+)
+
+replaceExact(
+  'server.js',
+  '        await tx.hairProfile.upsert({',
+  `        await require('/app/customer-profile-name-v636.js').persistCustomerProfileNameV636(
+          tx,
+          target.id,
+          profileNameV636,
+        )
+        await tx.hairProfile.upsert({`,
+  1,
+  'persist separated names for every linked customer record',
+)
+
+replaceExact(
   'customer-experience-v503.js',
   'const nameInput = profileForm?.querySelector(\'input[name="name"]\')',
   'const nameInput = profileForm?.querySelector(\'input[name="firstName"]\') || profileForm?.querySelector(\'input[name="name"]\')',

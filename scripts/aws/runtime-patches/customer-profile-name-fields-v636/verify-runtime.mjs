@@ -20,6 +20,8 @@ assert.match(page, /loadCustomerProfileNameV636/)
 assert.match(page, /姓・名とそれぞれのフリガナ/)
 assert.match(route, /parseCustomerProfileNameV636/)
 assert.match(route, /persistCustomerProfileNameV636/)
+assert.match(server, /const profileNameV636 = require\('\/app\/customer-profile-name-v636\.js'\)\.parseCustomerProfileNameV636/)
+assert.match(server, /persistCustomerProfileNameV636\(\s*tx,\s*target\.id,\s*profileNameV636/)
 assert.match(client, /input\[name="firstName"\]/)
 assert.match(client, /input\[name="firstNameKana"\]/)
 assert.match(server, /customer-experience-v503\.js\?v=636-profile-name-fields1/)
@@ -36,5 +38,6 @@ console.log(JSON.stringify({
   runtimeVerified: true,
   fourFieldsRendered: true,
   structuredPersistenceVerified: true,
+  priorityProfileHandlerVerified: true,
   nicknameCompatibilityVerified: true,
 }))

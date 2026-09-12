@@ -18,7 +18,8 @@ env:
   ECS_CLUSTER: salon-de-lien-staging-cluster
   ECS_SERVICE: salon-de-lien-staging-web
   RELEASE_DIR: scripts/aws/runtime-patches/customer-profile-name-fields-v636
-  PARENT_DIGEST: sha256:479a85d21d1a5805a204d7450640419221f0b5786995bd2a0899108f2bdcbdb7
+  PARENT_DIGEST: sha256:32bf8961c9cdab7a58daef6f4a410f03b035ebae0931de17d2a6c408f6c75041
+  BASE_DIGEST: sha256:479a85d21d1a5805a204d7450640419221f0b5786995bd2a0899108f2bdcbdb7
 
 jobs:
   deploy:
@@ -97,7 +98,7 @@ jobs:
           $tag = "customer-profile-name-fields-v636-$shortSha"
           $registry = "$($env:AWS_ACCOUNT_ID).dkr.ecr.$($env:AWS_REGION).amazonaws.com"
           $image = "$registry/$($env:ECR_REPOSITORY):$tag"
-          $baseImage = "$registry/$($env:ECR_REPOSITORY)@$($env:PARENT_DIGEST)"
+          $baseImage = "$registry/$($env:ECR_REPOSITORY)@$($env:BASE_DIGEST)"
           $rootfs = Join-Path $env:RUNNER_TEMP 'customer-profile-name-fields-v636-rootfs.tar'
           $flatBase = "salon-de-lien-v636-flat:$shortSha"
           crane export $baseImage $rootfs
