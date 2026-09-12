@@ -14,6 +14,7 @@ import {
 import { prisma } from "@/lib/prisma";
 import { SALON_STAFF_NAMES } from "@/lib/salon/staff";
 import { birthYearFromDate, parseBirthDateInput } from "@/lib/customer-age";
+import { parseCustomerRegistrationName } from "@/lib/customer-registration-name";
 
 function textValue(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -26,7 +27,7 @@ function optionalProfileValue<T extends readonly string[]>(formData: FormData, k
   return isProfileOption(options, value) ? value : undefined;
 }
 
-function redirectTo(request: NextRequest, status: "saved" | "invalid" | "failed") {
+function redirectTo(request: NextRequest, status: "saved" | "invalid" | "name" | "failed") {
   const url = getExternalRequestUrl(request, "/u/profile");
   url.searchParams.set("profile", status);
   return NextResponse.redirect(url, 303);
@@ -43,7 +44,14 @@ export async function POST(request: NextRequest) {
   }
 
   const formData = await request.formData();
-  const name = textValue(formData, "name");
+  const customerName = parseCustomerRegistrationName({
+    lastName: textValue(formData, "lastName"),
+    firstName: textValue(formData, "firstName"),
+    lastNameKana: textValue(formData, "lastNameKana"),
+    firstNameKana: textValue(formData, "firstNameKana")
+  });
+  if (!customerName) return redirectTo(request, "name");
+  const name = customerName.fullName;
   const nickname = textValue(formData, "nickname");
   const phone = textValue(formData, "phone");
   const birthDate = parseBirthDateInput(textValue(formData, "birthDate"));
@@ -93,6 +101,10 @@ export async function POST(request: NextRequest) {
         where: { id: customer.id },
         data: {
           name,
+          lastName: customerName.lastName,
+          firstName: customerName.firstName,
+          lastNameKana: customerName.lastNameKana,
+          firstNameKana: customerName.firstNameKana,
           phone: phone || null,
           gender,
           birthDate,

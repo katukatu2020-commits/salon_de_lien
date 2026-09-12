@@ -14,6 +14,7 @@ import {
 import { prisma } from "@/lib/prisma";
 import { resolveCustomerPhotoReference } from "@/lib/storage/customer-photo";
 import { birthDateInputValue } from "@/lib/customer-age";
+import { resolveCustomerProfileName } from "@/lib/customer-registration-name";
 
 const fieldClassName =
   "h-12 w-full min-w-0 max-w-full rounded-xl border border-[#e8ded2] bg-white px-4 text-base text-[#2f2a25] outline-none transition focus:border-[#8f4f42] focus:ring-4 focus:ring-[#e9c9be]/40";
@@ -68,6 +69,14 @@ export default async function CustomerProfilePage({
   ]);
   if (!customer || !appUser) return null;
 
+  const customerName = resolveCustomerProfileName({
+    fullName: customer.name,
+    lastName: customer.lastName,
+    firstName: customer.firstName,
+    lastNameKana: customer.lastNameKana,
+    firstNameKana: customer.firstNameKana
+  });
+
   const staffSelection =
     customer.staffAssignmentType === "assigned" && customer.assignedStaffName
       ? customer.assignedStaffName
@@ -108,6 +117,11 @@ export default async function CustomerProfilePage({
           入力内容を確認してください。プロフィールはまだ変更されていません。
         </p>
       ) : null}
+      {searchParams?.profile === "name" ? (
+        <p role="alert" className="rounded-[18px] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          姓・名とそれぞれのフリガナを入力してください。フリガナはカタカナで入力してください。
+        </p>
+      ) : null}
       {searchParams?.profile === "failed" ? (
         <p role="alert" className="rounded-[18px] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
           保存できませんでした。時間をおいて、もう一度お試しください。
@@ -130,8 +144,52 @@ export default async function CustomerProfilePage({
           </h2>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <label className="grid gap-1.5 text-sm font-semibold text-[#4f463f]">
-              お名前
-              <input name="name" required maxLength={80} defaultValue={customer.name} className={fieldClassName} />
+              姓
+              <input
+                name="lastName"
+                required
+                maxLength={50}
+                autoComplete="family-name"
+                defaultValue={customerName.lastName}
+                placeholder="例: 山田"
+                className={fieldClassName}
+              />
+            </label>
+            <label className="grid gap-1.5 text-sm font-semibold text-[#4f463f]">
+              名
+              <input
+                name="firstName"
+                required
+                maxLength={50}
+                autoComplete="given-name"
+                defaultValue={customerName.firstName}
+                placeholder="例: 花子"
+                className={fieldClassName}
+              />
+            </label>
+            <label className="grid gap-1.5 text-sm font-semibold text-[#4f463f]">
+              セイ（フリガナ）
+              <input
+                name="lastNameKana"
+                required
+                maxLength={50}
+                autoComplete="off"
+                defaultValue={customerName.lastNameKana}
+                placeholder="例: ヤマダ"
+                className={fieldClassName}
+              />
+            </label>
+            <label className="grid gap-1.5 text-sm font-semibold text-[#4f463f]">
+              メイ（フリガナ）
+              <input
+                name="firstNameKana"
+                required
+                maxLength={50}
+                autoComplete="off"
+                defaultValue={customerName.firstNameKana}
+                placeholder="例: ハナコ"
+                className={fieldClassName}
+              />
             </label>
             <label className="grid min-w-0 gap-1.5 text-sm font-semibold text-[#4f463f]">
               ニックネーム
