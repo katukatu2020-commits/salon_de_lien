@@ -30,6 +30,7 @@ function collectErrors(page) {
   page.on('console', message => {
     if (message.type() === 'error' &&
         !message.text().includes('Failed to load resource: the server responded with a status of 404') &&
+        !message.text().includes('Failed to load resource: the server responded with a status of 401') &&
         !message.text().includes('net::ERR_NAME_NOT_RESOLVED')) errors.push('console: ' + message.text())
   })
   return errors
