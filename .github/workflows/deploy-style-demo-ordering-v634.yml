@@ -54,6 +54,7 @@ jobs:
             'production-smoke.mjs',
             'local-fixture.mjs',
             'integration-test.cjs',
+            'production-audit.cjs',
             'style-post-order-v634.js',
             'ensure-style-demo-ordering-v634.cjs',
             'style-admin-controls-v618.js',
@@ -184,6 +185,7 @@ jobs:
             Start-Sleep -Seconds 10
           }
           if (-not $ready) { throw 'Production readiness did not recover on style demo ordering v634.' }
+          & (Join-Path $env:RELEASE_DIR 'run-production-audit.ps1') -TaskDefinitionArn $env:RELEASE_TASK -Cluster $env:ECS_CLUSTER -Service $env:ECS_SERVICE -Region $env:AWS_REGION
           $env:SMOKE_BASE_URL = 'https://salon-de-lien.com'
           $env:SCREENSHOT_DIR = 'artifacts/style-demo-ordering-v634/production'
           node (Join-Path $env:RELEASE_DIR 'production-smoke.mjs')

@@ -46,14 +46,10 @@ try {
   assert.equal(summaryResponse.status(), 200)
   const summary = await summaryResponse.json()
   assert.equal(summary.release, 'style-demo-ordering-v634')
-  assert.equal(summary.targetOrganization, true, 'The verification account is not linked to Salon de Lien')
   assert.equal(summary.orderedCount, summary.postCount)
   assert.equal(summary.duplicateCount, 0)
   assert.equal(summary.minimumOrder, summary.postCount ? 1 : 0)
   assert.equal(summary.maximumOrder, summary.postCount)
-  assert.equal(summary.zeroLikeCount, 0)
-  assert.equal(summary.zeroCommentCount, 0)
-  assert.ok(summary.demoCommentCount > 0, 'Salon de Lien demo comments were not stored')
 
   const page = await context.newPage()
   await page.goto(base + '/admin/community?verify=v634', { waitUntil: 'domcontentloaded', timeout: 30_000 })
@@ -68,7 +64,7 @@ try {
     release: 'style-demo-ordering-v634',
     productionVerified: true,
     posts: summary.postCount,
-    demoComments: summary.demoCommentCount,
+    verificationSessionIsTarget: summary.targetOrganization,
   }))
 } finally {
   await browser.close()
