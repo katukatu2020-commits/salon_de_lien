@@ -458,6 +458,26 @@ model ContactLog {
   @@index([scheduledFollowUp])
 }
 
+model BusinessInquiry {
+  id               String   @id
+  requestKey       String   @unique
+  audience         String
+  organizationName String
+  contactName      String
+  email            String
+  phone            String?
+  preferredContact String
+  message          String
+  sourcePath       String
+  status           String   @default("new")
+  operatorNote     String?
+  createdAt        DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt        DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([status, createdAt(sort: Desc)], map: "BusinessInquiry_status_createdAt_idx")
+  @@index([audience, createdAt(sort: Desc)], map: "BusinessInquiry_audience_createdAt_idx")
+}
+
 model Appointment {
   id                  String               @id @default(cuid())
   customerId          String
