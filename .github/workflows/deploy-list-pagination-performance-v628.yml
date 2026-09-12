@@ -1,4 +1,4 @@
-name: Deploy list pagination performance v628
+name: Deploy style demo ordering v634
 
 on:
   workflow_dispatch:
@@ -17,8 +17,8 @@ env:
   ECR_REPOSITORY: salon-de-lien-staging-app
   ECS_CLUSTER: salon-de-lien-staging-cluster
   ECS_SERVICE: salon-de-lien-staging-web
-  RELEASE_DIR: scripts/aws/runtime-patches/list-pagination-performance-v628
-  PARENT_DIGEST: sha256:d97bc14542ad779a63cf535c6d6fbacbb8047c32875cb60c2d885f9b76078140
+  RELEASE_DIR: scripts/aws/runtime-patches/style-demo-ordering-v634
+  PARENT_DIGEST: sha256:e4005c42f51a9c23dcd14359a7e5e2955d54d11c4788fa2f96d8a3fd28b007b5
 
 jobs:
   deploy:
@@ -43,13 +43,45 @@ jobs:
           $identity = aws sts get-caller-identity --output json --no-cli-pager | ConvertFrom-Json
           if ($identity.Account -ne $env:AWS_ACCOUNT_ID -or $identity.Arn -notmatch ':assumed-role/SalonDeLienGitHubDeployRole/') { throw 'Unexpected AWS deployment identity.' }
 
-      - name: Validate list pagination release
+      - name: Validate style demo ordering release
         shell: pwsh
         run: |
-          foreach ($file in @('patch-runtime.mjs', 'verify-runtime.mjs', 'browser-regression.mjs', 'production-smoke.mjs', 'local-fixture.mjs', 'dealer-bootstrap-v628.fragment.js', 'dealer-products-v628.fragment.js', 'dealer-search-v628.fragment.js')) {
+          foreach ($file in @(
+            'patch-runtime.mjs',
+            'verify-runtime.mjs',
+            'unit-test.mjs',
+            'browser-regression.mjs',
+            'production-smoke.mjs',
+            'local-fixture.mjs',
+            'integration-test.cjs',
+            'style-post-order-v634.js',
+            'ensure-style-demo-ordering-v634.cjs',
+            'style-admin-controls-v618.js',
+            'style-admin-controls-v618-client.js',
+            'style-community-controls-v610.js',
+            'style-community-controls-v610-client.js'
+          )) {
             node --check (Join-Path $env:RELEASE_DIR $file)
             if ($LASTEXITCODE -ne 0) { throw "Syntax check failed: $file" }
           }
+          node (Join-Path $env:RELEASE_DIR 'unit-test.mjs')
+          if ($LASTEXITCODE -ne 0) { throw 'Style ordering unit tests failed.' }
+
+      - name: Prepare Chromium verification
+        shell: pwsh
+        run: |
+          $chrome = @('/usr/bin/google-chrome', '/usr/bin/google-chrome-stable', '/usr/bin/chromium') | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if (-not $chrome) { throw 'A Chromium executable is required for the browser tests.' }
+          $browserDependencies = Join-Path $env:RUNNER_TEMP 'lien-browser-smoke-v634'
+          npm install --prefix $browserDependencies --no-save --package-lock=false --ignore-scripts playwright-core@1.62.1
+          if ($LASTEXITCODE -ne 0) { throw 'Browser test dependency installation failed.' }
+          "SMOKE_DEPENDENCIES_PACKAGE=$(Join-Path $browserDependencies 'package.json')" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+          "CHROME_PATH=$chrome" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+          $env:SMOKE_DEPENDENCIES_PACKAGE = Join-Path $browserDependencies 'package.json'
+          $env:CHROME_PATH = $chrome
+          $env:SCREENSHOT_DIR = 'artifacts/style-demo-ordering-v634/browser'
+          node (Join-Path $env:RELEASE_DIR 'browser-regression.mjs')
+          if ($LASTEXITCODE -ne 0) { throw 'Style ordering browser regression failed.' }
 
       - name: Log in to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
@@ -80,12 +112,12 @@ jobs:
         shell: pwsh
         run: |
           $shortSha = $env:GITHUB_SHA.Substring(0, 12)
-          $tag = "list-pagination-performance-v628-$shortSha"
+          $tag = "style-demo-ordering-v634-$shortSha"
           $registry = "$($env:AWS_ACCOUNT_ID).dkr.ecr.$($env:AWS_REGION).amazonaws.com"
           $image = "$registry/$($env:ECR_REPOSITORY):$tag"
           $baseImage = "$registry/$($env:ECR_REPOSITORY)@$($env:PARENT_DIGEST)"
-          $rootfs = Join-Path $env:RUNNER_TEMP 'salon-v628-rootfs.tar'
-          $flatBase = "salon-de-lien-v628-flat:$shortSha"
+          $rootfs = Join-Path $env:RUNNER_TEMP 'style-demo-ordering-v634-rootfs.tar'
+          $flatBase = "salon-de-lien-v634-flat:$shortSha"
           crane export $baseImage $rootfs
           if ($LASTEXITCODE -ne 0) { throw 'Base image export failed.' }
           docker import `
@@ -102,7 +134,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Flattened base image import failed.' }
           docker build --build-arg "BASE_IMAGE=$flatBase" --tag $image $env:RELEASE_DIR
           if ($LASTEXITCODE -ne 0) { throw 'Docker build failed.' }
-          docker run --rm --entrypoint node $image /tmp/lien-v628/verify-runtime.mjs
+          docker run --rm --entrypoint node $image /tmp/lien-v634/verify-runtime.mjs
           if ($LASTEXITCODE -ne 0) { throw 'Runtime isolation verification failed.' }
           docker push $image
           if ($LASTEXITCODE -ne 0) { throw 'ECR push failed.' }
@@ -111,17 +143,6 @@ jobs:
           "RELEASE_TAG=$tag" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
           "RELEASE_IMAGE=$image" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
           "RELEASE_DIGEST=$digest" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
-
-      - name: Prepare Chromium verification
-        shell: pwsh
-        run: |
-          $chrome = @('/usr/bin/google-chrome', '/usr/bin/google-chrome-stable', '/usr/bin/chromium') | Where-Object { Test-Path $_ } | Select-Object -First 1
-          if (-not $chrome) { throw 'A Chromium executable is required for the browser tests.' }
-          $browserDependencies = Join-Path $env:RUNNER_TEMP 'lien-browser-smoke-v628'
-          npm install --prefix $browserDependencies --no-save --package-lock=false --ignore-scripts playwright-core@1.62.1
-          if ($LASTEXITCODE -ne 0) { throw 'Browser test dependency installation failed.' }
-          "SMOKE_DEPENDENCIES_PACKAGE=$(Join-Path $browserDependencies 'package.json')" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
-          "CHROME_PATH=$chrome" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Register application task definition
         shell: pwsh
@@ -135,35 +156,20 @@ jobs:
         run: |
           & ./scripts/aws/approve-and-deploy-protected-release.ps1 -PreviousTaskDefinitionArn $env:PREVIOUS_TASK -PreviousImage $env:PREVIOUS_IMAGE -PreviousImageDigest $env:PREVIOUS_DIGEST -NewTaskDefinitionArn $env:RELEASE_TASK -NewImage $env:RELEASE_IMAGE -NewImageDigest $env:RELEASE_DIGEST -Profile ''
 
-      - name: Verify list pagination in production
+      - name: Verify style demo ordering in production
         shell: pwsh
         run: |
           $required = [ordered]@{
+            'X-Lien-Style-Demo-Ordering' = 'v634'
+            'X-Lien-Customer-Registration-Name-Fields' = 'v633'
+            'X-Lien-Salon-Onboarding-Guides' = 'removed-v632'
+            'X-Lien-Dealer-Pricing-Pagination' = 'v631'
+            'X-Lien-Managed-Bank-Accounts' = 'v629'
             'X-Lien-List-Pagination' = 'v628'
             'X-Lien-Password-Visibility' = 'v627'
-            'X-Lien-Style-Detail-Cleanup' = 'v626'
             'X-Lien-Style-Admin-Post-Controls' = 'v625'
-            'X-Lien-Navigation-Loader-Verified' = 'v624'
-            'X-Lien-Navigation-Loader-Scope' = 'v623'
-            'X-Lien-Auto-Split-Orders' = 'v622'
-            'X-Lien-All-Dealer-Order-Filter' = 'v621'
-            'X-Lien-Dealer-Code-History' = 'v620'
-            'X-Lien-Style-Admin-Rerender' = 'v619'
             'X-Lien-Style-Admin-Controls' = 'v618'
-            'X-Lien-Stamp-Card-Commercial' = 'v617'
-            'X-Lien-Customer-Booking-Confirmation' = 'v616'
-            'X-Lien-Style-Publisher-Comments' = 'v615'
-            'X-Lien-Customer-Current-Appointment' = 'v614'
-            'X-Lien-Coupon-Email-Delivery' = 'v613'
-            'X-Lien-Hotpepper-Menu-Import' = 'v612'
-            'X-Lien-Style-Community-Rerender' = 'v611'
             'X-Lien-Style-Community-Controls' = 'v610'
-            'X-Lien-Hotpepper-Style-Import' = 'v600'
-            'X-Lien-Business-Logout' = 'v599'
-            'X-Lien-Customer-Notification-Badge' = 'v597'
-            'X-Lien-Customer-Store-List' = 'v595'
-            'X-Lien-Daily-Sales-Print' = 'v590'
-            'X-Lien-Receipt-Pos-Direct' = 'v582'
           }
           $ready = $false
           for ($attempt = 1; $attempt -le 30; $attempt += 1) {
@@ -177,11 +183,11 @@ jobs:
             } catch { $ready = $false }
             Start-Sleep -Seconds 10
           }
-          if (-not $ready) { throw 'Production readiness did not recover on list pagination performance v628.' }
+          if (-not $ready) { throw 'Production readiness did not recover on style demo ordering v634.' }
           $env:SMOKE_BASE_URL = 'https://salon-de-lien.com'
-          $env:SCREENSHOT_DIR = 'artifacts/list-pagination-performance-v628/production'
+          $env:SCREENSHOT_DIR = 'artifacts/style-demo-ordering-v634/production'
           node (Join-Path $env:RELEASE_DIR 'production-smoke.mjs')
-          if ($LASTEXITCODE -ne 0) { throw 'Production list pagination browser test failed.' }
+          if ($LASTEXITCODE -ne 0) { throw 'Production style demo ordering test failed.' }
           $actualTask = (aws ecs describe-services --cluster $env:ECS_CLUSTER --services $env:ECS_SERVICE --region $env:AWS_REGION --query 'services[0].taskDefinition' --output text --no-cli-pager).Trim()
           if ($actualTask -ne $env:RELEASE_TASK) { throw 'ECS did not settle on the approved release.' }
 
@@ -202,10 +208,10 @@ jobs:
           git commit -m 'chore: record protected runtime release [skip ci]'
           git push origin "HEAD:$($env:GITHUB_REF_NAME)"
 
-      - name: Preserve browser verification screenshots
+      - name: Preserve verification artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: list-pagination-performance-v628
-          path: artifacts/list-pagination-performance-v628/
+          name: style-demo-ordering-v634
+          path: artifacts/style-demo-ordering-v634/
           if-no-files-found: ignore
