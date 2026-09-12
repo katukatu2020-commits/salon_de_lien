@@ -142,6 +142,10 @@ model CustomerRegistrationInvite {
 model Customer {
   id                       String                       @id @default(cuid())
   name                     String
+  lastName                 String?
+  firstName                String?
+  lastNameKana             String?
+  firstNameKana            String?
   gender                   String?
   birthYear                Int?
   phone                    String?

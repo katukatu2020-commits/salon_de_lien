@@ -85,6 +85,9 @@ export function CustomerRegistrationPage({
           {searchParams?.error === "profile" ? (
             <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm leading-6 text-red-800">入力内容を確認してください。プロフィールの各項目を選択してから登録してください。</p>
           ) : null}
+          {searchParams?.error === "name" ? (
+            <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm leading-6 text-red-800">姓名とフリガナをすべて入力してください。フリガナはカタカナで入力してください。</p>
+          ) : null}
           {searchParams?.error === "phoneFormat" ? (
             <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm leading-6 text-red-800">携帯電話番号を確認してください。全角数字にも対応しています。070・080・090から始まる11桁の番号を入力してください。</p>
           ) : null}
@@ -117,7 +120,10 @@ export function CustomerRegistrationPage({
           <section className="rounded-[22px] border border-lien bg-white p-5 shadow-lien-sm">
             <h2 className="flex items-center gap-2 text-lg font-semibold"><UserRound className="h-5 w-5 text-lien-primary" />基本情報</h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <label className="grid gap-1.5 text-sm font-semibold">お名前<input name="name" required className="lien-input" /></label>
+              <label className="grid gap-1.5 text-sm font-semibold">姓<input name="lastName" required maxLength={50} autoComplete="family-name" placeholder="例: 山田" className="lien-input" /></label>
+              <label className="grid gap-1.5 text-sm font-semibold">名<input name="firstName" required maxLength={50} autoComplete="given-name" placeholder="例: 花子" className="lien-input" /></label>
+              <label className="grid gap-1.5 text-sm font-semibold">セイ（フリガナ）<input name="lastNameKana" required maxLength={50} autoComplete="off" placeholder="例: ヤマダ" className="lien-input" /></label>
+              <label className="grid gap-1.5 text-sm font-semibold">メイ（フリガナ）<input name="firstNameKana" required maxLength={50} autoComplete="off" placeholder="例: ハナコ" className="lien-input" /></label>
               <CustomerPhoneVerificationField />
               <SelectBox label="性別" name="gender" options={CUSTOMER_GENDER_OPTIONS} />
               <label className="grid gap-1.5 text-sm font-semibold">生年月日<input name="birthDate" type="date" min="1900-01-01" required autoComplete="bday" className="lien-input" /></label>

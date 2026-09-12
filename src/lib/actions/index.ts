@@ -68,6 +68,7 @@ import {
   normalizeProfileOption
 } from "@/lib/customer-profile-options";
 import { birthYearFromDate, parseBirthDateInput } from "@/lib/customer-age";
+import { parseCustomerRegistrationName } from "@/lib/customer-registration-name";
 
 const MAX_PROFILE_IMAGE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_PROFILE_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -494,7 +495,14 @@ export async function createPublicConsultationLead(formData: FormData) {
   });
   if (existingEmail) redirect(registrationErrorPath("email"));
   const passwordHash = hashScryptPassword(password);
-  const name = requiredString(formData, "name");
+  const registrationName = parseCustomerRegistrationName({
+    lastName: nullableString(formData, "lastName"),
+    firstName: nullableString(formData, "firstName"),
+    lastNameKana: nullableString(formData, "lastNameKana"),
+    firstNameKana: nullableString(formData, "firstNameKana")
+  });
+  if (!registrationName) redirect(registrationErrorPath("name"));
+  const { fullName: name, fullNameKana, lastName, firstName, lastNameKana, firstNameKana } = registrationName;
   const submittedPhone = requiredString(formData, "phone");
   const phoneE164 = normalizeJapaneseMobilePhone(submittedPhone);
   const phoneVerificationId = nullableString(formData, "phoneVerificationId");
@@ -543,6 +551,7 @@ export async function createPublicConsultationLead(formData: FormData) {
   validateIntakePhotoFiles(photoFiles);
   const leadMessage = [
     `新規相談: ${name}`,
+    `フリガナ: ${fullNameKana}`,
     phone ? `連絡先: ${phone}` : null,
     gender ? `性別: ${gender}` : null,
     birthDate ? `生年月日: ${birthDate.toISOString().slice(0, 10)}` : null,
@@ -686,6 +695,10 @@ export async function createPublicConsultationLead(formData: FormData) {
       data: {
         organizationId,
         name,
+        lastName,
+        firstName,
+        lastNameKana,
+        firstNameKana,
         phone,
         gender,
         birthDate,
