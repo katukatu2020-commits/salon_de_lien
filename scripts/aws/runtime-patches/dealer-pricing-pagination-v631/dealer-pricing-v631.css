@@ -1,0 +1,38 @@
+/* dealer-pricing-pagination-v631 */
+.wo-pricing-toolbar {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) auto auto;
+  align-items: end;
+}
+
+.wo-pricing-toolbar > .wo-search {
+  width: 100%;
+}
+
+.wo-pricing-pager-v631 {
+  border-top: 1px solid var(--wo-line);
+}
+
+.wo-pricing-management.is-page-loading-v631 .wo-pricing-table,
+.wo-pricing-management.is-page-loading-v631 .wo-pricing-pager-v631,
+.wo-pricing-management.is-page-loading-v631 .wo-pricing-save {
+  opacity: .55;
+  pointer-events: none;
+}
+
+@media (max-width: 760px) {
+  .wo-pricing-toolbar {
+    display: flex;
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .wo-pricing-toolbar > .wo-product-result-v628 {
+    order: 2;
+  }
+
+  .wo-pricing-toolbar > .wo-pricing-bulk {
+    order: 3;
+  }
+}
