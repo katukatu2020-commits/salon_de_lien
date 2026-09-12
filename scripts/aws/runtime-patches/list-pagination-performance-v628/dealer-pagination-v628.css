@@ -1,0 +1,105 @@
+/* list-pagination-performance-v628: dealer product catalog */
+.wo-product-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.wo-product-result-v628 {
+  color: var(--wo-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.wo-list-pager-v628 {
+  display: flex;
+  min-height: 68px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-top: 1px solid var(--wo-line);
+  background: #fdfaf8;
+  padding: 12px 22px;
+  color: var(--wo-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.wo-list-pager-v628 > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wo-list-pager-v628 button {
+  min-width: 76px;
+  height: 42px;
+  border: 1px solid var(--wo-line);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--wo-rose-dark);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.wo-list-pager-v628 button:hover:not(:disabled),
+.wo-list-pager-v628 button:focus-visible {
+  border-color: #d18199;
+  background: #fff7f9;
+  outline: none;
+}
+
+.wo-list-pager-v628 button:disabled {
+  opacity: .38;
+  cursor: default;
+}
+
+.wo-list-pager-v628 strong {
+  min-width: 68px;
+  color: var(--wo-ink);
+  font-size: 12px;
+  text-align: center;
+}
+
+.wo-list-pager-v628.is-single-v628 {
+  justify-content: flex-end;
+  min-height: 48px;
+}
+
+.wo-product-management.is-page-loading-v628 .wo-catalog-table,
+.wo-product-management.is-page-loading-v628 .wo-list-pager-v628 {
+  opacity: .55;
+  pointer-events: none;
+}
+
+@media (max-width: 620px) {
+  .wo-product-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .wo-product-result-v628 {
+    padding-inline: 2px;
+  }
+
+  .wo-list-pager-v628 {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 12px;
+  }
+
+  .wo-list-pager-v628 > div {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 72px minmax(0, 1fr);
+  }
+
+  .wo-list-pager-v628 button {
+    width: 100%;
+    min-width: 0;
+    height: 44px;
+  }
+}

@@ -1,0 +1,22 @@
+/* list-pagination-performance-v628: style catalog */
+.orimia-admin-style-grid-v618 {
+  contain: layout style;
+}
+.orimia-admin-style-managed-card-v625 {
+  content-visibility: auto;
+  contain-intrinsic-size: 260px 390px;
+}
+
+.orimia-admin-style-pager-v618 {
+  min-height: 60px;
+  border-top: 1px solid #e8ded2;
+  background: #fff;
+  padding: 8px 12px 0;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 640px) {
+  .orimia-admin-style-managed-card-v625 {
+    contain-intrinsic-size: 170px 300px;
+  }
+}
