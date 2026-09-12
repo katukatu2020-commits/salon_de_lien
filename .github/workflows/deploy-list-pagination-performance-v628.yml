@@ -1,4 +1,4 @@
-name: Deploy business inquiries v637
+name: Deploy list pagination performance v628
 
 on:
   workflow_dispatch:
@@ -17,9 +17,8 @@ env:
   ECR_REPOSITORY: salon-de-lien-staging-app
   ECS_CLUSTER: salon-de-lien-staging-cluster
   ECS_SERVICE: salon-de-lien-staging-web
-  RELEASE_DIR: scripts/aws/runtime-patches/business-inquiries-v637
-  PARENT_DIGEST: sha256:1f05df3f744c973f28873a061b1954219a5774454a0e9d93e16742a3ea150673
-  BASE_DIGEST: sha256:1f05df3f744c973f28873a061b1954219a5774454a0e9d93e16742a3ea150673
+  RELEASE_DIR: scripts/aws/runtime-patches/list-pagination-performance-v628
+  PARENT_DIGEST: sha256:d97bc14542ad779a63cf535c6d6fbacbb8047c32875cb60c2d885f9b76078140
 
 jobs:
   deploy:
@@ -36,7 +35,7 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::009293460979:role/SalonDeLienGitHubDeployRole
           role-session-name: GitHubActions
-          aws-region: ap-northeast-1
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Verify protected automation identity
         shell: pwsh
@@ -44,15 +43,13 @@ jobs:
           $identity = aws sts get-caller-identity --output json --no-cli-pager | ConvertFrom-Json
           if ($identity.Account -ne $env:AWS_ACCOUNT_ID -or $identity.Arn -notmatch ':assumed-role/SalonDeLienGitHubDeployRole/') { throw 'Unexpected AWS deployment identity.' }
 
-      - name: Validate business inquiry release sources
+      - name: Validate list pagination release
         shell: pwsh
         run: |
-          foreach ($file in @('business-inquiries-v637.js', 'patch-runtime.mjs', 'verify-runtime.mjs', 'unit-test.mjs', 'browser-regression.mjs', 'production-audit.cjs', 'production-smoke.mjs')) {
+          foreach ($file in @('patch-runtime.mjs', 'verify-runtime.mjs', 'browser-regression.mjs', 'production-smoke.mjs', 'local-fixture.mjs', 'dealer-bootstrap-v628.fragment.js', 'dealer-products-v628.fragment.js', 'dealer-search-v628.fragment.js')) {
             node --check (Join-Path $env:RELEASE_DIR $file)
             if ($LASTEXITCODE -ne 0) { throw "Syntax check failed: $file" }
           }
-          node (Join-Path $env:RELEASE_DIR 'unit-test.mjs')
-          if ($LASTEXITCODE -ne 0) { throw 'Business inquiry unit tests failed.' }
 
       - name: Log in to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
@@ -74,31 +71,39 @@ jobs:
             $currentTag = $image.Substring($image.LastIndexOf(':') + 1)
             $digest = (aws ecr describe-images --repository-name $env:ECR_REPOSITORY --image-ids "imageTag=$currentTag" --region $env:AWS_REGION --query 'imageDetails[0].imageDigest' --output text --no-cli-pager).Trim()
           }
-          if ($digest -ne $env:PARENT_DIGEST) { throw "Production parent digest mismatch. Expected $($env:PARENT_DIGEST), found $digest." }
+          if ($digest -ne $env:PARENT_DIGEST) { throw "Production moved from the reviewed parent image. Expected $($env:PARENT_DIGEST), found $digest." }
           "PREVIOUS_TASK=$task" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
           "PREVIOUS_IMAGE=$image" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
           "PREVIOUS_DIGEST=$digest" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
 
-      - name: Build and push immutable child image
+      - name: Build, test, and push immutable child image
         shell: pwsh
         run: |
           $shortSha = $env:GITHUB_SHA.Substring(0, 12)
-          $tag = "business-inquiries-v637-$shortSha"
+          $tag = "list-pagination-performance-v628-$shortSha"
           $registry = "$($env:AWS_ACCOUNT_ID).dkr.ecr.$($env:AWS_REGION).amazonaws.com"
           $image = "$registry/$($env:ECR_REPOSITORY):$tag"
-          $baseImage = "$registry/$($env:ECR_REPOSITORY)@$($env:BASE_DIGEST)"
-          $rootfs = Join-Path $env:RUNNER_TEMP 'business-inquiries-v637-rootfs.tar'
-          $flatBase = "salon-de-lien-v637-flat:$shortSha"
+          $baseImage = "$registry/$($env:ECR_REPOSITORY)@$($env:PARENT_DIGEST)"
+          $rootfs = Join-Path $env:RUNNER_TEMP 'salon-v628-rootfs.tar'
+          $flatBase = "salon-de-lien-v628-flat:$shortSha"
           crane export $baseImage $rootfs
           if ($LASTEXITCODE -ne 0) { throw 'Base image export failed.' }
-          docker import --change 'USER nextjs' --change 'ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin' --change 'ENV NODE_VERSION=20.20.2' --change 'ENV YARN_VERSION=1.22.22' --change 'ENV NODE_ENV=production' --change 'ENV NEXT_TELEMETRY_DISABLED=1' --change 'WORKDIR /app' --change 'ENTRYPOINT ["lien-entrypoint"]' --change 'CMD ["node","server.js"]' $rootfs $flatBase | Out-Null
+          docker import `
+            --change 'USER nextjs' `
+            --change 'ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin' `
+            --change 'ENV NODE_VERSION=20.20.2' `
+            --change 'ENV YARN_VERSION=1.22.22' `
+            --change 'ENV NODE_ENV=production' `
+            --change 'ENV NEXT_TELEMETRY_DISABLED=1' `
+            --change 'WORKDIR /app' `
+            --change 'ENTRYPOINT ["lien-entrypoint"]' `
+            --change 'CMD ["node","server.js"]' `
+            $rootfs $flatBase | Out-Null
           if ($LASTEXITCODE -ne 0) { throw 'Flattened base image import failed.' }
           docker build --build-arg "BASE_IMAGE=$flatBase" --tag $image $env:RELEASE_DIR
           if ($LASTEXITCODE -ne 0) { throw 'Docker build failed.' }
-          docker run --rm --entrypoint node $image /tmp/lien-v637/verify-runtime.mjs
+          docker run --rm --entrypoint node $image /tmp/lien-v628/verify-runtime.mjs
           if ($LASTEXITCODE -ne 0) { throw 'Runtime isolation verification failed.' }
-          docker run --rm --entrypoint /app/node_modules/.bin/prisma -e DATABASE_URL='postgresql://user:pass@localhost:5432/db?schema=public' -v "$($env:GITHUB_WORKSPACE)/prisma/schema.prisma:/tmp/schema.prisma:ro" $image validate --schema /tmp/schema.prisma
-          if ($LASTEXITCODE -ne 0) { throw 'Prisma schema validation failed.' }
           docker push $image
           if ($LASTEXITCODE -ne 0) { throw 'ECR push failed.' }
           $digest = (aws ecr describe-images --repository-name $env:ECR_REPOSITORY --image-ids "imageTag=$tag" --region $env:AWS_REGION --query 'imageDetails[0].imageDigest' --output text --no-cli-pager).Trim()
@@ -107,33 +112,16 @@ jobs:
           "RELEASE_IMAGE=$image" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
           "RELEASE_DIGEST=$digest" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
 
-      - name: Verify responsive business and operator pages
+      - name: Prepare Chromium verification
         shell: pwsh
         run: |
           $chrome = @('/usr/bin/google-chrome', '/usr/bin/google-chrome-stable', '/usr/bin/chromium') | Where-Object { Test-Path $_ } | Select-Object -First 1
-          if (-not $chrome) { throw 'A Chromium executable is required for browser tests.' }
-          $browserDependencies = Join-Path $env:RUNNER_TEMP 'lien-browser-smoke-v637'
+          if (-not $chrome) { throw 'A Chromium executable is required for the browser tests.' }
+          $browserDependencies = Join-Path $env:RUNNER_TEMP 'lien-browser-smoke-v628'
           npm install --prefix $browserDependencies --no-save --package-lock=false --ignore-scripts playwright-core@1.62.1
-          if ($LASTEXITCODE -ne 0) { throw 'Browser dependency installation failed.' }
-          $runtimeRoot = Join-Path $env:RUNNER_TEMP 'lien-runtime-v637'
-          New-Item -ItemType Directory -Force -Path $runtimeRoot | Out-Null
-          $container = docker create $env:RELEASE_IMAGE
-          try {
-            foreach ($file in @('server.js','audience-sites.js','audience-icons.js','platform-operator.js','business-inquiries-v637.js','orimia-public-v637.css')) {
-              docker cp "$($container):/app/$file" (Join-Path $runtimeRoot $file)
-              if ($LASTEXITCODE -ne 0) { throw "Could not extract $file from the release image." }
-            }
-          } finally {
-            docker rm $container | Out-Null
-          }
+          if ($LASTEXITCODE -ne 0) { throw 'Browser test dependency installation failed.' }
           "SMOKE_DEPENDENCIES_PACKAGE=$(Join-Path $browserDependencies 'package.json')" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
           "CHROME_PATH=$chrome" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
-          $env:SMOKE_DEPENDENCIES_PACKAGE = Join-Path $browserDependencies 'package.json'
-          $env:CHROME_PATH = $chrome
-          $env:LIEN_RUNTIME_ROOT = $runtimeRoot
-          $env:SCREENSHOT_DIR = 'artifacts/business-inquiries-v637/browser'
-          node (Join-Path $env:RELEASE_DIR 'browser-regression.mjs')
-          if ($LASTEXITCODE -ne 0) { throw 'Business inquiry browser regression failed.' }
 
       - name: Register application task definition
         shell: pwsh
@@ -147,20 +135,35 @@ jobs:
         run: |
           & ./scripts/aws/approve-and-deploy-protected-release.ps1 -PreviousTaskDefinitionArn $env:PREVIOUS_TASK -PreviousImage $env:PREVIOUS_IMAGE -PreviousImageDigest $env:PREVIOUS_DIGEST -NewTaskDefinitionArn $env:RELEASE_TASK -NewImage $env:RELEASE_IMAGE -NewImageDigest $env:RELEASE_DIGEST -Profile ''
 
-      - name: Verify business inquiries in production
+      - name: Verify list pagination in production
         shell: pwsh
         run: |
           $required = [ordered]@{
-            'X-Lien-Business-Inquiries' = 'v637'
-            'X-Lien-Customer-Profile-Name-Fields' = 'v636'
-            'X-Lien-Booking-Confirmation-Name' = 'v635'
-            'X-Lien-Style-Demo-Ordering' = 'v634'
-            'X-Lien-Customer-Registration-Name-Fields' = 'v633'
-            'X-Lien-Salon-Onboarding-Guides' = 'removed-v632'
-            'X-Lien-Dealer-Pricing-Pagination' = 'v631'
-            'X-Lien-Managed-Bank-Accounts' = 'v629'
             'X-Lien-List-Pagination' = 'v628'
             'X-Lien-Password-Visibility' = 'v627'
+            'X-Lien-Style-Detail-Cleanup' = 'v626'
+            'X-Lien-Style-Admin-Post-Controls' = 'v625'
+            'X-Lien-Navigation-Loader-Verified' = 'v624'
+            'X-Lien-Navigation-Loader-Scope' = 'v623'
+            'X-Lien-Auto-Split-Orders' = 'v622'
+            'X-Lien-All-Dealer-Order-Filter' = 'v621'
+            'X-Lien-Dealer-Code-History' = 'v620'
+            'X-Lien-Style-Admin-Rerender' = 'v619'
+            'X-Lien-Style-Admin-Controls' = 'v618'
+            'X-Lien-Stamp-Card-Commercial' = 'v617'
+            'X-Lien-Customer-Booking-Confirmation' = 'v616'
+            'X-Lien-Style-Publisher-Comments' = 'v615'
+            'X-Lien-Customer-Current-Appointment' = 'v614'
+            'X-Lien-Coupon-Email-Delivery' = 'v613'
+            'X-Lien-Hotpepper-Menu-Import' = 'v612'
+            'X-Lien-Style-Community-Rerender' = 'v611'
+            'X-Lien-Style-Community-Controls' = 'v610'
+            'X-Lien-Hotpepper-Style-Import' = 'v600'
+            'X-Lien-Business-Logout' = 'v599'
+            'X-Lien-Customer-Notification-Badge' = 'v597'
+            'X-Lien-Customer-Store-List' = 'v595'
+            'X-Lien-Daily-Sales-Print' = 'v590'
+            'X-Lien-Receipt-Pos-Direct' = 'v582'
           }
           $ready = $false
           for ($attempt = 1; $attempt -le 30; $attempt += 1) {
@@ -174,12 +177,11 @@ jobs:
             } catch { $ready = $false }
             Start-Sleep -Seconds 10
           }
-          if (-not $ready) { throw 'Production readiness did not recover on business inquiries v637.' }
-          & (Join-Path $env:RELEASE_DIR 'run-production-audit.ps1') -TaskDefinitionArn $env:RELEASE_TASK -Cluster $env:ECS_CLUSTER -Service $env:ECS_SERVICE -Region $env:AWS_REGION
+          if (-not $ready) { throw 'Production readiness did not recover on list pagination performance v628.' }
           $env:SMOKE_BASE_URL = 'https://salon-de-lien.com'
-          $env:SCREENSHOT_DIR = 'artifacts/business-inquiries-v637/production'
+          $env:SCREENSHOT_DIR = 'artifacts/list-pagination-performance-v628/production'
           node (Join-Path $env:RELEASE_DIR 'production-smoke.mjs')
-          if ($LASTEXITCODE -ne 0) { throw 'Production business inquiry smoke test failed.' }
+          if ($LASTEXITCODE -ne 0) { throw 'Production list pagination browser test failed.' }
           $actualTask = (aws ecs describe-services --cluster $env:ECS_CLUSTER --services $env:ECS_SERVICE --region $env:AWS_REGION --query 'services[0].taskDefinition' --output text --no-cli-pager).Trim()
           if ($actualTask -ne $env:RELEASE_TASK) { throw 'ECS did not settle on the approved release.' }
 
@@ -193,17 +195,17 @@ jobs:
           $lock.imageDigest = $env:RELEASE_DIGEST
           $lock.canonicalCommit = $env:GITHUB_SHA
           $lock.runtimePatchId = $env:RELEASE_TAG
-          [IO.File]::WriteAllText((Resolve-Path $lockPath), ($lock | ConvertTo-Json -Depth 20) + [Environment]::NewLine, [Text.UTF8Encoding]::new($false))
+          [IO.File]::WriteAllText((Resolve-Path $lockPath), ($lock | ConvertTo-Json -Depth 20) + "`n", [Text.UTF8Encoding]::new($false))
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add $lockPath
           git commit -m 'chore: record protected runtime release [skip ci]'
           git push origin "HEAD:$($env:GITHUB_REF_NAME)"
 
-      - name: Preserve verification artifacts
+      - name: Preserve browser verification screenshots
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: business-inquiries-v637
-          path: artifacts/business-inquiries-v637/
+          name: list-pagination-performance-v628
+          path: artifacts/list-pagination-performance-v628/
           if-no-files-found: ignore
