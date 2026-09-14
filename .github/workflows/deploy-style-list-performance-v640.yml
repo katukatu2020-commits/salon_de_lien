@@ -18,7 +18,7 @@ env:
   ECS_CLUSTER: salon-de-lien-staging-cluster
   ECS_SERVICE: salon-de-lien-staging-web
   RELEASE_DIR: scripts/aws/runtime-patches/style-list-performance-v640
-  PARENT_DIGEST: sha256:2996b9095c164a3b8f579b3282b98d10669be3d807550efa356508dd0b2c736a
+  PARENT_DIGEST: sha256:484c1290e062a75e8ac7e2641abb42cee27df750b1143e772beecc34f3e788c5
   BUILD_BASE_DIGEST: sha256:a96c4c23867ea3cb187a68059550b4bc82def683993dcbe2d5a3a4803ee33086
 
 jobs:

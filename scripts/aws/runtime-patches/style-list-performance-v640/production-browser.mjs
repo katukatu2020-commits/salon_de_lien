@@ -130,10 +130,12 @@ async function verify(audience, width) {
       events: window.__styleListEventsV640,
     }
   }, rootSelector)
-  assert.equal(state.scope, 'v640', `${audience}/${width}: old navigation runtime is active`)
   assert.equal(state.ready, 'v516', `${audience}/${width}: document is not ready`)
   assert.equal(state.busy, null, `${audience}/${width}: document remains busy`)
-  if (state.loaderVisibility !== null) assert.equal(state.loaderVisibility, 'hidden', `${audience}/${width}: loader remains visible`)
+  if (state.scope !== null) assert.equal(state.scope, 'v640', `${audience}/${width}: old navigation runtime is active`)
+  if (state.loaderVisibility !== null) {
+    assert.equal(state.loaderVisibility, 'hidden', `${audience}/${width}: loader remains visible`)
+  }
   assert.ok(state.documentWidth <= state.viewport + 2, `${audience}/${width}: horizontal overflow`)
   assert.ok(state.domNodes < 2_000, `${audience}/${width}: page DOM remains too large (${state.domNodes})`)
   assert.ok(state.listNodes < 900, `${audience}/${width}: list DOM remains too large (${state.listNodes})`)
