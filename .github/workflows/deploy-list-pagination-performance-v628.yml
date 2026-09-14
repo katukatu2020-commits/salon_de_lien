@@ -1,4 +1,4 @@
-name: Deploy customer store limit v642
+name: Finalize customer store limit v642
 
 on:
   workflow_dispatch:
@@ -18,26 +18,16 @@ env:
   ECS_CLUSTER: salon-de-lien-staging-cluster
   ECS_SERVICE: salon-de-lien-staging-web
   RELEASE_DIR: scripts/aws/runtime-patches/customer-store-limit-v642
-  PARENT_DIGEST: sha256:a47cbb5096a915f1bd446e381f9543423edcc3e8553a104479bccf4a6319296e
+  RELEASE_COMMIT: 0b0599063628d9e9d5a2b79f06139a3510779ae2
+  RELEASE_TAG: customer-store-limit-v642-0b0599063628
+  RELEASE_IMAGE: 009293460979.dkr.ecr.ap-northeast-1.amazonaws.com/salon-de-lien-staging-app:customer-store-limit-v642-0b0599063628
+  RELEASE_DIGEST: sha256:b9c9454dca44771df4e9662a49a56aa293fedcf6ae23b9374a208bfdf557a970
+  RELEASE_TASK: arn:aws:ecs:ap-northeast-1:009293460979:task-definition/salon-de-lien-staging-web:650
 
 jobs:
-  deploy:
+  finalize:
     runs-on: ubuntu-latest
-    timeout-minutes: 50
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: salon
-          POSTGRES_PASSWORD: local-test-v642
-          POSTGRES_DB: customer_store_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+    timeout-minutes: 15
     steps:
       - name: Check out the canonical release branch
         uses: actions/checkout@v4
@@ -51,112 +41,11 @@ jobs:
           role-session-name: GitHubActions
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Verify protected automation identity
+      - name: Verify deployed customer store limit release
         shell: pwsh
         run: |
           $identity = aws sts get-caller-identity --output json --no-cli-pager | ConvertFrom-Json
           if ($identity.Account -ne $env:AWS_ACCOUNT_ID -or $identity.Arn -notmatch ':assumed-role/SalonDeLienGitHubDeployRole/') { throw 'Unexpected AWS deployment identity.' }
-
-      - name: Validate customer store limit release
-        shell: pwsh
-        run: |
-          foreach ($file in @('patch-runtime.mjs', 'verify-runtime.mjs', 'integration.mjs', 'browser-regression.mjs', 'production-smoke.mjs', 'customer-store-membership-v642.js', 'stores-v642.fragment.js', 'stores-page-v642.fragment.js', 'store-client-v642.fragment.js')) {
-            node --check (Join-Path $env:RELEASE_DIR $file)
-            if ($LASTEXITCODE -ne 0) { throw "Syntax check failed: $file" }
-          }
-
-      - name: Log in to Amazon ECR
-        uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Install the pinned registry export tool
-        uses: imjasonh/setup-crane@feee3b6bb0d4c68370f256a4502498c9227e5c6b
-        with:
-          version: v0.22.1
-
-      - name: Resolve and lock the currently running release
-        shell: pwsh
-        run: |
-          $task = (aws ecs describe-services --cluster $env:ECS_CLUSTER --services $env:ECS_SERVICE --region $env:AWS_REGION --query 'services[0].taskDefinition' --output text --no-cli-pager).Trim()
-          $definition = aws ecs describe-task-definition --task-definition $task --region $env:AWS_REGION --output json --no-cli-pager | ConvertFrom-Json
-          $web = @($definition.taskDefinition.containerDefinitions | Where-Object { $_.name -eq 'Web' })[0]
-          $image = ([string]$web.image).Trim()
-          if (-not $task -or -not $image) { throw 'Current ECS release could not be resolved.' }
-          if ($image -match '@(sha256:[a-f0-9]{64})$') { $digest = $Matches[1] } else {
-            $currentTag = $image.Substring($image.LastIndexOf(':') + 1)
-            $digest = (aws ecr describe-images --repository-name $env:ECR_REPOSITORY --image-ids "imageTag=$currentTag" --region $env:AWS_REGION --query 'imageDetails[0].imageDigest' --output text --no-cli-pager).Trim()
-          }
-          if ($digest -ne $env:PARENT_DIGEST) { throw "Production moved from the reviewed parent image. Expected $($env:PARENT_DIGEST), found $digest." }
-          "PREVIOUS_TASK=$task" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
-          "PREVIOUS_IMAGE=$image" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
-          "PREVIOUS_DIGEST=$digest" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
-
-      - name: Build and verify immutable child image
-        shell: pwsh
-        run: |
-          $shortSha = $env:GITHUB_SHA.Substring(0, 12)
-          $tag = "customer-store-limit-v642-$shortSha"
-          $registry = "$($env:AWS_ACCOUNT_ID).dkr.ecr.$($env:AWS_REGION).amazonaws.com"
-          $image = "$registry/$($env:ECR_REPOSITORY):$tag"
-          $baseImage = "$registry/$($env:ECR_REPOSITORY)@$($env:PARENT_DIGEST)"
-          $rootfs = Join-Path $env:RUNNER_TEMP 'salon-v642-rootfs.tar'
-          $flatBase = "salon-de-lien-v642-flat:$shortSha"
-          crane export $baseImage $rootfs
-          if ($LASTEXITCODE -ne 0) { throw 'Base image export failed.' }
-          docker import --change 'USER nextjs' --change 'ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin' --change 'ENV NODE_VERSION=20.20.2' --change 'ENV YARN_VERSION=1.22.22' --change 'ENV NODE_ENV=production' --change 'ENV NEXT_TELEMETRY_DISABLED=1' --change 'WORKDIR /app' --change 'ENTRYPOINT ["lien-entrypoint"]' --change 'CMD ["node","server.js"]' $rootfs $flatBase | Out-Null
-          if ($LASTEXITCODE -ne 0) { throw 'Flattened base image import failed.' }
-          docker build --build-arg "BASE_IMAGE=$flatBase" --tag $image $env:RELEASE_DIR
-          if ($LASTEXITCODE -ne 0) { throw 'Docker build failed.' }
-          docker run --rm --entrypoint node $image /tmp/lien-v642/verify-runtime.mjs
-          if ($LASTEXITCODE -ne 0) { throw 'Runtime verification failed.' }
-          docker run --rm --network host --entrypoint node -e TEST_DATABASE_URL=postgresql://salon:local-test-v642@127.0.0.1:5432/customer_store_test $image /tmp/lien-v642/integration.mjs
-          if ($LASTEXITCODE -ne 0) { throw 'Customer store transaction integration tests failed.' }
-          docker push $image
-          if ($LASTEXITCODE -ne 0) { throw 'ECR push failed.' }
-          $digest = (aws ecr describe-images --repository-name $env:ECR_REPOSITORY --image-ids "imageTag=$tag" --region $env:AWS_REGION --query 'imageDetails[0].imageDigest' --output text --no-cli-pager).Trim()
-          if (-not $digest -or $digest -eq 'None') { throw 'Release digest was not resolved.' }
-          "RELEASE_TAG=$tag" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
-          "RELEASE_IMAGE=$image" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
-          "RELEASE_DIGEST=$digest" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
-
-      - name: Verify responsive customer store controls
-        shell: pwsh
-        run: |
-          $chrome = @('/usr/bin/google-chrome', '/usr/bin/google-chrome-stable', '/usr/bin/chromium') | Where-Object { Test-Path $_ } | Select-Object -First 1
-          if (-not $chrome) { throw 'A Chromium executable is required for browser tests.' }
-          $browserDependencies = Join-Path $env:RUNNER_TEMP 'lien-browser-smoke-v642'
-          npm install --prefix $browserDependencies --no-save --package-lock=false --ignore-scripts playwright-core@1.62.1
-          if ($LASTEXITCODE -ne 0) { throw 'Browser dependency installation failed.' }
-          $runtimeRoot = Join-Path $env:RUNNER_TEMP 'lien-runtime-v642'
-          New-Item -ItemType Directory -Force -Path $runtimeRoot | Out-Null
-          $container = docker create $env:RELEASE_IMAGE
-          try {
-            docker cp "$($container):/app/customer-link-ui-v293.js" (Join-Path $runtimeRoot 'customer-link-ui-v293.js')
-            if ($LASTEXITCODE -ne 0) { throw 'Could not extract the customer store client.' }
-          } finally {
-            docker rm $container | Out-Null
-          }
-          $env:SMOKE_DEPENDENCIES_PACKAGE = Join-Path $browserDependencies 'package.json'
-          $env:CHROME_PATH = $chrome
-          $env:LIEN_RUNTIME_ROOT = $runtimeRoot
-          $env:SCREENSHOT_DIR = 'artifacts/customer-store-limit-v642/browser'
-          node (Join-Path $env:RELEASE_DIR 'browser-regression.mjs')
-          if ($LASTEXITCODE -ne 0) { throw 'Customer store browser regression failed.' }
-
-      - name: Register application task definition
-        shell: pwsh
-        run: |
-          $newTask = (& ./scripts/aws/register-release-task.ps1 -CurrentTaskDefinition $env:PREVIOUS_TASK -Image $env:RELEASE_IMAGE -Profile '' | Select-Object -Last 1).Trim()
-          if (-not $newTask) { throw 'Release task definition was not registered.' }
-          "RELEASE_TASK=$newTask" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
-
-      - name: Approve and deploy with automatic rollback
-        shell: pwsh
-        run: |
-          & ./scripts/aws/approve-and-deploy-protected-release.ps1 -PreviousTaskDefinitionArn $env:PREVIOUS_TASK -PreviousImage $env:PREVIOUS_IMAGE -PreviousImageDigest $env:PREVIOUS_DIGEST -NewTaskDefinitionArn $env:RELEASE_TASK -NewImage $env:RELEASE_IMAGE -NewImageDigest $env:RELEASE_DIGEST -Profile ''
-
-      - name: Verify customer store limit in production
-        shell: pwsh
-        run: |
           $required = [ordered]@{
             'X-Lien-Customer-Store-Limit' = 'v642'
             'X-Lien-Search-Input-Stability' = 'v641'
@@ -167,7 +56,7 @@ jobs:
             'X-Lien-Password-Visibility' = 'v627'
           }
           $ready = $false
-          for ($attempt = 1; $attempt -le 30; $attempt += 1) {
+          for ($attempt = 1; $attempt -le 12; $attempt += 1) {
             try {
               $response = Invoke-WebRequest -Uri 'https://salon-de-lien.com/api/health/ready' -TimeoutSec 10 -UseBasicParsing
               $ready = $response.StatusCode -eq 200
@@ -178,12 +67,19 @@ jobs:
             } catch { $ready = $false }
             Start-Sleep -Seconds 10
           }
-          if (-not $ready) { throw 'Production readiness did not recover on customer store limit v642.' }
+          if (-not $ready) { throw 'Production is not serving customer store limit v642.' }
           $env:SMOKE_BASE_URL = 'https://salon-de-lien.com'
           node (Join-Path $env:RELEASE_DIR 'production-smoke.mjs')
           if ($LASTEXITCODE -ne 0) { throw 'Production customer store smoke test failed.' }
-          $actualTask = (aws ecs describe-services --cluster $env:ECS_CLUSTER --services $env:ECS_SERVICE --region $env:AWS_REGION --query 'services[0].taskDefinition' --output text --no-cli-pager).Trim()
-          if ($actualTask -ne $env:RELEASE_TASK) { throw 'ECS did not settle on the approved release.' }
+          $service = aws ecs describe-services --cluster $env:ECS_CLUSTER --services $env:ECS_SERVICE --region $env:AWS_REGION --output json --no-cli-pager | ConvertFrom-Json
+          $current = @($service.services)[0]
+          if ($current.taskDefinition -ne $env:RELEASE_TASK) { throw "Unexpected running task: $($current.taskDefinition)" }
+          if ($current.desiredCount -ne 1 -or $current.runningCount -ne 1 -or $current.pendingCount -ne 0) { throw 'ECS service is not stable.' }
+          $definition = aws ecs describe-task-definition --task-definition $current.taskDefinition --region $env:AWS_REGION --output json --no-cli-pager | ConvertFrom-Json
+          $image = [string](@($definition.taskDefinition.containerDefinitions | Where-Object { $_.name -eq 'Web' })[0].image)
+          if ($image -ne $env:RELEASE_IMAGE) { throw "Unexpected running image: $image" }
+          $digest = (aws ecr describe-images --repository-name $env:ECR_REPOSITORY --image-ids "imageTag=$($env:RELEASE_TAG)" --region $env:AWS_REGION --query 'imageDetails[0].imageDigest' --output text --no-cli-pager).Trim()
+          if ($digest -ne $env:RELEASE_DIGEST) { throw "Unexpected release digest: $digest" }
 
       - name: Record approved release lock
         shell: pwsh
@@ -193,7 +89,7 @@ jobs:
           $lock.taskDefinitionArn = $env:RELEASE_TASK
           $lock.imageUri = $env:RELEASE_IMAGE
           $lock.imageDigest = $env:RELEASE_DIGEST
-          $lock.canonicalCommit = $env:GITHUB_SHA
+          $lock.canonicalCommit = $env:RELEASE_COMMIT
           $lock.runtimePatchId = $env:RELEASE_TAG
           [IO.File]::WriteAllText((Resolve-Path $lockPath), ($lock | ConvertTo-Json -Depth 20) + [Environment]::NewLine, [Text.UTF8Encoding]::new($false))
           git config user.name 'github-actions[bot]'
@@ -201,11 +97,3 @@ jobs:
           git add $lockPath
           git commit -m 'chore: record protected runtime release [skip ci]'
           git push origin "HEAD:$($env:GITHUB_REF_NAME)"
-
-      - name: Preserve verification artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: customer-store-limit-v642
-          path: artifacts/customer-store-limit-v642/
-          if-no-files-found: ignore

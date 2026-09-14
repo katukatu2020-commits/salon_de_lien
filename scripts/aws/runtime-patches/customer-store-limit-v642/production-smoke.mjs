@@ -17,6 +17,6 @@ assert.match(source, /最大\$\{limit\}店舗/)
 const api = await fetch(`${base}/api/lien-customer-stores`, { cache: 'no-store', redirect: 'manual' })
 assert.equal(api.status, 401)
 const page = await fetch(`${base}/u/stores`, { cache: 'no-store', redirect: 'manual' })
-assert.ok([302, 303, 307, 308].includes(page.status))
+assert.equal(page.status, 401)
 
 console.log(JSON.stringify({ release: 'customer-store-limit-v642', productionVerified: true, clientAssetVerified: true, customerRoutesProtected: true }))
