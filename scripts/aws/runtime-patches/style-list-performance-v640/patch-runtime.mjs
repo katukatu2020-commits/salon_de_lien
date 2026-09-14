@@ -361,7 +361,7 @@ replaceExact(
 replaceExact(
   'public/style-community-controls-v610.js',
   '  let listRequest = 0\n  let scanQueued = false\n',
-  '  let listRequest = 0\n  let listAbortControllerV640 = null\n  let scanQueued = false\n  let listHydrationReadyV640 = false\n',
+  '  let listRequest = 0\n  let listAbortControllerV640 = null\n  let listSnapshotV640 = null\n  let scanQueued = false\n  let listHydrationReadyV640 = false\n',
   1,
   'customer list request state',
 )
@@ -409,6 +409,20 @@ replaceExact(
 )
 replaceExact(
   'public/style-community-controls-v610.js',
+  `    loadList()
+  }
+
+  function includeSelectedOption`,
+  `    if (listSnapshotV640) renderList(listSnapshotV640)
+    else if (!listAbortControllerV640) loadList()
+  }
+
+  function includeSelectedOption`,
+  1,
+  'reuse customer request across shell hydration',
+)
+replaceExact(
+  'public/style-community-controls-v610.js',
   `  function renderList(payload) {
     if (!listRoot || !listRoot.isConnected) return`,
   `  function announceListStateV640(state) {
@@ -418,7 +432,10 @@ replaceExact(
   }
 
   function renderList(payload) {
-    if (!listRoot || !listRoot.isConnected) return`,
+    listSnapshotV640 = payload
+    if (!listRoot || !listRoot.isConnected) listRoot = document.querySelector('.orimia-style-community-v610')
+    if (!listRoot || !listRoot.isConnected) return
+    listRoot.dataset.orimiaStyleListMountedV640 = 'true'`,
   1,
   'customer list readiness event',
 )
@@ -508,6 +525,35 @@ replaceExact(
 
 replaceExact(
   'public/style-admin-controls-v618.js',
+  `    loadList()
+  }
+
+  function mountList`,
+  `    if (!listAbortController) loadList()
+  }
+
+  function mountList`,
+  1,
+  'reuse admin request across shell hydration',
+)
+replaceExact(
+  'public/style-admin-controls-v618.js',
+  `    writeListFilters(filters, false)
+    loadList()
+  }
+
+  function formatDate`,
+  `    writeListFilters(filters, false)
+    if (listSnapshot) renderList(listSnapshot)
+    else if (!listAbortController) loadList()
+  }
+
+  function formatDate`,
+  1,
+  'reuse admin snapshot after shell replacement',
+)
+replaceExact(
+  'public/style-admin-controls-v618.js',
   `  function renderList(payload) {
     listSnapshot = payload`,
   `  function announceListStateV640(state) {
@@ -517,7 +563,8 @@ replaceExact(
   }
 
   function renderList(payload) {
-    listSnapshot = payload`,
+    listSnapshot = payload
+    if (!listRoot || !listRoot.isConnected) listRoot = document.querySelector('.orimia-style-admin-v618')`,
   1,
   'admin list readiness event',
 )

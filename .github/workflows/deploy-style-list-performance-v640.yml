@@ -18,7 +18,8 @@ env:
   ECS_CLUSTER: salon-de-lien-staging-cluster
   ECS_SERVICE: salon-de-lien-staging-web
   RELEASE_DIR: scripts/aws/runtime-patches/style-list-performance-v640
-  PARENT_DIGEST: sha256:a96c4c23867ea3cb187a68059550b4bc82def683993dcbe2d5a3a4803ee33086
+  PARENT_DIGEST: sha256:2996b9095c164a3b8f579b3282b98d10669be3d807550efa356508dd0b2c736a
+  BUILD_BASE_DIGEST: sha256:a96c4c23867ea3cb187a68059550b4bc82def683993dcbe2d5a3a4803ee33086
 
 jobs:
   deploy:
@@ -85,7 +86,7 @@ jobs:
           $tag = "style-list-performance-v640-$shortSha"
           $registry = "$($env:AWS_ACCOUNT_ID).dkr.ecr.$($env:AWS_REGION).amazonaws.com"
           $image = "$registry/$($env:ECR_REPOSITORY):$tag"
-          $baseImage = "$registry/$($env:ECR_REPOSITORY)@$($env:PARENT_DIGEST)"
+          $baseImage = "$registry/$($env:ECR_REPOSITORY)@$($env:BUILD_BASE_DIGEST)"
           $rootfs = Join-Path $env:RUNNER_TEMP 'salon-v640-rootfs.tar'
           $flatBase = "salon-de-lien-v640-flat:$shortSha"
           crane export $baseImage $rootfs

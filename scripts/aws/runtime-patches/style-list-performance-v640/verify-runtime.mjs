@@ -50,8 +50,11 @@ for (const [client, audience] of [[customerClient, 'customer'], [adminClient, 's
 }
 assert.match(customerClient, /orimiaStyleListMountedV640/)
 assert.match(customerClient, /listHydrationReadyV640/)
+assert.match(customerClient, /listSnapshotV640/)
+assert.match(customerClient, /else if \(!listAbortControllerV640\) loadList\(\)/)
 assert.match(customerClient, /index > 1/)
 assert.match(adminClient, /index > 3/)
+assert.match(adminClient, /else if \(!listAbortController\) loadList\(\)/)
 
 assert.match(adminPage, /data-orimia-style-list-shell-v640/)
 assert.match(adminPage, /className:"orimia-style-admin-v618"/)

@@ -83,6 +83,7 @@ function html(audience) {
     *{box-sizing:border-box}body{margin:0;font-family:sans-serif;color:#292522}main{max-width:1180px;margin:auto;padding:20px}.orimia-style-grid-v610,.orimia-admin-style-grid-v618{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr));gap:12px}img{display:block;width:100%;max-width:100%;height:180px;object-fit:cover}a{color:inherit}.orimia-admin-style-card-shell-v625{min-width:0}
   </style></head><body><main><h1>Style list</h1><section class="${rootClass}" data-orimia-style-list-shell-v640="true"></section></main><script>
     window.__styleListEventsV640=[];window.addEventListener('orimia:style-list-state-v640',event=>window.__styleListEventsV640.push(event.detail));
+    const nativeFetchV640=window.fetch.bind(window);window.fetch=(input,options)=>{const url=String(input);if(!window.__styleShellReplacedV640&&url.includes('/api/lien-style-')){window.__styleShellReplacedV640=true;setTimeout(()=>{const root=document.querySelector('.${rootClass}');if(!root)return;const replacement=root.cloneNode(false);replacement.removeAttribute('data-orimia-style-list-mounted-v640');root.replaceWith(replacement)},0)}return nativeFetchV640(input,options)};
   </script><script src="${clientPath}"></script></body></html>`
 }
 
@@ -146,6 +147,7 @@ async function verify(audience, width) {
   assert.equal(await page.locator(rootSelector).count(), 1, `${audience}/${width}: duplicate list roots`)
   assert.equal(await root.locator(cardSelector).count(), 12, `${audience}/${width}: list did not stay at 12 cards`)
   assert.equal(apiRequests[audience].length, 1, `${audience}/${width}: initial list API was not called exactly once`)
+  assert.equal(await page.evaluate(() => window.__styleShellReplacedV640), true, `${audience}/${width}: hydration replacement fixture did not run`)
   assert.equal(documentRequests.length, 1, `${audience}/${width}: unexpected document navigation`)
 
   const imagePolicy = await root.locator(`${cardSelector} img`).evaluateAll(images => images.map(image => ({
