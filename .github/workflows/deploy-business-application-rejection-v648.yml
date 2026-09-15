@@ -2,6 +2,7 @@ name: Deploy business application rejection v648
 
 on:
   workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: write
