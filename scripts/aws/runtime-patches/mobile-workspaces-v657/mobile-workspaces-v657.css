@@ -1,0 +1,1267 @@
+/* mobile-workspaces-v657
+ * Mobile-only workspace treatment for the salon admin and dealer applications.
+ * Desktop behavior is deliberately outside this stylesheet's media boundary.
+ */
+@media (max-width: 767.98px) {
+  /* Shared mobile ergonomics */
+  :where(.admin-app-shell, .wo-dealer-body) {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  :where(.admin-app-shell, .wo-dealer-body) :where(button, a, input, select, textarea) {
+    touch-action: manipulation;
+  }
+
+  :where(.admin-app-shell, .wo-dealer-body) :where(button, a, input, select, textarea):focus-visible {
+    outline: 3px solid rgba(196, 72, 105, .22);
+    outline-offset: 2px;
+  }
+
+  /* Salon application shell */
+  html.orimia-admin-shell-v518 body .admin-app-shell {
+    min-height: 100dvh !important;
+    padding-bottom: calc(76px + env(safe-area-inset-bottom)) !important;
+    background: var(--lien-bg, #f8f5f2) !important;
+  }
+
+  html.orimia-admin-shell-v518 body .admin-shell-header {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 70 !important;
+    border-bottom: 1px solid var(--lien-border, #eadfd8) !important;
+    background: rgba(255, 253, 251, .98) !important;
+    box-shadow: 0 2px 14px rgba(57, 42, 36, .045) !important;
+  }
+
+  html.orimia-admin-shell-v518 body .orimia-admin-mobile-header-v518 {
+    height: 64px !important;
+    min-height: 64px !important;
+    grid-template-columns: 44px minmax(0, 1fr) auto !important;
+    gap: 8px !important;
+    padding: 0 12px !important;
+  }
+
+  html.orimia-admin-shell-v518 body .orimia-admin-mobile-header-v518 > .orimia-admin-back-v518,
+  html.orimia-admin-shell-v518 body .orimia-admin-mobile-header-v518 .ca-notification-button,
+  html.orimia-admin-shell-v518 body .orimia-admin-mobile-header-v518 > div:last-child > button[aria-label*="メニュー"] {
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+  }
+
+  html.orimia-admin-shell-v518 body .orimia-admin-mobile-header-v518 > a > [role="img"] {
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    flex-basis: 32px !important;
+  }
+
+  html.orimia-admin-shell-v518 body .orimia-admin-mobile-header-v518 > a > span:last-child {
+    font-size: 14px !important;
+    font-weight: 800 !important;
+  }
+
+  html.orimia-admin-shell-v518 body .admin-main-content {
+    width: 100% !important;
+    max-width: 100vw !important;
+    padding: 12px 12px calc(96px + env(safe-area-inset-bottom)) !important;
+    overflow-x: clip !important;
+  }
+
+  html.orimia-admin-shell-v518 body .admin-main-content > div {
+    width: 100% !important;
+    max-width: 100% !important;
+    gap: 12px !important;
+  }
+
+  /* Page introductions become compact command headers on phones. */
+  html.orimia-admin-shell-v518 body .admin-main-content header.lien-glass {
+    min-height: 0 !important;
+    border: 1px solid var(--lien-border, #e8ddd6) !important;
+    border-radius: 8px !important;
+    background: var(--lien-surface, #fff) !important;
+    padding: 16px !important;
+    box-shadow: none !important;
+  }
+
+  html.orimia-admin-shell-v518 body .admin-main-content header.lien-glass > [class*="grid"] {
+    min-height: 0 !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 0 !important;
+  }
+
+  html.orimia-admin-shell-v518 body .admin-main-content header.lien-glass > [class*="grid"] > div:has(> figure) {
+    display: none !important;
+  }
+
+  html.orimia-admin-shell-v518 body .admin-main-content header.lien-glass h1 {
+    margin: 2px 0 0 !important;
+    font-size: 22px !important;
+    line-height: 1.35 !important;
+    letter-spacing: 0 !important;
+  }
+
+  html.orimia-admin-shell-v518 body .admin-main-content header.lien-glass p {
+    margin-top: 7px !important;
+    font-size: 13px !important;
+    line-height: 1.7 !important;
+  }
+
+  html.orimia-admin-shell-v518 body .admin-main-content header.lien-glass :where(a, button) {
+    min-height: 46px !important;
+    border-radius: 7px !important;
+    font-size: 13px !important;
+  }
+
+  html.orimia-admin-shell-v518 body .admin-main-content header.lien-glass [class*="flex-wrap"]:has(> a, > button) {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 8px !important;
+    margin-top: 14px !important;
+  }
+
+  /* In-page navigation stays visible and can be swiped when a workspace has many tabs. */
+  html.orimia-admin-shell-v518 body .admin-main-content nav[class*="grid-cols-"] {
+    position: sticky !important;
+    top: 64px !important;
+    z-index: 24 !important;
+    display: flex !important;
+    min-height: 54px !important;
+    gap: 4px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    border: 1px solid var(--lien-border, #e8ddd6) !important;
+    border-radius: 8px !important;
+    background: rgba(255, 253, 251, .97) !important;
+    padding: 4px !important;
+    box-shadow: 0 4px 12px rgba(61, 43, 36, .04) !important;
+    scrollbar-width: none !important;
+    scroll-snap-type: x proximity !important;
+  }
+
+  html.orimia-admin-shell-v518 body .admin-main-content nav[class*="grid-cols-"]::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  html.orimia-admin-shell-v518 body .admin-main-content nav[class*="grid-cols-"] > :where(a, button) {
+    min-width: max-content !important;
+    min-height: 44px !important;
+    flex: 1 0 auto !important;
+    border-radius: 6px !important;
+    padding: 0 13px !important;
+    font-size: 12px !important;
+    line-height: 1.25 !important;
+    scroll-snap-align: start !important;
+    white-space: nowrap !important;
+  }
+
+  /* Calm, scan-friendly content surfaces. */
+  html.orimia-admin-shell-v518 body .admin-main-content :where(section, article)[class*="rounded-"] {
+    border-radius: 8px !important;
+    box-shadow: none !important;
+  }
+
+  html.orimia-admin-shell-v518 body .admin-main-content section[class*="rounded-"] {
+    padding: 15px !important;
+  }
+
+  html.orimia-admin-shell-v518 body .admin-main-content section[class*="rounded-"] section[class*="rounded-"] {
+    padding: 12px !important;
+    background: var(--lien-surface-soft, #fbf8f5) !important;
+  }
+
+  html.orimia-admin-shell-v518 body .admin-main-content h2 {
+    font-size: 18px !important;
+    line-height: 1.4 !important;
+    letter-spacing: 0 !important;
+  }
+
+  html.orimia-admin-shell-v518 body .admin-main-content h3 {
+    font-size: 15px !important;
+    line-height: 1.45 !important;
+  }
+
+  html.orimia-admin-shell-v518 body .admin-main-content :where(p, li, dd) {
+    line-height: 1.65 !important;
+  }
+
+  html.orimia-admin-shell-v518 body .admin-main-content :where(label, legend) {
+    font-size: max(12px, 1em) !important;
+  }
+
+  html.orimia-admin-shell-v518 body .admin-main-content small,
+  html.orimia-admin-shell-v518 body .admin-main-content [class*="text-[9px]"],
+  html.orimia-admin-shell-v518 body .admin-main-content [class*="text-[10px]"] {
+    font-size: 11.5px !important;
+    line-height: 1.55 !important;
+  }
+
+  html.orimia-admin-shell-v518 body .admin-main-content :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+    min-height: 50px !important;
+    max-width: 100% !important;
+    border-radius: 7px !important;
+    font-size: 16px !important;
+  }
+
+  html.orimia-admin-shell-v518 body .admin-main-content textarea {
+    min-height: 116px !important;
+  }
+
+  html.orimia-admin-shell-v518 body .admin-main-content :where(input[type="checkbox"], input[type="radio"]) {
+    width: 21px !important;
+    height: 21px !important;
+    min-width: 21px !important;
+  }
+
+  html.orimia-admin-shell-v518 body .admin-main-content button:not([role="switch"]),
+  html.orimia-admin-shell-v518 body .admin-main-content a[class*="button"],
+  html.orimia-admin-shell-v518 body .admin-main-content a[class*="btn"] {
+    min-height: 44px !important;
+  }
+
+  html.orimia-admin-shell-v518 body .admin-main-content button[class*="rounded-full"] {
+    min-width: 44px !important;
+  }
+
+  /* Dense desktop tables remain available, with a stable first column and readable cells. */
+  html.orimia-admin-shell-v518 body .admin-main-content div:has(> table) {
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    border: 1px solid var(--lien-border, #e8ddd6) !important;
+    border-radius: 8px !important;
+    background: var(--lien-surface, #fff) !important;
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior-inline: contain !important;
+  }
+
+  html.orimia-admin-shell-v518 body .admin-main-content table {
+    min-width: 680px !important;
+    font-size: 12px !important;
+  }
+
+  html.orimia-admin-shell-v518 body .admin-main-content table :where(th, td) {
+    padding: 12px !important;
+  }
+
+  html.orimia-admin-shell-v518 body .admin-main-content table :where(th, td):first-child {
+    position: sticky !important;
+    left: 0 !important;
+    z-index: 2 !important;
+    background: var(--lien-surface, #fff) !important;
+    box-shadow: 1px 0 0 var(--lien-border, #e8ddd6) !important;
+  }
+
+  /* Existing mobile card lists receive consistent dimensions. */
+  html.orimia-admin-shell-v518 body .admin-main-content .md\:hidden > :where(article, a, button),
+  html.orimia-admin-shell-v518 body .admin-main-content [class*="md:hidden"] > :where(article, a, button) {
+    border-radius: 8px !important;
+  }
+
+  html.orimia-admin-shell-v518 body .admin-main-content [class*="md:hidden"] article :where(a, button) {
+    min-height: 44px !important;
+  }
+
+  /* Settings and setup screens: remove nested-card bulk on small displays. */
+  html.orimia-admin-shell-v518 body .admin-main-content :where(.ca-setup-hero, .ca-form-card, .ca-settings-panel) {
+    border-radius: 8px !important;
+    box-shadow: none !important;
+  }
+
+  html.orimia-admin-shell-v518 body .admin-main-content .ca-setup-card {
+    overflow: visible !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+  }
+
+  html.orimia-admin-shell-v518 body .admin-main-content .ca-setup-hero {
+    margin-bottom: 12px !important;
+    border: 1px solid var(--lien-border, #e8ddd6) !important;
+    background: var(--lien-surface, #fff) !important;
+    padding: 16px !important;
+  }
+
+  html.orimia-admin-shell-v518 body .admin-main-content :where(.ca-profile-grid, .lien-settings-secondary-grid-v447) {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 12px !important;
+    padding: 0 !important;
+  }
+
+  html.orimia-admin-shell-v518 body .admin-main-content .ca-form-card {
+    border: 1px solid var(--lien-border, #e8ddd6) !important;
+    background: var(--lien-surface, #fff) !important;
+    padding: 16px !important;
+  }
+
+  html.orimia-admin-shell-v518 body .admin-main-content .lien-settings-tabs-v447 {
+    position: sticky !important;
+    top: 64px !important;
+    z-index: 23 !important;
+    display: flex !important;
+    overflow-x: auto !important;
+    padding: 4px !important;
+    scrollbar-width: none !important;
+  }
+
+  html.orimia-admin-shell-v518 body .admin-main-content .lien-settings-tabs-v447::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  html.orimia-admin-shell-v518 body .admin-main-content .lien-settings-tabs-v447 > * {
+    min-width: max-content !important;
+    min-height: 44px !important;
+    flex: 0 0 auto !important;
+    padding-inline: 14px !important;
+  }
+
+  /* Style management cards keep two visual columns but expose full-size controls. */
+  html.orimia-admin-shell-v518 body .orimia-style-admin-v618 {
+    gap: 12px !important;
+  }
+
+  html.orimia-admin-shell-v518 body .orimia-admin-style-toolbar-v618 {
+    border-radius: 8px !important;
+    padding: 14px !important;
+    box-shadow: none !important;
+  }
+
+  html.orimia-admin-shell-v518 body .orimia-admin-style-filters-v618 {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 10px !important;
+  }
+
+  html.orimia-admin-shell-v518 body .orimia-admin-style-filter-field-v618 > span {
+    font-size: 12px !important;
+  }
+
+  html.orimia-admin-shell-v518 body .orimia-admin-style-filter-field-v618 select {
+    height: 50px !important;
+    font-size: 16px !important;
+  }
+
+  html.orimia-admin-shell-v518 body .orimia-admin-style-grid-v618 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+
+  html.orimia-admin-shell-v518 body .orimia-admin-style-managed-card-v625,
+  html.orimia-admin-shell-v518 body .orimia-admin-style-card-v618 {
+    border-radius: 8px !important;
+    box-shadow: none !important;
+  }
+
+  html.orimia-admin-shell-v518 body .orimia-admin-style-card-copy-v618 {
+    min-height: 72px !important;
+    padding: 10px !important;
+  }
+
+  html.orimia-admin-shell-v518 body .orimia-admin-style-card-copy-v618 strong {
+    font-size: 12px !important;
+  }
+
+  html.orimia-admin-shell-v518 body .orimia-admin-style-card-copy-v618 small {
+    font-size: 11px !important;
+  }
+
+  html.orimia-admin-shell-v518 body .orimia-admin-style-actions-v625 {
+    grid-template-columns: minmax(0, 1fr) 44px !important;
+    gap: 7px !important;
+    padding: 8px !important;
+  }
+
+  html.orimia-admin-shell-v518 body .orimia-admin-style-order-form-v634 {
+    grid-template-columns: minmax(0, 1fr) 58px !important;
+    gap: 7px !important;
+  }
+
+  html.orimia-admin-shell-v518 body .orimia-admin-style-order-form-v634 label,
+  html.orimia-admin-shell-v518 body .orimia-admin-style-order-form-v634 button,
+  html.orimia-admin-shell-v518 body .orimia-admin-style-visibility-v625,
+  html.orimia-admin-shell-v518 body .orimia-admin-style-delete-v625 {
+    min-height: 44px !important;
+  }
+
+  html.orimia-admin-shell-v518 body .orimia-admin-style-delete-v625 {
+    width: 44px !important;
+  }
+
+  html.orimia-admin-shell-v518 body .orimia-admin-style-pager-v618 {
+    position: sticky !important;
+    bottom: calc(76px + env(safe-area-inset-bottom)) !important;
+    z-index: 20 !important;
+    min-height: 60px !important;
+    border: 1px solid var(--lien-border, #e8ddd6) !important;
+    border-radius: 8px !important;
+    background: rgba(255, 253, 251, .98) !important;
+    padding: 8px !important;
+  }
+
+  /* Full-height mobile sheets put actions within thumb reach. */
+  html.orimia-admin-shell-v518 body :where([role="dialog"], dialog:not(.orimia-style-delete-dialog-v625)) {
+    width: 100vw !important;
+    max-width: none !important;
+    max-height: 100dvh !important;
+    margin: auto 0 0 !important;
+    border-radius: 8px 8px 0 0 !important;
+  }
+
+  html.orimia-admin-shell-v518 body .orimia-style-delete-dialog-v625 {
+    width: calc(100vw - 24px) !important;
+    max-width: none !important;
+    border-radius: 8px !important;
+  }
+
+  html.orimia-admin-shell-v518 body .orimia-style-delete-dialog-v625 form {
+    padding: 18px !important;
+  }
+
+  /* Salon bottom navigation */
+  html.orimia-admin-shell-v518 body .orimia-admin-bottom-nav-v518 {
+    height: calc(76px + env(safe-area-inset-bottom)) !important;
+    min-height: calc(76px + env(safe-area-inset-bottom)) !important;
+    background: rgba(255, 253, 251, .985) !important;
+    box-shadow: 0 -4px 18px rgba(57, 42, 36, .07) !important;
+  }
+
+  html.orimia-admin-shell-v518 body .orimia-admin-bottom-link-v518 {
+    position: relative !important;
+    min-height: 76px !important;
+    gap: 5px !important;
+    padding: 7px 2px 5px !important;
+    font-size: 10.5px !important;
+    font-weight: 800 !important;
+  }
+
+  html.orimia-admin-shell-v518 body .orimia-admin-bottom-link-v518::before {
+    position: absolute !important;
+    top: 0 !important;
+    left: 50% !important;
+    width: 28px !important;
+    height: 3px !important;
+    transform: translateX(-50%) !important;
+    border-radius: 0 0 3px 3px !important;
+    background: transparent !important;
+    content: "" !important;
+  }
+
+  html.orimia-admin-shell-v518 body .orimia-admin-bottom-link-v518:is(.is-active, [aria-current="page"])::before {
+    background: var(--lien-primary, #c74b6f) !important;
+  }
+
+  html.orimia-admin-shell-v518 body .orimia-admin-bottom-icon-v518 {
+    width: 22px !important;
+    height: 22px !important;
+    flex-basis: 22px !important;
+  }
+
+  /* Dealer application shell */
+  body.wo-dealer-body {
+    min-width: 0;
+    background: #f7f4f1;
+  }
+
+  body.wo-dealer-body .wo-dealer-stage {
+    min-width: 0;
+    padding: 0 0 calc(92px + env(safe-area-inset-bottom));
+  }
+
+  body.wo-dealer-body .wo-dealer-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 32;
+    min-height: 64px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--wo-line);
+    background: rgba(255, 253, 251, .98);
+    box-shadow: 0 2px 14px rgba(57, 42, 36, .045);
+    backdrop-filter: blur(14px);
+  }
+
+  body.wo-dealer-body .wo-dealer-topbar > div {
+    min-width: 0;
+  }
+
+  body.wo-dealer-body .wo-dealer-topbar small {
+    display: block;
+    margin-bottom: 2px;
+    color: var(--wo-rose-dark);
+    font-size: 9px;
+    font-weight: 900;
+  }
+
+  body.wo-dealer-body .wo-dealer-topbar strong {
+    display: block;
+    overflow: hidden;
+    font-size: 16px;
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  body.wo-dealer-body .wo-dealer-topbar > span {
+    max-width: 42%;
+    overflow: hidden;
+    font-size: 11px;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  body.wo-dealer-body .wo-main {
+    width: 100%;
+    max-width: 100vw;
+    padding: 12px 12px 24px;
+    overflow-x: clip;
+  }
+
+  /* The sticky top bar already names the current dealer workspace. */
+  body.wo-dealer-body .wo-page-head {
+    display: none;
+  }
+
+  body.wo-dealer-body .wo-app-root {
+    display: grid;
+    min-width: 0;
+    gap: 12px;
+  }
+
+  body.wo-dealer-body .wo-workspace,
+  body.wo-dealer-body .wo-kpis,
+  body.wo-dealer-body .wo-dealer-code-band {
+    overflow: hidden;
+    border-radius: 8px;
+    box-shadow: none;
+  }
+
+  body.wo-dealer-body .wo-workspace-head {
+    min-height: 0;
+    align-items: stretch;
+    flex-direction: column;
+    gap: 13px;
+    padding: 17px 16px;
+    background: #fff;
+  }
+
+  body.wo-dealer-body .wo-section-label {
+    margin-bottom: 5px;
+    font-size: 9px;
+    font-weight: 900;
+  }
+
+  body.wo-dealer-body .wo-workspace-head h2 {
+    margin: 0;
+    font-size: 21px;
+    line-height: 1.35;
+  }
+
+  body.wo-dealer-body .wo-workspace-head p:last-child {
+    margin: 7px 0 0;
+    color: var(--wo-muted);
+    font-size: 12px;
+    line-height: 1.7;
+  }
+
+  body.wo-dealer-body .wo-count-chip,
+  body.wo-dealer-body .wo-private-chip,
+  body.wo-dealer-body .wo-billing-status {
+    min-height: 32px;
+    align-self: flex-start;
+    font-size: 11px;
+  }
+
+  body.wo-dealer-body :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+    min-height: 50px;
+    max-width: 100%;
+    border-radius: 7px;
+    font-size: 16px;
+  }
+
+  body.wo-dealer-body textarea {
+    min-height: 112px;
+  }
+
+  body.wo-dealer-body :where(input[type="checkbox"], input[type="radio"]) {
+    width: 21px;
+    height: 21px;
+    min-width: 21px;
+  }
+
+  body.wo-dealer-body .wo-button {
+    min-height: 46px;
+    border-radius: 7px;
+    padding-inline: 15px;
+    font-size: 13px;
+  }
+
+  body.wo-dealer-body .wo-icon-button,
+  body.wo-dealer-body .wo-icon-link,
+  body.wo-dealer-body .wo-row-actions :where(button, a) {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    border-radius: 7px;
+  }
+
+  body.wo-dealer-body .wo-search svg {
+    left: 15px;
+    width: 20px;
+    height: 20px;
+  }
+
+  body.wo-dealer-body .wo-search input {
+    height: 50px;
+    padding: 0 14px 0 46px;
+  }
+
+  body.wo-dealer-body .wo-form-help,
+  body.wo-dealer-body .wo-workspace small,
+  body.wo-dealer-body .wo-mobile-label {
+    font-size: 11px;
+    line-height: 1.55;
+  }
+
+  /* Dealer identity and KPI bands */
+  body.wo-dealer-body .wo-dealer-code-band {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    margin-bottom: 12px;
+    padding: 15px;
+  }
+
+  body.wo-dealer-body .wo-dealer-code-band > div > svg {
+    width: 42px;
+    height: 42px;
+    padding: 9px;
+  }
+
+  body.wo-dealer-body .wo-dealer-code-band small {
+    font-size: 10px;
+  }
+
+  body.wo-dealer-body .wo-dealer-code-band strong {
+    font-size: 14px;
+  }
+
+  body.wo-dealer-body .wo-dealer-code-band code {
+    width: 100%;
+    min-height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    font-size: 15px;
+    text-overflow: ellipsis;
+  }
+
+  body.wo-dealer-body .wo-dealer-code-band > p {
+    grid-column: 1;
+    margin: 0;
+    font-size: 11px;
+    line-height: 1.6;
+  }
+
+  body.wo-dealer-body .wo-dealer-code-band .wo-button {
+    width: 100%;
+  }
+
+  body.wo-dealer-body .wo-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-bottom: 12px;
+  }
+
+  body.wo-dealer-body .wo-kpis > div {
+    min-height: 92px;
+    gap: 5px;
+    padding: 14px;
+  }
+
+  body.wo-dealer-body .wo-kpis span,
+  body.wo-dealer-body .wo-kpis small {
+    font-size: 11px;
+  }
+
+  body.wo-dealer-body .wo-kpis strong {
+    font-size: 25px;
+  }
+
+  /* Search and filtering toolbars */
+  body.wo-dealer-body :where(.wo-order-toolbar, .wo-product-toolbar, .wo-contract-toolbar, .wo-pricing-toolbar) {
+    display: flex;
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  body.wo-dealer-body :where(.wo-order-toolbar, .wo-product-toolbar, .wo-contract-toolbar, .wo-pricing-toolbar) .wo-search {
+    width: 100%;
+  }
+
+  body.wo-dealer-body .wo-segmented {
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    padding: 4px;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+  }
+
+  body.wo-dealer-body .wo-segmented::-webkit-scrollbar {
+    display: none;
+  }
+
+  body.wo-dealer-body .wo-segmented button {
+    min-width: max-content;
+    min-height: 44px;
+    flex: 1 0 auto;
+    padding: 0 15px;
+    border-radius: 6px;
+    font-size: 12px;
+    scroll-snap-align: start;
+  }
+
+  body.wo-dealer-body :where(.wo-code-link-form, .wo-dealer-salon-form) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+    padding: 15px;
+  }
+
+  body.wo-dealer-body :where(.wo-code-link-form, .wo-dealer-salon-form) .wo-button {
+    width: 100%;
+  }
+
+  /* Product management form and list */
+  body.wo-dealer-body .wo-dealer-product-form {
+    padding: 15px;
+  }
+
+  body.wo-dealer-body .wo-mobile-form-disclosure-v657 {
+    display: flex;
+    width: calc(100% - 30px);
+    min-height: 50px;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 9px;
+    margin: 0 15px 14px;
+    border: 1px solid #d9c8bf;
+    border-radius: 7px;
+    background: #fff;
+    padding: 0 14px;
+    color: var(--wo-ink);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 800;
+    text-align: left;
+  }
+
+  body.wo-dealer-body .wo-mobile-form-disclosure-v657 > svg {
+    width: 19px;
+    height: 19px;
+    flex: 0 0 19px;
+    color: var(--wo-rose);
+  }
+
+  body.wo-dealer-body .wo-mobile-form-disclosure-v657 > span:first-of-type {
+    min-width: 0;
+    flex: 1;
+  }
+
+  body.wo-dealer-body .wo-mobile-disclosure-chevron-v657 {
+    flex: 0 0 auto;
+    color: var(--wo-muted);
+    font-size: 18px;
+    line-height: 1;
+    transition: transform .18s ease;
+  }
+
+  body.wo-dealer-body .wo-mobile-form-disclosure-v657[aria-expanded="true"] .wo-mobile-disclosure-chevron-v657 {
+    transform: rotate(180deg);
+  }
+
+  body.wo-dealer-body .wo-dealer-product-form.is-collapsed-v657 {
+    display: none;
+  }
+
+  body.wo-dealer-body .wo-product-form-grid,
+  body.wo-dealer-body .wo-product-editor .wo-product-form-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 13px;
+  }
+
+  body.wo-dealer-body .wo-product-form-grid label.wide {
+    grid-column: 1;
+  }
+
+  body.wo-dealer-body .wo-product-form-grid label > span,
+  body.wo-dealer-body .wo-company-grid label > span,
+  body.wo-dealer-body .wo-password-field-v653 > span:first-child {
+    font-size: 12px;
+  }
+
+  body.wo-dealer-body .wo-form-actions {
+    margin-top: 16px;
+  }
+
+  body.wo-dealer-body .wo-form-actions .wo-button {
+    width: 100%;
+  }
+
+  body.wo-dealer-body :where(.wo-catalog-table, .wo-contract-table, .wo-dealer-orders) {
+    overflow: visible;
+    padding: 10px;
+  }
+
+  body.wo-dealer-body :where(.wo-catalog-table-head, .wo-contract-table-head, .wo-dealer-order-head) {
+    display: none;
+  }
+
+  body.wo-dealer-body .wo-catalog-table article,
+  body.wo-dealer-body .wo-contract-table article {
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px 12px;
+    margin-bottom: 10px;
+    padding: 15px;
+    border: 1px solid var(--wo-line);
+    border-radius: 8px;
+    background: #fff;
+  }
+
+  body.wo-dealer-body .wo-catalog-table article > div:first-child,
+  body.wo-dealer-body .wo-contract-table article > div:first-child {
+    grid-column: 1 / -1;
+  }
+
+  body.wo-dealer-body .wo-catalog-table article strong,
+  body.wo-dealer-body .wo-contract-table article strong {
+    overflow: visible;
+    font-size: 14px;
+    line-height: 1.45;
+    text-overflow: clip;
+    white-space: normal;
+  }
+
+  body.wo-dealer-body .wo-catalog-table article :where(small, span),
+  body.wo-dealer-body .wo-contract-table article :where(small, span) {
+    font-size: 11px;
+    line-height: 1.5;
+  }
+
+  body.wo-dealer-body .wo-catalog-table article > .wo-row-actions,
+  body.wo-dealer-body .wo-contract-table article > .wo-row-actions {
+    grid-column: 1 / -1;
+    grid-row: auto;
+    justify-content: flex-end;
+    padding-top: 8px;
+    border-top: 1px solid #eee4df;
+  }
+
+  body.wo-dealer-body .wo-list-pager-v628 {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 0;
+    padding: 12px;
+  }
+
+  body.wo-dealer-body .wo-list-pager-v628 > div {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 70px minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  body.wo-dealer-body .wo-list-pager-v628 button {
+    width: 100%;
+    min-width: 0;
+    height: 46px;
+    font-size: 13px;
+  }
+
+  /* Orders become readable action cards. */
+  body.wo-dealer-body .wo-dealer-order-row {
+    min-width: 0;
+    min-height: 0;
+    margin-bottom: 10px;
+    padding-bottom: 60px;
+    overflow: hidden;
+    border: 1px solid var(--wo-line);
+    border-radius: 8px;
+    background: #fff;
+  }
+
+  body.wo-dealer-body .wo-dealer-order-row > button {
+    min-width: 0;
+    min-height: 0;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px 12px;
+    padding: 15px;
+    font-size: 13px;
+  }
+
+  body.wo-dealer-body .wo-dealer-order-row > button > span {
+    overflow: visible;
+    line-height: 1.45;
+    text-overflow: clip;
+    white-space: normal;
+  }
+
+  body.wo-dealer-body .wo-dealer-order-row > button > span:nth-child(2),
+  body.wo-dealer-body .wo-dealer-order-row > button > span:nth-child(3),
+  body.wo-dealer-body .wo-dealer-order-row > button > span:nth-child(4) {
+    grid-column: 1;
+  }
+
+  body.wo-dealer-body .wo-dealer-order-row > button > span:nth-child(5) {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  body.wo-dealer-body .wo-dealer-order-row > button > span:nth-child(6) {
+    display: none;
+  }
+
+  body.wo-dealer-body .wo-dealer-order-row > button small {
+    margin-top: 4px;
+    font-size: 11px;
+  }
+
+  body.wo-dealer-body .wo-order-document-actions-v656 {
+    right: auto;
+    bottom: 10px;
+    left: 14px;
+    top: auto;
+    gap: 8px;
+    transform: none;
+  }
+
+  body.wo-dealer-body .wo-order-document-actions-v656 .wo-icon-link {
+    width: 44px;
+    height: 44px;
+  }
+
+  /* Pricing is converted from a compressed desktop grid to product cards. */
+  body.wo-dealer-body .wo-pricing-salon {
+    width: 100%;
+    min-width: 0;
+  }
+
+  body.wo-dealer-body .wo-pricing-salon > span,
+  body.wo-dealer-body .wo-pricing-bulk label > span:first-child {
+    font-size: 12px;
+  }
+
+  body.wo-dealer-body .wo-pricing-bulk {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  body.wo-dealer-body .wo-pricing-bulk .wo-button {
+    width: 100%;
+  }
+
+  body.wo-dealer-body .wo-pricing-table {
+    overflow: visible;
+    padding: 10px;
+  }
+
+  body.wo-dealer-body .wo-pricing-head {
+    display: none;
+  }
+
+  body.wo-dealer-body .wo-pricing-row {
+    min-width: 0;
+    min-height: 0;
+    grid-template-columns: 32px minmax(0, 1fr);
+    gap: 12px;
+    margin-bottom: 10px;
+    padding: 15px;
+    border: 1px solid var(--wo-line);
+    border-radius: 8px;
+    background: #fff;
+    font-size: 13px;
+  }
+
+  body.wo-dealer-body .wo-pricing-row > :first-child {
+    align-self: start;
+  }
+
+  body.wo-dealer-body .wo-pricing-row > :nth-child(n+3) {
+    grid-column: 2;
+    justify-self: stretch;
+  }
+
+  body.wo-dealer-body .wo-pricing-row :where(strong, span, small) {
+    overflow: visible;
+    font-size: 12px;
+    line-height: 1.5;
+    text-overflow: clip;
+    white-space: normal;
+  }
+
+  body.wo-dealer-body .wo-pricing-row input[type="number"] {
+    width: 100%;
+  }
+
+  body.wo-dealer-body .wo-pricing-save {
+    bottom: calc(76px + env(safe-area-inset-bottom));
+    z-index: 20;
+    align-items: stretch;
+    flex-direction: column;
+    gap: 9px;
+    padding: 12px;
+  }
+
+  body.wo-dealer-body .wo-pricing-save p {
+    margin: 0;
+    font-size: 11px;
+  }
+
+  body.wo-dealer-body .wo-pricing-save .wo-button {
+    width: 100%;
+  }
+
+  /* Company and password pages */
+  body.wo-dealer-body .wo-company-form > section,
+  body.wo-dealer-body .wo-plan-summary,
+  body.wo-dealer-body .wo-billing-detail {
+    padding: 17px 15px;
+  }
+
+  body.wo-dealer-body .wo-company-form > section > header {
+    margin-bottom: 15px;
+  }
+
+  body.wo-dealer-body .wo-company-form > section > header strong {
+    font-size: 15px;
+  }
+
+  body.wo-dealer-body .wo-company-form > section > header small {
+    font-size: 11px;
+  }
+
+  body.wo-dealer-body .wo-company-grid,
+  body.wo-dealer-body .wo-company-account dl {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 13px;
+  }
+
+  body.wo-dealer-body .wo-company-grid label.wide {
+    grid-column: 1;
+  }
+
+  body.wo-dealer-body .wo-company-save {
+    position: sticky;
+    bottom: calc(76px + env(safe-area-inset-bottom));
+    z-index: 20;
+    align-items: stretch;
+    flex-direction: column;
+    gap: 9px;
+    padding: 12px;
+  }
+
+  body.wo-dealer-body .wo-company-save .wo-button {
+    width: 100%;
+  }
+
+  body.wo-dealer-body .wo-password-content-v653 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  body.wo-dealer-body .wo-password-summary-v653 {
+    padding: 18px 16px;
+    border-right: 0;
+    border-bottom: 1px solid var(--wo-line);
+  }
+
+  body.wo-dealer-body .wo-password-summary-v653 h2 {
+    font-size: 16px;
+  }
+
+  body.wo-dealer-body .wo-password-summary-v653 > p,
+  body.wo-dealer-body .wo-password-policy-v653,
+  body.wo-dealer-body .wo-password-actions-v653 p {
+    font-size: 11px;
+  }
+
+  body.wo-dealer-body .wo-password-form-v653 {
+    padding: 18px 16px;
+  }
+
+  body.wo-dealer-body .wo-password-actions-v653 {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 13px;
+  }
+
+  body.wo-dealer-body .wo-password-actions-v653 .wo-button {
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* Dealer dialogs are full-height working sheets on phones. */
+  body.wo-dealer-body .wo-dialog {
+    width: 100vw;
+    max-width: none;
+    max-height: 100dvh;
+    margin: auto 0 0;
+    border-radius: 8px 8px 0 0;
+  }
+
+  body.wo-dealer-body .wo-dialog-shell > header {
+    min-height: 72px;
+    padding: 12px 14px;
+  }
+
+  body.wo-dealer-body .wo-dialog-shell > header h2 {
+    font-size: 19px;
+  }
+
+  body.wo-dealer-body .wo-dialog-shell > header > button {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  body.wo-dealer-body .wo-dialog-content {
+    max-height: calc(100dvh - 164px);
+    padding: 16px 14px;
+  }
+
+  body.wo-dealer-body .wo-dialog-shell > footer {
+    gap: 8px;
+    padding: 12px 14px calc(12px + env(safe-area-inset-bottom));
+  }
+
+  body.wo-dealer-body .wo-dialog-shell > footer .wo-button {
+    min-width: 0;
+    flex: 1 1 140px;
+  }
+
+  body.wo-dealer-body .wo-dialog-document-actions-v656 {
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  body.wo-dealer-body .wo-dialog-document-actions-v656 .wo-button {
+    width: 100%;
+    padding-inline: 8px;
+    font-size: 11px;
+  }
+
+  /* Dealer bottom navigation */
+  body.wo-dealer-body .wo-dealer-mobile-nav {
+    position: fixed;
+    inset: auto 0 0;
+    z-index: 40;
+    display: grid;
+    width: 100%;
+    height: calc(76px + env(safe-area-inset-bottom));
+    min-height: calc(76px + env(safe-area-inset-bottom));
+    grid-template-columns: repeat(6, minmax(52px, 1fr));
+    overflow-x: auto;
+    overflow-y: hidden;
+    border-top: 1px solid var(--wo-line);
+    background: rgba(255, 253, 251, .985);
+    padding: 0 0 env(safe-area-inset-bottom);
+    box-shadow: 0 -4px 18px rgba(57, 42, 36, .07);
+    backdrop-filter: blur(14px);
+    scrollbar-width: none;
+  }
+
+  body.wo-dealer-body .wo-dealer-mobile-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  body.wo-dealer-body .wo-dealer-mobile-nav a {
+    position: relative;
+    display: flex;
+    min-width: 52px;
+    min-height: 76px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 7px 2px 5px;
+    color: #8f8580;
+    font-size: 9.5px;
+    font-weight: 800;
+    line-height: 1.1;
+    text-align: center;
+    text-decoration: none;
+  }
+
+  body.wo-dealer-body .wo-dealer-mobile-nav a::before {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 28px;
+    height: 3px;
+    transform: translateX(-50%);
+    border-radius: 0 0 3px 3px;
+    background: transparent;
+    content: "";
+  }
+
+  body.wo-dealer-body .wo-dealer-mobile-nav a.active {
+    color: var(--wo-rose);
+  }
+
+  body.wo-dealer-body .wo-dealer-mobile-nav a.active::before {
+    background: var(--wo-rose);
+  }
+
+  body.wo-dealer-body .wo-dealer-mobile-nav svg {
+    width: 22px;
+    height: 22px;
+    flex: 0 0 22px;
+  }
+
+  body.wo-dealer-body .wo-dealer-mobile-nav a span {
+    display: block;
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* The salon inventory embed uses the wholesale components without dealer body. */
+  html.orimia-admin-shell-v518 body .admin-main-content .wo-app-root .wo-workspace {
+    border-radius: 8px !important;
+    box-shadow: none !important;
+  }
+
+  html.orimia-admin-shell-v518 body .admin-main-content .wo-app-root .wo-workspace-head {
+    min-height: 0 !important;
+    align-items: stretch !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    padding: 16px !important;
+    background: #fff !important;
+  }
+
+  html.orimia-admin-shell-v518 body .admin-main-content .wo-app-root .wo-workspace-head h2 {
+    font-size: 20px !important;
+  }
+
+  html.orimia-admin-shell-v518 body .admin-main-content .wo-app-root :where(.wo-filters, .wo-order-toolbar) {
+    grid-template-columns: minmax(0, 1fr) !important;
+    padding: 12px !important;
+  }
+
+  /* Operational content should lead on phones; desktop keeps the branded media. */
+  html.orimia-admin-shell-v518 body .admin-main-content header[data-orimia-admin-workspace-source-v572] > div > div:has(> figure),
+  html.orimia-admin-shell-v518 body .admin-main-content header[data-inventory-orders-page-header-v572] .orimia-inventory-hero-image-v572 {
+    display: none !important;
+  }
+}
