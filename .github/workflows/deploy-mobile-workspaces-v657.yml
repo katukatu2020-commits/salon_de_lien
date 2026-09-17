@@ -130,6 +130,8 @@ jobs:
           }
           $env:SMOKE_DEPENDENCIES_PACKAGE = Join-Path $browserDependencies 'node_modules/playwright-core/package.json'
           $env:CHROME_PATH = $chrome
+          "SMOKE_DEPENDENCIES_PACKAGE=$($env:SMOKE_DEPENDENCIES_PACKAGE)" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+          "CHROME_PATH=$chrome" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
           $env:LIEN_RUNTIME_ROOT = $runtimeRoot
           $env:MOBILE_CSS_PATH = Join-Path $runtimeRoot 'public/mobile-workspaces-v657.css'
           $env:SCREENSHOT_DIR = 'artifacts/mobile-commercial-v657/dealer-browser'

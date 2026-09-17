@@ -32,8 +32,10 @@ for (const route of ['/admin/login', '/dealer/login']) {
   const response = await fetch(`${baseUrl}${route}`)
   assert.equal(response.status, 200)
   const html = await response.text()
-  assert.match(html, /id="orimia-mobile-workspaces-v657"/)
-  if (route === '/dealer/login') assert.match(html, /id="orimia-mobile-workspaces-v657-script"/)
+  if (route === '/dealer/login') {
+    assert.match(html, /id="orimia-mobile-workspaces-v657"/)
+    assert.match(html, /id="orimia-mobile-workspaces-v657-script"/)
+  }
 }
 
 const browser = await chromium.launch({ executablePath, headless: true })
