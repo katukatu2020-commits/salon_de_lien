@@ -2,6 +2,7 @@ name: Deploy style admin scroll stability v649
 
 on:
   workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: write
