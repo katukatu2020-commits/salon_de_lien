@@ -9,5 +9,5 @@ permissions:
 
 jobs:
   deploy:
-    uses: ./.github/workflows/deploy-mobile-workspaces-v657.yml
+    uses: ./.github/workflows/finalize-mobile-workspaces-v657.yml
     secrets: inherit
