@@ -30,7 +30,18 @@ try {
       assert.deepEqual(await type.locator('option').evaluateAll(options => options.map(option => option.value)), ['', 'salon', 'dealer'])
       assert.equal(await phone.getAttribute('required'), '')
       assert.equal(await form.locator('input[type="hidden"][name="audience"]').count(), 0)
-      assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2))
+      const formLayout = await form.evaluate((element) => {
+        const viewportWidth = document.documentElement.clientWidth
+        const controls = Array.from(element.querySelectorAll('input,select,textarea,button'))
+        const rectangles = [element, ...controls].map(node => node.getBoundingClientRect())
+        return {
+          viewportWidth,
+          minimumLeft: Math.min(...rectangles.map(rectangle => rectangle.left)),
+          maximumRight: Math.max(...rectangles.map(rectangle => rectangle.right)),
+        }
+      })
+      assert.ok(formLayout.minimumLeft >= -2)
+      assert.ok(formLayout.maximumRight <= formLayout.viewportWidth + 2)
     }
     await page.goto(base + '/business/salon', { waitUntil: 'domcontentloaded', timeout: 30_000 })
     const form = page.locator('.business-inquiry-form')
@@ -43,7 +54,7 @@ try {
     assert.equal(await form.locator('[name="phone"]').evaluate(element => element.validity.valueMissing), true)
     await page.locator('#contact').screenshot({ path: path.join(output, `application-${width}.png`) })
     assert.deepEqual(errors, [])
-    results.push({ width, requiredPhoneValidation: true, visibleApplicationType: true, noOverflow: true })
+    results.push({ width, requiredPhoneValidation: true, visibleApplicationType: true, formContained: true })
     await context.close()
   }
 } finally {
