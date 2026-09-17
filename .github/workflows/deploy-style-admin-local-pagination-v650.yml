@@ -2,6 +2,7 @@ name: Deploy style admin local pagination v650
 
 on:
   workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: write

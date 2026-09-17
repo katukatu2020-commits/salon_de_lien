@@ -8,6 +8,6 @@ permissions:
   id-token: write
 
 jobs:
-  deploy-style-admin-scroll-stability-v649:
-    uses: ./.github/workflows/deploy-style-admin-scroll-stability-v649.yml
+  deploy-style-admin-local-pagination-v650:
+    uses: ./.github/workflows/deploy-style-admin-local-pagination-v650.yml
     secrets: inherit
