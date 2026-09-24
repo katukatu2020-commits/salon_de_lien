@@ -1,0 +1,225 @@
+/* dealer-product-search-filters-v659 */
+.wo-catalog-toolbar-v659 {
+  display: grid;
+  grid-template-columns: minmax(260px, 1.2fr) minmax(420px, 1fr) auto;
+  align-items: end;
+  gap: 12px;
+}
+
+.wo-catalog-toolbar-v659 .wo-search {
+  width: 100%;
+}
+
+.wo-product-filters-v659 {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) minmax(150px, 1fr) auto;
+  align-items: end;
+  gap: 8px;
+}
+
+.wo-product-filters-v659 label {
+  display: grid;
+  min-width: 0;
+  gap: 5px;
+}
+
+.wo-product-filters-v659 label > span {
+  color: var(--wo-muted);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.wo-product-filters-v659 select,
+.wo-filter-reset-v659 {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--wo-line);
+  border-radius: 7px;
+  color: var(--wo-ink);
+  background: #fff;
+  font: inherit;
+}
+
+.wo-product-filters-v659 select {
+  padding: 0 36px 0 11px;
+  outline: none;
+}
+
+.wo-product-filters-v659 select:focus {
+  border-color: #d18199;
+  box-shadow: 0 0 0 3px rgba(200, 78, 112, .1);
+}
+
+.wo-filter-reset-v659 {
+  width: auto;
+  padding: 0 13px;
+  color: var(--wo-rose-dark);
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.wo-filter-reset-v659:disabled {
+  color: #aaa09b;
+  background: #f5f2f0;
+  cursor: default;
+}
+
+.wo-pricing-toolbar-v659 {
+  grid-template-columns: minmax(260px, 1.15fr) minmax(420px, 1fr) auto;
+  align-items: end;
+}
+
+.wo-pricing-toolbar-v659 > .wo-pricing-bulk {
+  grid-column: 1 / -1;
+  justify-content: flex-end;
+  padding-top: 12px;
+  border-top: 1px solid var(--wo-line);
+}
+
+.wo-pricing-selection-v659 {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 7px;
+  margin-right: auto;
+}
+
+.wo-pricing-selection-v659 strong {
+  min-width: 74px;
+  color: var(--wo-rose-dark);
+  font-size: 11px;
+}
+
+.wo-pricing-selection-v659 button {
+  min-height: 38px;
+  padding: 0 11px;
+  border: 1px solid var(--wo-line);
+  border-radius: 6px;
+  color: var(--wo-ink);
+  background: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.wo-pricing-selection-v659 button:disabled {
+  color: #aaa09b;
+  background: #f5f2f0;
+  cursor: default;
+}
+
+.wo-pricing-select-v659,
+.wo-pricing-publish-v659 {
+  display: inline-flex;
+  align-items: center;
+}
+
+.wo-pricing-select-v659 {
+  width: 24px;
+  height: 24px;
+  justify-content: center;
+}
+
+.wo-pricing-select-v659 input,
+.wo-pricing-publish-v659 input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--wo-rose);
+}
+
+.wo-pricing-publish-v659 {
+  width: fit-content;
+  gap: 7px;
+  cursor: pointer;
+}
+
+.wo-pricing-publish-v659 .wo-pricing-visibility {
+  white-space: nowrap;
+}
+
+.wo-pricing-management[aria-busy="true"] .wo-pricing-table,
+.wo-product-management[aria-busy="true"] .wo-product-results-v641 {
+  opacity: .55;
+  pointer-events: none;
+}
+
+@media (max-width: 1120px) {
+  .wo-catalog-toolbar-v659,
+  .wo-pricing-toolbar-v659 {
+    grid-template-columns: minmax(240px, 1fr) minmax(360px, 1fr);
+  }
+
+  .wo-catalog-toolbar-v659 > .wo-product-result-v628,
+  .wo-pricing-toolbar-v659 > .wo-product-result-v628 {
+    grid-column: 1 / -1;
+    justify-self: end;
+  }
+}
+
+@media (max-width: 760px) {
+  body.wo-dealer-body #dealer-pricing-form {
+    padding-bottom: 180px;
+  }
+
+  .wo-catalog-toolbar-v659,
+  .wo-pricing-toolbar-v659 {
+    display: flex;
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .wo-product-filters-v659 {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  }
+
+  .wo-pricing-toolbar-v659 > .wo-pricing-bulk {
+    display: grid;
+    grid-template-columns: 1fr;
+    padding-top: 10px;
+  }
+
+  .wo-pricing-selection-v659 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+  }
+
+  .wo-pricing-selection-v659 strong {
+    grid-column: 1 / -1;
+  }
+
+  .wo-pricing-selection-v659 button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 620px) {
+  .wo-product-filters-v659 {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .wo-filter-reset-v659 {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .wo-product-filters-v659 select,
+  .wo-filter-reset-v659,
+  .wo-pricing-selection-v659 button {
+    min-height: 46px;
+    font-size: 12px;
+  }
+
+  .wo-pricing-row > .wo-pricing-publish-v659 {
+    grid-row: 1;
+    grid-column: 2;
+    justify-self: end;
+  }
+
+  .wo-pricing-row > .wo-pricing-publish-v659 .wo-pricing-visibility {
+    grid-row: auto;
+    grid-column: auto;
+  }
+}
