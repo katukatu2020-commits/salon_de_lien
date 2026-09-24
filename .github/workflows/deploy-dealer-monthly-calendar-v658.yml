@@ -3,7 +3,7 @@ name: Deploy dealer monthly calendar v658
 on:
   push:
     branches:
-      - release/dealer-monthly-calendar-v658
+      - recovery/aws-canonical-20260815
     paths:
       - .github/workflows/deploy-dealer-monthly-calendar-v658.yml
       - scripts/aws/runtime-patches/dealer-monthly-calendar-v658/**
