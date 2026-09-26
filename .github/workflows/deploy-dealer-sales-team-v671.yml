@@ -24,6 +24,7 @@ env:
   ECS_SERVICE: salon-de-lien-staging-web
   RELEASE_DIR: scripts/aws/runtime-patches/dealer-sales-team-v671
   PARENT_DIGEST: sha256:1b17258461c0aaf8fd483a0275979b4cc3ee16344febced038d2a6450a403305
+  DEPLOY_FROM_DIGEST: sha256:aa9e83b2ecd9b72c5df5d77ce6dc00bd0436613a64b39eb90897d8f30905f37b
 
 jobs:
   deploy:
@@ -89,7 +90,7 @@ jobs:
             $currentTag = $image.Substring($image.LastIndexOf(':') + 1)
             $digest = (aws ecr describe-images --repository-name $env:ECR_REPOSITORY --image-ids "imageTag=$currentTag" --region $env:AWS_REGION --query 'imageDetails[0].imageDigest' --output text --no-cli-pager).Trim()
           }
-          if ($digest -ne $env:PARENT_DIGEST) { throw "Production moved from reviewed parent: $image ($digest)." }
+          if ($digest -ne $env:DEPLOY_FROM_DIGEST) { throw "Production moved from reviewed release: $image ($digest)." }
           "PREVIOUS_TASK=$task" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
           "PREVIOUS_IMAGE=$image" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
           "PREVIOUS_DIGEST=$digest" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append

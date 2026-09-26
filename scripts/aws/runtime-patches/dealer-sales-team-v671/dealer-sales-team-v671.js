@@ -90,7 +90,7 @@ function createDealerSalesTeam({ prisma: db, crypto, helpers: h }) {
         const active = p.active !== false
         if (old.legacyOwner && (!active || role !== 'ADMIN')) fail('代表管理者の停止・権限変更はできません。')
         if (old.id === s.memberId && (!active || role !== 'ADMIN')) fail('自分の停止・権限変更は別の管理者に依頼してください。')
-        await tx.$executeRawUnsafe('UPDATE "DealerSalesMember" SET "name"=$1,"role"=$2,"branchId"=$3,"active"=$4,"authVersion"="authVersion"+1 WHERE "id"=$5', name, role, branchId, active, old.id)
+        await tx.$executeRawUnsafe('UPDATE "DealerSalesMember" SET "name"=$1,"role"=$2,"branchId"=$3,"active"=$4,"authVersion"="authVersion"+CASE WHEN "role"<>$2 OR "active"<>$4 THEN 1 ELSE 0 END WHERE "id"=$5', name, role, branchId, active, old.id)
         await audit(tx, s, 'MEMBER_UPDATED', old.id)
         return { id: old.id }
       }
@@ -111,6 +111,7 @@ function createDealerSalesTeam({ prisma: db, crypto, helpers: h }) {
     return db.$transaction(async tx => {
       const row = await member(tx, s, p.id)
       if (row.legacyOwner) fail('代表管理者はパスワード変更画面をご利用ください。')
+      if (row.id === s.memberId) fail('自分のパスワードは「パスワード変更」画面から変更してください。')
       const password = crypto.randomBytes(15).toString('base64url') + 'A1!'
       await tx.$executeRawUnsafe('UPDATE "DealerSalesMember" SET "passwordHash"=$1,"authVersion"="authVersion"+1,"mustChangePassword"=TRUE WHERE "id"=$2', h.hashPassword(crypto, password), row.id)
       await audit(tx, s, 'PASSWORD_RESET', row.id)
@@ -201,7 +202,7 @@ function createDealerSalesTeam({ prisma: db, crypto, helpers: h }) {
     return { month: r.key, summary: summary[0], categories, salons, progress: visibleProgress }
   }
   function page(s, view) {
-    return h.portal(s, view).replace('/wholesale-ordering-client-v543.js?v=659-product-search-filters1', '/dealer-sales-team-v671-client.js?v=671-1').replace('</head>', '<link rel="stylesheet" href="/password-visibility-v627.css?v=627-release1"></head>')
+    return h.portal(s, view).replace('/wholesale-ordering-client-v543.js?v=659-product-search-filters1', '/dealer-sales-team-v671-client.js?v=671-2').replace('</head>', '<link rel="stylesheet" href="/password-visibility-v627.css?v=627-release1"></head>')
   }
   async function handle(req, res, url) {
     const p = url.pathname.replace(/\/$/, '')

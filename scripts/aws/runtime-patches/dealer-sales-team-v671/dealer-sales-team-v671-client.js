@@ -67,6 +67,9 @@
   }
   function render() {
     root.innerHTML=`<div class="dst-app"><div id="dst-notice" class="dst-notice" role="status" hidden></div>${view==='team' ? teamBody() : filters()+`<div id="dst-report">${reportBody()}</div>`}</div>`
+    for (const button of root.querySelectorAll('[data-password-reset]')) {
+      if (button.dataset.passwordReset === state.options.viewer.memberId) button.remove()
+    }
   }
   function dialog(title,body,onSubmit) {
     const el=document.createElement('dialog'); el.className='dst-dialog'
