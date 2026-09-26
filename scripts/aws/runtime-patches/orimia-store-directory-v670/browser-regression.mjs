@@ -20,7 +20,7 @@ fs.mkdirSync(output, { recursive: true })
 const stores = [
   { organizationId: 'org-tokyo', name: '青山ヘアスタジオ', prefecture: '東京都', city: '渋谷区', addressLine1: '神宮前1-2-3', phone: '03-1111-2222', current: false, linked: false },
   { organizationId: 'org-okayama-current', name: 'Salon de Lien', prefecture: '岡山県', city: '岡山市', addressLine1: '北区駅元町1-1', phone: '086-111-2222', current: true, linked: true },
-  { organizationId: 'org-okayama-b', name: 'ヘアサロン ハレルヤ', prefecture: '岡山県', city: '倉敷市', addressLine1: '阿知1-2-3', phone: '', current: false, linked: false },
+  { organizationId: 'org-okayama-b', name: 'ヘアサロン ハレルヤ', prefecture: '岡山', city: '倉敷市', addressLine1: '阿知1-2-3', phone: '', current: false, linked: false },
   { organizationId: 'org-no-prefecture', name: 'サロン ノース', prefecture: '都道府県未設定', city: '', addressLine1: '', phone: '', current: false, linked: false },
 ]
 

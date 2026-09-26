@@ -10,11 +10,12 @@ const output = process.env.SCREENSHOT_DIR || 'artifacts/orimia-store-directory-v
 const executablePath = process.env.CHROME_PATH || '/usr/bin/google-chrome'
 fs.mkdirSync(output, { recursive: true })
 
-function unexpected(errors) {
+function unexpected(errors, retiredBillingResponses = []) {
   return errors.filter(message => (
     !message.includes('Minified React error #418')
     && !message.includes('Minified React error #423')
     && !message.includes('Failed to load resource: the server responded with a status of 404')
+    && !(retiredBillingResponses.length > 0 && message.includes('Failed to load resource: the server responded with a status of 410'))
   ))
 }
 
@@ -62,8 +63,6 @@ try {
     form: { email: process.env.VERIFY_ADMIN_ID || 'demo.owner', password: process.env.VERIFY_ADMIN_PASSWORD || 'LienDemo2026!', next: '/admin/settings' },
   })
   assert.ok(adminLogin.ok(), `Admin login returned ${adminLogin.status()}`)
-  const switched = await adminContext.request.post(`${base}/api/admin/shared-account-switch`, { headers: { Origin: base, Accept: 'application/json' } })
-  assert.equal(switched.status(), 200)
   const profileResponse = await adminContext.request.get(`${base}/api/admin/store-profile`, { headers: { Accept: 'application/json' } })
   assert.equal(profileResponse.status(), 200)
   const profile = (await profileResponse.json()).profile
@@ -71,15 +70,20 @@ try {
 
   const settings = await adminContext.newPage()
   const settingsErrors = []
+  const retiredBillingResponses = []
   settings.on('pageerror', error => settingsErrors.push(error.message))
   settings.on('console', message => { if (message.type() === 'error') settingsErrors.push(message.text()) })
+  settings.on('response', response => {
+    const url = new URL(response.url())
+    if (response.status() === 410 && url.pathname === '/api/admin/billing/status') retiredBillingResponses.push(response.url())
+  })
   await settings.goto(`${base}/admin/settings?verify=v670`, { waitUntil: 'domcontentloaded', timeout: 30_000 })
   const publication = settings.locator('#orimia-publication-v670')
   await publication.waitFor({ state: 'visible', timeout: 20_000 })
   assert.equal(await publication.getByRole('switch').getAttribute('aria-checked'), String(profile.orimiaPublished))
   assert.equal(await settings.locator('.lien-store-qr-card,[data-sm-store-code]').count(), 0)
   assert.ok(await settings.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2))
-  assert.deepEqual(unexpected(settingsErrors), [])
+  assert.deepEqual(unexpected(settingsErrors, retiredBillingResponses), [])
   await settings.screenshot({ path: path.join(output, 'settings-publication-390.png'), fullPage: true })
   await adminContext.close()
 

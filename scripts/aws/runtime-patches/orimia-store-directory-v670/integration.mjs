@@ -60,7 +60,7 @@ try {
 
   const storeProfile = createStoreProfileService({ prisma, crypto: await import('node:crypto') })
   await storeProfile.ensureSchema()
-  await prisma.$executeRawUnsafe('INSERT INTO "OrganizationStoreProfile" ("organizationId","prefecture","city","orimiaPublished") VALUES ($1,$2,$3,$4)', 'org-a', '岡山県', '岡山市', true)
+  await prisma.$executeRawUnsafe('INSERT INTO "OrganizationStoreProfile" ("organizationId","prefecture","city","orimiaPublished") VALUES ($1,$2,$3,$4)', 'org-a', '岡山', '岡山市', true)
   await prisma.$executeRawUnsafe('INSERT INTO "OrganizationStoreProfile" ("organizationId","prefecture","city","orimiaPublished") VALUES ($1,$2,$3,$4)', 'org-c', '東京都', '渋谷区', true)
   await storeProfile.updatePublication({ role: 'ADMIN', organizationId: 'org-b' }, { published: false })
   await prisma.$executeRawUnsafe('UPDATE "OrganizationStoreProfile" SET "prefecture"=$2,"city"=$3 WHERE "organizationId"=$1', 'org-b', '北海道', '札幌市')
@@ -70,6 +70,7 @@ try {
   assert.deepEqual(stores.map(store => store.organizationId), ['org-c', 'org-a'])
   assert.equal(stores.find(store => store.organizationId === 'org-a').current, true)
   assert.equal(stores.find(store => store.organizationId === 'org-a').linked, true)
+  assert.equal(stores.find(store => store.organizationId === 'org-a').prefecture, '岡山県')
   assert.deepEqual(directory.groupStores(stores).map(group => group.prefecture), ['東京都', '岡山県'])
   assert.equal(await directory.storeIsPublished(prisma, 'org-b'), false)
   assert.equal(await directory.storeIsPublished(prisma, 'org-offline'), false)

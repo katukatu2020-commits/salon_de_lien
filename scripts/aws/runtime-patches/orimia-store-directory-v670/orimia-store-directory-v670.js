@@ -12,6 +12,11 @@ const PREFECTURES = [
 ]
 
 const prefectureOrder = new Map(PREFECTURES.map((name, index) => [name, index]))
+const prefectureAliases = new Map(PREFECTURES.flatMap(name => {
+  const aliases = [[name, name]]
+  if (/[都府県]$/.test(name)) aliases.push([name.slice(0, -1), name])
+  return aliases
+}))
 
 function clean(value) {
   return String(value == null ? '' : value).replace(/\s+/g, ' ').trim()
@@ -24,7 +29,8 @@ function escapeHtml(value) {
 }
 
 function prefectureName(value) {
-  return clean(value) || '都道府県未設定'
+  const name = clean(value)
+  return prefectureAliases.get(name) || name || '都道府県未設定'
 }
 
 function comparePrefecture(left, right) {
