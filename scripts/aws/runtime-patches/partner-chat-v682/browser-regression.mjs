@@ -1,0 +1,122 @@
+import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import { createRequire } from 'node:module'
+const require = createRequire(process.env.SMOKE_DEPENDENCIES_PACKAGE || import.meta.url)
+const { chromium } = require('playwright-core')
+const base = process.env.VERIFY_BASE_URL || 'http://127.0.0.1:3190'
+if (new URL(base).hostname !== '127.0.0.1') throw Error('Isolated fixture only')
+const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROME_PATH || 'C:/Program Files/Google/Chrome/Application/chrome.exe' })
+const out = 'artifacts/partner-chat-v682'; fs.mkdirSync(out, { recursive: true })
+const errors = [], results = []
+async function login(ctx, loginId = 'erp-owner-a') {
+  const r = await ctx.request.post(base + '/api/dealer/auth/login', { headers: { Origin: base }, data: { loginId, password: 'FixtureOnly-v678!' }, maxRedirects: 0 })
+  assert.equal(r.status(), 303)
+}
+async function ready(page) { await page.locator('#pc-body:not([disabled])').waitFor() }
+async function send(page, text) {
+  await page.getByRole('textbox', { name: 'メッセージ', exact: true }).fill(text)
+  await page.getByRole('button', { name: '送信', exact: true }).click()
+  await page.waitForFunction(() => !document.getElementById('pc-body').value)
+  await page.locator('.pc-message p').filter({ hasText: text }).last().waitFor()
+}
+async function visibleLayout(page, mobile) {
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true, 'No horizontal overflow')
+  const rect = await page.locator('#pc-send').boundingBox()
+  assert.ok(rect.width >= 44 && rect.height >= 44)
+  assert.ok(rect.y >= 0 && rect.y + rect.height <= (await page.viewportSize()).height, 'Composer is on screen')
+  if (mobile) assert.equal(await page.locator('.pc-sidebar').isVisible(), false)
+}
+try {
+  const dealer = await browser.newContext({ viewport: { width: 1440, height: 1000 } })
+  const salon = await browser.newContext({ viewport: { width: 1440, height: 1000 }, extraHTTPHeaders: { 'x-fixture-salon': '1' } })
+  await login(dealer)
+  const dp = await dealer.newPage(), sp = await salon.newPage()
+  for (const p of [dp, sp]) { p.setDefaultTimeout(12000); p.on('pageerror', e => errors.push(e.message)) }
+  await dp.goto(base + '/dealer/messages')
+  await dp.locator('[data-partner="salon-a"]').click(); await ready(dp)
+  await sp.goto(base + '/admin/dealer-messages?dealer=dealer-a'); await ready(sp)
+  const token = Date.now()
+  await send(dp, 'ブラウザ確認 ' + token + '：明日の納品は14時を予定しています。')
+  await sp.getByRole('button', { name: '会話を更新' }).click()
+  await sp.locator('.pc-message p').filter({ hasText: '明日の納品は14時' }).last().waitFor()
+  await send(sp, 'サロン返信 ' + token + '：ありがとうございます。よろしくお願いいたします。')
+  await dp.getByRole('button', { name: '会話を更新' }).click()
+  await dp.locator('.pc-message p').filter({ hasText: 'サロン返信 ' + token }).last().waitFor()
+  await visibleLayout(dp, false); await visibleLayout(sp, false)
+  await dp.screenshot({ path: out + '/dealer-desktop.png', fullPage: true })
+  await sp.screenshot({ path: out + '/salon-desktop.png', fullPage: true })
+  // Search controls and the composer must remain the same DOM nodes during updates/IME.
+  await dp.locator('#pc-search').evaluate(el => { window.fixtureSearch = el; el.focus(); el.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true })); el.value = 'テストサロン'; el.dispatchEvent(new InputEvent('input', { bubbles: true, isComposing: true })) })
+  await dp.waitForTimeout(500)
+  assert.equal(await dp.evaluate(() => document.activeElement === window.fixtureSearch && document.querySelectorAll('[data-partner]').length === 2), true)
+  await dp.locator('#pc-search').evaluate(el => el.dispatchEvent(new CompositionEvent('compositionend', { bubbles: true })))
+  await dp.waitForTimeout(400)
+  assert.equal(await dp.locator('#pc-search').inputValue(), 'テストサロン')
+  await dp.locator('#pc-search').fill('')
+  await dp.waitForTimeout(400)
+  await dp.locator('#pc-body').fill('未送信の日本語メッセージ')
+  await dp.locator('#pc-body').evaluate(el => { window.fixtureBody = el })
+  await dp.locator('#pc-log').evaluate(el => { el.scrollTop = 200 })
+  await dp.getByRole('button', { name: '会話を更新' }).click(); await dp.waitForTimeout(500)
+  assert.equal(await dp.locator('#pc-body').inputValue(), '未送信の日本語メッセージ')
+  assert.equal(await dp.evaluate(() => window.fixtureBody === document.getElementById('pc-body')), true)
+  assert.ok(Math.abs((await dp.locator('#pc-log').evaluate(el => el.scrollTop)) - 200) < 2)
+  await dp.locator('[data-partner="salon-b"]').click(); await ready(dp)
+  assert.equal(await dp.locator('#pc-body').inputValue(), '')
+  await dp.locator('[data-partner="salon-a"]').click(); await ready(dp)
+  assert.equal(await dp.locator('#pc-body').inputValue(), '未送信の日本語メッセージ')
+  await dp.locator('#pc-body').fill('')
+  await dp.locator('#pc-log').evaluate(el => { el.scrollTop = 0 })
+  await dp.locator('#pc-older').click()
+  await dp.locator('.pc-message p').filter({ hasText: '分納分を発送しました。' }).waitFor()
+  // Simulate a lost response after the server saved the message; retry must not duplicate it.
+  const retryText = '再送確認 ' + token
+  let dropped = false
+  await dp.route('**/api/dealer/erp/chat-send?*', async route => {
+    if (!dropped) { dropped = true; await route.fetch(); await route.abort('failed') } else await route.continue()
+  })
+  await dp.locator('#pc-body').fill(retryText); await dp.locator('#pc-send').click()
+  await dp.locator('#pc-thread-error').waitFor({ state: 'visible' })
+  assert.equal(await dp.locator('#pc-body').inputValue(), retryText)
+  await dp.locator('#pc-send:not([disabled])').click()
+  await dp.waitForFunction(() => !document.getElementById('pc-body').value)
+  assert.equal(await dp.locator('.pc-message p').filter({ hasText: retryText }).count(), 1)
+  await dp.unroute('**/api/dealer/erp/chat-send?*')
+  // Switching conversation while a history request is delayed must not overwrite the new one.
+  await dp.route('**/api/dealer/erp/chat-messages?partner=salon-a', async route => { await new Promise(r => setTimeout(r, 450)); await route.continue() })
+  await dp.locator('[data-partner="salon-a"]').click()
+  await dp.locator('[data-partner="salon-b"]').click(); await ready(dp); await dp.waitForTimeout(600)
+  assert.equal(await dp.locator('#pc-name').textContent(), 'テストサロン B')
+  assert.equal(await dp.locator('.pc-message p').filter({ hasText: retryText }).count(), 0)
+  await dp.unroute('**/api/dealer/erp/chat-messages?partner=salon-a')
+  results.push('desktop: two-way send, legacy history, IME, stable DOM, scroll, drafts, lost-response retry, stale response isolation')
+  for (const width of [390, 320]) {
+    await dp.setViewportSize({ width, height: 844 }); await sp.setViewportSize({ width, height: 844 })
+    await dp.goto(base + '/dealer/messages')
+    await dp.locator('[data-partner="salon-a"]').click(); await ready(dp)
+    await sp.goto(base + '/admin/dealer-messages?dealer=dealer-a'); await ready(sp)
+    await send(dp, `スマホ${width}：商品のお問い合わせです。`)
+    await sp.locator('#pc-refresh').isVisible().then(async visible => { if (!visible) { await sp.locator('#pc-back').click(); await sp.locator('[data-partner="dealer-a"]').click(); await ready(sp) } })
+    await sp.locator('.pc-message p').filter({ hasText: `スマホ${width}：` }).last().waitFor()
+    await send(sp, `スマホ${width}返信：注文内容を確認しました。`)
+    await visibleLayout(dp, true); await visibleLayout(sp, true)
+    await dp.screenshot({ path: `${out}/dealer-mobile-${width}.png`, fullPage: true })
+    await sp.screenshot({ path: `${out}/salon-mobile-${width}.png`, fullPage: true })
+    await dp.locator('#pc-back').click()
+    assert.equal(await dp.locator('.pc-sidebar').isVisible(), true)
+    await dp.screenshot({ path: `${out}/dealer-list-${width}.png`, fullPage: true })
+    await sp.locator('#pc-back').click()
+    await sp.locator('[data-partner="dealer-b"]').click(); await ready(sp)
+    assert.equal(await sp.locator('#pc-name').textContent(), 'テストディーラー b')
+    results.push(`${width}px: list/conversation navigation, two-way sending, visible composer, no overflow, correct selected dealer`)
+  }
+  const staffCtx = await browser.newContext()
+  await login(staffCtx, 'erp-sales-a')
+  const staffPage = await staffCtx.newPage(); await staffPage.goto(base + '/dealer/messages')
+  await staffPage.locator('[data-partner="salon-a"]').waitFor()
+  assert.equal(await staffPage.locator('[data-partner="salon-b"]').count(), 0)
+  assert.deepEqual(errors, [])
+  results.push('staff: only assigned active salons visible; no page errors')
+  fs.writeFileSync(out + '/results.json', JSON.stringify({ results, errors }, null, 2))
+  console.log(results.map(x => 'PASS ' + x).join('\n'))
+} finally { await browser.close() }
