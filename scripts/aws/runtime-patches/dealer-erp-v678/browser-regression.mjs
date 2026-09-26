@@ -1,0 +1,111 @@
+import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import path from 'node:path'
+import { createRequire } from 'node:module'
+const require=createRequire(process.env.SMOKE_DEPENDENCIES_PACKAGE || import.meta.url)
+const { chromium }=require('playwright-core')
+const base=process.env.VERIFY_BASE_URL || 'http://127.0.0.1:3182'
+const out=process.env.SCREENSHOT_DIR || 'artifacts/dealer-erp-v678/browser'
+fs.mkdirSync(out,{ recursive:true })
+const browser=await chromium.launch({ executablePath:process.env.CHROME_PATH || 'C:/Program Files/Google/Chrome/Application/chrome.exe',headless:true })
+const errors=[]
+const run=Date.now().toString(36)
+try {
+  for (const size of [{ name:'desktop',width:1440,height:1000 },{ name:'mobile',width:390,height:844 },{ name:'small-mobile',width:360,height:780 }]) {
+    const ctx=await browser.newContext({ viewport:{ width:size.width,height:size.height } })
+    const login=await ctx.request.post(base+'/api/dealer/auth/login',{ headers:{ Origin:base },data:{ loginId:'erp-owner-a',password:'FixtureOnly-v678!' },maxRedirects:0 })
+    assert.equal(login.status(),303)
+    const page=await ctx.newPage()
+    page.on('pageerror',e => errors.push(e.message))
+    for (const view of ['operations','inventory','fulfillment','receivables','activities','messages']) {
+      await page.goto(base+'/dealer/'+view,{ waitUntil:'networkidle' })
+      await page.locator('#erp-body[aria-busy=false]').waitFor()
+      assert.equal(await page.locator('.erp-notice.error:visible').count(),0,view)
+      const overflow=await page.evaluate(() => document.documentElement.scrollWidth-document.documentElement.clientWidth)
+      assert.ok(overflow<=2,`${size.name}/${view} overflow ${overflow}`)
+      await page.screenshot({ path:path.join(out,size.name+'-'+view+'.png'),fullPage:true })
+      if (view==='inventory') {
+        await page.getByRole('button',{ name:'倉庫を追加',exact:true }).click()
+        const dlg=page.locator('dialog').last()
+        await dlg.locator('[name=name]').fill('画面検証倉庫 '+size.name+' '+run)
+        await dlg.locator('[name=location]').fill('1番棚')
+        await dlg.locator('button[type=submit]').click()
+        await dlg.waitFor({ state:'detached' })
+        await page.getByRole('button',{ name:'入出庫・棚卸し',exact:true }).click()
+        const stock=page.locator('dialog').last()
+        await stock.getByRole('button',{ name:'商品を選択',exact:true }).click()
+        const picker=page.locator('dialog:has(.erp-product-search)'),q=picker.locator('[name=q]')
+        await q.focus()
+        await q.evaluate(el => { window.erpInput=el;el.dispatchEvent(new CompositionEvent('compositionstart',{ data:'' })) })
+        await q.fill('おるでぃーぶ')
+        await q.evaluate(el => el.dispatchEvent(new CompositionEvent('compositionupdate',{ data:'おるでぃーぶ' })))
+        await page.waitForTimeout(400)
+        assert.equal(await q.evaluate(el => el===window.erpInput && document.activeElement===el),true)
+        await q.fill('オルディーブ')
+        await q.evaluate(el => el.dispatchEvent(new CompositionEvent('compositionend',{ data:'オルディーブ' })))
+        await picker.getByRole('button',{ name:'検索',exact:true }).click()
+        await picker.locator('[data-product]').first().click()
+        await picker.waitFor({ state:'detached' })
+        await stock.locator('[name=locationId]').selectOption({ label:`画面検証倉庫 ${size.name} ${run} / 1番棚` })
+        await stock.locator('[name=quantity]').fill('3')
+        await stock.locator('[name=reason]').fill('画面からのテスト入庫')
+        await page.screenshot({ path:path.join(out,size.name+'-stock-form.png'),fullPage:true })
+        await stock.locator('[type=submit]').click()
+        await stock.waitFor({ state:'detached' })
+        await page.locator('#erp-body[aria-busy=false]').waitFor()
+        assert.match(await page.locator('#erp-body').innerText(),new RegExp('画面検証倉庫 '+size.name))
+      }
+      if (view==='fulfillment') {
+        await page.locator('[data-order="order-ten"]').click()
+        const dlg=page.locator('dialog').last()
+        await dlg.locator('[data-return]').first().waitFor()
+        assert.match(await dlg.innerText(),/order-ten/)
+        await page.screenshot({ path:path.join(out,size.name+'-order-detail.png'),fullPage:true })
+        const width=await dlg.evaluate(el => ({ scroll:el.scrollWidth,width:el.clientWidth }))
+        assert.ok(width.scroll-width.width<=2,JSON.stringify(width))
+        await dlg.locator('[data-close]').click()
+      }
+      if (view==='activities') {
+        await page.locator('[data-activity]').first().click()
+        const dlg=page.locator('dialog').last(), start=await dlg.locator('[name=startsAt]').inputValue()
+        assert.match(start,/T10:00$/)
+        await dlg.locator('[name=result]').fill('UI検証 '+size.name)
+        await dlg.locator('[type=submit]').click()
+        await dlg.waitFor({ state:'detached' })
+        await page.locator('#erp-body[aria-busy=false]').waitFor()
+        await page.locator('[data-activity]').first().click()
+        assert.equal(await page.locator('dialog [name=startsAt]').inputValue(),start)
+        await page.locator('dialog [data-close]').click()
+      }
+      if (view==='messages') {
+        await page.locator('tr').filter({ hasText:'納品について' }).getByRole('button',{ name:'開く' }).click()
+        const dlg=page.locator('dialog').last()
+        await dlg.locator('.erp-chat-message').first().waitFor()
+        const msg='画面送信テスト '+size.name,composer=dlg.locator('textarea')
+        await composer.fill(msg)
+        await dlg.locator('[data-chat-refresh]').click()
+        assert.equal(await composer.inputValue(),msg,'Refreshing must preserve draft')
+        await dlg.locator('[type=submit]').click()
+        await page.waitForFunction(text => [...document.querySelectorAll('.erp-chat-message p')].some(p => p.textContent===text),msg)
+        await page.screenshot({ path:path.join(out,size.name+'-chat.png'),fullPage:true })
+        await dlg.locator('[data-close]').click()
+      }
+    }
+    await ctx.close()
+  }
+  const salon=await browser.newContext({ viewport:{ width:390,height:844 },extraHTTPHeaders:{ 'x-fixture-salon':'1' } })
+  const page=await salon.newPage()
+  page.on('pageerror',e => errors.push(e.message))
+  await page.goto(base+'/admin/dealer-messages?dealer=dealer-a',{ waitUntil:'networkidle' })
+  await page.locator('#erp-body[aria-busy=false]').waitFor()
+  assert.match(await page.locator('#erp-body').innerText(),/納品について/)
+  assert.doesNotMatch(await page.locator('#erp-body').innerText(),/社内連絡/)
+  await page.getByRole('button',{ name:'開く',exact:true }).first().click()
+  await page.locator('dialog textarea').fill('サロン画面からの返信')
+  await page.locator('dialog [type=submit]').click()
+  await page.waitForFunction(() => [...document.querySelectorAll('.erp-chat-message p')].some(p => p.textContent==='サロン画面からの返信'))
+  await page.screenshot({ path:path.join(out,'salon-chat.png'),fullPage:true })
+  await salon.close()
+  assert.deepEqual(errors,[])
+  console.log('PASS: desktop/mobile/small-mobile pages, stock entry, IME input, delivery detail, schedule timezone, dealer/salon chat, draft retention')
+} finally { await browser.close() }
