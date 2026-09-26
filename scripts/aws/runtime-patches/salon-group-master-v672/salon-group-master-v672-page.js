@@ -1,0 +1,41 @@
+'use strict'
+
+const h = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
+const n = value => new Intl.NumberFormat('ja-JP').format(Number(value || 0))
+const yen = value => n(value) + '円'
+function change(current, previous) {
+  if (!previous) return current ? '前月実績なし' : '前月比 0%'
+  const rate = Math.round((current - previous) / previous * 1000) / 10
+  return '前月比 ' + (rate > 0 ? '+' : '') + rate + '%'
+}
+function shell(body) {
+  return `<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>系列店マスタ | ORIMIA for Salon</title><link rel="icon" href="/brand/orimia-icon-32.png"><link rel="stylesheet" href="/salon-group-master-v672.css?v=672-1"><script src="/salon-group-master-v672-client.js?v=672-1" defer></script></head><body class="sg-body"><header class="sg-top"><a class="sg-brand" href="/admin/settings"><img src="/brand/orimia-icon-192.png" width="40" height="40" alt=""><span>ORIMIA for Salon<small>系列店マスタ</small></span></a><a class="sg-back" href="/admin/settings">店舗運用設定へ戻る</a></header><main class="sg-main">${body}</main></body></html>`
+}
+function field(label, name, type = 'text', max = 100, extra = '') {
+  return `<label class="sg-field"><span>${label}</span><input name="${name}" type="${type}" maxlength="${max}" required ${extra}></label>`
+}
+function renderMaster(data, prefectures, error) {
+  if (!data) return shell(`<h1>系列店マスタ</h1><p class="sg-error" role="alert">${h(error)}</p><a class="sg-button" href="/admin/settings">店舗運用設定へ戻る</a>`)
+  const s = data.summary
+  const options = '<option value="">すべての系列店</option>' + data.stores.map(store => `<option value="${h(store.id)}"${data.selectedStore === store.id ? ' selected' : ''}>${h(store.name)}</option>`).join('')
+  const metrics = [
+    ['会計確定売上', yen(s.revenue), change(s.revenue, s.previousRevenue), 'revenue'],
+    ['会計件数 / 客単価', n(s.saleCount) + '件', '客単価 ' + yen(s.saleCount ? Math.round(s.revenue / s.saleCount) : 0), ''],
+    ['予約件数', n(s.bookings) + '件', 'キャンセルを除く', ''],
+    ['顧客数', n(s.customers) + '名', '店舗ごとの登録人数合計', ''],
+    ['店舗数', n(s.storeCount) + '店舗', '利用中 ' + n(s.activeStores) + ' / ORIMIA公開 ' + n(s.publishedStores), ''],
+  ].map(([label, value, sub, tone]) => `<article class="sg-metric ${tone}"><h2>${label}</h2><strong>${value}</strong><p>${h(sub)}</p></article>`).join('')
+  const maximum = Math.max(1, ...data.trend.map(t => t.amount))
+  const bars = data.trend.map((row, i) => `<div class="sg-bar-item"><div class="sg-bar-track"><span class="sg-bar${i === 11 ? ' current' : ''}" style="height:${row.amount ? Math.max(2, row.amount / maximum * 100) : 0}%" title="${h(row.month)} ${yen(row.amount)}"></span></div><span class="sg-bar-value">${n(row.amount)}</span><span class="sg-bar-label">${row.month.slice(5)}月</span></div>`).join('')
+  const total = data.trend.reduce((sum, t) => sum + t.amount, 0)
+  const rows = data.rows.map(store => `<tr><td><div class="sg-store"><img src="/api/lien-store-icon?organizationId=${encodeURIComponent(store.id)}" width="40" height="40" loading="lazy" alt=""><div><strong>${h(store.name)}</strong><small>${h((store.prefecture || '') + (store.city || '')) || '所在地未設定'}</small></div></div></td><td data-label="利用状態"><span class="sg-status${store.status === 'SUSPENDED' ? ' stopped' : ''}">${store.status === 'SUSPENDED' ? '利用停止' : '利用中'}</span><small>ORIMIA ${store.published ? '公開' : '非公開'}</small></td><td class="sg-num" data-label="会計確定売上"><strong>${yen(store.revenue)}</strong><small>${h(change(store.revenue, store.previousRevenue))}</small></td><td class="sg-num" data-label="会計 / 客単価">${n(store.saleCount)}件<small>${yen(store.saleCount ? Math.round(store.revenue / store.saleCount) : 0)}</small></td><td class="sg-num" data-label="予約">${n(store.bookings)}件</td><td class="sg-num" data-label="顧客 / スタッフ">${n(store.customers)}名<small>スタッフ ${n(store.staff)}名</small></td><td data-label="店舗アカウント"><small>${h(store.loginId || '未設定')}</small>${store.id === data.currentOrganizationId ? '<a href="/admin/settings">店舗運用設定</a>' : `<button type="button" class="sg-text-button" data-store-filter="${h(store.id)}">推移を確認</button>`}</td></tr>`).join('')
+  const plan = h(data.plan.name || '契約プラン未設定')
+  return shell(`<section class="sg-heading"><div><p class="sg-eyebrow">SALON GROUP</p><h1>系列店マスタ</h1><p class="sg-group-name">${h(data.groupName)}</p></div><div class="sg-actions"><button class="sg-button" type="button" data-open="sg-link">既存店舗を連携</button><button class="sg-button primary" type="button" data-open="sg-create"${!data.plan.key ? ' disabled' : ''}>新店舗を登録</button></div></section>
+    <form id="sg-filter" class="sg-filter" method="get" action="/admin/salon-master"><label>集計月<input type="month" name="month" value="${h(data.month)}" min="2000-01" max="2099-12" required></label><label>対象店舗<select name="store">${options}</select></label><button type="submit" class="sg-button">表示</button><span>会計確定分・税込 / 日本時間</span></form>
+    <section class="sg-metrics" aria-label="月次の運用実績">${metrics}</section>
+    <section class="sg-trend"><header class="sg-section-head"><div><h2>売上の推移</h2><p>${h(data.trend[0].month)} ～ ${h(data.month)} / 直近12か月</p></div><div class="sg-total"><small>期間合計</small><strong>${yen(total)}</strong></div></header><div class="sg-chart-scroll"><div class="sg-chart" role="img" aria-label="12か月の会計確定売上。各月の金額は下の月別実績で確認できます。">${bars}</div></div><details class="sg-month-details"><summary>月別実績</summary><dl>${data.trend.map(row => `<div><dt>${h(row.month)}</dt><dd>${yen(row.amount)}</dd></div>`).join('')}</dl></details></section>
+    <section class="sg-stores"><header class="sg-section-head"><div><h2>店舗別の運用状況</h2><p>${h(data.month)} / ${n(data.rows.length)}店舗</p></div></header><div class="sg-table-wrap"><table class="sg-table"><thead><tr><th>店舗</th><th>利用 / 公開状況</th><th class="sg-num">売上 / 前月比</th><th class="sg-num">会計 / 客単価</th><th class="sg-num">予約</th><th class="sg-num">顧客 / スタッフ</th><th>店舗アカウント</th></tr></thead><tbody>${rows}</tbody></table></div></section>
+    <dialog class="sg-dialog" id="sg-create" aria-labelledby="sg-create-title"><form id="sg-create-form"><header><h2 id="sg-create-title">新店舗を登録</h2><button type="button" class="sg-close" data-close aria-label="閉じる" title="閉じる">×</button></header><div class="sg-fields">${field('店舗名', 'name')}${field('店舗管理者名', 'ownerName', 'text', 80)}${field('連絡先メール', 'email', 'email', 254, 'autocomplete="email"')}${field('電話番号', 'phone', 'tel', 24, 'autocomplete="tel"')}<label class="sg-field"><span>都道府県</span><select name="prefecture" required><option value="">選択してください</option>${prefectures.map(p => `<option>${p}</option>`).join('')}</select></label>${field('市区町村', 'city', 'text', 80)}<div class="sg-full">${field('町名・番地・建物名', 'address', 'text', 200)}</div></div><div class="sg-registration-terms"><strong>${plan} / 月額 ${yen(data.plan.monthlyAmount)}</strong><p>お支払い：銀行口座振替</p><p>店舗一覧は非公開で登録されます。初期IDとパスワードを連絡先メールに送信します。</p><label><input type="checkbox" name="confirmed" required> 上記の契約内容で系列店を追加する</label></div><input type="hidden" name="planKey" value="${h(data.plan.key)}"><input type="hidden" name="monthlyAmount" value="${data.plan.monthlyAmount}"><p class="sg-feedback" role="status" aria-live="polite"></p><footer><button type="button" class="sg-button" data-close>キャンセル</button><button class="sg-button primary" type="submit">登録する</button></footer></form><section id="sg-created" hidden></section></dialog>
+    <dialog class="sg-dialog" id="sg-link" aria-labelledby="sg-link-title"><form id="sg-link-form"><header><h2 id="sg-link-title">既存店舗を連携</h2><button type="button" class="sg-close" data-close aria-label="閉じる" title="閉じる">×</button></header><p class="sg-form-note">連携先の店舗管理者アカウント</p><div class="sg-fields single">${field('ログインID', 'loginId', 'text', 160, 'autocomplete="off"')}${field('パスワード', 'password', 'password', 128, 'autocomplete="off"')}</div><label class="sg-consent"><input type="checkbox" required> この店舗の売上・運用状況を系列店マスタへ共有する</label><p class="sg-feedback" role="status" aria-live="polite"></p><footer><button type="button" class="sg-button" data-close>キャンセル</button><button class="sg-button primary" type="submit">認証して連携</button></footer></form></dialog>`)
+}
+module.exports = { renderMaster }
