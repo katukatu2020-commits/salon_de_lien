@@ -13,6 +13,7 @@ write('platform-console-v683-icons.json',JSON.stringify(markup))
 write('platform-console-v683.js',fs.readFileSync(path.join(source,'platform-console.js'),'utf8'))
 write('platform-console-v683.css',fs.readFileSync(path.join(source,'platform-console.css'),'utf8'))
 let platform=read('platform-operator.js')
+platform=replace(platform,"img-src data:; form-action 'self'", "img-src 'self' data:; form-action 'self'")
 platform=replace(platform,'function pageShell(title, body, authenticated) {',`function pageShell(title, body, authenticated) {
   return require('./platform-console-v683').modernize(legacyPageShell(title, body, authenticated), title, authenticated)
 }

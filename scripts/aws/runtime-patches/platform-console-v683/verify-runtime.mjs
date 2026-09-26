@@ -29,4 +29,5 @@ const filtered=ui.listPage(data,accounts,new URL('http://local/platform/business
 assert.equal((filtered.match(/data-business=/g)||[]).length,1)
 assert.equal((ui.listPage(data,accounts,new URL('http://local/platform/businesses?state=SUSPENDED'),pageShell).match(/data-business=/g)||[]).length,0)
 assert.ok(!fs.readFileSync('/app/business-account-approvals-v643.js','utf8').match(/createdAt" DESC LIMIT 200/))
+assert.ok(fs.readFileSync('/app/platform-operator.js','utf8').includes("img-src 'self' data:; form-action 'self'"))
 console.log('PASS v683: deduplication, metric/detail parity, escaping, filtering, pagination >200, safe action return')
