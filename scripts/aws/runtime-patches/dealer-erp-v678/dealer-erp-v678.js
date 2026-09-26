@@ -3,7 +3,6 @@
 const fs = require('node:fs')
 const path = require('node:path')
 const { monthRange } = require('./dealer-sales-team-v671')
-const { parse: parseCsv } = require('node:module').createRequire('/opt/dealer-erp/package.json')('csv-parse/sync')
 const fail = (message, status = 400) => { throw Object.assign(new Error(message), { status }) }
 const text = (value, label, max = 160, optional = false) => {
   const v = String(value ?? '').trim()
@@ -316,25 +315,6 @@ function createDealerErp({ prisma: db, crypto, helpers: h }) {
     await tx.$executeRawUnsafe('INSERT INTO "DealerErpPayment" ("id","dealerId","organizationId","reference","paidDate","amountYen","note","actorId") VALUES ($1,$2,$3,$4,$5::date,$6,$7,$8)', pid, s.id, p.organizationId, text(p.reference, '取引番号'), date(p.paidDate), amount, text(p.note, '摘要', 1000, true), actor(s))
     return { id: pid }
   }
-  async function importPayments(tx, s, p) {
-    admin(s)
-    const content = text(p.csv, 'CSV', 400000)
-    let rows
-    try { rows = parseCsv(content, { columns: true, bom: true, skip_empty_lines: true, trim: true, max_record_size: 4000 }) } catch { fail('CSVを読み取れません。テンプレートの列と形式を確認してください。') }
-    if (!rows.length || rows.length > 500 || ['取引番号', 'サロンコード', '入金日', '金額', '摘要'].some(k => !(k in rows[0]))) fail('CSVの列または件数を確認してください（最大500行）。')
-    const result = { imported: 0, skipped: 0 }
-    for (const r of rows) {
-      const reference = text(r['取引番号'], '取引番号'), paidDate = date(r['入金日']), amountYen = num(r['金額'], -1000000000000)
-      const c = await one(tx, 'SELECT c."organizationId" FROM "WholesaleDealerContract" c JOIN "Organization" o ON o."id"=c."organizationId" WHERE c."dealerId"=$1 AND o."publicCode"=$2', s.id, text(r['サロンコード'], 'サロンコード'))
-      if (!c) fail('取引先サロンコードが見つかりません: ' + r['サロンコード'])
-      const existing = await one(tx, 'SELECT *,"paidDate"::text AS day FROM "DealerErpPayment" WHERE "dealerId"=$1 AND "reference"=$2', s.id, reference)
-      if (existing) {
-        if (existing.organizationId !== c.organizationId || existing.day !== paidDate || Number(existing.amountYen) !== amountYen || existing.voided) fail('同じ取引番号の内容が異なります: ' + reference, 409)
-        result.skipped++
-      } else { await recordPayment(tx, s, { ...c, reference, paidDate, amountYen, note: r['摘要'] }); result.imported++ }
-    }
-    return result
-  }
   async function settle(tx, s, p) {
     admin(s)
     const inv = await invoice(tx, s, p.invoiceId)
@@ -439,7 +419,7 @@ function createDealerErp({ prisma: db, crypto, helpers: h }) {
     await tx.$executeRawUnsafe('INSERT INTO "DealerErpRead" ("threadId","viewerId","messageId") VALUES ($1,$2,$3) ON CONFLICT ("threadId","viewerId") DO UPDATE SET "messageId"=GREATEST("DealerErpRead"."messageId",$3)', t.id, actor(s), messageId)
     return { read: true }
   }
-  const actions = { warehouse: warehouseSave, location: locationSave, stock: stockChange, 'order-edit': orderEdit, reserve, ship, deliver, 'shipment-reverse': reverseShipment, return: returnGoods, purchase, receive: receivePurchase, invoice: issueInvoice, 'invoice-void': voidInvoice, payment: recordPayment, 'payment-import': importPayments, settle, 'settlement-undo': undoSettlement, 'payment-void': voidPayment, terms, 'branch-goal': branchGoal, activity: saveActivity, thread: createThread, message: sendMessage, read: markRead }
+  const actions = { warehouse: warehouseSave, location: locationSave, stock: stockChange, 'order-edit': orderEdit, reserve, ship, deliver, 'shipment-reverse': reverseShipment, return: returnGoods, purchase, receive: receivePurchase, invoice: issueInvoice, 'invoice-void': voidInvoice, payment: recordPayment, settle, 'settlement-undo': undoSettlement, 'payment-void': voidPayment, terms, 'branch-goal': branchGoal, activity: saveActivity, thread: createThread, message: sendMessage, read: markRead }
   async function command(s, action, p) {
     if (!actions[action] || (s.salon && !['thread', 'message', 'read'].includes(action))) fail('操作が見つかりません。', 404)
     const key = text(p.key, '再送防止キー', 100)
@@ -626,7 +606,6 @@ function createDealerErp({ prisma: db, crypto, helpers: h }) {
       const name = p.split('/').pop(), q = url.searchParams
       if (req.method === 'GET') {
         if (s.salon && !['options', 'threads', 'messages', 'unread'].includes(name)) fail('ページが見つかりません。', 404)
-        if (name === 'payment-template.csv') { admin(s); res.setHeader('Content-Type', 'text/csv; charset=utf-8'); res.setHeader('Content-Disposition', 'attachment; filename="payment-template.csv"'); res.end(csv([['取引番号', 'サロンコード', '入金日', '金額', '摘要']])); return true }
         if (name === 'report.csv') {
           const r = await report(s, q)
           res.setHeader('Content-Type', 'text/csv; charset=utf-8'); res.setHeader('Content-Disposition', 'attachment; filename="dealer-report.csv"'); res.end(csv([['対象月', '集計区分', '名称', '納品売上（税抜）', '受注見込み（税抜）'], ...['categories', 'salons', 'progress', 'branches'].flatMap(group => r[group].map(row => [r.month, { categories: 'カテゴリー', salons: 'サロン', progress: '担当者', branches: '営業所' }[group], row.name || row.category, row.actualYen, row.forecastYen]))])); return true

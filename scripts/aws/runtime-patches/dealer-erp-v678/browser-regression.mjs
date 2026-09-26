@@ -77,6 +77,20 @@ try {
         assert.equal(await page.locator('dialog [name=startsAt]').inputValue(),start)
         await page.locator('dialog [data-close]').click()
       }
+      if (view==='receivables') {
+        assert.equal(await page.getByRole('button',{ name:'入金CSV取込',exact:true }).count(),0)
+        await page.getByRole('button',{ name:'入金を記録',exact:true }).click()
+        const dlg=page.locator('dialog').last()
+        await dlg.locator('[name=organizationId]').selectOption('salon-a')
+        await dlg.locator('[name=reference]').fill(`UI-MANUAL-${size.name}-${run}`)
+        await dlg.locator('[name=amountYen]').fill('10')
+        await dlg.locator('[name=note]').fill('手動入金確認テスト')
+        await dlg.locator('[type=submit]').click()
+        await dlg.waitFor({ state:'detached' })
+        await page.locator('[data-tab=payments]').click()
+        await page.locator('#erp-body[aria-busy=false]').waitFor()
+        assert.match(await page.locator('#erp-body').innerText(),new RegExp(`UI-MANUAL-${size.name}-${run}`))
+      }
       if (view==='messages') {
         await page.locator('tr').filter({ hasText:'納品について' }).getByRole('button',{ name:'開く' }).click()
         const dlg=page.locator('dialog').last()
