@@ -1,0 +1,214 @@
+/* Desktop-only layer. Mobile keeps the original markup, styling and behavior. */
+@layer orimiaDesktopQuality {
+@media (min-width:1024px) {
+  html[data-orimia-desktop-quality="v674"] {
+    --ocd-sidebar:232px!important; --ocd-header:72px!important; --ocd-ink:#272c32!important; --ocd-muted:#68717b!important;
+    --ocd-line:#e2e6e9!important; --ocd-paper:#fff!important; --ocd-bg:#f6f8fa!important; --ocd-rose:#bd4468!important; --ocd-rose-soft:#fbedf2!important;
+    --rose:#bd4468!important; --muted:#68717b!important; --line:#e2e6e9!important;scrollbar-gutter:stable!important;
+    width:100%!important;max-width:none!important;margin:0!important;padding:0!important;background:var(--ocd-bg)!important;
+  }
+  html[data-orimia-desktop-quality="v674"] body {
+    width:100%!important;max-width:none!important;margin:0!important;padding:0 0 0 var(--ocd-sidebar)!important;
+    min-height:100vh!important;background:var(--ocd-bg)!important;color:var(--ocd-ink)!important;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP","Hiragino Kaku Gothic ProN","Yu Gothic UI",Meiryo,sans-serif!important;font-size:14px!important;line-height:1.65!important;
+  }
+  html[data-orimia-desktop-quality="v674"] body :is(h1,h2,h3,h4,p,a,button,input,select,textarea,label,strong,small,span,dt,dd,li,td,th,output) {font-family:inherit!important;letter-spacing:0!important}
+  html[data-orimia-desktop-quality="v674"] body>.app,
+  html[data-orimia-desktop-quality="v674"] body>div[class*="min-h-screen"] {width:100%!important;max-width:none!important;margin:0!important;padding-left:0!important;background:transparent!important;box-shadow:none!important}
+  html[data-orimia-desktop-quality="v674"] body:not(#ocd-root-v529):not(#ocd-page-v529) :is(.content,.customer-native-main),
+  html[data-orimia-desktop-quality="v674"] body:not(#ocd-root-v529):not(#ocd-page-v529) .customer-native-route-shell .customer-native-main.customer-native-main {
+    box-sizing:border-box!important;width:100%!important;min-width:0!important;max-width:1280px!important;min-height:100vh!important;margin:0 auto!important;padding:104px 36px 64px!important;background:transparent!important;
+  }
+  html[data-orimia-desktop-quality="v674"] .customer-native-route-shell {background:transparent!important}
+  html[data-orimia-desktop-quality="v674"] :is(main,.lien-chat-v294) :is(h1,.page-title h1) {font-size:26px!important;line-height:1.4!important;font-weight:700!important;color:var(--ocd-ink)}
+  html[data-orimia-desktop-quality="v674"] :is(main,.lien-chat-v294) h2 {font-size:19px!important;line-height:1.5!important;font-weight:700!important}
+  html[data-orimia-desktop-quality="v674"] main :is([class~="text-xs"],[class~="text-[10px]"],[class~="text-[11px]"],[class~="text-[12px]"]) {font-size:13px!important;line-height:1.65!important}
+  html[data-orimia-desktop-quality="v674"] main :is([class~="text-sm"],[class~="text-[13px]"]) {font-size:14px!important;line-height:1.65!important}
+  html[data-orimia-desktop-quality="v674"] main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]),select,textarea) {font-size:15px!important;border-radius:8px!important;border-color:#d8dee4!important;background-color:#fff;min-height:44px}
+  html[data-orimia-desktop-quality="v674"] main :is(input,textarea)::placeholder {color:#939da7;opacity:1}
+  html[data-orimia-desktop-quality="v674"] main :is(button,a,input,textarea,select):focus-visible,
+  html[data-orimia-desktop-quality="v674"] :is(.ocd-sidebar,.ocd-header) :is(a,button):focus-visible {outline:3px solid #a93c60!important;outline-offset:3px!important}
+  html[data-orimia-desktop-quality="v674"] :is(main,.lien-chat-v294) :is(.primary,.cj-primary,.orimia-store-select) {min-height:44px!important;border-radius:8px!important;font-size:14px!important;font-weight:700!important;background:#bd4468!important;box-shadow:none!important}
+  html[data-orimia-desktop-quality="v674"] :is(.customer-page-back,.orimia-customer-page-back-v518) {display:none!important}
+
+  /* One compact, predictable navigation frame for server and React pages. */
+  html[data-orimia-desktop-quality="v674"] aside#orimia-customer-desktop-nav-v529#orimia-customer-desktop-nav-v529 {
+    width:var(--ocd-sidebar)!important;min-width:var(--ocd-sidebar)!important;padding:0 14px 12px!important;background:#fff!important;border-right:1px solid var(--ocd-line)!important;box-shadow:none!important;overflow:hidden!important;
+  }
+  html[data-orimia-desktop-quality="v674"] .ocd-brand {height:88px!important;min-height:88px!important;flex:0 0 88px!important;margin:0!important;padding:0 6px!important;gap:10px!important;border-bottom:1px solid var(--ocd-line)!important}
+  html[data-orimia-desktop-quality="v674"] .ocd-brand img {width:38px!important;height:38px!important;flex:0 0 38px!important;object-fit:contain!important}
+  html[data-orimia-desktop-quality="v674"] .ocd-brand strong {font-family:Georgia,serif!important;font-size:15px!important;line-height:1.4!important;color:#293038!important}
+  html[data-orimia-desktop-quality="v674"] .ocd-brand small {font-size:10px!important;font-weight:400!important;text-transform:none!important;color:#737c86!important;margin-top:2px!important}
+  html[data-orimia-desktop-quality="v674"] .ocd-navigation {display:block!important;min-height:0!important;overflow-y:auto!important;overscroll-behavior:contain;scrollbar-width:thin;flex:1 1 auto!important;padding:18px 0!important}
+  html[data-orimia-desktop-quality="v674"] .ocd-nav-group {display:grid!important;gap:3px!important;margin:0 0 18px!important;padding:0!important;border:0!important;background:none!important;box-shadow:none!important}
+  html[data-orimia-desktop-quality="v674"] .ocd-nav-group:last-child {margin-bottom:0!important}
+  html[data-orimia-desktop-quality="v674"] .ocd-nav-group h2 {font-size:11px!important;line-height:18px!important;font-weight:600!important;margin:0 0 6px!important;padding:0 12px!important;color:#7a838d!important}
+  html[data-orimia-desktop-quality="v674"] :is(.ocd-nav-link,.ocd-more) {box-sizing:border-box!important;min-height:40px!important;padding:8px 12px!important;gap:10px!important;border:0!important;border-radius:6px!important;font-size:13px!important;font-weight:500!important;line-height:1.5!important;color:#515b65!important;transform:none!important;box-shadow:none!important;background:transparent!important}
+  html[data-orimia-desktop-quality="v674"] :is(.ocd-nav-link,.ocd-more) .ocd-icon {width:18px!important;height:18px!important;flex:0 0 18px!important;color:inherit!important}
+  html[data-orimia-desktop-quality="v674"] :is(.ocd-nav-link,.ocd-more):hover {background:#f1f4f6!important;color:#242b33!important}
+  html[data-orimia-desktop-quality="v674"] :is(.ocd-nav-link,.ocd-more)[aria-current="page"] {background:#fbedf2!important;color:#a33859!important;font-weight:700!important}
+  html[data-orimia-desktop-quality="v674"] .ocd-more {flex:0 0 44px!important;margin-top:8px!important;border-top:1px solid var(--ocd-line)!important;border-radius:0!important}
+  html[data-orimia-desktop-quality="v674"] header#orimia-customer-desktop-header-v529#orimia-customer-desktop-header-v529 {height:72px!important;padding:0 36px!important;grid-template-columns:40px minmax(0,1fr) auto!important;gap:14px!important;background:#fff!important;border-bottom:1px solid var(--ocd-line)!important;box-shadow:none!important;backdrop-filter:none!important}
+  html[data-orimia-desktop-quality="v674"] .ocd-back {width:36px!important;height:36px!important;min-height:36px!important;justify-content:center!important;padding:0!important;border:1px solid #e2e6e9!important;color:#606b76!important}
+  html[data-orimia-desktop-quality="v674"] .ocd-back>span {display:none!important}
+  html[data-orimia-desktop-quality="v674"] .ocd-page-heading>span {font-size:10px!important;line-height:1.4!important;color:#8a6470!important;font-weight:600!important}
+  html[data-orimia-desktop-quality="v674"] .ocd-page-heading>strong {font-size:16px!important;font-weight:600!important;color:#333b43!important;margin:3px 0 0!important}
+  html[data-orimia-desktop-quality="v674"] :is(.ocd-page-heading>small,.ocd-profile-link small) {display:none!important}
+  html[data-orimia-desktop-quality="v674"] .ocd-header-actions {gap:10px!important}
+  html[data-orimia-desktop-quality="v674"] :is(.ocd-action,.ocd-profile-link,.ocd-book) {min-width:0!important;height:40px!important;min-height:40px!important;border-radius:6px!important;border:1px solid var(--ocd-line)!important;background:#fff!important;padding:0 12px!important;box-shadow:none!important}
+  html[data-orimia-desktop-quality="v674"] .ocd-action {width:40px!important;padding:0!important}
+  html[data-orimia-desktop-quality="v674"] .ocd-profile-link strong {font-size:13px!important;font-weight:600!important}
+  html[data-orimia-desktop-quality="v674"] .ocd-book {display:flex!important;align-items:center!important;gap:8px!important;background:#bd4468!important;border-color:#bd4468!important;color:#fff!important;font-size:13px!important;font-weight:700!important;white-space:nowrap!important}
+  html[data-orimia-desktop-quality="v674"] .ocd-book .ocd-icon {width:18px;height:18px}
+  html[data-orimia-desktop-quality="v674"] .ocd-unread {font-size:10px!important;min-width:20px!important;height:20px!important}
+
+  /* Content hierarchy and controls. Sections are open layouts, not nested cards. */
+  html[data-orimia-desktop-quality="v674"] :is(.page-title,.campaign-hero,.sc-page-head-v617) {margin:0 0 24px!important;padding:0 0 20px!important;border-bottom:1px solid var(--ocd-line)!important;background:transparent!important;text-align:left!important;border-radius:0!important;box-shadow:none!important}
+  html[data-orimia-desktop-quality="v674"] .customer-native-main>div>header {padding:0 0 20px!important;margin:0 0 4px!important;background:none!important;border:0!important;border-bottom:1px solid var(--ocd-line)!important;border-radius:0!important;box-shadow:none!important}
+  html[data-orimia-desktop-quality="v674"] .customer-native-main>div>header :is(figure,div:has(>img)) {max-height:160px!important;overflow:hidden!important;border-radius:8px!important}
+  html[data-orimia-desktop-quality="v674"] .customer-native-main>div>header img {height:160px!important;object-fit:cover!important}
+  html[data-orimia-desktop-quality="v674"] :is(main,.lien-chat-v294) :is(section,article,aside,figure,div)[class*="rounded-"] {border-radius:8px!important;box-shadow:none!important}
+  html[data-orimia-desktop-quality="v674"] .customer-native-main :is(form>section,div.grid>section) {border-color:var(--ocd-line)!important}
+  html[data-orimia-desktop-quality="v674"] :is(.tabs,.cn-toolbar) {margin:0 0 20px!important;background:#fff!important;border:1px solid var(--ocd-line)!important;border-radius:8px!important;box-shadow:none!important}
+  html[data-orimia-desktop-quality="v674"] .tab {display:flex!important;align-items:center!important;justify-content:center!important;min-height:48px!important;padding:12px 16px!important;font-size:14px!important;font-weight:600!important}
+  html[data-orimia-desktop-quality="v674"] .tab.active {background:#fbedf2!important;color:#a33859!important}
+  html[data-orimia-desktop-quality="v674"] :is(.section-head h2,.campaign-hero h1) {margin:0!important;font-weight:700!important}
+  html[data-orimia-desktop-quality="v674"] :is(.section-head p,.section-head a,.campaign-hero p,.sc-page-head-v617 p) {font-size:13px!important;line-height:1.7!important}
+  html[data-orimia-desktop-quality="v674"] .content>.section {padding:24px 0!important;background:transparent!important;box-shadow:none!important;border-radius:0!important}
+
+  /* Home: compact actions and readable membership information. */
+  html[data-orimia-desktop-quality="v674"][data-orimia-customer-view="/u/home"] .welcome {padding:0 0 20px!important}
+  html[data-orimia-desktop-quality="v674"] .welcome strong {font-size:26px!important;font-weight:700!important;line-height:1.4!important}
+  html[data-orimia-desktop-quality="v674"] .welcome>span {font-size:13px!important;color:var(--ocd-muted)!important;margin-top:5px!important}
+  html[data-orimia-desktop-quality="v674"] .content>.hero {height:210px!important;min-height:0!important;border-radius:8px!important;margin:0 0 20px!important}
+  html[data-orimia-desktop-quality="v674"] .hero-copy {padding:24px!important}
+  html[data-orimia-desktop-quality="v674"] .hero-copy h1 {font-size:26px!important;line-height:1.65!important;color:#fff!important}
+  html[data-orimia-desktop-quality="v674"] .content>.quick-grid {grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:12px!important;margin:0 0 28px!important;padding:0!important}
+  html[data-orimia-desktop-quality="v674"] .quick-card {display:grid!important;grid-template-columns:36px minmax(0,1fr)!important;grid-template-rows:auto auto!important;align-content:center!important;justify-items:start!important;gap:1px 14px!important;min-height:88px!important;height:auto!important;padding:16px 20px!important;border:1px solid var(--ocd-line)!important;border-radius:8px!important;background:#fff!important;box-shadow:none!important;transform:none!important}
+  html[data-orimia-desktop-quality="v674"] .quick-card>:first-child {grid-row:1!important;grid-column:1!important;width:25px!important;height:25px!important;align-self:center!important;color:#bd4468!important;margin:0!important}
+  html[data-orimia-desktop-quality="v674"] .quick-card strong {font-size:15px!important;font-weight:600!important;line-height:1.5!important;color:#333b43!important}
+  html[data-orimia-desktop-quality="v674"] .quick-card small {display:none!important}
+  html[data-orimia-desktop-quality="v674"] .quick-card:hover {border-color:#c890a1!important;background:#fffafd!important}
+  html[data-orimia-desktop-quality="v674"] .quick-card[href="/u/appointments"] {border-color:#e4bbc8!important;background:#fbedf2!important}
+  html[data-orimia-desktop-quality="v674"] .metrics {gap:16px!important}
+  html[data-orimia-desktop-quality="v674"] .metric {padding:20px 24px!important;border:1px solid var(--ocd-line)!important;border-radius:8px!important;background:#fff!important;box-shadow:none!important}
+  html[data-orimia-desktop-quality="v674"] .metric :is(span,small) {font-size:13px!important;color:#68717b!important}
+  html[data-orimia-desktop-quality="v674"] .metric strong {font-size:23px!important;line-height:1.5!important}
+  html[data-orimia-desktop-quality="v674"] .member-code39 {border-radius:8px!important;box-shadow:none!important;background:#fff!important;border-color:var(--ocd-line)!important}
+  html[data-orimia-desktop-quality="v674"] .member-code39>div span {font-size:14px!important}
+
+  /* Booking retains all existing event handlers and wizard state. */
+  html[data-orimia-desktop-quality="v674"] .cj-booking-top>h1 {margin:0 0 24px!important}
+  html[data-orimia-desktop-quality="v674"] .cj-steps {max-width:800px!important;margin:0 auto 28px!important;padding:8px 0 20px!important}
+  html[data-orimia-desktop-quality="v674"] .cj-steps>button {font-size:13px!important;gap:9px!important}
+  html[data-orimia-desktop-quality="v674"] .cj-steps>button>span {width:36px!important;height:36px!important;font-size:15px!important}
+  html[data-orimia-desktop-quality="v674"] .cj-steps small {font-size:13px!important}
+  html[data-orimia-desktop-quality="v674"] .cj-booking-top>h2 {font-size:20px!important;margin:0 0 18px!important}
+  html[data-orimia-desktop-quality="v674"] .cj-search {background:#fff!important;border:1px solid #d8dee4!important;border-radius:8px!important;margin-bottom:16px!important}
+  html[data-orimia-desktop-quality="v674"] .cj-menu-list {border:1px solid var(--ocd-line)!important;border-radius:8px!important;overflow:hidden!important;background:#fff!important}
+  html[data-orimia-desktop-quality="v674"] .cj-menu-row {min-height:88px!important;padding:18px!important;gap:12px!important;background:#fff}
+  html[data-orimia-desktop-quality="v674"] .cj-menu-row strong {font-size:16px!important;font-weight:600!important;line-height:1.55!important}
+  html[data-orimia-desktop-quality="v674"] .cj-menu-row small {font-size:14px!important;line-height:1.6!important;color:#69737d!important}
+  html[data-orimia-desktop-quality="v674"] .cj-menu-row:has(input:checked) {background:#fbedf2!important}
+  html[data-orimia-desktop-quality="v674"] .cj-booking-footer {display:flex!important;align-items:center!important;left:var(--ocd-sidebar)!important;right:0!important;width:auto!important;padding:16px 36px!important;border-top:1px solid var(--ocd-line)!important;background:#fff!important;box-shadow:0 -4px 18px #25334606!important;gap:16px!important}
+  html[data-orimia-desktop-quality="v674"] .cj-booking-footer :is([data-cj-next],[data-cj-prev]) {min-height:46px!important;font-size:14px!important;border-radius:8px!important}
+  html[data-orimia-desktop-quality="v674"] .cj-booking-footer [data-cj-next] {flex:0 1 300px!important;max-width:320px!important;margin-left:auto!important}
+  html[data-orimia-desktop-quality="v674"] :is(.cj-booking-footer[hidden],.cj-booking-footer [hidden]) {display:none!important}
+  html[data-orimia-desktop-quality="v674"][data-orimia-customer-view="/u/appointments"] .customer-native-main {padding-bottom:132px!important}
+  html[data-orimia-desktop-quality="v674"] .cj-staff-list {gap:16px!important}
+  html[data-orimia-desktop-quality="v674"] .cj-staff-detail {padding:18px!important;border-color:var(--ocd-line)!important;border-radius:8px!important;background:#fff!important}
+  html[data-orimia-desktop-quality="v674"] .cj-slot-scroller {border:1px solid var(--ocd-line)!important;border-radius:8px!important;background:#fff!important}
+  html[data-orimia-desktop-quality="v674"] .cj-dates {display:none!important}
+  html[data-orimia-desktop-quality="v674"] :is(.cj-date-original,.cj-slot-row) {display:grid!important;grid-template-columns:76px repeat(7,minmax(0,1fr))!important;gap:0!important}
+  html[data-orimia-desktop-quality="v674"] .cj-date-original {background:#f6f8fa!important;border-bottom:1px solid var(--ocd-line)!important}
+  html[data-orimia-desktop-quality="v674"] .cj-date-original>div {min-height:56px!important;padding:10px 4px!important;text-align:center!important;font-size:13px!important}
+  html[data-orimia-desktop-quality="v674"] .cj-slot-row>button {display:grid!important;border-left:1px solid var(--ocd-line)!important;min-width:0!important}
+  html[data-orimia-desktop-quality="v674"] .cj-slot-row>[data-cj-day="0"] {justify-items:center!important;padding:0 6px!important;background:#f6f8fa!important}
+  html[data-orimia-desktop-quality="v674"] .cj-confirmation {max-width:960px!important;width:100%!important;margin-left:auto!important;margin-right:auto!important}
+  html[data-orimia-desktop-quality="v674"] .lien-booking-v616__label {font-size:14px!important}
+  html[data-orimia-desktop-quality="v674"] :is(.lien-booking-v616__hint,.lien-booking-v616__policy) {font-size:13px!important;line-height:1.8!important}
+  html[data-orimia-desktop-quality="v674"] .lien-booking-v616__amounts {font-size:15px!important}
+  html[data-orimia-desktop-quality="v674"] .lien-booking-v616__total {padding-top:16px!important;margin-top:12px!important;font-size:20px!important}
+  html[data-orimia-desktop-quality="v674"] .lien-booking-v616__total strong {font-size:22px!important}
+
+  /* Lists, member benefits and personal information. */
+  html[data-orimia-desktop-quality="v674"] .orimia-directory {width:100%!important;padding:0!important}
+  html[data-orimia-desktop-quality="v674"] .orimia-store-copy h2 {font-size:17px!important}
+  html[data-orimia-desktop-quality="v674"] :is(.orimia-store-copy p,.orimia-store-copy small,.orimia-store-visits,.orimia-directory-summary,.orimia-prefecture-field label) {font-size:13px!important}
+  html[data-orimia-desktop-quality="v674"] .orimia-store-card {padding:24px!important;border-color:var(--ocd-line)!important;box-shadow:none!important}
+  html[data-orimia-desktop-quality="v674"] :is(.orimia-store-current,.orimia-store-select) {font-size:13px!important}
+  html[data-orimia-desktop-quality="v674"] .coupon-list {padding:0!important;gap:20px!important}
+  html[data-orimia-desktop-quality="v674"] .coupon {padding:24px!important;border-radius:8px!important;background:#fff!important;border-color:#e5ced7!important;box-shadow:none!important}
+  html[data-orimia-desktop-quality="v674"] .coupon h2 {font-size:19px!important}
+  html[data-orimia-desktop-quality="v674"] .coupon :is(p,small,.coupon-date) {font-size:13px!important;line-height:1.7!important}
+  html[data-orimia-desktop-quality="v674"] .coupon .primary {margin-top:18px!important}
+  html[data-orimia-desktop-quality="v674"] .ranking-intro {padding:0 0 20px!important;border:0!important;border-radius:0!important;background:none!important;text-align:left!important;box-shadow:none!important;margin:0!important}
+  html[data-orimia-desktop-quality="v674"] .ranking-intro::before,html[data-orimia-desktop-quality="v674"] .ranking-intro::after {display:none!important}
+  html[data-orimia-desktop-quality="v674"] .ranking-intro h2 {font-size:19px!important}
+  html[data-orimia-desktop-quality="v674"] .ranking-intro p {font-size:13px!important;line-height:1.7!important;color:#68717b!important}
+  html[data-orimia-desktop-quality="v674"] .product-list {gap:16px!important;padding:0!important}
+  html[data-orimia-desktop-quality="v674"] .product-row {gap:16px!important;min-height:150px!important;padding:18px!important;border:1px solid var(--ocd-line)!important;border-radius:8px!important;background:#fff!important;box-shadow:none!important}
+  html[data-orimia-desktop-quality="v674"] .product-meta {min-width:0!important}
+  html[data-orimia-desktop-quality="v674"] .product-meta h3 {font-size:16px!important;line-height:1.5!important;font-weight:600!important;white-space:normal!important}
+  html[data-orimia-desktop-quality="v674"] .product-meta p {font-size:13px!important;line-height:1.65!important;color:#68717b!important}
+  html[data-orimia-desktop-quality="v674"] .tag {font-size:11px!important;padding:3px 8px!important;border-radius:4px!important;background:#f6f8fa!important;border-color:#e2e6e9!important;color:#68717b!important}
+  html[data-orimia-desktop-quality="v674"] .detail-card {max-width:900px!important;margin:0 auto!important;padding:28px 0!important;background:transparent!important;box-shadow:none!important}
+  html[data-orimia-desktop-quality="v674"] .detail-card :is(p,li,.description) {font-size:15px!important;line-height:1.9!important}
+  html[data-orimia-desktop-quality="v674"] .detail-visual {max-width:900px!important;margin:0 auto!important}
+  html[data-orimia-desktop-quality="v674"] .detail-visual img {max-height:420px!important;object-fit:contain!important}
+  html[data-orimia-desktop-quality="v674"] .sc-page-v617 {max-width:none!important}
+  html[data-orimia-desktop-quality="v674"] .sc-card-v617 {box-shadow:none!important;border-color:#dce2e7!important}
+  html[data-orimia-desktop-quality="v674"] .sc-card-v617 :is(p,small) {font-size:13px!important;line-height:1.6!important}
+  html[data-orimia-desktop-quality="v674"] .cj-profile-overview {max-width:960px!important;margin:0 auto!important}
+  html[data-orimia-desktop-quality="v674"] .cj-member {padding:24px!important;background:#fff!important;border:1px solid var(--ocd-line)!important;border-radius:8px!important}
+  html[data-orimia-desktop-quality="v674"] .cj-member strong {font-size:22px!important}
+  html[data-orimia-desktop-quality="v674"] .cj-member :is(p,small) {font-size:14px!important}
+  html[data-orimia-desktop-quality="v674"] .cj-member-stats {gap:16px!important;margin:20px 0!important}
+  html[data-orimia-desktop-quality="v674"] .cj-member-stats>div {padding:20px!important;border:1px solid var(--ocd-line)!important;border-radius:8px!important;background:#fff!important}
+  html[data-orimia-desktop-quality="v674"] .cj-member-stats dt {font-size:13px!important;color:#68717b!important}
+  html[data-orimia-desktop-quality="v674"] .cj-member-stats dd {font-size:24px!important;font-weight:700!important}
+  html[data-orimia-desktop-quality="v674"] .cj-account-links {display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important;border:0!important}
+  html[data-orimia-desktop-quality="v674"] .cj-account-links>a {min-height:64px!important;padding:16px 20px!important;border:1px solid var(--ocd-line)!important;border-radius:8px!important;background:#fff!important;font-size:14px!important}
+  html[data-orimia-desktop-quality="v674"] .cn-toolbar {padding:14px 18px!important;font-size:14px!important}
+  html[data-orimia-desktop-quality="v674"] .cn-toolbar button {min-height:36px!important;font-size:13px!important}
+  html[data-orimia-desktop-quality="v674"] .cn-list {border:1px solid var(--ocd-line)!important;box-shadow:none!important;background:#fff!important}
+  html[data-orimia-desktop-quality="v674"] .cn-row {padding:22px!important;border-color:var(--ocd-line)!important}
+  html[data-orimia-desktop-quality="v674"] .cn-row :is(h2,h3,strong) {font-size:15px!important;line-height:1.6!important}
+  html[data-orimia-desktop-quality="v674"] .cn-row :is(p,small,time) {font-size:13px!important;line-height:1.7!important}
+  html[data-orimia-desktop-quality="v674"] .menu-list {display:grid!important;padding:0!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important}
+  html[data-orimia-desktop-quality="v674"] .menu-row {min-height:72px!important;padding:18px!important;border:1px solid var(--ocd-line)!important;border-radius:8px!important;background:#fff!important;font-size:15px!important;box-shadow:none!important}
+
+  /* Chat is a bounded workspace, with independently scrolling messages. */
+  html[data-orimia-desktop-quality="v674"] .lien-chat-v294 {box-sizing:border-box!important;max-width:1280px!important;min-height:0!important;height:calc(100dvh - var(--ocd-header))!important;margin:0 auto!important;padding:28px 36px!important;display:flex!important;flex-direction:column!important}
+  html[data-orimia-desktop-quality="v674"] .lien-chat-v294__hero {padding:0 0 20px!important;flex:none!important}
+  html[data-orimia-desktop-quality="v674"] .lien-chat-v294__hero h1 {font-size:26px!important}
+  html[data-orimia-desktop-quality="v674"] .lien-chat-v294__hero p {font-size:13px!important}
+  html[data-orimia-desktop-quality="v674"] .lien-chat-v294__grid {flex:1 1 auto!important;min-height:0!important;height:auto!important;grid-template-columns:280px minmax(0,1fr)!important;border:1px solid var(--ocd-line)!important;border-radius:8px!important;box-shadow:none!important;background:#fff!important;overflow:hidden!important}
+  html[data-orimia-desktop-quality="v674"] .lien-chat-v294__sidebar {min-height:0!important;overflow-y:auto!important;border-color:var(--ocd-line)!important;background:#fff!important}
+  html[data-orimia-desktop-quality="v674"] .lien-chat-v294__staff-button {padding:16px!important;border-radius:0!important}
+  html[data-orimia-desktop-quality="v674"] .lien-chat-v294__staff-copy strong {font-size:15px!important}
+  html[data-orimia-desktop-quality="v674"] .lien-chat-v294__staff-copy small {font-size:12px!important}
+  html[data-orimia-desktop-quality="v674"] .lien-chat-v294__conversation {min-height:0!important;height:100%!important;overflow:hidden!important}
+  html[data-orimia-desktop-quality="v674"] .lien-chat-v294__messages {min-height:0!important;overflow-y:auto!important;padding:24px!important;background:#fafbfc!important}
+  html[data-orimia-desktop-quality="v674"] .lien-chat-v294__message {font-size:14px!important;line-height:1.8!important;border-radius:8px!important;padding:12px 16px!important;max-width:560px!important}
+  html[data-orimia-desktop-quality="v674"] .lien-chat-v294__message-meta {font-size:11px!important}
+  html[data-orimia-desktop-quality="v674"] .lien-chat-v294__composer {padding:16px!important;background:#fff!important;border-color:var(--ocd-line)!important}
+  html[data-orimia-desktop-quality="v674"] .lien-chat-v294__composer textarea {font:inherit!important;font-size:14px!important;border-radius:8px!important;min-height:64px!important}
+  html[data-orimia-desktop-quality="v674"] .lien-chat-v294__send {border-radius:8px!important;background:#bd4468!important;font-size:14px!important}
+}
+@media (min-width:1024px) and (max-width:1199px) {
+  html[data-orimia-desktop-quality="v674"] {--ocd-sidebar:216px!important}
+  html[data-orimia-desktop-quality="v674"] body:not(#ocd-root-v529):not(#ocd-page-v529) :is(.content,.customer-native-main),
+  html[data-orimia-desktop-quality="v674"] body:not(#ocd-root-v529):not(#ocd-page-v529) .customer-native-route-shell .customer-native-main.customer-native-main {padding-left:24px!important;padding-right:24px!important}
+  html[data-orimia-desktop-quality="v674"] .ocd-brand {gap:7px!important}
+  html[data-orimia-desktop-quality="v674"] .ocd-brand strong {white-space:nowrap!important}
+  html[data-orimia-desktop-quality="v674"] .ocd-brand img {width:32px!important;height:32px!important;flex-basis:32px!important}
+  html[data-orimia-desktop-quality="v674"] .ocd-brand strong {font-size:14px!important}
+  html[data-orimia-desktop-quality="v674"] .ocd-profile-link {width:40px!important;padding:0!important;justify-content:center!important}
+  html[data-orimia-desktop-quality="v674"] .ocd-profile-link>span {display:none!important}
+  html[data-orimia-desktop-quality="v674"] .quick-card {padding:14px!important;gap:0 8px!important;grid-template-columns:28px minmax(0,1fr)!important}
+  html[data-orimia-desktop-quality="v674"] .quick-card strong {font-size:14px!important}
+  html[data-orimia-desktop-quality="v674"] .lien-chat-v294__grid {grid-template-columns:240px minmax(0,1fr)!important}
+  html[data-orimia-desktop-quality="v674"] .lien-chat-v294 {padding:24px!important}
+}
+}
