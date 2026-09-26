@@ -1,0 +1,41 @@
+/* style-mobile-stability-v676: the compound field owns the only focus ring. */
+html body .orimia-style-admin-v618 .orimia-admin-style-order-form-v634 input[name="displayOrder"],
+html body .orimia-style-admin-v618 .orimia-admin-style-order-form-v634 input[name="displayOrder"]:focus,
+html body .orimia-style-admin-v618 .orimia-admin-style-order-form-v634 input[name="displayOrder"]:focus-visible {
+  border: 0 !important;
+  border-radius: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  padding: 0 4px !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+
+@media (max-width: 767.98px) {
+  html body .orimia-style-admin-v618 .orimia-admin-style-order-form-v634 {
+    grid-template-columns: minmax(0, 1fr) 48px;
+    gap: 5px;
+  }
+  html body .orimia-style-admin-v618 .orimia-admin-style-order-form-v634 label {
+    gap: 2px;
+    padding: 0 4px;
+    font-size: 12px;
+  }
+  html body .orimia-style-admin-v618 .orimia-admin-style-order-form-v634 input[name="displayOrder"] {
+    appearance: textfield;
+    -moz-appearance: textfield;
+    font-size: 16px !important;
+  }
+  html body .orimia-style-admin-v618 .orimia-admin-style-order-form-v634 input::-webkit-inner-spin-button,
+  html body .orimia-style-admin-v618 .orimia-admin-style-order-form-v634 input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+}
+
+html body .orimia-style-admin-v618 .orimia-admin-style-order-form-v634 label:focus-within {
+  border-color: #bd4968 !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(189, 73, 104, .2) !important;
+}
