@@ -1,0 +1,15 @@
+      const section = document.getElementById('sg-created')
+      section.replaceChildren()
+      const title = document.createElement('h2'); title.textContent = '新店舗登録の申請を受け付けました'
+      title.id = 'sg-create-success-title'; create.closest('dialog').setAttribute('aria-labelledby', title.id)
+      const message = document.createElement('p'); message.textContent = '運営が内容を確認し、連絡先メールへご案内します。承認後、新店舗が系列店に追加されます。'
+      const receipt = document.createElement('p'); receipt.textContent = '受付番号: ' + result.inquiryId
+      const done = document.createElement('button'); done.type = 'button'; done.className = 'sg-button primary'; done.textContent = '閉じる'
+      done.addEventListener('click', () => {
+        create.closest('dialog').close()
+        create.reset(); create.hidden = false; section.hidden = true; feedback.textContent = ''
+        create.closest('dialog').setAttribute('aria-labelledby', 'sg-create-title')
+      })
+      section.append(title, message, receipt, done)
+      create.hidden = true; section.hidden = false; title.tabIndex = -1; title.focus()
+      requestKey = crypto.randomUUID()
