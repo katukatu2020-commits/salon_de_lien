@@ -23,6 +23,15 @@ try {
       await page.locator('.dst-table').first().waitFor()
       const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth)
       assert.ok(overflow<=2,`${view}/${viewport.name}: overflow ${overflow}`)
+      if (viewport.name === 'mobile') {
+        const navigation = await page.locator('.wo-dealer-mobile-nav').evaluate(nav => {
+          const first=nav.querySelector('a'), last=nav.querySelector('a:last-child')
+          nav.scrollLeft=nav.scrollWidth
+          return {sameRow:first.offsetTop===last.offsetTop,lastVisible:last.getBoundingClientRect().right<=nav.getBoundingClientRect().right+1,scrollWidth:nav.scrollWidth,width:nav.clientWidth}
+        })
+        assert.ok(navigation.sameRow && navigation.lastVisible,JSON.stringify(navigation))
+        await page.locator('.wo-dealer-mobile-nav').evaluate(nav => {const a=nav.querySelector('.active');nav.scrollLeft=a.offsetLeft-(nav.clientWidth-a.clientWidth)/2})
+      }
       if(view==='sales') {
         assert.match(await page.locator('.dst-metrics').innerText(),/15,000円/)
         await page.locator('[name=closing]').selectOption('20')

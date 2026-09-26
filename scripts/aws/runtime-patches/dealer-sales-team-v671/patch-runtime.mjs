@@ -8,9 +8,11 @@ function replace(file,before,after,count=1) {
   if(content.split(before).length-1!==count) throw new Error(`Unexpected parent anchor ${file}: ${before.slice(0,150)}`)
   fs.writeFileSync(target,content.replaceAll(before,after))
 }
-for(const file of ['dealer-sales-team-v671.js','dealer-sales-team-v671-client.js','dealer-sales-team-v671.css']) fs.copyFileSync(path.join(source,file),path.join(root,file))
+for(const file of ['dealer-sales-team-v671.js','dealer-sales-team-v671-client.js','dealer-sales-team-v671-nav.js','dealer-sales-team-v671.css']) fs.copyFileSync(path.join(source,file),path.join(root,file))
 fs.copyFileSync(path.join(source,'schema.sql'),path.join(root,'dealer-sales-team-v671.sql'))
 const w='wholesale-ordering-v543.js'
+const navAssets='<link rel="stylesheet" href="/dealer-sales-team-v671.css?v=671-1"><script src="/dealer-sales-team-v671-nav.js?v=671-1" defer></script>'
+replace(w,'href="/dealer-monthly-calendar-v658.css?v=658-release1"></head>','href="/dealer-monthly-calendar-v658.css?v=658-release1">'+navAssets+'</head>')
 replace(w,'  const authAttempts = new Map()',`  const authAttempts = new Map()
   const salesTeamV671 = require('./dealer-sales-team-v671.js').createDealerSalesTeam({ prisma, crypto, helpers: { verifyPassword: verifyDealerPassword, hashPassword: dealerPasswordHash, session: dealerSession, portal: dealerPortalPage, sameOrigin: validSameOrigin, readPayload, json, html, redirect, expiredCookie: expiredSessionCookie, allowAttempt: allowAuthAttempt } })`)
 replace(w,'    })().catch(error => {\n      schemaPromise = null','      await salesTeamV671.ensureSchema()\n    })().catch(error => {\n      schemaPromise = null')
@@ -24,6 +26,7 @@ replace(w,`        const rows = await prisma.$queryRawUnsafe('SELECT "id","name"
         redirect(res, '/dealer/orders'); return true`, `        if (!allowAuthAttempt(req, 'login', loginId)) { redirect(res, '/dealer/login?error=invalid'); return true }
         const dealer = await salesTeamV671.authenticate(loginId, password)
         if (!dealer) { redirect(res, '/dealer/login?error=invalid'); return true }
+        authAttempts.delete(clientAddress(req) + ':login:' + loginId)
         res.setHeader('Set-Cookie', sessionCookie(req, signedDealerSession(crypto, dealer)))
         redirect(res, dealer.staffUserId && dealer.mustChangePassword ? '/dealer/password-change' : '/dealer/orders'); return true`)
 replace(w,"  const pages = {\n    calendar:", `  const pages = {
@@ -45,6 +48,7 @@ replace(w,'    return { approved: true }','    await salesTeamV671.claimContract
 replace(w,"if (timestamp.includes('$8')) updateParams.push(session.name)","if (timestamp.includes('$8')) updateParams.push(session.memberName || session.name)")
 replace(w,'orderId, target, session.id, session.name, JSON.stringify({ previousStatus:', 'orderId, target, session.memberId || session.id, session.memberName || session.name, JSON.stringify({ previousStatus:')
 const approvals='business-account-approvals-v643.js'
+replace(approvals,'href="/wholesale-ordering-v543.css?v=653-password-layout1"></head>','href="/wholesale-ordering-v543.css?v=653-password-layout1">'+navAssets+'</head>')
 replace(approvals,"  const nav = [\n    ['orders', '/dealer/orders', 'clipboard', '受注管理'],",`  const nav = [
     ['sales', '/dealer/sales', 'percent', '月次売上'],
     ['targets', '/dealer/targets', 'percent', '目標・進捗'],

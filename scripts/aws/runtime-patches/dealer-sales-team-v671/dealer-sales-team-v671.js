@@ -201,11 +201,11 @@ function createDealerSalesTeam({ prisma: db, crypto, helpers: h }) {
     return { month: r.key, summary: summary[0], categories, salons, progress: visibleProgress }
   }
   function page(s, view) {
-    return h.portal(s, view).replace('/wholesale-ordering-client-v543.js?v=659-product-search-filters1', '/dealer-sales-team-v671-client.js?v=671-1').replace('</head>', '<link rel="stylesheet" href="/dealer-sales-team-v671.css?v=671-1"><link rel="stylesheet" href="/password-visibility-v627.css?v=627-release1"></head>')
+    return h.portal(s, view).replace('/wholesale-ordering-client-v543.js?v=659-product-search-filters1', '/dealer-sales-team-v671-client.js?v=671-1').replace('</head>', '<link rel="stylesheet" href="/password-visibility-v627.css?v=627-release1"></head>')
   }
   async function handle(req, res, url) {
     const p = url.pathname.replace(/\/$/, '')
-    const asset = { '/dealer-sales-team-v671-client.js': ['dealer-sales-team-v671-client.js','application/javascript'], '/dealer-sales-team-v671.css': ['dealer-sales-team-v671.css','text/css'] }[p]
+    const asset = { '/dealer-sales-team-v671-client.js': ['dealer-sales-team-v671-client.js','application/javascript'], '/dealer-sales-team-v671-nav.js': ['dealer-sales-team-v671-nav.js','application/javascript'], '/dealer-sales-team-v671.css': ['dealer-sales-team-v671.css','text/css'] }[p]
     if (asset && req.method === 'GET') { res.setHeader('Content-Type', asset[1] + '; charset=utf-8'); res.setHeader('Cache-Control','public,max-age=31536000,immutable'); res.end(fs.readFileSync(path.join(__dirname, asset[0]))); return true }
     if (!p.startsWith('/dealer/') && !p.startsWith('/api/dealer/')) return false
     if (p.startsWith('/api/dealer/auth/') || p === '/dealer/login' || p.startsWith('/dealer/password-reset')) return false
