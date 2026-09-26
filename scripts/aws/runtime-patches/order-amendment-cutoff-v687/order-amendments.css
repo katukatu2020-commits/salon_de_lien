@@ -1,0 +1,43 @@
+.oa-dialog{width:min(880px,calc(100% - 32px));max-height:calc(100dvh - 32px);padding:0;border:1px solid var(--wo-border,#dfd3cc);border-radius:8px;color:var(--wo-ink,#302b29);background:#fff;box-shadow:0 20px 64px #0003;overflow:auto;letter-spacing:0}
+.oa-dialog::backdrop{background:#211b195e}
+.oa-dialog>header{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 24px;background:#fff;border-bottom:1px solid #e7ddd7}
+.oa-dialog h2{font-size:20px;margin:0;line-height:1.5}
+.oa-close{width:40px;height:40px;font-size:26px;flex:none}
+.oa-content{padding:24px}
+.oa-dialog button,.oa-cutoff button{min-height:42px;padding:8px 16px;border:1px solid #d9c9c0;border-radius:6px;background:#fff;font:inherit;font-size:14px;cursor:pointer}
+.oa-dialog button:disabled,.oa-cutoff button:disabled{opacity:.45;cursor:default}
+.oa-dialog button:focus-visible,.oa-cutoff button:focus-visible{outline:2px solid #bb486e;outline-offset:2px}
+.oa-dialog .oa-primary,.oa-cutoff .oa-primary{background:#bd4d70;border-color:#bd4d70;color:#fff;font-weight:700}
+.oa-dialog .oa-danger{color:#ae3030;border-color:#d59e9e}
+.oa-summary{display:flex;flex-wrap:wrap;gap:10px 24px;padding-bottom:16px;border-bottom:1px solid #eee}
+.oa-lock{color:#a23d38;font-weight:700}
+.oa-line{display:grid;grid-template-columns:minmax(0,1fr) 108px auto;gap:16px;align-items:center;padding:16px 0;border-bottom:1px solid #eee}
+.oa-line strong,.oa-product strong{font-size:15px;overflow-wrap:anywhere}
+.oa-line small,.oa-product small{display:block;font-size:12px;color:#777;margin-top:4px;overflow-wrap:anywhere}
+.oa-dialog label,.oa-cutoff label{display:grid;gap:6px;font-size:14px;font-weight:600;min-width:0}
+.oa-dialog input,.oa-dialog textarea,.oa-cutoff input{box-sizing:border-box;width:100%;min-width:0;min-height:44px;padding:9px 12px;border:1px solid #d9c9c0;border-radius:6px;background:#fff;color:#302b29;font:inherit;font-size:16px;outline:none;box-shadow:none}
+.oa-dialog input:focus,.oa-dialog textarea:focus,.oa-cutoff input:focus{border-color:#bd4d70;box-shadow:0 0 0 1px #bd4d70}
+.oa-dialog input:disabled,.oa-dialog textarea:disabled{background:#f7f7f7;color:#555}
+.oa-fields{display:grid;grid-template-columns:190px minmax(0,1fr);gap:20px;margin-top:24px}
+.oa-catalog{margin-top:16px;border-bottom:1px solid #ddd;padding-bottom:12px}
+.oa-catalog summary{cursor:pointer;font-weight:700;padding:12px 0;color:#a93f62}
+.oa-catalog label{margin:8px 0}
+.oa-product{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid #eee;padding:10px 0}
+.oa-product button{flex:none}
+.oa-products nav{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 0;font-size:13px}
+.oa-totals{display:grid;gap:10px;margin:20px 0;text-align:right;font-size:14px}
+.oa-totals strong{display:inline-block;min-width:120px;font-size:16px}
+.oa-error{color:#a22e2e;white-space:pre-wrap;font-size:14px}
+.oa-form footer{display:flex;justify-content:flex-end;gap:12px;border-top:1px solid #ddd;padding-top:18px}
+.oa-cutoff{margin:0 0 24px;padding:20px 24px;background:#fff;border-top:1px solid #ddd;border-bottom:1px solid #ddd}
+.oa-settings{display:flex;flex-wrap:wrap;align-items:center;gap:12px 24px}
+.oa-settings>div{margin-right:auto}.oa-settings p{margin:4px 0;font-size:13px;color:#786e68}
+.oa-settings label{width:150px}
+.oa-settings-note{flex-basis:100%}
+.oa-settings-status{color:#278060!important}
+.oa-history-button{margin-top:8px;display:inline-flex!important;min-height:38px}
+.oa-order-actions{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-width:0}
+.oa-order-actions .wo-order-document-actions-v656{position:static;transform:none;width:auto}
+@media(min-width:621px){.wo-order-management-v641:has(.oa-order-actions) .wo-dealer-order-head,.wo-order-management-v641 .wo-dealer-order-row:has(.oa-order-actions){min-width:900px}.wo-order-management-v641:has(.oa-order-actions) .wo-dealer-order-head,.wo-order-management-v641 .wo-dealer-order-row:has(.oa-order-actions)>button{grid-template-columns:minmax(170px,1.25fr) minmax(130px,1.1fr) minmax(72px,.7fr) minmax(72px,.7fr) minmax(72px,.75fr) 126px 28px}.wo-dealer-order-row:has(.oa-order-actions)>button{min-height:110px}.wo-dealer-order-row .oa-order-actions{position:absolute;top:50%;right:52px;transform:translateY(-50%);width:126px}.wo-dealer-order-row .oa-history-button{margin-top:0}.wo-dealer-order-row:has(.oa-order-actions) .wo-mobile-label{display:none}.wo-dealer-order-row:has(.oa-order-actions)>button small{font-size:10px}}
+@media(max-width:620px){.wo-dealer-order-row:has(.oa-order-actions){padding-bottom:0}.wo-dealer-order-row .oa-order-actions{padding:0 14px 12px;justify-content:space-between;flex-direction:row}.wo-dealer-order-row .oa-history-button{margin-top:0}}
+@media(max-width:600px){.oa-dialog{width:calc(100% - 16px);max-height:calc(100dvh - 16px)}.oa-content{padding:16px}.oa-dialog>header{padding:12px 16px}.oa-dialog h2{font-size:18px}.oa-line{grid-template-columns:minmax(0,1fr) 88px;gap:8px}.oa-line>button{grid-column:2;font-size:13px;min-height:36px}.oa-fields{grid-template-columns:minmax(0,1fr)}.oa-fields input[type=date]{max-width:100%}.oa-form footer{flex-wrap:wrap}.oa-form footer button{flex:1;min-width:130px}.oa-cutoff{padding:16px}.oa-settings>div{flex-basis:100%}.oa-settings label{flex:1}.oa-order-actions{flex-direction:row;flex-wrap:wrap;justify-content:flex-end}.oa-summary{font-size:14px}}

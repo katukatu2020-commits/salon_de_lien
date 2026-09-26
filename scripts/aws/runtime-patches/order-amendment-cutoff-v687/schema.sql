@@ -1,0 +1,12 @@
+CREATE TABLE IF NOT EXISTS "WholesaleOrderCutoffPolicy" (
+ "dealerId" TEXT PRIMARY KEY REFERENCES "WholesaleDealer"("id") ON DELETE CASCADE,
+ "cutoffMinutes" INTEGER NOT NULL CHECK ("cutoffMinutes" BETWEEN 0 AND 1439),
+ "updatedBy" TEXT NOT NULL,
+ "updatedAt" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS "WholesaleOrderAmendment" (
+ "orderId" TEXT PRIMARY KEY REFERENCES "WholesaleOrder"("id") ON DELETE CASCADE,
+ "cutoffMinutes" INTEGER CHECK ("cutoffMinutes" BETWEEN 0 AND 1439),
+ "cutoffAt" TIMESTAMPTZ(3),
+ "createdAt" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
