@@ -15,7 +15,7 @@ function render({dealer,view,head,icon,escapeHtml:esc,content,scripts}) {
   const key = ['password','staff-password'].includes(view) ? 'password-change' : view
   const menu = navigation(dealer.role)
   const active = menu.find(group=>group.pages.some(([id])=>id===key)) || menu[0]
-  const title = active.pages.find(([id])=>id===key)?.[1] || '業務ダッシュボード'
+  const title = key==='messages' ? '契約サロンとのチャット' : active.pages.find(([id])=>id===key)?.[1] || '業務ダッシュボード'
   const badge = '<span class="dw-unread" data-dw-unread hidden></span>'
   const link = (id,label,extra='') => `<a href="/dealer/${id}"${id===key?' aria-current="page"':''} ${extra}>${esc(label)}${id==='messages'?badge:''}</a>`
   const groupLink = (group,short) => `<a href="/dealer/${group.pages[0][0]}"${group.id===active.id?' class="is-active" aria-current="true"':''}>${icon(group.icon)}<span>${esc(short||group.label)}</span>${group.id==='activity'?badge:''}</a>`
