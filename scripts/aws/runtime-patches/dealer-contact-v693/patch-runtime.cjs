@@ -1,0 +1,37 @@
+'use strict'
+const fs=require('node:fs'),path=require('node:path'),base='/app'
+const read=f=>fs.readFileSync(path.join(base,f),'utf8'),write=(f,s)=>fs.writeFileSync(path.join(base,f),s),local=f=>fs.readFileSync(path.join(__dirname,f),'utf8')
+function replace(s,a,b){if(s.split(a).length!==2)throw Error('Patch anchor count: '+a.slice(0,120));return s.replace(a,()=>b)}
+fs.copyFileSync(path.join(__dirname,'contact.cjs'),path.join(base,'dealer-contact-v693.js'))
+write('dealer-sales-team-v671.sql',read('dealer-sales-team-v671.sql')+'\nALTER TABLE "DealerSalesMember" ADD COLUMN IF NOT EXISTS phone TEXT;\n')
+let team=read('dealer-sales-team-v671.js')
+team=replace(team,'SELECT m."id",m."name",COALESCE(m."loginId"','SELECT m."id",m."name",m.phone,COALESCE(m."loginId"')
+team=replace(team,"      const name = text(p.name, '氏名')","      const name = text(p.name, '氏名')\n      const contactPhone=p.phone===undefined?undefined:require('./dealer-contact-v693').phone(p.phone)")
+team=replace(team,"        await audit(tx, s, 'MEMBER_UPDATED', old.id)","        if(contactPhone!==undefined)await tx.$executeRawUnsafe('UPDATE \"DealerSalesMember\" SET phone=$1 WHERE id=$2 AND \"dealerId\"=$3',contactPhone,old.id,s.id)\n        await audit(tx, s, 'MEMBER_UPDATED', old.id)")
+team=replace(team,"      await audit(tx, s, 'MEMBER_CREATED', id)","      if(contactPhone!==undefined)await tx.$executeRawUnsafe('UPDATE \"DealerSalesMember\" SET phone=$1 WHERE id=$2 AND \"dealerId\"=$3',contactPhone,id,s.id)\n      await audit(tx, s, 'MEMBER_CREATED', id)")
+team=replace(team,'/dealer-sales-team-v671-client.js?v=671-2','/dealer-sales-team-v693-client.js?v=693-1')
+team=replace(team,"    const asset = { '/dealer-sales-team-v671-client.js':", "    const asset = { '/dealer-sales-team-v693-client.js': ['public/dealer-sales-team-v693-client.js','application/javascript'], '/dealer-sales-team-v671-client.js':")
+write('dealer-sales-team-v671.js',team)
+let w=read('wholesale-ordering-v543.js')
+w=replace(w,"        if (pathname === '/api/admin/wholesale/bootstrap' && req.method === 'GET') {",`        if (pathname === '/api/admin/wholesale/dealer-contact' && req.method === 'GET') {
+          json(res,200,{ok:true,contact:await require('./dealer-contact-v693').salonContact(prisma,session.organizationId,url.searchParams.get('dealerId'),WholesaleError)});return true
+        }
+        if (pathname === '/api/admin/wholesale/bootstrap' && req.method === 'GET') {`)
+write('wholesale-ordering-v543.js',w)
+let salon=read('public/salon-order-entry-v692.js')
+salon=replace(salon,'  function contractPanel() {',local('contact-dialog.js')+'\n  function contractPanel() {')
+salon=replace(salon,"return '<span><strong>' + esc(contract.dealerName) + '</strong><small>ディーラー固有コード '","return '<span><button type=\"button\" class=\"dc-name-v693\" data-action=\"dealer-contact\" data-dealer-id=\"' + esc(contract.dealerId) + '\" aria-haspopup=\"dialog\" aria-label=\"' + esc(contract.dealerName) + 'の担当者・連絡先\"><strong>' + esc(contract.dealerName) + '</strong>' + icon('chevron') + '</button><small>ディーラー固有コード '")
+salon=replace(salon,"      if (action === 'copy-salon-code') {","      if (action === 'dealer-contact') { await showDealerContactV693(target.dataset.dealerId,target) }\n      else if (action === 'copy-salon-code') {")
+write('public/salon-order-entry-v693.js',salon)
+write('public/salon-order-entry-v693.css',read('public/salon-order-entry-v692.css')+'\n'+local('style.css'))
+write('public/inventory-orders-common-layout-v572.salon-orders-v693.js',replace(read('public/inventory-orders-common-layout-v572.salon-orders-v692.js'),'/salon-order-entry-v692.js?v=692-1','/salon-order-entry-v693.js?v=693-1'))
+let client=read('dealer-sales-team-v671-client.js')
+client=replace(client,"const body=input('name','氏名',m.name,'text','required maxlength=\"80\"')+","const body=input('name','氏名',m.name,'text','required maxlength=\"80\"')+input('phone','担当者の電話番号（任意・契約サロンに公開）',m.phone||'','tel','maxlength=\"40\" autocomplete=\"tel\"')+")
+client=replace(client,'<small>${esc(m.loginId)}</small></td>','<small>${esc(m.loginId)}</small><small>${esc(m.phone||\'電話番号未登録\')}</small></td>')
+write('public/dealer-sales-team-v693-client.js',client)
+let server=read('server.js')
+server=replace(server,'/inventory-orders-common-layout-v572.salon-orders-v692.js?v=692-1','/inventory-orders-common-layout-v572.salon-orders-v693.js?v=693-1')
+server=replace(server,'/salon-order-entry-v692.css?v=692-1','/salon-order-entry-v693.css?v=693-1')
+server=replace(server,"res.setHeader('X-Lien-Order-Consolidation','v692')","res.setHeader('X-Lien-Order-Consolidation','v692')\n   if (url.pathname === '/api/health/ready') res.setHeader('X-Lien-Dealer-Contact','v693')")
+write('server.js',server)
+console.log('dealer-contact-v693 applied')

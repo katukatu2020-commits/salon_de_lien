@@ -1,0 +1,17 @@
+.wo-contract-list .dc-name-v693{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:44px;padding:0;border:0;background:transparent;box-shadow:none;color:inherit;font:inherit;text-align:left;cursor:pointer;border-radius:4px}
+.wo-contract-list .dc-name-v693 strong{min-width:0;overflow-wrap:anywhere}
+.wo-contract-list .dc-name-v693 svg{width:18px;height:18px;flex:none;color:#4d8070}
+.wo-contract-list .dc-name-v693:focus-visible{outline:2px solid #b6456d;outline-offset:4px}
+.dc-dialog-v693{box-sizing:border-box;width:min(460px,calc(100vw - 32px));max-height:calc(100dvh - 32px);margin:auto;padding:0;border:1px solid #ddd7d3;border-radius:8px;background:#fff;color:#292c2e;overflow:auto;box-shadow:0 16px 60px #0002}
+.dc-dialog-v693::backdrop{background:#2227}
+.dc-dialog-v693>header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px;border-bottom:1px solid #e6e2df}
+.dc-dialog-v693 h2{font-size:20px;line-height:1.5;letter-spacing:0;margin:0;overflow-wrap:anywhere;min-width:0}
+.dc-dialog-v693 .dc-close{width:44px;height:44px;flex:none;display:grid;place-items:center;border:1px solid #dedad7;border-radius:4px;background:#fff;padding:0;cursor:pointer}
+.dc-dialog-v693 svg{width:20px;height:20px}
+.dc-dialog-v693 .dc-content{padding:20px}.dc-dialog-v693 dl{margin:0}.dc-dialog-v693 dl>div{padding:0 0 18px;margin-bottom:18px;border-bottom:1px solid #ece9e6}
+.dc-dialog-v693 dt{font-size:13px;color:#666;margin-bottom:8px}.dc-dialog-v693 dd{font-size:18px;font-weight:600;margin:0;overflow-wrap:anywhere}
+.dc-dialog-v693 .dc-phone{display:inline-flex;align-items:center;min-height:44px;color:#225f50;text-decoration:underline;text-underline-offset:4px;max-width:100%;overflow-wrap:anywhere}
+.dc-dialog-v693 .dc-empty{font-size:16px;font-weight:400;color:#777}
+.dc-dialog-v693 .dc-chat{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px;color:#a93d61;font-weight:600;text-decoration:none}
+.dc-dialog-v693 :is(button,a):focus-visible{outline:2px solid #b6456d;outline-offset:3px}
+@media(max-width:380px){.dc-dialog-v693>header,.dc-dialog-v693 .dc-content{padding:16px}}

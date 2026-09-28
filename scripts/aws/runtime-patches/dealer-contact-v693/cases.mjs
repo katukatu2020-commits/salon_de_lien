@@ -1,0 +1,57 @@
+import assert from 'node:assert/strict'
+export async function verify({db,req,ok,a,b,staff,employee}){
+ const run=(q,...p)=>db.$executeRawUnsafe(q,...p),headers={'x-fixture-salon':'1'}
+ const endpoint='/api/admin/wholesale/dealer-contact?dealerId=dealer-a'
+ const contact=()=>ok(endpoint,'',undefined,headers).then(r=>r.contact)
+ const members=await ok('/api/dealer/team/data',a)
+ const m=members.members.find(m=>m.id===employee.id)
+ assert.ok(m)
+ const edit={id:m.id,name:m.name,role:m.role,branchId:m.branchId,active:true}
+ assert.equal((await req(endpoint)).status,401)
+ assert.equal((await req(endpoint,a)).status,401,'Dealer session cannot access salon endpoint')
+ assert.equal((await req(endpoint,'',undefined,headers)).headers.get('cache-control').includes('no-store'),true)
+ assert.equal((await contact()).staffPhone,null)
+ await ok('/api/dealer/team/member',a,{...edit,phone:'０９０ー１２３４ー５６７８'})
+ await run('UPDATE "WholesaleDealer" SET phone=$1 WHERE id=\'dealer-a\'','086-123-4567')
+ assert.deepEqual(await contact(),{dealerId:'dealer-a',dealerName:'テストディーラー a',staffName:'営業担当',staffPhone:'090-1234-5678',companyPhone:'086-123-4567'})
+ await ok('/api/dealer/team/member',a,edit)
+ assert.equal((await contact()).staffPhone,'090-1234-5678','Old clients preserve phone')
+ for(const phone of ['123','javascript:alert(1)','09012345678<script>', '1'.repeat(41)]){
+  assert.equal((await req('/api/dealer/team/member',a,{...edit,phone})).status,400)
+ }
+ assert.equal((await contact()).staffPhone,'090-1234-5678')
+ assert.equal((await req('/api/dealer/team/member',staff,{...edit,phone:'080-1234-5678'})).status,403)
+ assert.equal((await req('/api/dealer/team/member',b,{...edit,branchId:null,phone:'080-1234-5678'})).status,404)
+ assert.equal((await req('/api/dealer/team/member',a,{...edit,phone:''},{Origin:'https://evil.example'})).status,403)
+ await ok('/api/dealer/team/member',a,{...edit,phone:''})
+ assert.equal((await contact()).staffPhone,null,'Explicit blank clears')
+ assert.equal((await contact()).companyPhone,'086-123-4567','Company phone stays separate')
+ await ok('/api/dealer/team/member',a,{...edit,phone:'090-1234-5678'})
+ for(const status of ['PENDING','SUSPENDED']){
+  await run('UPDATE "WholesaleDealerContract" SET status=$1 WHERE id=\'contract-a\'',status)
+  assert.equal((await req(endpoint,'',undefined,headers)).status,404)
+ }
+ await run('UPDATE "WholesaleDealerContract" SET status=\'ACTIVE\' WHERE id=\'contract-a\'')
+ assert.equal((await req(endpoint.replace('dealer-a','dealer-b'),'',undefined,headers)).status,404)
+ assert.equal((await req(endpoint.replace('dealer-a','missing'),'',undefined,headers)).status,404)
+ await run('UPDATE "WholesaleDealer" SET active=FALSE WHERE id=\'dealer-a\'')
+ assert.equal((await req(endpoint,'',undefined,headers)).status,404)
+ await run('UPDATE "WholesaleDealer" SET active=TRUE WHERE id=\'dealer-a\'')
+ await run('UPDATE "DealerSalesMember" SET active=FALSE WHERE id=$1',m.id)
+ assert.equal((await contact()).staffName,null);assert.equal((await contact()).staffPhone,null)
+ await run('UPDATE "DealerSalesMember" SET active=TRUE WHERE id=$1',m.id)
+ const other=await ok('/api/dealer/team/member',b,{name:'他社担当',loginId:'contact-other-b',role:'STAFF',phone:'080-9999-9999'})
+ await run('UPDATE "WholesaleDealerContract" SET "salesMemberId"=$1 WHERE id=\'contract-a\'',other.id)
+ assert.equal((await contact()).staffName,null,'Corrupt foreign assignment cannot disclose contact')
+ await run('UPDATE "WholesaleDealerContract" SET "salesMemberId"=NULL WHERE id=\'contract-a\'')
+ assert.equal((await contact()).staffPhone,null)
+ const reassigned=await ok('/api/dealer/team/member',a,{name:'交代担当',loginId:'contact-new-a',role:'STAFF',phone:'+81 90 2345 6789'})
+ await ok('/api/dealer/team/assignment',a,{id:'contract-a',memberId:reassigned.id,closingDay:31})
+ assert.equal((await contact()).staffName,'交代担当');assert.equal((await contact()).staffPhone,'+81 90 2345 6789')
+ await ok('/api/dealer/team/assignment',a,{id:'contract-a',memberId:m.id,branchId:m.branchId,closingDay:20})
+ assert.equal((await contact()).staffName,'営業担当')
+ assert.equal((await ok('/api/dealer/team/data',a)).members.find(x=>x.id===m.id).phone,'090-1234-5678')
+ assert.equal((await req('/dealer-sales-team-v693-client.js')).status,200)
+ assert.match((await req('/dealer/team',a)).content,/dealer-sales-team-v693-client\.js\?v=693-1/)
+ console.log('v693 integration PASS: phone create/update/clear/normalization, backward compatibility, live assignment, unassigned/inactive staff, tenant/contract isolation, CSRF, no sensitive payload/cache, staff asset')
+}
