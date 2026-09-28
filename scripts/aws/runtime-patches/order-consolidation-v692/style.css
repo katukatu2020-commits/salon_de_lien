@@ -1,0 +1,13 @@
+.oc-breakdown{margin:16px 0;padding:0;border-top:1px solid #ddd}
+.oc-breakdown>div{display:flex;justify-content:space-between;gap:16px;padding:10px 0;border-bottom:1px solid #eee}
+.oc-breakdown dt{font-weight:400}.oc-breakdown dd{margin:0;white-space:nowrap;font-weight:700}
+.oc-breakdown>div:last-child{font-weight:700}.oc-condition{font-size:14px;line-height:1.7;color:#405f55}
+.oc-error{color:#b42318}.wo-confirm-group>p{padding:0 16px;overflow-wrap:anywhere}
+.wo-confirm-group .oc-breakdown{margin:16px}.wo-contract-list small{white-space:normal;overflow-wrap:anywhere}
+.oa-cutoff[data-shipping-v692] .oa-settings{display:grid;grid-template-columns:minmax(180px,1fr) repeat(2,minmax(180px,220px)) auto;gap:16px;align-items:end}
+.oa-cutoff[data-shipping-v692] .oa-settings label{width:100%;min-width:0;max-width:100%}
+.oa-cutoff[data-shipping-v692] .oa-settings>div{margin:0}
+.oa-cutoff[data-shipping-v692] .oa-settings-note,.oa-cutoff[data-shipping-v692] .oa-settings-status{grid-column:1/-1}
+@media(max-width:1100px){.oa-cutoff[data-shipping-v692] .oa-settings{grid-template-columns:repeat(2,minmax(0,1fr))}.oa-cutoff[data-shipping-v692] .oa-settings>div{grid-column:1/-1}}
+@media(max-width:600px){.oa-cutoff[data-shipping-v692] .oa-settings{grid-template-columns:minmax(0,1fr)}.oa-cutoff[data-shipping-v692] .oa-settings button{width:100%}}
+@media(max-width:600px){.oc-breakdown{font-size:14px}.oc-breakdown>div{gap:8px}.wo-dialog-shell header h2{font-size:20px}}

@@ -1,0 +1,97 @@
+'use strict'
+const fs=require('node:fs'),path=require('node:path')
+const base=process.env.RUNTIME_ROOT||'/app',src=__dirname
+const read=f=>fs.readFileSync(path.join(base,f),'utf8'),write=(f,s)=>fs.writeFileSync(path.join(base,f),s)
+function replace(s,a,b){if(s.split(a).length!==2)throw Error('Patch anchor count: '+a.slice(0,130));return s.replace(a,()=>b)}
+function span(s,a,b,value){const i=s.indexOf(a),j=s.indexOf(b,i+a.length);if(i<0||j<0)throw Error('Missing span '+a);return s.slice(0,i)+value+s.slice(j)}
+const fragment=f=>fs.readFileSync(path.join(src,f),'utf8')
+fs.copyFileSync(path.join(src,'consolidation.cjs'),path.join(base,'order-consolidation-v692.js'))
+fs.copyFileSync(path.join(src,'schema.sql'),path.join(base,'order-consolidation-v692.sql'))
+fs.copyFileSync(path.join(src,'style.css'),path.join(base,'public/order-consolidation-v692.css'))
+let w=read('wholesale-ordering-v543.js')
+w=replace(w,'  const salesTeamV671 =','  const consolidationV692 = require("./order-consolidation-v692").createConsolidation({db:prisma,crypto,erp:dealerErpV678,ErrorClass:WholesaleError})\n  const salesTeamV671 =')
+w=replace(w,'await dealerErpV678.ensureSchema()','await dealerErpV678.ensureSchema()\n      await consolidationV692.ensureSchema()')
+w=replace(w,"    const showingAllDealers = requestedDealerId === 'all'","    await consolidationV692.decorateContracts(contracts)\n    const showingAllDealers = requestedDealerId === 'all'")
+w=span(w,'  async function createOrder(','  function currentDealerMonthKey',`  async function createOrder(session,payload){return (await consolidationV692.create(session,payload))[0]}
+  async function createSplitOrders(session,payload){return consolidationV692.create(session,payload)}
+
+  `)
+w=replace(w,"if (pathname === '/api/admin/wholesale/orders')", "if (pathname === '/api/admin/wholesale/order-quote') { json(res,200,{ok:true,...await consolidationV692.quote(session,payload)});return true }\n        if (pathname === '/api/admin/wholesale/orders')")
+w=replace(w,'o."totalYen",d."name" AS "dealerName",COUNT(l."id")','o."totalYen",o."shippingFeeYen",o."businessDate",d."name" AS "dealerName",COUNT(l."id")')
+const calendarStart=w.indexOf('  async function dealerCalendarPayload('),calendarEnd=w.indexOf('  async function saveDealerCalendarPlan(',calendarStart)
+let calendar=w.slice(calendarStart,calendarEnd)
+calendar=replace(calendar,'TO_CHAR(o."orderedAt" AT TIME ZONE \'Asia/Tokyo\',\'YYYY-MM-DD\')','TO_CHAR(COALESCE(o."businessDate",(o."orderedAt" AT TIME ZONE \'Asia/Tokyo\')::date),\'YYYY-MM-DD\')')
+calendar=replace(calendar,'o."orderedAt">=$2::timestamptz','COALESCE(o."businessDate",(o."orderedAt" AT TIME ZONE \'Asia/Tokyo\')::date)>=($2::timestamptz AT TIME ZONE \'Asia/Tokyo\')::date')
+calendar=replace(calendar,'o."orderedAt"<$3::timestamptz','COALESCE(o."businessDate",(o."orderedAt" AT TIME ZONE \'Asia/Tokyo\')::date)<($3::timestamptz AT TIME ZONE \'Asia/Tokyo\')::date')
+w=w.slice(0,calendarStart)+calendar+w.slice(calendarEnd)
+const legacyStart=w.indexOf('  async function updateOrderStatus('),legacyEnd=w.indexOf('  async function loadDealerOrderDocument(',legacyStart)
+let legacyStatus=w.slice(legacyStart,legacyEnd)
+legacyStatus=replace(legacyStatus,'      await tx.$executeRawUnsafe(\'INSERT INTO "WholesaleOrderEvent"','      const shippingTotals=await require("./order-consolidation-v692").reprice(tx,orderId)\n      await tx.$executeRawUnsafe(\'INSERT INTO "WholesaleOrderEvent"')
+legacyStatus=replace(legacyStatus,'JSON.stringify({ previousStatus: order.status, subtotalYen, totalYen })','JSON.stringify({ previousStatus: order.status, subtotalYen, totalYen, ...shippingTotals })')
+legacyStatus=replace(legacyStatus,'return { status: target, deliveryNo, subtotalYen, taxYen, totalYen }','return { status: target, deliveryNo, subtotalYen, taxYen, totalYen, ...shippingTotals }')
+w=w.slice(0,legacyStart)+legacyStatus+w.slice(legacyEnd)
+w=replace(w,'  const taxRate = documentAmount(order.taxRate)','  const shippingFeeYen = documentAmount(order.shippingFeeYen)\n  const taxRate = documentAmount(order.taxRate)')
+w=replace(w,'Math.round(billedSubtotal * taxRate / 100)','Math.round((billedSubtotal + shippingFeeYen) * taxRate / 100)')
+w=replace(w,'? billedSubtotal + billedTaxYen :','? billedSubtotal + shippingFeeYen + billedTaxYen :')
+w=replace(w,'    billedSubtotal,\n    billedTaxYen,','    billedSubtotal: billedSubtotal + shippingFeeYen,\n    shippingFeeYen,\n    billedTaxYen,')
+w=replace(w,'${adjustment}<tr><th colspan="4">税抜請求額','${adjustment}${totals.shippingFeeYen ? `<tr><th colspan="4">送料（税抜）</th><td>${yen(totals.shippingFeeYen)}</td></tr>` : \'\'}<tr><th colspan="4">税抜請求額')
+write('wholesale-ordering-v543.js',w)
+let e=read('dealer-erp-v678.js')
+e=replace(e,"'use strict'","'use strict'\nconst shippingV692=require('./order-consolidation-v692')")
+e=replace(e,"const actions = { 'order-cutoff'","const actions = { 'shipping-policy': shippingV692.savePolicy, 'order-cutoff'")
+e=replace(e,"const getters = { 'order-amendment'","const getters = { 'shipping-policy': s=>shippingV692.policy(db,s), 'order-amendment'")
+e=replace(e,'o.id, status, subtotal, total - subtotal, total, shipped)\n  }','o.id, status, subtotal, total - subtotal, total, shipped)\n    await shippingV692.reprice(tx,o.id)\n  }')
+e=replace(e,'  async function ship(tx, s, p) {\n    const o = await order(tx, s, p.orderId, true)','  async function ship(tx, s, p) {\n    const o = await order(tx, s, p.orderId, true)\n    await shippingV692.assertClosed(tx,o)\n    if(o.consolidationClosesAt)await tx.$executeRawUnsafe(\'UPDATE "WholesaleOrder" SET "deliveryNo"=COALESCE("deliveryNo",$2) WHERE id=$1\',o.id,"DN-"+o.orderNo.replace(/^PO-/,""))')
+e=replace(e,"for (const l of items) await charge(tx, s, o, l, l.quantity, 'delivery:' + l.id)","for (const l of items) await charge(tx, s, o, l, l.quantity, 'delivery:' + l.id)\n    await shippingV692.chargeShipping(tx,o,crypto)")
+e=replace(e,'  async function printShipment(s, sid) {',`  async function printConsolidatedOrder(s,orderId){
+    const o=await order(db,s,orderId,false)
+    const salon=await one(db,'SELECT name FROM "Organization" WHERE id=$1',o.organizationId)
+    const issuer=await one(db,'SELECT name,address,phone FROM "WholesaleDealer" WHERE id=$1',s.id)
+    const items=await db.$queryRawUnsafe(\`SELECT l."productName",l."productCode",l."listPrice",SUM(l.quantity-l.returned)::int AS quantity FROM "DealerErpShipmentLine" l JOIN "DealerErpShipment" sh ON sh.id=l."shipmentId" WHERE sh."orderId"=$1 AND sh.status<>'REVERSED' GROUP BY l."lineId",l."productName",l."productCode",l."listPrice" HAVING SUM(l.quantity-l.returned)>0 ORDER BY l."productName",l."lineId"\`,o.id)
+    return documentPage('納品書',o.deliveryNo||('DN-'+o.orderNo.replace(/^PO-/,'')),issuer,salon,items,'<p>受注番号 '+esc(o.orderNo)+'</p><dl><div><dt>定価合計（税抜）</dt><dd>'+yen(items.reduce((n,l)=>n+l.quantity*l.listPrice,0))+'</dd></div></dl>',items.length?'':'出荷前')
+  }
+  async function printShipment(s, sid) {`)
+e=replace(e,'    const { sh, o, items } = await shipment(db, s, sid)','    const { sh, o, items } = await shipment(db, s, sid)\n    if(o.consolidationClosesAt)return printConsolidatedOrder(s,o.id)')
+e=replace(e,'SELECT e."orderId" FROM "DealerErpOrder" e JOIN "WholesaleOrder" o','SELECT e."orderId",o."consolidationClosesAt" FROM "DealerErpOrder" e JOIN "WholesaleOrder" o')
+e=replace(e,'        if (!found) return false','        if (!found) return false\n        if(found.consolidationClosesAt && oldDocument[2]===\'delivery-note\'){h.html(res,200,await printConsolidatedOrder(s,found.orderId));return true}')
+write('dealer-erp-v678.js',e)
+let a=read('order-amendments-v687.js')
+a=replace(a,"note=text(p.salonNote??o.salonNote??'','発注メモ',1200,true)","note=text(p.salonNote??o.salonNote??'','発注メモ',o.consolidationClosesAt?12000:1200,true)")
+a=replace(a,'  await tx.$executeRawUnsafe(\'INSERT INTO "WholesaleOrderEvent"','  const shippingTotals=await require("./order-consolidation-v692").reprice(tx,o.id)\n  await tx.$executeRawUnsafe(\'INSERT INTO "WholesaleOrderEvent"')
+a=replace(a,'salonNote:note,totalYen:total}}','salonNote:note,totalYen:total,...shippingTotals}}')
+a=replace(a,'  return {id:o.id,totalYen:total}','  return {id:o.id,totalYen:total,...shippingTotals}')
+write('order-amendments-v687.js',a)
+let s=read('public/salon-order-entry-v687.js')
+s=span(s,'  function showOrderDialog()','  async function saveInventory(',fragment('confirmation.js')+'\n\n')
+s=replace(s,"esc(contract.dealerCode) + '</small><a href=", "esc(contract.dealerCode) + '</small><small>' + esc(shippingConditionV692(contract.shippingPolicy)) + '</small><a href=")
+s=replace(s,'表示価格は税抜です。選択商品は発注先ごとに自動で注文を分けます。','表示価格は税抜です。発注先ごと・締切日ごとに合算し、送料を再計算します。')
+write('public/salon-order-entry-v692.js',s)
+let c=read('public/order-amendments-v687.js')
+c=replace(c,' async function mountSettings(root){',fragment('shipping-settings.js')+'\n async function mountSettings(root){\n  void mountShippingSettingsV692(root)')
+c=replace(c,'maxlength="1200" rows="3"','maxlength="12000" rows="3"')
+c=replace(c,'初回設定は既存の発注にも適用されます。時刻変更後は新規発注に適用されます。','合算中の注文は受付時の締切を維持します。未設定時は毎日0時に確定します。過去の締切未設定注文には初回設定を適用します。')
+c=replace(c,'<strong>${esc(o.orderNo)}</strong><span>','<strong>${esc(o.orderNo)}</strong>${o.businessDate?`<span>発注日 ${esc(o.businessDate.slice(0,10))}</span>`:\'\'}<span>')
+c=replace(c,'tax=Math.round(subtotal*Number(o.taxRate)/100)','fee=o.consolidationClosesAt&&o.status!==\'CANCELLED\'&&subtotal<Number(o.shippingFreeThresholdYen)?Number(o.shippingPolicyFeeYen):0,tax=Math.round((subtotal+fee)*Number(o.taxRate)/100)')
+c=replace(c,'<span>消費税 <strong>','<span>送料（税抜） <strong>${yen(fee)}</strong></span><span>消費税 <strong>')
+c=replace(c,'yen(subtotal+tax)','yen(subtotal+fee+tax)')
+write('public/order-amendments-v692.js',c)
+write('public/dealer-orders-v692.js',replace(read('public/dealer-orders-v688.js'),'<summary>発注の変更・キャンセル締切</summary>','<summary>発注の締切・送料設定</summary>'))
+write('public/inventory-orders-common-layout-v572.salon-orders-v692.js',read('public/inventory-orders-common-layout-v572.salon-orders-v687.js').replaceAll('/salon-order-entry-v687.js?v=687-1','/salon-order-entry-v692.js?v=692-1'))
+for(const f of ['server.js','dealer-workspace-v688.js']){
+ let content=read(f)
+ for(const [before,after] of [['/order-amendments-v687.js?v=687-1','/order-amendments-v692.js?v=692-1'],['/inventory-orders-common-layout-v572.salon-orders-v687.js?v=687-1','/inventory-orders-common-layout-v572.salon-orders-v692.js?v=692-1']]){
+  if(f==='server.js'||content.includes(before))content=replace(content,before,after)
+ }
+ if(f==='dealer-workspace-v688.js'){
+  content=replace(content,"head.replace('</head>',", "head.replace('</head>', '<link rel=\"stylesheet\" href=\"/order-consolidation-v692.css?v=692-1\">' +")
+  content=replace(content,'/dealer-orders-v688.js?v=688-1','/dealer-orders-v692.js?v=692-1')
+ }
+ else {
+  content=replace(content,'/salon-order-entry-v686.css?v=686-1','/salon-order-entry-v692.css?v=692-1')
+  content=replace(content,"res.setHeader('X-Lien-Enterprise-Inquiries','v691')","res.setHeader('X-Lien-Enterprise-Inquiries','v691')\n   if (url.pathname === '/api/health/ready') res.setHeader('X-Lien-Order-Consolidation','v692')")
+ }
+ write(f,content)
+}
+// The salon stylesheet is already loaded by the runtime HTML injection.
+write('public/salon-order-entry-v692.css',read('public/salon-order-entry-v686.css')+'\n'+fragment('style.css'))
+console.log('order-consolidation-v692 applied')
