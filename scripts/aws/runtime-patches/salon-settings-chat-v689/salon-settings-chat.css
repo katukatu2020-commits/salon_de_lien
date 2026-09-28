@@ -1,0 +1,15 @@
+[data-salon-settings-readonly-v689]{max-width:960px;margin:auto;color:var(--lien-ink,#332d2a)}
+[data-salon-settings-readonly-v689] h1{font-size:28px;margin:0 0 12px;letter-spacing:0}
+[data-salon-settings-readonly-v689] header{padding:20px 0;border-bottom:1px solid #eaded9}
+.settings-access-v689{padding:16px;background:#f2f6f4;border-left:3px solid #548773;font-size:14px;line-height:1.7}
+[data-salon-settings-readonly-v689] dl{margin:24px 0}
+[data-salon-settings-readonly-v689] dl>div{display:grid;grid-template-columns:160px minmax(0,1fr);gap:16px;padding:20px 0;border-bottom:1px solid #eaded9}
+[data-salon-settings-readonly-v689] dt{color:#766e69;font-size:14px}
+[data-salon-settings-readonly-v689] dd{margin:0;overflow-wrap:anywhere}
+.chat-compose-v689{display:grid;gap:16px;margin-top:auto;padding-top:20px;border-top:1px solid #eaded9}
+.chat-compose-v689 label{display:grid;gap:8px;font-size:14px;font-weight:600}
+.chat-compose-v689 select,.chat-compose-v689 textarea{width:100%;min-width:0;font-size:16px}
+.chat-compose-v689 button{justify-self:end;min-width:96px;min-height:44px}
+[data-chat-error-v689]{color:#a62842;font-size:14px;line-height:1.6;white-space:normal;flex-basis:100%}
+form[action="/api/lien-chat-form"]{flex-wrap:wrap}
+@media(max-width:600px){[data-salon-settings-readonly-v689] h1{font-size:24px}[data-salon-settings-readonly-v689] dl>div{grid-template-columns:1fr;gap:6px;padding:16px 0}}
