@@ -1,0 +1,72 @@
+import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import path from 'node:path'
+import {createRequire} from 'node:module'
+const require=createRequire(process.env.SMOKE_DEPENDENCIES_PACKAGE||path.resolve('../node_modules/playwright-core/package.json'))
+const {chromium}=require('playwright-core'),base=process.env.SMOKE_BASE_URL||'http://127.0.0.1:3201'
+assert.ok(['127.0.0.1','localhost'].includes(new URL(base).hostname),'Isolated fixture only')
+const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH||'C:/Program Files/Google/Chrome/Application/chrome.exe'})
+const out='artifacts/dealer-calendar-day-v696';fs.mkdirSync(out,{recursive:true})
+const errors=[]
+try{
+ const context=await browser.newContext({locale:'ja-JP',timezoneId:'America/New_York'}),p=await context.newPage()
+ p.setDefaultTimeout(10000);p.on('pageerror',e=>errors.push(e.message))
+ await p.goto(base+'/dealer/login');await p.locator('[name=loginId]').fill('erp-owner-a');await p.locator('[name=password]').fill('FixtureOnly-v678!')
+ await p.locator('button[type=submit]').click();await p.waitForURL('**/dealer/orders')
+ const dialog=p.locator('.cd-dialog'),body=p.locator('.cd-content')
+ const loaded=()=>p.waitForFunction(()=>document.querySelector('.cd-content')?.getAttribute('aria-busy')===null)
+ for(const width of [1440,390,320]){
+  await p.setViewportSize({width,height:900});await p.goto(base+'/dealer/calendar?month=2028-02')
+  const day=p.locator('[data-calendar-date="2028-02-29"]'),target=p.locator('[name=salesTargetYen]')
+  await day.waitFor();await target.fill('7654321')
+  await day.scrollIntoViewIfNeeded();await day.focus();const y=await p.evaluate(()=>scrollY)
+  await day.press('Enter');await loaded();assert.equal(await dialog.isVisible(),true)
+  assert.match(await p.locator('#cd-title').innerText(),/2028年2月29日/)
+  assert.match(await body.innerText(),/13,300円/);assert.match(await body.innerText(),/営業担当/);assert.match(await body.innerText(),/テストサロン A/)
+  assert.equal(await p.evaluate(()=>window.dayXss),undefined)
+  assert.equal(await body.locator('script').count(),0)
+  assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false)
+  assert.equal(await dialog.evaluate(e=>e.scrollWidth>e.clientWidth+1),false)
+  await p.screenshot({path:out+'/day-'+width+'.png'})
+  await body.evaluate(e=>e.scrollTo(0,e.scrollHeight));await p.screenshot({path:out+'/orders-'+width+'.png'})
+  await p.getByRole('button',{name:'翌日',exact:true}).click();await loaded()
+  assert.match(await p.locator('#cd-title').innerText(),/3月1日/)
+  assert.match(await body.innerText(),/day-cutoff-next/)
+  await p.getByRole('button',{name:'前日',exact:true}).click();await loaded()
+  await p.keyboard.press('Escape');await p.waitForFunction(()=>!document.querySelector('.cd-dialog')?.open)
+  assert.equal(await target.inputValue(),'7654321','Draft target survives opening the day')
+  assert.equal(await day.evaluate(e=>e===document.activeElement),true,'Focus returns to selected day')
+  assert.ok(Math.abs(await p.evaluate(()=>scrollY)-y)<5,'Calendar scroll retained')
+  await day.click();await loaded();await p.getByRole('button',{name:'日別詳細を閉じる'}).click()
+ }
+ await p.setViewportSize({width:1440,height:900});await p.goto(base+'/dealer/calendar?month=2028-03')
+ await p.locator('[data-calendar-date="2028-03-05"]').click();await loaded()
+ assert.match(await body.innerText(),/この日の営業予定・活動はありません/);assert.match(await body.innerText(),/この日の受注はありません/)
+ await p.getByRole('button',{name:'翌日',exact:true}).click();await loaded()
+ assert.equal(await body.locator('.cd-order').count(),30);assert.equal(await body.locator('.cd-activity').count(),30)
+ await p.getByRole('button',{name:'受注の次ページ',exact:true}).click();await loaded()
+ assert.equal(await body.locator('.cd-order').count(),5);assert.equal(await body.locator('.cd-activity').count(),30)
+ await p.getByRole('button',{name:'営業予定の次ページ',exact:true}).click();await loaded()
+ assert.equal(await body.locator('.cd-order').count(),5);assert.equal(await body.locator('.cd-activity').count(),5)
+ await p.route('**/api/dealer/erp/calendar-day?*',r=>r.fulfill({status:503,contentType:'application/json',body:JSON.stringify({ok:false,error:'一時的な通信エラー'})}),{times:1})
+ await p.getByRole('button',{name:'翌日',exact:true}).click();await loaded()
+ assert.match(await body.innerText(),/一時的な通信エラー/)
+ await p.getByRole('button',{name:'再試行',exact:true}).click();await loaded();assert.match(await body.innerText(),/この日の受注はありません/)
+ let release,seen
+ const pending=new Promise(r=>release=r),requested=new Promise(r=>seen=r)
+ await p.route('**/api/dealer/erp/calendar-day?*',async r=>{seen();await pending;try{await r.continue()}catch{}},{times:1})
+ await p.getByRole('button',{name:'前日',exact:true}).click();await requested
+ await p.getByRole('button',{name:'翌日',exact:true}).click();await loaded();release()
+ assert.match(await p.locator('#cd-title').innerText(),/3月7日/);assert.match(await body.innerText(),/この日の受注はありません/)
+ await p.getByRole('button',{name:'日別詳細を閉じる'}).click()
+ // Staff sees only their order snapshots and activities shared with them.
+ const staff=await browser.newContext(),sp=await staff.newPage()
+ await sp.goto(base+'/dealer/login');await sp.locator('[name=loginId]').fill('erp-sales-a');await sp.locator('[name=password]').fill('FixtureOnly-v678!');await sp.locator('button[type=submit]').click();await sp.waitForURL('**/dealer/orders')
+ await sp.goto(base+'/dealer/calendar?month=2028-02');await sp.locator('[data-calendar-date="2028-02-29"]').click()
+ await sp.waitForFunction(()=>document.querySelector('.cd-content')?.getAttribute('aria-busy')===null)
+ const staffText=await sp.locator('.cd-content').innerText()
+ assert.match(staffText,/8,900円/);assert.doesNotMatch(staffText,/owner-private|other-branch|other-dealer|day-other/)
+ await staff.close()
+ assert.deepEqual(errors,[])
+ console.log('v696 browser PASS: desktop/mobile 1440/390/320, real daily schedules/orders, JST, XSS, keyboard/focus/scroll/draft retention, pagination, empty/retry/stale states, staff privacy')
+}finally{await browser.close()}
