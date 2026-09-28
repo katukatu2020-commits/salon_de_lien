@@ -24,7 +24,7 @@ env:
   ECS_SERVICE: salon-de-lien-staging-web
   RELEASE_DIR: scripts/aws/runtime-patches/dealer-workspace-v688
   PARENT_DIGEST: sha256:1794f8ab6ed96a49d46b55bc67f79cf0ad477d5808d629afe48319a89673d5e6
-  DEPLOY_FROM_DIGEST: sha256:1794f8ab6ed96a49d46b55bc67f79cf0ad477d5808d629afe48319a89673d5e6
+  DEPLOY_FROM_DIGEST: sha256:d3b42763975567a1a3cbde86d8b27cbc038720085c6fcbda76df8bf498a0e086
 
 jobs:
   deploy:

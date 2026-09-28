@@ -13,6 +13,10 @@ service=service.slice(0,start)+`function dealerPortalPage(dealer, initialView = 
 }
 `+service.slice(end)
 service=replace(service,'module.exports = { createWholesaleOrderingService,','module.exports = { dealerWorkspacePage: dealerPortalPage, createWholesaleOrderingService,')
+service=replace(service,"    if (pathname === '/dealer' && req.method === 'GET') {",`    if (pathname === '/dealer/password-change' && ['GET','HEAD'].includes(req.method) && !await dealerSession(req)) {
+      redirect(res, '/dealer/login?next=' + encodeURIComponent(pathname), 302); return true
+    }
+    if (pathname === '/dealer' && req.method === 'GET') {`)
 write('wholesale-ordering-v543.js',service)
 // Version only the dealer clients. The salon client and all existing asset URLs stay intact.
 for(const [input,output] of [['wholesale-ordering-client-v543.js','public/dealer-catalog-v688.js'],['public/dealer-order-entry-v687.js','public/dealer-orders-v688.js']]){

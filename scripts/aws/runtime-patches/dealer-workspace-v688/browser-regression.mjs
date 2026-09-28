@@ -9,6 +9,12 @@ const routes={operations:'home',orders:'orders',fulfillment:'orders',inventory:'
 const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH||'C:/Program Files/Google/Chrome/Application/chrome.exe'})
 const report=[]
 try{
+  const anonymous=await browser.newContext()
+  for(const method of ['get','head']){
+    const response=await anonymous.request[method](base+'/dealer/password-change',{maxRedirects:0})
+    assert.equal(response.status(),302);assert(response.headers().location.startsWith('/dealer/login'))
+  }
+  await anonymous.close()
   for(const width of [1440,1024,390,320]){
     const context=await browser.newContext({viewport:{width,height:900}}),page=await context.newPage(),errors=[]
     page.setDefaultTimeout(12000);page.on('pageerror',e=>errors.push(e.message))
