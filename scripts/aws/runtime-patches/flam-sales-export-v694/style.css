@@ -1,0 +1,17 @@
+.flam-toolbar-v694{display:flex;justify-content:flex-end;margin:0 0 16px}
+.flam-toolbar-v694 svg,.flam-dialog-v694 svg{width:18px;height:18px;flex:none}
+.flam-toolbar-v694 button,.flam-dialog-v694 button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px}
+dialog.flam-dialog-v694{width:min(720px,calc(100vw - 32px));max-height:calc(100dvh - 32px);border-radius:8px;padding:0;margin:auto;color:#292c2e}
+.flam-dialog-v694>header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 20px;border-bottom:1px solid #e3e6e8}
+.flam-dialog-v694 h2{font-size:20px;font-weight:600;line-height:1.5;margin:0;letter-spacing:0}.flam-dialog-v694 h3{font-size:16px;margin:0 0 12px;letter-spacing:0}
+.flam-dialog-v694 [data-flam-close]{width:44px;height:44px;padding:0;flex:none;background:#fff;border:1px solid #d5dadd;border-radius:4px;cursor:pointer}
+.flam-dialog-v694 .flam-body{padding:20px}.flam-dialog-v694 .flam-scope{font-size:14px;color:#666;margin:0 0 16px;overflow-wrap:anywhere}
+.flam-dialog-v694 .flam-summary{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:0 0 24px}.flam-dialog-v694 dt{font-size:13px;color:#626970}.flam-dialog-v694 dd{font-size:20px;font-weight:600;margin:8px 0 0;overflow-wrap:anywhere}
+.flam-dialog-v694 .flam-codes{border-top:1px solid #e3e6e8;padding-top:18px}.flam-dialog-v694 .flam-code-list{max-height:280px;overflow:auto;margin-bottom:12px}
+.flam-dialog-v694 .flam-code-list label{display:grid;grid-template-columns:minmax(0,1fr) 190px;align-items:center;gap:12px;padding:8px 2px;border-bottom:1px solid #eff1f2}.flam-dialog-v694 .flam-code-list span{overflow-wrap:anywhere}.flam-dialog-v694 .flam-code-list input{width:100%;min-width:0;box-sizing:border-box;min-height:44px;font-size:16px}
+.flam-dialog-v694 .flam-option{display:flex;align-items:center;gap:10px;margin-top:20px;min-height:44px}.flam-dialog-v694 input[type=checkbox]{width:20px;height:20px;flex:none}
+.flam-dialog-v694 .flam-meta{font-size:13px;color:#666;margin:14px 0 0}.flam-dialog-v694 .flam-issues,.flam-dialog-v694 .flam-error{color:#a92b39;background:#fff3f3;padding:14px 16px;font-size:14px;overflow-wrap:anywhere}.flam-dialog-v694 .flam-issues{padding-left:32px}
+.flam-dialog-v694>footer{position:sticky;bottom:0;background:#fff;display:flex;gap:12px;justify-content:flex-end;border-top:1px solid #e3e6e8;padding:16px 20px}
+.flam-dialog-v694>footer button span{white-space:nowrap}
+@media(max-width:360px){.flam-dialog-v694>footer{gap:8px}.flam-dialog-v694>footer button{gap:6px;font-size:13px}}
+@media(max-width:480px){dialog.flam-dialog-v694{width:calc(100vw - 16px);max-height:calc(100dvh - 16px)}.flam-dialog-v694 .flam-body,.flam-dialog-v694>header,.flam-dialog-v694>footer{padding:16px}.flam-dialog-v694 .flam-summary{grid-template-columns:1fr;gap:12px}.flam-dialog-v694 .flam-code-list label{grid-template-columns:1fr;gap:6px}.flam-dialog-v694>footer button{flex:1;padding:10px 8px}.flam-toolbar-v694 button{width:100%}}
