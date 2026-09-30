@@ -1,0 +1,22 @@
+name: Dealer demo data audit v699
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  group: salon-de-lien-protected-release
+  cancel-in-progress: false
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::009293460979:role/SalonDeLienGitHubDeployRole
+          role-session-name: GitHubActions
+          aws-region: ap-northeast-1
+      - name: Read dealer and salon identities without changing data
+        run: node scripts/aws/data/dealer-demo-v699/run.mjs
