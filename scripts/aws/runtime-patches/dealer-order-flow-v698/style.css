@@ -1,0 +1,39 @@
+.flow-body{margin:0;color:#352c30;background:#fcfaf9;font-family:system-ui,sans-serif;letter-spacing:0}
+.flow-main,#flow-app{min-width:0;max-width:1440px;margin:auto;padding:24px}
+.flow-head{background:white;border-bottom:1px solid #e8dedb;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.flow-head nav,.flow-toolbar,.flow-tabs{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.flow-head form{margin:0}.flow-body a{color:#a3385d}.flow-body h1{font-size:26px}.flow-body h2{font-size:20px}
+#flow-app button,.flow-dialog button,.flow-head button,.flow-document button{font:inherit;cursor:pointer;border:1px solid #dccdcc;border-radius:6px;padding:10px 16px;min-height:44px;background:white;color:#9e3657}
+#flow-app button.primary,.flow-dialog button.primary{background:#b94368;color:white;border-color:#b94368}
+#flow-app button:disabled,.flow-dialog button:disabled{opacity:.5;cursor:not-allowed}
+#flow-app input,#flow-app select,#flow-app textarea,.flow-dialog input,.flow-dialog select,.flow-dialog textarea{font:inherit;min-height:44px;max-width:100%;box-sizing:border-box;border:1px solid #d5cac7;border-radius:5px;padding:10px;background:white;color:#352c30}
+#flow-app input[type=checkbox],.flow-dialog input[type=checkbox]{min-height:24px;width:24px;vertical-align:middle}
+#flow-app input[type=number]{width:96px}
+#flow-app label,.flow-dialog label{display:grid;gap:6px;font-weight:600}
+#flow-app small,.flow-document small{display:block;color:#7c7275;font-size:13px;margin-top:4px}
+.flow-table-wrap{overflow:auto;margin:18px 0;border-top:1px solid #e5dcda}
+.flow-table{width:100%;border-collapse:collapse;background:white;font-size:14px}
+.flow-table th,.flow-table td{padding:13px 12px;text-align:left;border-bottom:1px solid #e8e0dc;vertical-align:middle}
+.flow-table th{background:#f7f3f3;color:#685a60;white-space:nowrap}
+.flow-table td{max-width:400px;overflow-wrap:anywhere}
+.flow-table td:last-child{white-space:nowrap}.flow-table td:last-child button{margin:3px}
+.flow-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.flow-form-grid .wide{grid-column:1/-1}
+.flow-toolbar{padding:12px 0}.flow-toolbar a{font-weight:600}
+.flow-status{min-height:24px;margin:12px 0;color:#a52a4d}.flow-status:empty{display:none}
+.flow-note{padding:14px 0;color:#685a60}
+.flow-tabs{border-bottom:1px solid #ded3d0;padding:0 0 12px;margin-bottom:20px}
+.flow-tabs button[aria-selected=true]{background:#fcebf1!important;border-color:#cb6b8b!important}
+.flow-dialog{width:min(720px,calc(100% - 32px));max-height:90dvh;border:1px solid #ddcfca;border-radius:8px;padding:24px;box-sizing:border-box;color:#352c30}
+.flow-dialog::backdrop{background:#211c214d}.flow-dialog header{display:flex;justify-content:space-between;align-items:center;gap:16px}
+.flow-dialog footer{display:flex;justify-content:flex-end;gap:12px;margin-top:20px}
+.flow-badge{display:inline-block;padding:4px 8px;background:#eef5f1;color:#397863;border-radius:4px;white-space:nowrap;font-size:13px}
+.flow-summary{display:flex;gap:24px;flex-wrap:wrap;padding:20px 0;border-bottom:1px solid #e4d9d6}.flow-summary strong{display:block;font-size:24px}
+.flow-document{max-width:980px;margin:24px auto;padding:24px;background:white}
+.flow-document header{display:flex;justify-content:space-between;gap:24px}.flow-document table{border-collapse:collapse;width:100%}.flow-document th,.flow-document td{padding:12px;border-bottom:1px solid #ddd;text-align:right}.flow-document td:first-child,.flow-document th:first-child{text-align:left}
+.flow-document dl{max-width:360px;margin-left:auto}.flow-document dl div{display:flex;justify-content:space-between;padding:10px 0}.flow-document dd{margin:0}.flow-document nav{display:flex;justify-content:space-between}
+.flow-addon{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:12px 0}.flow-addon a{padding:10px 16px;border:1px solid #dccfcc;background:white;border-radius:6px;color:#a3385d}
+@media(max-width:640px){.flow-main,#flow-app{padding:16px 8px}.flow-head{padding:12px;display:block}.flow-head nav{margin-top:12px;gap:10px;font-size:13px}.flow-form-grid{grid-template-columns:minmax(0,1fr)}.flow-table th,.flow-table td{padding:10px 8px}.flow-dialog{padding:16px}.flow-summary{gap:16px}.flow-toolbar>*{max-width:100%}}
+@media print{.no-print{display:none!important}.flow-document{padding:0;margin:0}tr{break-inside:avoid}}
+@media(max-width:640px){.flow-table-wrap{overflow:visible;border-top:0}.flow-table,.flow-table tbody{display:block;background:transparent}.flow-table thead{display:none}.flow-table tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border:1px solid #e1d6d2;border-radius:6px;background:white;margin-bottom:12px;padding:8px}.flow-table td{border:0;min-width:0;max-width:none;white-space:normal!important;padding:8px}.flow-table td:first-child,.flow-table td:last-child{grid-column:1/-1}.flow-table td[data-label]::before{content:attr(data-label);display:block;color:#75696f;font-size:12px;margin-bottom:6px}.flow-head nav a{padding:6px 0}.flow-table td:last-child a{display:inline-block;padding:8px 4px}}
+.flow-totals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;padding:20px 0;border-block:1px solid #e4d9d4;margin:20px 0}.flow-totals strong{display:block;font-size:24px;margin-top:8px}@media(max-width:640px){.flow-totals{grid-template-columns:1fr}.flow-totals strong{font-size:22px}}

@@ -8,6 +8,7 @@ datasource db {
 }
 
 model Organization {
+  serviceMode                  String                       @default("FULL")
   id                           String                       @id
   slug                         String                       @unique
   name                         String
@@ -47,6 +48,7 @@ model Organization {
 }
 
 model AppUser {
+  orderOnlyPasswordChangeRequired Boolean                 @default(false)
   id                  String                  @id @default(cuid())
   organizationId      String?
   customerId          String?                 @unique
@@ -75,6 +77,44 @@ model AppUser {
   @@index([email])
   @@index([loginId])
   @@index([manufacturerName])
+}
+
+// Legacy wholesale/ERP tables use the runtime SQL repository. These additive
+// bridge models retain scalar foreign keys; migration SQL owns those constraints.
+model DealerSupplier {
+  id          String   @id
+  dealerId    String
+  name        String
+  code        String
+  note        String   @default("")
+  active      Boolean  @default(true)
+  exporterKey String   @default("generic")
+  updatedAt   DateTime @default(now()) @db.Timestamptz(6)
+
+  @@unique([dealerId, code])
+  @@unique([id, dealerId])
+}
+
+model DealerProductSupplier {
+  productId           String
+  supplierId          String
+  supplierProductCode String   @default("")
+  unitCost            Int      @default(0)
+  isPrimary           Boolean  @default(false)
+  updatedAt           DateTime @default(now()) @db.Timestamptz(6)
+
+  // One primary supplier per product is enforced by a partial unique SQL index.
+  @@id([productId, supplierId])
+}
+
+model DealerErpPurchaseSource {
+  purchaseLineId String
+  orderLineId    String
+  quantity       Int
+  snapshot       Json
+
+  @@id([purchaseLineId, orderLineId])
+  @@index([orderLineId], map: "DealerErpPurchaseSource_order")
 }
 
 model CustomerStoreLink {

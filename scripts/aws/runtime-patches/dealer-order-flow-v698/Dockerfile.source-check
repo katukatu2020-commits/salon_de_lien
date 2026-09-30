@@ -1,0 +1,16 @@
+FROM node:20-bookworm-slim
+WORKDIR /app
+ENV NEXT_TELEMETRY_DISABLED=1
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+COPY package.json package-lock.json ./
+COPY prisma ./prisma
+RUN npm ci
+COPY src ./src
+COPY public ./public
+COPY tests ./tests
+COPY scripts ./scripts
+COPY next-env.d.ts tsconfig.json next.config.mjs postcss.config.js tailwind.config.ts .eslintrc.json ./
+RUN npm run typecheck
+RUN npm run lint
+RUN npm test
+RUN npm run build
