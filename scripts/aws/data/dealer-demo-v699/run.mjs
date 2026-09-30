@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
 import { gzipSync } from 'node:zlib';
 import { execFileSync } from 'node:child_process';
 const region='ap-northeast-1',cluster='salon-de-lien-staging-cluster';
@@ -12,7 +13,7 @@ const code=fs.readFileSync(new URL('./audit.cjs',import.meta.url),'utf8');
 const compressed=gzipSync(code).toString('base64');
 const overrides={containerOverrides:[{name:'Web',command:['node','-e',`eval(require('node:zlib').gunzipSync(Buffer.from('${compressed}','base64')).toString())`]}]};
 if(Buffer.byteLength(JSON.stringify(overrides))>8100)throw Error('ECS override too large');
-const root=process.env.RUNNER_TEMP;
+const root=process.env.RUNNER_TEMP || os.tmpdir();
 const network=path.join(root,'demo-v699-network.json'),override=path.join(root,'demo-v699-overrides.json');
 fs.writeFileSync(network,JSON.stringify(service.networkConfiguration));
 fs.writeFileSync(override,JSON.stringify(overrides));

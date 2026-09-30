@@ -1,10 +1,5 @@
 name: Dealer demo data audit v699
 on:
-  push:
-    branches: [recovery/aws-canonical-20260815]
-    paths:
-      - .github/workflows/dealer-demo-data-v699.yml
-      - scripts/aws/data/dealer-demo-v699/**
   workflow_dispatch:
 permissions:
   contents: read
