@@ -8,7 +8,7 @@ fs.copyFileSync(path.join(__dirname,'client.js'),path.join(root,'public/dealer-p
 fs.copyFileSync(path.join(__dirname,'style.css'),path.join(root,'public/dealer-product-master-v709.css'))
 edit('wholesale-ordering-v543.js',s=>{
   s=once(s,'  const authAttempts = new Map()',`  const authAttempts = new Map()
-  const masterCatalogV709 = require('./dealer-product-master-v709/catalog.cjs').createCatalog({db:prisma,h:{session:dealerSession,portal:dealerPortalPage,sameOrigin:validSameOrigin,readPayload,json,html,redirect}})`)
+  const masterCatalogV709 = require('./dealer-product-master-v709/catalog.cjs').createCatalog({db:prisma,h:{session:dealerSession,portal:dealerPortalPage,sameOrigin:validSameOrigin,readPayload,json,html,redirect,searchVariants:dealerSearchVariantsV659}})`)
   s=once(s,'    if (await dealerErpV678.flowPortal.handle(req, res, url)) return true','    if (await masterCatalogV709.handle(req, res, url)) return true\n    if (await dealerErpV678.flowPortal.handle(req, res, url)) return true')
   s=once(s,"dealer.staffUserId && dealer.mustChangePassword ? '/dealer/password-change' : '/dealer/orders'","dealer.staffUserId && dealer.mustChangePassword ? '/dealer/password-change' : await masterCatalogV709.landing(dealer)")
   return once(s,"head:sharedHead('ディーラー管理'),icon,escapeHtml,...custom}","head:sharedHead('ディーラー管理').replace('</head>','<link rel=\"stylesheet\" href=\"/dealer-product-master-v709.css\"></head>'),icon,escapeHtml,...custom}")

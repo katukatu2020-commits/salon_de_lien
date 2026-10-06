@@ -33,12 +33,13 @@ function createCatalog({db,h={},sourceCode=process.env.ORIMIA_PRODUCT_MASTER_DEA
     const manufacturers=[...new Set(groups.map(p=>p.manufacturerName))]
     const categories=[...new Set(groups.filter(p=>!f.manufacturer||p.manufacturerName===f.manufacturer).map(p=>p.category).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ja'))
     if(!categories.includes(f.category))f.category=''
-    const needle='%'+f.search.replace(/[\\%_]/g,'\\$&')+'%'
+    const terms=(h.searchVariants?h.searchVariants(f.search):f.search?[f.search.normalize('NFKC')]:[]).map(term=>term.replace(/[\\%_]/g,'\\$&'))
     const where=`p."dealerId"=$1 AND p.active=TRUE AND ($3='' OR p."manufacturerName"=$3) AND ($4='' OR p.category=$4)
-      AND ($5='%%' OR concat_ws(' ',p.name,p."manufacturerName",p."productCode",p."manufacturerProductCode",p."janCode") ILIKE $5)
+      AND ($5::jsonb='[]'::jsonb OR EXISTS (SELECT 1 FROM jsonb_array_elements_text($5::jsonb) AS terms(term)
+        WHERE concat_ws(' ',p.name,p."manufacturerName",p."productCode",p."manufacturerProductCode",p."janCode") ILIKE '%' || terms.term || '%'))
       AND (NOT $6::boolean OR own.id IS NULL OR own.active=FALSE)`
     const join=`FROM "WholesaleDealerProduct" p LEFT JOIN "WholesaleDealerProduct" own ON own."dealerId"=$2 AND own."productCode"=p."productCode"`
-    const params=[sourceId,s.id,f.manufacturer,f.category,needle,f.unregistered]
+    const params=[sourceId,s.id,f.manufacturer,f.category,JSON.stringify(terms),f.unregistered]
     const total=Number((await db.$queryRawUnsafe(`SELECT COUNT(*)::int AS total ${join} WHERE ${where}`,...params))[0].total)
     f.page=Math.min(f.page,Math.max(1,Math.ceil(total/f.pageSize)))
     const products=await db.$queryRawUnsafe(`SELECT ${publicFields},own.id AS "ownProductId",own.active AS "ownActive",own."wholesalePrice" AS "ownPrice" ${join} WHERE ${where} ORDER BY p."manufacturerName",p.name,p."productCode",p.id LIMIT $7 OFFSET $8`,...params,f.pageSize,(f.page-1)*f.pageSize)

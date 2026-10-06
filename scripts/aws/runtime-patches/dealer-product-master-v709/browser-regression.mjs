@@ -15,6 +15,10 @@ try{
   const ctx=await browser.newContext({viewport:{width:1440,height:1050}}),page=await ctx.newPage(),errors=[]
   page.on('pageerror',e=>errors.push(e.message));page.setDefaultTimeout(20000)
   assert.equal((await login(ctx,'qa709.a')).headers().location,'/dealer/products/master')
+  for(const search of ['オルディーブ','ｵﾙﾃﾞｨｰﾌﾞ','おるでぃーぶ']){
+    const response=await ctx.request.get(base+'/api/dealer/product-master?search='+encodeURIComponent(search));assert.equal(response.status(),200)
+    const body=await response.json();assert.equal(body.total,1);assert.equal(body.products[0].id,'qa-v709-p3999')
+  }
   await page.goto(base+'/dealer/products/master');await page.locator('[data-product]').first().waitFor()
   assert.equal(await page.locator('[data-product]').count(),50)
   const select=async(selector,value)=>{const response=page.waitForResponse(r=>r.url().includes('/api/dealer/product-master?'));await page.locator(selector).selectOption(value);await response;await page.waitForFunction(()=>document.querySelector('[data-results]').getAttribute('aria-busy')==='false')}

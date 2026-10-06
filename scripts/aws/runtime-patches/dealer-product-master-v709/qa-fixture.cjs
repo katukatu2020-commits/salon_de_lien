@@ -15,6 +15,7 @@ async function seed(){
     for(const id of ['source','a','b','foreign'])await tx.$executeRawUnsafe('INSERT INTO "WholesaleDealer" (id,name,"loginId",email,"passwordHash","dealerCode") VALUES ($1,$2,$3,$4,$5,$6)',prefix+id,'QA709 '+id,'qa709.'+id,'qa709.'+id+'@example.invalid',hash,id==='source'?'DLR-60EA86D040':'QA709-'+id)
     await tx.$executeRawUnsafe(`INSERT INTO "WholesaleDealerProduct" (id,"dealerId","manufacturerName",name,category,"productCode","manufacturerProductCode","janCode","wholesalePrice","suggestedRetailPrice","orderUnit",description)
       SELECT 'qa-v709-p'||lpad(n::text,4,'0'),'qa-v709-source',CASE WHEN n%2=0 THEN 'QA709 中野製薬' ELSE 'QA709 ミルボン' END,'検証商品 '||lpad(n::text,4,'0'),CASE WHEN n%2=0 THEN 'スタイリング' ELSE 'GM' END,'QA709-'||lpad(n::text,4,'0'),'M-'||n,'4900000'||lpad(n::text,6,'0'),731,CASE WHEN n=4 THEN NULL ELSE 2000 END,1,'商品説明' FROM generate_series(1,4000) n`)
+    await tx.$executeRawUnsafe(`UPDATE "WholesaleDealerProduct" SET name='ｵﾙﾃﾞｨｰﾌﾞ ｱﾃﾞｨｸｼｰ' WHERE id='qa-v709-p3999'`)
     await tx.$executeRawUnsafe(`INSERT INTO "WholesaleDealerProduct" (id,"dealerId","manufacturerName",name,"productCode","wholesalePrice") VALUES ('qa-v709-foreign-product','qa-v709-foreign','他社','他社専用品','QA709-PRIVATE',999)`)
     await tx.$executeRawUnsafe(`INSERT INTO "DealerSalesMember" (id,"dealerId",name,"loginId","passwordHash",role,"mustChangePassword") VALUES ('qa-v709-staff','qa-v709-a','QA709スタッフ','qa709.staff',$1,'STAFF',FALSE)`,hash)
   })
