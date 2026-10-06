@@ -44,6 +44,7 @@ model Organization {
   products                     Product[]
   SmsSendLog                   SmsSendLog[]
   staffBookingSettings         StaffBookingSetting[]
+  staffDailySchedules          StaffDailySchedule[]
   visitCommunityPosts          VisitCommunityPost[]
 }
 
@@ -558,6 +559,22 @@ model StaffBookingSetting {
 
   @@unique([organizationId, staffKey])
   @@index([organizationId, staffName])
+}
+
+model StaffDailySchedule {
+  organizationId  String
+  staffKey        String
+  date            String
+  isDayOff        Boolean      @default(false)
+  startMinutes    Int
+  endMinutes      Int
+  updatedByUserId String?
+  createdAt       DateTime     @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime     @default(now()) @updatedAt @db.Timestamptz(6)
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@id([organizationId, staffKey, date])
+  @@index([organizationId, date], map: "StaffDailySchedule_org_date_idx")
 }
 
 model ServiceSale {

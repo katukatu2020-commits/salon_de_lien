@@ -1,0 +1,19 @@
+.work-calendar-v704,.work-day-v704{min-width:0;background:#fff;border-block:1px solid #e7d8d1;padding:24px}
+.work-heading-v704{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px}
+.work-heading-v704 h2{margin:0;font-size:20px}.work-heading-v704 p{font-size:12px;color:#74645d;margin:8px 0 0}
+.work-month-v704{display:grid;grid-template-columns:40px 120px 40px;align-items:center;text-align:center;gap:8px}
+.work-month-v704 a,.work-heading-v704>a{display:grid;place-items:center;text-decoration:none}
+.work-grid-v704{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border-top:1px solid #e7d8d1;border-left:1px solid #e7d8d1}
+.work-weekday-v704{text-align:center;background:#faf6f3;font-size:12px;padding:10px 0;border-right:1px solid #e7d8d1}
+.work-cell-v704,.work-empty-v704{min-width:0;min-height:124px;padding:12px;border-right:1px solid #e7d8d1;border-bottom:1px solid #e7d8d1}
+.work-cell-v704{display:flex;flex-direction:column;gap:6px;text-decoration:none!important;color:#403b38;font-size:13px;background:#fff}
+.work-cell-v704 time{font-weight:800;margin-bottom:5px}.work-cell-v704 span{color:#316f5d}.work-cell-v704 small{color:#797572}.work-cell-v704 em{font-size:10px;font-style:normal;color:#a44160}
+.work-cell-v704.is-closed{background:#fff7f9}.work-cell-v704.is-outside{background:#f5f5f5;color:#8e8e8e}.work-cell-v704.is-today{box-shadow:inset 0 0 0 2px #bc466a}.work-cell-v704:hover{background:#f9eef2}.work-cell-v704:focus-visible{outline:3px solid #bc466a;outline-offset:-3px}
+.work-staff-row-v704{display:grid;grid-template-columns:minmax(150px,1fr) 150px 145px 145px;gap:16px;align-items:center;padding:20px 0;border-top:1px solid #e7d8d1}
+.work-staff-row-v704 strong{font-size:16px}.work-staff-row-v704 small{display:block;margin-top:8px;color:#74706d;font-size:12px}
+.work-staff-row-v704 label{display:grid;gap:6px;min-width:0;font-size:11px;color:#74645d}
+.work-staff-row-v704 input,.work-staff-row-v704 select{width:100%;min-width:0;min-height:44px;padding:8px;border:1px solid #ddcbc3;border-radius:6px;background:#fff;font-size:14px;color:#403b38}
+.work-staff-row-v704 input:disabled{background:#f6f6f6;color:#777}
+.work-actions-v704{display:flex;align-items:center;justify-content:space-between;gap:16px;border-top:1px solid #e7d8d1;padding-top:20px}.work-actions-v704 p{font-size:13px;color:#9e3452;margin:0}
+.work-actions-v704 button{background:#b74668;white-space:nowrap}.work-links-v704{margin-top:16px;font-size:13px;text-align:right}.work-defaults-v704{border-top:1px solid #e7d8d1;padding:18px 0}.work-defaults-v704 summary{cursor:pointer;font-weight:700;font-size:14px}.work-defaults-v704 .ca-attendance-card{border:0;box-shadow:none}
+@media(max-width:800px){.work-calendar-v704,.work-day-v704{padding:12px}.work-heading-v704{align-items:flex-start;flex-direction:column}.work-heading-v704 h2{font-size:17px}.work-month-v704{align-self:center}.work-cell-v704,.work-empty-v704{min-height:104px;padding:8px 4px}.work-cell-v704{font-size:10px;gap:5px}.work-cell-v704 small,.work-cell-v704 em{font-size:9px}.work-staff-row-v704{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.work-actions-v704{align-items:stretch;flex-direction:column}.work-actions-v704 button{width:100%}}
