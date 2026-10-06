@@ -324,7 +324,7 @@ export function AppShell({
               <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#aa9b90]" />
               <input
                 name="q"
-                placeholder="顧客名・電話・メモで検索"
+                placeholder="顧客名・フリガナ・電話・メモで検索"
                 className="h-11 w-full rounded-full border border-lien bg-white px-11 text-sm text-lien-ink shadow-sm outline-none placeholder:text-[#a99d93] focus:border-[color:var(--lien-primary)] focus:ring-2 focus:ring-[#ead0c7]"
               />
             </form>

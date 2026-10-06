@@ -22,6 +22,7 @@ import { customerPaidAttendantSummary } from "@/lib/salon/staff";
 import { requireBackofficeSession } from "@/lib/auth/authorization";
 import { resolveCustomerPhotoReferences } from "@/lib/storage/customer-photo";
 import { customerAgeLabel } from "@/lib/customer-age";
+import { CUSTOMER_KANA_QUERY, customerKana, formatCustomerNameWithKana, matchingCustomerKanaIds, type CustomerKanaRow } from "@/lib/customer-kana";
 
 type CustomersPageProps = {
   searchParams: {
@@ -1153,6 +1154,11 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
     );
   }
 
+  const kanaRows = session.organizationId
+    ? await prisma.$queryRawUnsafe<CustomerKanaRow[]>(CUSTOMER_KANA_QUERY, session.organizationId)
+    : [];
+  const kanaById = new Map(kanaRows.map(row => [row.id, customerKana(row)]));
+  const matchingKanaIds = matchingCustomerKanaIds(kanaRows, keyword);
   const customers = await prisma.customer.findMany({
     where: keyword
       ? {
@@ -1160,6 +1166,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
           storeHiddenAt: null,
           organizationId: session.organizationId ?? undefined,
           OR: [
+            { id: { in: matchingKanaIds } },
             { name: { contains: keyword, mode: "insensitive" } },
             { phone: { contains: keyword, mode: "insensitive" } },
             { memo: { contains: keyword, mode: "insensitive" } }
@@ -3103,9 +3110,9 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
             <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[color:var(--lien-muted)]" />
             <input
               name="q"
-              aria-label="顧客名・電話・メモで検索"
+              aria-label="顧客名・フリガナ・電話・メモで検索"
               defaultValue={keyword}
-              placeholder="顧客名・電話・メモで検索"
+              placeholder="顧客名・フリガナ・電話・メモで検索"
               className="h-12 w-full rounded-full border border-[color:var(--lien-border)] bg-white pl-11 pr-4 text-sm text-[color:var(--lien-ink)] shadow-sm outline-none transition placeholder:text-[#A69A90] focus:border-[color:var(--lien-primary)] focus:ring-4 focus:ring-[#E9C9BE]/40"
             />
           </label>
@@ -5600,7 +5607,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="truncate text-base font-semibold text-[color:var(--lien-ink)]">{row.customer.name}</p>
+                  <p className="text-base font-semibold text-[color:var(--lien-ink)]" style={{ whiteSpace: "normal", overflowWrap: "anywhere" }}>{formatCustomerNameWithKana(row.customer.name, kanaById.get(row.customer.id) ?? "")}</p>
                   <p className="mt-1 text-xs font-semibold text-[color:var(--lien-primary)]">{customerCode(row.customer.id)}</p>
                   <span
                     className={`mt-2 inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
@@ -5667,8 +5674,8 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
               {visibleCommercialRows.map((row) => (
                 <tr key={row.customer.id} className="hover:bg-[#fbf8f3]">
                   <td className="whitespace-nowrap px-5 py-4">
-                    <Link href={row.href} className="inline-flex min-h-9 items-center rounded-full px-3 font-semibold text-stone-950 transition hover:bg-[color:var(--lien-surface-soft)] hover:text-[color:var(--lien-primary-dark)]">
-                      {row.customer.name}
+                    <Link href={row.href} style={{ maxWidth: "24rem", whiteSpace: "normal", overflowWrap: "anywhere" }} className="inline-flex min-h-9 items-center rounded-full px-3 font-semibold text-stone-950 transition hover:bg-[color:var(--lien-surface-soft)] hover:text-[color:var(--lien-primary-dark)]">
+                      {formatCustomerNameWithKana(row.customer.name, kanaById.get(row.customer.id) ?? "")}
                     </Link>
                     <div className="mt-1 text-xs font-medium text-teal-800">{customerCode(row.customer.id)}</div>
                     <span
