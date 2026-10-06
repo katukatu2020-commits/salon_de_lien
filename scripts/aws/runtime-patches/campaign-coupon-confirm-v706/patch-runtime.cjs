@@ -45,6 +45,6 @@ action = replace(action, 'let a = await e.customerBroadcast.create({\n          
 write('.next/server/chunks/9845.js', action)
 let server = read('server.js')
 server = replace(server, 'const customerCampaigns = createCustomerCampaignService({', "const broadcastPreviewV706 = require('./broadcast-preview-v706.cjs').createService({ prisma, sessionProvider: req => chatSession(req, 'staff'), json })\nconst customerCampaigns = createCustomerCampaignService({")
-server = replace(server, '      if(await wholesaleOrdering.flowGate(req,res,url))return', "      if (url.pathname === '/api/health/ready') res.setHeader('X-Lien-Campaign-Coupon-Confirm', 'v706')\n      if (await broadcastPreviewV706.handle(req, res, url)) return\n      if(await wholesaleOrdering.flowGate(req,res,url))return")
+server = replace(server, '      if(await wholesaleOrdering.flowGate(req,res,url))return', "      if (url.pathname === '/api/health/ready') res.setHeader('X-Lien-Campaign-Coupon-Confirm', 'v706')\n      if(await wholesaleOrdering.flowGate(req,res,url))return\n      if (await broadcastPreviewV706.handle(req, res, url)) return")
 write('server.js', server)
 console.log('v706 campaign 4:3 editor and verified broadcast confirmation installed.')
