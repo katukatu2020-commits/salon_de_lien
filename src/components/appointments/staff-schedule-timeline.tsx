@@ -13,6 +13,7 @@ import { BookingCapacityEditor } from "@/components/appointments/booking-capacit
 import { BOOKING_PROVIDERS, inferBookingProvider } from "@/lib/appointments/booking-provider";
 import type { BookingCapacityOverrideValue } from "@/lib/appointments/booking-capacity";
 import { resolveScheduleStaffIdentity } from "@/lib/appointments/staff-identity";
+import { checkoutDisplay } from "@/lib/appointments/checkout-display";
 import {
   appointmentMinutes,
   assignScheduleLanes,
@@ -38,6 +39,7 @@ export type ScheduleTimelineAppointment = {
   staffKey?: string;
   staffName: string;
   status: string;
+  checkoutCompleted?: boolean;
   source: string | null;
   bookingProvider: string | null;
   updatedAt: string;
@@ -83,13 +85,6 @@ const TOUCH_SCROLL_THRESHOLD = 6;
 
 function minutesLabel(minutes: number) {
   return `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
-}
-
-function statusClasses(status: string) {
-  if (status === "予約確定") return "border-[#e2b9b1] bg-[#fff0ed] text-[#603d37]";
-  if (status === "変更受付") return "border-[#dfc78e] bg-[#fff8e6] text-[#725117]";
-  if (status === "仮予約") return "border-[#c7d7c4] bg-[#f0f6ee] text-[#405b40]";
-  return "border-[#ddd5cc] bg-[#f5f1ec] text-[#6f665e]";
 }
 
 function appointmentRange(appointment: ScheduleTimelineAppointment) {
@@ -468,6 +463,12 @@ export function StaffScheduleTimeline({
         <div>
           <p className="text-sm font-semibold text-[color:var(--lien-primary)]">日別シフト表</p>
           <h2 className="mt-1 text-xl font-semibold text-[color:var(--lien-ink)]">{dateLabel}</h2>
+          <div className="mt-2 flex gap-4 text-xs" aria-label="会計状態">
+            {[true, false].map((completed) => {
+              const display = checkoutDisplay(completed);
+              return <span key={display.label} className="inline-flex items-center gap-1.5"><span aria-hidden="true" className="h-3 w-3 rounded-sm border" style={display.style} />{display.label}</span>;
+            })}
+          </div>
           <p className="mt-1 text-xs leading-5 text-[color:var(--lien-muted)]">予約をドラッグして移動、右端を引いて施術時間を変更できます。15分単位で保存されます。</p>
         </div>
         <div className="flex flex-col items-start gap-3 lg:items-end">
@@ -607,16 +608,19 @@ export function StaffScheduleTimeline({
                       <button
                         key={appointment.id}
                         type="button"
-                        className={`group absolute z-10 overflow-hidden rounded-xl border px-2 py-1.5 text-left text-[11px] leading-4 shadow-sm outline-none transition hover:z-20 hover:shadow-md focus-visible:z-20 focus-visible:ring-2 focus-visible:ring-[color:var(--lien-primary)] ${statusClasses(appointment.status)} ${isAppointmentActive(appointment) ? "cursor-grab active:cursor-grabbing" : "cursor-default opacity-70"}`}
+                        data-appointment-id={appointment.id}
+                        data-checkout-state={appointment.checkoutCompleted ? "paid" : "unpaid"}
+                        className={`group absolute z-10 overflow-hidden rounded-xl border px-2 py-1.5 text-left text-[11px] leading-4 shadow-sm outline-none transition hover:z-20 hover:shadow-md focus-visible:z-20 focus-visible:ring-2 focus-visible:ring-[color:var(--lien-primary)] ${isAppointmentActive(appointment) ? "cursor-grab active:cursor-grabbing" : "cursor-default"}`}
                         style={{
+                          ...checkoutDisplay(Boolean(appointment.checkoutCompleted)).style,
                           left: eventLeft,
                           top: ROW_PADDING + lane * (EVENT_HEIGHT + EVENT_GAP),
                           width: eventWidth,
                           height: EVENT_HEIGHT,
                           touchAction: "pan-y pinch-zoom"
                         }}
-                        title={`${appointmentRange(appointment)} ${appointment.customerName} / ${provider.label}。ダブルクリックで予約・会計を開く`}
-                        aria-label={`${appointment.customerName} ${appointmentRange(appointment)}。ダブルクリックまたはEnterキーで予約・会計を開く。矢印キーで15分移動、Shiftと左右キーで長さを変更`}
+                        title={`${checkoutDisplay(Boolean(appointment.checkoutCompleted)).label} / ${appointmentRange(appointment)} ${appointment.customerName} / ${provider.label}。ダブルクリックで予約・会計を開く`}
+                        aria-label={`${checkoutDisplay(Boolean(appointment.checkoutCompleted)).label} / ${appointment.customerName} ${appointmentRange(appointment)}。ダブルクリックまたはEnterキーで予約・会計を開く。矢印キーで15分移動、Shiftと左右キーで長さを変更`}
                         onPointerDown={(event) => pointerStart(event, appointment, "move")}
                         onPointerMove={pointerMove}
                         onPointerUp={pointerEnd}

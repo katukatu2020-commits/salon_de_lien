@@ -169,7 +169,8 @@ export default async function AppointmentsPage({ searchParams }: AppointmentsPag
         OR: [{ source: null }, { source: { not: OWNER_DASHBOARD_SIMULATION_SOURCE } }]
       },
       include: {
-        customer: { select: { id: true, name: true, phone: true } }
+        customer: { select: { id: true, name: true, phone: true } },
+        serviceSales: { select: { id: true }, take: 1 }
       },
       orderBy: { scheduledAt: "asc" }
     }),
@@ -439,6 +440,7 @@ export default async function AppointmentsPage({ searchParams }: AppointmentsPag
                   staffKey: assignedStaff?.key ?? FREE_STAFF.key,
                   staffName: assignedStaff?.name ?? FREE_STAFF.name,
                   status: appointment.status,
+                  checkoutCompleted: appointment.serviceSales.length > 0,
                   source: appointment.source,
                   bookingProvider: appointment.bookingProvider,
                   updatedAt: appointment.updatedAt.toISOString()

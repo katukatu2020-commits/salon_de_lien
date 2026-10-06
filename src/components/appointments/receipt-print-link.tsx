@@ -4,9 +4,7 @@ import { Printer } from "lucide-react";
 export function ReceiptPrintLink({ appointmentId, className = "" }: { appointmentId: string; className?: string }) {
   return (
     <Link
-      href={`/admin/appointments/${appointmentId}/receipt`}
-      target="_blank"
-      rel="noreferrer"
+      href={`/admin/appointments/${appointmentId}/receipt?autoPrint=1`}
       className={`lien-button-secondary ${className}`}
     >
       <Printer className="h-4 w-4" aria-hidden="true" />

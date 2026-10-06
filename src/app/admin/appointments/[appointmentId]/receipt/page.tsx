@@ -2,6 +2,8 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { notFound } from "next/navigation";
 import { ReceiptPrintButton } from "@/components/appointments/receipt-print-button";
+import Script from "next/script";
+import { appointmentShiftHref } from "@/lib/appointments/checkout-display";
 import { requireBackofficeSession } from "@/lib/auth/authorization";
 import { DEFAULT_COUPON_SALON_INFO } from "@/lib/coupons/coupon-defaults";
 import { buildReceiptSaleSummary, receiptNumber } from "@/lib/appointments/receipt";
@@ -97,6 +99,7 @@ export default async function AppointmentReceiptPage({ params }: AppointmentRece
 
   return (
     <main className={styles.screen}>
+      <Script src="/checkout-shift-v700.js" strategy="afterInteractive" />
       <div className={styles.toolbar}>
         <Link href={`/admin/appointments/${appointment.id}`} className="lien-button-secondary px-4">
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
@@ -105,7 +108,7 @@ export default async function AppointmentReceiptPage({ params }: AppointmentRece
         <ReceiptPrintButton />
       </div>
 
-      <article data-receipt-print-root className={styles.receipt} aria-label="会計レシート">
+      <article data-receipt-print-root data-shift-return-href={appointmentShiftHref(appointment.scheduledAt)} className={styles.receipt} aria-label="会計レシート">
         <header className={styles.brand}>
           <p className={styles.brandName}>{appointment.customer.organization.name}</p>
           <p className={styles.brandSub}>{DEFAULT_COUPON_SALON_INFO.salonNameSub}</p>
