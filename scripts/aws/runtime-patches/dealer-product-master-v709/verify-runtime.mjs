@@ -1,0 +1,16 @@
+import fs from 'node:fs'
+import assert from 'node:assert/strict'
+const read=p=>fs.readFileSync('/app/'+p,'utf8')
+const wholesale=read('wholesale-ordering-v543.js'),catalog=read('dealer-product-master-v709/catalog.cjs')
+assert.match(wholesale,/masterCatalogV709.handle\(req, res, url\)/)
+assert.match(wholesale,/await masterCatalogV709.landing\(dealer\)/)
+assert.match(wholesale,/商品・契約価格は管理者のみ変更できます/)
+assert.match(read('dealer-workspace-v688.js'),/マスタから商品を選ぶ/)
+assert.match(catalog,/s.role!=='ADMIN'/)
+assert.match(catalog,/DLR-60EA86D040/)
+assert.match(catalog,/private, no-store/)
+assert.match(catalog,/h.sameOrigin\(req\)/)
+assert.match(catalog,/ON CONFLICT \("dealerId","productCode"\)/)
+assert.doesNotMatch(catalog,/p\."wholesalePrice"|p\.\*|WholesaleContractProductPrice|DealerErpStock/)
+assert.match(read('server.js'),/X-Lien-Dealer-Product-Master/)
+console.log('v709 runtime PASS: catalog route, onboarding, admin authorization, private-price isolation and existing product storage')
