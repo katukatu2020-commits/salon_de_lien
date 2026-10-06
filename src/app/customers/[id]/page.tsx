@@ -2099,7 +2099,7 @@ export default async function CustomerDetailPage({ params, searchParams }: Custo
                 });
 
                 return (
-                  <article key={item.id} className="rounded-xl border border-[color:var(--lien-border)] bg-[color:var(--lien-surface-soft)] p-4">
+                  <article key={item.id} data-history-record-id={item.id} className="rounded-xl border border-[color:var(--lien-border)] bg-[color:var(--lien-surface-soft)] p-4">
                     <div className="flex items-center justify-between gap-3 border-b border-[color:var(--lien-border)] pb-3">
                       <p className="font-semibold text-[color:var(--lien-ink)]">{formatDate(item.occurredAt)}</p>
                       {saleTotal > 0 ? (

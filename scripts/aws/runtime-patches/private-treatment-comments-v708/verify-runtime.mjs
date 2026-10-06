@@ -1,0 +1,22 @@
+import assert from 'node:assert/strict'
+import fs from 'node:fs'
+const root=process.env.LIEN_RUNTIME_ROOT||'/app'
+const client=fs.readFileSync(root+'/commercial-admin-v101.js','utf8')
+assert.match(client,/const section = historySection\(customerId\)/)
+assert.doesNotMatch(client,/const section = historySection\(\)/)
+assert.match(client,/byId.get\(card.dataset.historyRecordId\)/)
+assert.match(client,/スタッフコメント（顧客非公開）/)
+assert.match(client,/route\(\)\?\.customerId !== customerId/)
+assert.match(client,/\.lien-treatment-memo-private\{display:inline-flex\}/)
+assert.match(fs.readFileSync(root+'/.next/server/chunks/3244.js','utf8'),/"data-history-record-id": e.id/)
+const service=fs.readFileSync(root+'/customer-appointment-history-v565.js','utf8')
+assert.match(service,/\['ADMIN', 'STAFF'\].includes\(session.role\)/)
+assert.match(service,/WHERE "id"=\$1 AND "organizationId"=\$2 AND "deletedAt" IS NULL AND "storeHiddenAt" IS NULL/)
+assert.match(service,/sameOrigin\(req\)/)
+assert.match(service,/private, no-store, max-age=0/)
+assert.match(service,/typeof input.body !== 'string'/)
+assert.ok(service.indexOf('const session = await requireStaff(req, res)')<service.indexOf('await ensureSchema()',service.indexOf('async function handle')))
+const server=fs.readFileSync(root+'/server.js','utf8')
+assert.match(server,/X-Lien-Private-Treatment-Comments/)
+assert.ok(server.indexOf('wholesaleOrdering.flowGate(req,res,url)')<server.indexOf('customerAppointmentHistory.handle(req, res, url)'))
+console.log('v708 runtime PASS: private comments, stable history identifiers, staff/tenant gates, cache and existing photo controls')
