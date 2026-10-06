@@ -35,7 +35,8 @@ type CheckoutProduct = {
   stockQuantity: number;
 };
 
-type PickerSection = "long" | "product" | "coupon" | "points";
+type PickerSection = "menu" | "long" | "product" | "coupon" | "points";
+type ServiceItem = { id: string; name: string; priceYen: number };
 
 function clampInteger(value: number, minimum: number, maximum: number) {
   if (!Number.isFinite(value)) return minimum;
@@ -75,7 +76,8 @@ function ItemPicker({
   availablePoints,
   maxPointDiscount,
   pointDiscount,
-  setPointDiscount
+  setPointDiscount,
+  addMenu
 }: {
   open: boolean;
   onClose: () => void;
@@ -93,7 +95,22 @@ function ItemPicker({
   maxPointDiscount: number;
   pointDiscount: number;
   setPointDiscount: (value: number) => void;
+  addMenu: (menu: ServiceItem) => void;
 }) {
+  const [menus, setMenus] = useState<ServiceItem[]>([]);
+  const [menuError, setMenuError] = useState("");
+  const [menusLoading, setMenusLoading] = useState(false);
+  useEffect(() => {
+    if (!open || section !== "menu") return;
+    const controller = new AbortController();
+    setMenusLoading(true); setMenuError("");
+    fetch("/api/admin/checkout-menus", { cache: "no-store", signal: controller.signal })
+      .then(async response => { if (!response.ok) throw new Error("メニューを取得できませんでした。"); return response.json(); })
+      .then(data => setMenus(data.menus))
+      .catch(error => { if (!controller.signal.aborted) setMenuError(error.message); })
+      .finally(() => { if (!controller.signal.aborted) setMenusLoading(false); });
+    return () => controller.abort();
+  }, [open, section]);
   useEffect(() => {
     if (!open) return;
     const previousOverflow = document.body.style.overflow;
@@ -111,6 +128,7 @@ function ItemPicker({
   if (!open) return null;
 
   const sections: Array<{ key: PickerSection; label: string }> = [
+    { key: "menu", label: "メニュー" },
     { key: "long", label: "ロング料金" },
     { key: "product", label: "商品" },
     { key: "coupon", label: "クーポン" },
@@ -132,7 +150,7 @@ function ItemPicker({
           </button>
         </header>
 
-        <nav className="grid grid-cols-4 gap-1.5 border-b border-[#e8ded2] bg-white px-4 py-3 sm:gap-2" aria-label="会計項目の種類">
+        <nav className="grid grid-cols-5 gap-1.5 border-b border-[#e8ded2] bg-white px-4 py-3 sm:gap-2" aria-label="会計項目の種類">
           {sections.map((item) => (
             <button key={item.key} type="button" onClick={() => setSection(item.key)} aria-pressed={section === item.key} className={`lien-segment min-h-10 min-w-0 rounded-full px-1.5 text-xs font-semibold transition sm:px-4 sm:text-sm ${section === item.key ? "bg-[color:var(--lien-primary)] text-white shadow-sm" : "bg-[color:var(--lien-surface-soft)] text-[color:var(--lien-ink)]"}`}>
               {item.label}
@@ -141,6 +159,13 @@ function ItemPicker({
         </nav>
 
         <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-5">
+          {section === "menu" ? <div className="grid gap-2">
+            <button type="button" className="lien-button-secondary min-h-11" onClick={() => { addMenu({ id: crypto.randomUUID(), name: "", priceYen: 0 }); onClose(); }}><Plus className="h-4 w-4" />施術を手入力</button>
+            {menusLoading ? <p role="status">読込中...</p> : null}
+            {menuError ? <p role="alert">{menuError}</p> : null}
+            {!menusLoading && !menuError && !menus.length ? <p>登録メニューはありません。</p> : null}
+            {menus.map(menu => <button key={menu.id} type="button" className="flex min-h-12 items-center justify-between gap-3 rounded-lg border p-3 text-left" onClick={() => { addMenu(menu); onClose(); }}><span>{menu.name}</span><span className="shrink-0 tabular-nums">{menu.priceYen.toLocaleString("ja-JP")}円</span></button>)}
+          </div> : null}
           {section === "long" ? (
             <div className="grid gap-3 sm:grid-cols-2">
               <button type="button" onClick={() => { setLongHairLength(""); onClose(); }} aria-pressed={longHairLength === ""} className={`lien-list-action min-h-16 rounded-2xl border px-4 text-left shadow-sm ${longHairLength === "" ? "border-[color:var(--lien-primary)] bg-[#f8e9e3] ring-2 ring-[#e9c9be]/45" : "border-[#e8ded2] bg-white"}`}>
@@ -218,7 +243,8 @@ export function AppointmentCheckoutForm({
   coupons,
   initialCouponSelection = "",
   products,
-  taxRate
+  taxRate,
+  requiresReview = false
 }: {
   appointmentId: string;
   initialMenu: string;
@@ -228,14 +254,17 @@ export function AppointmentCheckoutForm({
   initialCouponSelection?: string;
   products: CheckoutProduct[];
   taxRate: number;
+  requiresReview?: boolean;
 }) {
-  const [subtotal, setSubtotal] = useState(initialSubtotal);
+  const [serviceItems, setServiceItems] = useState<ServiceItem[]>(() => initialMenu.trim() || initialSubtotal > 0 ? [{ id: "reservation", name: initialMenu.trim(), priceYen: initialSubtotal }] : []);
+  const subtotal = serviceItems.reduce((sum, item) => sum + item.priceYen, 0);
+  const menu = serviceItems.map(item => item.name.trim()).filter(Boolean).join(" + ");
   const [longHairLength, setLongHairLength] = useState<LongHairLength | "">("");
   const [couponSelection, setCouponSelection] = useState(initialCouponSelection);
   const [pointDiscount, setPointDiscount] = useState(0);
   const [productLines, setProductLines] = useState<Array<{ productId: string; quantity: number }>>([]);
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [pickerSection, setPickerSection] = useState<PickerSection>("long");
+  const [pickerSection, setPickerSection] = useState<PickerSection>("menu");
 
   const longCharge = longHairLength ? LONG_HAIR_FEES[longHairLength] : 0;
   const serviceTotal = subtotal + longCharge;
@@ -274,16 +303,11 @@ export function AppointmentCheckoutForm({
       <input type="hidden" name="longHairLength" value={longHairLength} />
       <input type="hidden" name="couponSelection" value={couponSelection} />
       <input type="hidden" name="pointDiscount" value={appliedPoints} />
+      <input type="hidden" name="menu" value={menu} />
+      <input type="hidden" name="subtotal" value={subtotal} />
+      {requiresReview ? <label className="flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm"><input className="mt-1 h-4 w-4" type="checkbox" name="reservationImportReviewed" value="1" required /><span>メール取込のメニュー・料金を確認済み</span></label> : null}
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <label className="grid gap-1.5 text-sm font-semibold sm:col-span-2">
-          <span className="inline-flex items-center gap-2"><Scissors className="h-4 w-4 text-[color:var(--lien-primary)]" />本日のメニュー</span>
-          <input className="lien-input" name="menu" defaultValue={initialMenu} placeholder="カット + カラー" required />
-        </label>
-        <label className="grid gap-1.5 text-sm font-semibold">
-          <span className="inline-flex items-center gap-2"><BadgeJapaneseYen className="h-4 w-4 text-[color:var(--lien-primary)]" />基本施術料金</span>
-          <input className="lien-input tabular-nums" name="subtotal" type="number" min="1" step="1" value={subtotal} onChange={(event) => setSubtotal(clampInteger(Number(event.target.value), 0, 10_000_000))} required />
-        </label>
         <label className="grid gap-1.5 text-sm font-semibold">
           <span className="inline-flex items-center gap-2"><CreditCard className="h-4 w-4 text-[color:var(--lien-primary)]" />支払い方法</span>
           <select className="lien-input" name="paymentMethod" defaultValue="" required>
@@ -296,14 +320,18 @@ export function AppointmentCheckoutForm({
         <div className="flex items-center justify-between gap-3 border-b border-[color:var(--lien-border)] px-4 py-4">
           <div>
             <h3 className="text-sm font-semibold">会計項目</h3>
-            <p className="mt-1 text-xs text-[color:var(--lien-muted)]">追加料金・商品・割引をここにまとめます。</p>
           </div>
-          <button type="button" onClick={() => openPicker("long")} className="lien-button-primary px-4">
+          <button type="button" onClick={() => openPicker("menu")} className="lien-button-primary px-4">
             <Plus className="h-4 w-4" />項目を追加
           </button>
         </div>
 
         <div className="divide-y divide-[color:var(--lien-border)]">
+          {serviceItems.map((item, index) => <div key={item.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_9rem_auto] sm:items-end" data-checkout-service-item>
+            <label className="col-span-2 grid min-w-0 gap-1 text-xs font-semibold sm:col-span-1"><span className="inline-flex items-center gap-2"><Scissors className="h-4 w-4" />施術メニュー</span><input className="lien-input" aria-label={`施術メニュー ${index + 1}`} value={item.name} maxLength={500} required onChange={event => setServiceItems(current => current.map(row => row.id === item.id ? { ...row, name: event.target.value } : row))} /></label>
+            <label className="grid min-w-0 gap-1 text-xs font-semibold"><span className="inline-flex items-center gap-2"><BadgeJapaneseYen className="h-4 w-4" />施術料金</span><input className="lien-input tabular-nums" aria-label={`施術料金 ${index + 1}`} type="number" min="0" max="10000000" step="1" value={item.priceYen} required onChange={event => setServiceItems(current => current.map(row => row.id === item.id ? { ...row, priceYen: clampInteger(Number(event.target.value), 0, 10000000) } : row))} /></label>
+            <button type="button" className="lien-icon-button self-end" aria-label={`${item.name || "施術メニュー"}を外す`} title="施術メニューを削除" onClick={() => setServiceItems(current => current.filter(row => row.id !== item.id))}><Trash2 className="h-4 w-4" /></button>
+          </div>)}
           {longHairLength ? (
             <div className="flex items-center justify-between gap-3 px-4 py-3">
               <span className="inline-flex items-center gap-2 text-sm font-semibold"><Ruler className="h-4 w-4 text-[color:var(--lien-primary)]" />ロング料金 {longHairLength}</span>
@@ -338,12 +366,13 @@ export function AppointmentCheckoutForm({
             </div>
           ) : null}
 
-          {!longHairLength && productLines.length === 0 && !selectedCoupon && appliedPoints === 0 ? (
-            <p className="px-4 py-5 text-center text-sm text-[color:var(--lien-muted)]">追加項目はありません。</p>
+          {!serviceItems.length && !longHairLength && productLines.length === 0 && !selectedCoupon && appliedPoints === 0 ? (
+            <p className="px-4 py-5 text-center text-sm text-[color:var(--lien-muted)]">会計項目はありません。</p>
           ) : null}
         </div>
 
-        <div className="grid grid-cols-2 gap-px border-t border-[color:var(--lien-border)] bg-[color:var(--lien-border)] sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-px border-t border-[color:var(--lien-border)] bg-[color:var(--lien-border)] sm:grid-cols-5">
+          <button type="button" onClick={() => openPicker("menu")} className="min-h-11 bg-[color:var(--lien-surface-soft)] px-3 text-xs font-semibold">メニュー</button>
           <button type="button" onClick={() => openPicker("long")} className="min-h-11 bg-[color:var(--lien-surface-soft)] px-3 text-xs font-semibold transition hover:bg-white hover:text-[color:var(--lien-primary-dark)] active:bg-[#f3e5dc]">ロング料金</button>
           <button type="button" onClick={() => openPicker("product")} className="min-h-11 bg-[color:var(--lien-surface-soft)] px-3 text-xs font-semibold transition hover:bg-white hover:text-[color:var(--lien-primary-dark)] active:bg-[#f3e5dc]">商品</button>
           <button type="button" onClick={() => openPicker("coupon")} className="min-h-11 bg-[color:var(--lien-surface-soft)] px-3 text-xs font-semibold transition hover:bg-white hover:text-[color:var(--lien-primary-dark)] active:bg-[#f3e5dc]">クーポン</button>
@@ -353,7 +382,7 @@ export function AppointmentCheckoutForm({
 
       <section className="rounded-[22px] border border-[#ddc68b] bg-gradient-to-br from-white via-[#fff9ee] to-[#f7e8c9] p-5">
         <div className="grid gap-2 text-sm">
-          <div className="flex justify-between gap-4 text-[color:var(--lien-muted)]"><span>基本施術料金</span><span className="font-semibold tabular-nums">{subtotal.toLocaleString("ja-JP")}円</span></div>
+          <div className="flex justify-between gap-4 text-[color:var(--lien-muted)]"><span>施術合計</span><span className="font-semibold tabular-nums">{subtotal.toLocaleString("ja-JP")}円</span></div>
           {longHairLength ? <div className="flex justify-between gap-4 text-[color:var(--lien-muted)]"><span>ロング料金 {longHairLength}</span><span className="font-semibold tabular-nums">+{longCharge.toLocaleString("ja-JP")}円</span></div> : null}
           {productTotal > 0 ? <div className="flex justify-between gap-4 text-[color:var(--lien-muted)]"><span>商品</span><span className="font-semibold tabular-nums">{productTotal.toLocaleString("ja-JP")}円</span></div> : null}
           <div className="flex justify-between gap-4"><span>小計</span><span className="font-semibold tabular-nums">{checkoutSubtotal.toLocaleString("ja-JP")}円</span></div>
@@ -383,6 +412,7 @@ export function AppointmentCheckoutForm({
         maxPointDiscount={maxPointDiscount}
         pointDiscount={appliedPoints}
         setPointDiscount={setPointDiscount}
+        addMenu={item => setServiceItems(current => [...current, { ...item, id: crypto.randomUUID() }])}
       />
     </form>
   );

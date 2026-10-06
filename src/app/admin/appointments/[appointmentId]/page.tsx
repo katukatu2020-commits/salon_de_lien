@@ -254,6 +254,7 @@ export default async function AppointmentCheckoutPage({ params, searchParams }: 
             </div>
           ) : (
             <AppointmentCheckoutForm
+              key={appointment.id}
               appointmentId={appointment.id}
               initialMenu={appointment.menu ?? ""}
               initialSubtotal={externalPayableAmount}
@@ -262,6 +263,7 @@ export default async function AppointmentCheckoutPage({ params, searchParams }: 
               initialCouponSelection={appointment.couponIssueId ? `couponIssue:${appointment.couponIssueId}` : ""}
               products={products}
               taxRate={appointment.customer.organization.taxRate}
+              requiresReview={Boolean(appointment.note?.includes("取込内容要確認:"))}
             />
           )}
         </LienCard>

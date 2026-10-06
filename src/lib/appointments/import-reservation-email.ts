@@ -7,6 +7,7 @@ import {
   type ReservationEmailInput
 } from "@/lib/appointments/reservation-email";
 import { BOOKING_PROVIDERS, inferBookingProvider } from "@/lib/appointments/booking-provider";
+import { mergeImportedMenu } from "@/lib/appointments/reservation-menu.cjs";
 
 const GMAIL_CUSTOMER_MEMO = "Gmail予約メールから登録。内容確認後に正式な顧客情報へ更新してください。";
 
@@ -40,7 +41,7 @@ function noteAmount(note: string | null | undefined, label: string) {
 export function mergeReservationEmailDetails(
   parsed: Pick<
     ParsedReservationEmail,
-    "staffAssignment" | "staffName" | "durationMinutes" | "menu" | "estimatedPrice"
+    "staffAssignment" | "staffName" | "durationMinutes" | "menu" | "estimatedPrice" | "menuFieldPresent" | "priceFieldPresent"
   >,
   existing?: ExistingAppointmentDetails | null
 ) {
@@ -50,8 +51,7 @@ export function mergeReservationEmailDetails(
         ? existing?.staffName ?? null
         : parsed.staffName,
     durationMinutes: parsed.durationMinutes ?? existing?.durationMinutes ?? null,
-    menu: parsed.menu ?? existing?.menu ?? null,
-    estimatedPrice: parsed.estimatedPrice ?? existing?.estimatedPrice ?? null
+    ...mergeImportedMenu(parsed, existing)
   };
 }
 
@@ -148,21 +148,27 @@ export async function importReservationEmail(
       staffName: true,
       durationMinutes: true,
       menu: true,
+      bookingProvider: true,
       estimatedPrice: true,
-      note: true
+      note: true,
+      serviceSales: { select: { id: true }, take: 1 }
     }
   });
+  if (existing?.serviceSales.length) return { ok: false as const, errors: ["会計済みの予約はメールで上書きできません。"] };
+  if (existing?.bookingProvider && existing.bookingProvider !== bookingProvider) return { ok: false as const, errors: ["予約番号の予約元が一致しません。"] };
   const mergedDetails = mergeReservationEmailDetails(parsed.value, existing);
-  const usedPoints = parsed.value.usedPoints ?? noteAmount(existing?.note, "利用ポイント");
-  const usedGiftAmount = parsed.value.usedGiftAmount ?? noteAmount(existing?.note, "利用ギフト券");
-  const otherDiscountAmount = parsed.value.otherDiscountAmount ?? noteAmount(existing?.note, "その他割引");
-  const prepaidAmount = parsed.value.prepaidAmount ?? noteAmount(existing?.note, "事前決済額");
-  const paymentDue = parsed.value.paymentDue ?? noteAmount(existing?.note, "支払予定額");
+  const previousFinancialNote = parsed.value.menuFieldPresent && parsed.value.menu !== existing?.menu ? null : existing?.note;
+  const usedPoints = parsed.value.usedPoints ?? noteAmount(previousFinancialNote, "利用ポイント");
+  const usedGiftAmount = parsed.value.usedGiftAmount ?? noteAmount(previousFinancialNote, "利用ギフト券");
+  const otherDiscountAmount = parsed.value.otherDiscountAmount ?? noteAmount(previousFinancialNote, "その他割引");
+  const prepaidAmount = parsed.value.prepaidAmount ?? noteAmount(previousFinancialNote, "事前決済額");
+  const paymentDue = parsed.value.paymentDue ?? noteAmount(previousFinancialNote, "支払予定額");
   const note = [
     parsed.value.bookingReference ? `予約番号: ${parsed.value.bookingReference}` : null,
     mergedDetails.staffName ? `担当: ${mergedDetails.staffName}` : null,
     mergedDetails.durationMinutes ? `所要時間: ${mergedDetails.durationMinutes}分` : null,
     parsed.value.subject ? `メール件名: ${parsed.value.subject}` : null,
+    parsed.value.reviewReason ? `取込内容要確認: ${parsed.value.reviewReason}` : null,
     usedPoints !== null ? `利用ポイント: ${usedPoints}pt` : null,
     usedGiftAmount !== null ? `利用ギフト券: ${usedGiftAmount}円` : null,
     otherDiscountAmount !== null ? `その他割引: ${otherDiscountAmount}円` : null,
@@ -174,7 +180,7 @@ export async function importReservationEmail(
     .filter((value): value is string => Boolean(value))
     .join("\n");
   const appointment = await prisma.appointment.upsert({
-    where: { id: appointmentId },
+    where: { id: appointmentId, serviceSales: { none: {} } },
     update: {
       customerId: customer.id,
       scheduledAt: parsed.value.scheduledAt,

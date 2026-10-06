@@ -45,8 +45,9 @@ export async function completeAppointmentCheckoutAction(appointmentId: string, f
   let errorMessage = "";
 
   try {
-    if (!menu) throw new Error("本日のメニューを入力してください。");
-    if (!Number.isInteger(subtotal) || subtotal <= 0) throw new Error("施術料金を正しく入力してください。");
+    if (!menu && productIds.length === 0) throw new Error("会計項目を追加してください。");
+    if (menu.length > 2000 || !Number.isSafeInteger(subtotal) || subtotal < 0 || subtotal > 10_000_000 || (!menu && subtotal !== 0)) throw new Error("施術料金を正しく入力してください。");
+    if (!menu && longHairLength) throw new Error("ロング料金の対象メニューを追加してください。");
     if (!Number.isInteger(pointDiscount) || pointDiscount < 0) throw new Error("利用ポイントを正しく入力してください。");
     if (!paymentMethod) throw new Error("支払い方法を選択してください。");
     if (longHairLength && !isLongHairLength(longHairLength)) throw new Error("ロング料金を選び直してください。");
@@ -88,6 +89,7 @@ export async function completeAppointmentCheckoutAction(appointmentId: string, f
           staffName: true,
           source: true,
           couponIssueId: true,
+          note: true,
           customer: {
             select: {
               organizationId: true,
@@ -102,6 +104,7 @@ export async function completeAppointmentCheckoutAction(appointmentId: string, f
         throw new Error("この予約を操作する権限がありません。");
       }
       if (appointment.serviceSales.length > 0) throw new Error("この予約はすでに会計済みです。");
+      if (appointment.note?.includes("取込内容要確認:") && formString(formData, "reservationImportReviewed") !== "1") throw new Error("メール取込のメニュー・料金を確認してください。");
       const effectiveCouponSelection = appointment.couponIssueId
         ? `couponIssue:${appointment.couponIssueId}`
         : couponSelection;
@@ -193,7 +196,7 @@ export async function completeAppointmentCheckoutAction(appointmentId: string, f
         data: {
           customerId: appointment.customerId,
           appointmentId: appointment.id,
-          title: menu,
+          title: menu || "商品購入",
           amount: finalAmount,
           paymentMethod,
           paidAt,
@@ -275,7 +278,7 @@ export async function completeAppointmentCheckoutAction(appointmentId: string, f
       await tx.appointment.update({
         where: { id: appointment.id },
         data: {
-          menu,
+          menu: menu || null,
           estimatedPrice: serviceAmount,
           status: "来店済み"
         }

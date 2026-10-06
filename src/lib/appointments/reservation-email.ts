@@ -1,4 +1,5 @@
 import { FREE_STAFF, SALON_STAFF, normalizeSalonStaffName } from "@/lib/salon/staff";
+import { parseReservationMenu } from "@/lib/appointments/reservation-menu.cjs";
 
 export type ReservationEmailInput = {
   subject?: string | null;
@@ -24,6 +25,9 @@ export type ParsedReservationEmail = {
   bookingReference: string | null;
   status: string;
   subject: string | null;
+  menuFieldPresent?: boolean;
+  priceFieldPresent?: boolean;
+  reviewReason?: string | null;
 };
 
 const labelGroups = {
@@ -448,6 +452,7 @@ export function parseReservationEmail(input: ReservationEmailInput) {
   const customerName = parseCustomerName(content, customerPhone?.index);
   const scheduledAt = parseDateTime(content);
   const staff = parseStaff(content);
+  const menuDetails = parseReservationMenu(content);
   const errors: string[] = [];
 
   if (!customerName) errors.push("お客様名を読み取れませんでした。");
@@ -463,8 +468,11 @@ export function parseReservationEmail(input: ReservationEmailInput) {
       customerName,
       phone: customerPhone?.value ?? null,
       scheduledAt,
-      menu: cleanTextValue(labeledValue(content, labelGroups.menu)),
-      estimatedPrice: parsePrice(labeledValue(content, labelGroups.price)),
+      menu: menuDetails.menu,
+      estimatedPrice: menuDetails.estimatedPrice,
+      menuFieldPresent: menuDetails.menuFieldPresent,
+      priceFieldPresent: menuDetails.priceFieldPresent,
+      reviewReason: menuDetails.reviewReason,
       usedPoints: parsePointAmount(labeledValue(content, labelGroups.usedPoints)),
       usedGiftAmount: parseUsageAmount(labeledValue(content, labelGroups.usedGiftAmount)),
       otherDiscountAmount: parseUsageAmount(labeledValue(content, labelGroups.otherDiscountAmount)),
