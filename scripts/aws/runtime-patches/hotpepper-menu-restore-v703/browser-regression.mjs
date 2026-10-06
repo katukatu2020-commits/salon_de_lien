@@ -1,0 +1,82 @@
+import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import path from 'node:path'
+import { execFileSync } from 'node:child_process'
+import { createRequire } from 'node:module'
+const require = createRequire(process.env.BROWSER_PACKAGE_JSON || path.resolve('package.json'))
+const { chromium } = require('playwright-core')
+const base = 'http://127.0.0.1:3188', container = 'orimia-qa-v680-app'
+execFileSync('docker', ['cp', path.resolve('scripts/aws/runtime-patches/hotpepper-menu-restore-v703/qa-fixture.cjs'), container + ':/tmp/qa-menu-v703.cjs'])
+const fixture = action => JSON.parse(execFileSync('docker', ['exec', container, 'node', '/tmp/qa-menu-v703.cjs', action], { encoding: 'utf8' }) || 'null')
+const output = path.resolve('artifacts/hotpepper-menu-v703'); fs.mkdirSync(output, { recursive: true })
+const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROME_PATH || 'C:/Program Files/Google/Chrome/Application/chrome.exe' })
+try {
+  const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } })
+  await context.request.post(base + '/api/auth/login', { form: { email: 'demo.owner', password: 'QaLocalOnly-v680!', next: '/admin/appointments' } })
+  const page = await context.newPage(), errors = []; page.setDefaultTimeout(10000); page.on('pageerror', e => errors.push(e.message))
+  await page.goto(base + '/admin/appointments?date=2026-10-23')
+  await page.getByRole('link', { name: 'メニュー・商品・在庫', exact: true }).click()
+  const entry = page.locator('[data-hotpepper-menu-entry-v703]')
+  await entry.waitFor(); assert.equal(await entry.count(), 1)
+  await page.screenshot({ path: path.join(output, 'desktop-entry.png') })
+  await entry.click(); await page.locator('[data-menu-import-url-v612]').waitFor()
+  assert.equal(await page.locator('[data-menu-import-mode-v612]').isChecked(), true)
+  assert.equal(await page.locator('[data-menu-import-start-v612]').isEnabled(), false)
+  await page.locator('[data-menu-import-url-v612]').fill('https://example.com/menus')
+  await page.locator('[data-menu-import-rights-v612]').check()
+  await page.locator('[data-menu-import-start-v612]').click()
+  await page.locator('[data-menu-import-feedback-v612]').filter({ hasText: '同じ店舗' }).waitFor()
+  await page.getByRole('button', { name: 'メニュー登録を閉じる' }).click()
+  await page.getByRole('button', { name: '新しいメニューを追加', exact: true }).click()
+  assert.equal(await page.locator('input[name=menuName]').isVisible(), true)
+  await page.getByRole('button', { name: 'メニュー登録を閉じる' }).click()
+
+  // The QA network blocks external access. Seed a preview using the actual service
+  // with its supported fetchRemote dependency; edits/confirmation/ticks use real HTTP/DB.
+  const seeded = fixture('seed'); assert.equal(seeded.duplicate, 1)
+  await entry.click(); await page.locator('[data-menu-import-row-v612]').first().waitFor()
+  assert.equal(await page.locator('[data-menu-import-row-v612]').count(), 3)
+  await page.locator('[data-menu-import-edit-v612="1"]').click()
+  await page.locator('[data-menu-import-editor-form-v612] input[name=durationMinutes]').fill('125')
+  await page.locator('[data-menu-import-editor-form-v612] button[type=submit]').click()
+  await page.locator('[data-menu-import-row-v612="1"]').filter({ hasText: '125分' }).waitFor()
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.locator('[data-menu-import-row-v612="1"]').scrollIntoViewIfNeeded()
+  assert.equal(await page.getByRole('dialog').evaluate(e => e.scrollWidth > e.clientWidth + 1), false)
+  assert.equal(await page.locator('.orimia-menu-import-table-wrap-v612').evaluate(e => e.scrollWidth > e.clientWidth + 1), false, 'Mobile preview must not hide edit buttons off-screen')
+  await page.screenshot({ path: path.join(output, 'mobile-preview.png') })
+  await page.locator('[data-menu-import-confirm-v612]').click()
+  await page.locator('[data-menu-import-confirm-run-v612]').click()
+  await page.locator('[data-menu-import-reload-v612]').waitFor()
+  assert.deepEqual(fixture('read'), [
+    { name: 'QA703 カット＋カラー', durationMinutes: 125, priceYen: 13200 },
+    { name: 'QA703 頭皮ケア', durationMinutes: 60, priceYen: 4400 },
+  ])
+  await page.locator('[data-menu-import-reload-v612]').click(); await entry.waitFor()
+  await page.getByText('QA703 カット＋カラー', { exact: true }).waitFor()
+  await page.screenshot({ path: path.join(output, 'mobile-entry.png') })
+  const repeated = fixture('seed'); assert.equal(repeated.duplicate, 3); assert.equal(repeated.available, 0)
+  await entry.click(); await page.locator('[data-menu-import-confirm-v612]').waitFor()
+  assert.equal(await page.locator('[data-menu-import-confirm-v612]').isEnabled(), false)
+  page.once('dialog', d => d.accept())
+  await page.locator('[data-menu-import-cancel-v612]').click()
+  await page.locator('[data-menu-import-reload-v612]').waitFor()
+  await page.getByRole('button', { name: 'メニュー登録を閉じる' }).click()
+  await page.setViewportSize({ width: 1440, height: 1000 })
+  await page.getByRole('link', { name: '予約・シフト・会計', exact: true }).first().click()
+  await page.waitForURL(/admin\/appointments/)
+  await page.getByRole('link', { name: 'メニュー・商品・在庫', exact: true }).click(); await entry.waitFor()
+  assert.equal(await entry.count(), 1)
+  await entry.click(); await page.locator('[data-menu-import-url-v612]').waitFor()
+  await page.route('**/api/lien-hotpepper-menus-v612', async route => {
+    if (route.request().method() === 'POST') await route.fulfill({ status: 422, contentType: 'application/json', body: JSON.stringify({ error: '掲載元との通信を完了できませんでした。再試行してください。' }) })
+    else await route.continue()
+  })
+  await page.locator('[data-menu-import-url-v612]').fill('https://beauty.hotpepper.jp/slnH000307612/coupon/CT00/')
+  await page.locator('[data-menu-import-rights-v612]').check()
+  await page.locator('[data-menu-import-url-v612]').press('Enter')
+  await page.locator('[data-menu-import-feedback-v612]').filter({ hasText: '再試行' }).waitFor()
+  assert.equal(await page.locator('[data-menu-import-start-v612]').isEnabled(), true)
+  assert.deepEqual(errors, [])
+  console.log('PASS v703 browser: SPA entry, single mount, desktop/mobile, manual form, URL guard, resume/edit/confirm/import to real QA DB, duplicate prevention, retry error, Enter key')
+} finally { fixture('cleanup'); await browser.close() }

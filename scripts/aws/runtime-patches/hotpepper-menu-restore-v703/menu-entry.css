@@ -1,0 +1,13 @@
+.hotpepper-menu-entry-v703 { max-width:100%; gap:8px; white-space:normal; line-height:1.5; }
+.hotpepper-menu-entry-v703 svg { width:18px; height:18px; flex:none; }
+.hotpepper-menu-entry-v703 span { min-width:0; overflow-wrap:anywhere; }
+.hotpepper-menu-toolbar-v703 { display:grid!important; grid-template-columns:minmax(0,1fr) auto auto; align-items:center; gap:16px!important; }
+.hotpepper-menu-toolbar-v703 > div { min-width:0; }
+@media(max-width:639px) {
+  .hotpepper-menu-toolbar-v703 { grid-template-columns:minmax(0,1fr) auto; gap:12px!important; }
+  .hotpepper-menu-toolbar-v703 > span { grid-column:2; grid-row:1; }
+  .hotpepper-menu-entry-v703 { grid-column:1 / -1; grid-row:2; width:100%; }
+  [role="dialog"] .orimia-menu-import-v612 table.orimia-menu-import-table-v612 { min-width:0!important; width:100%!important; }
+  [role="dialog"] .orimia-menu-import-v612 .orimia-menu-import-table-v612 td { position:static!important; padding:0!important; min-width:0!important; box-shadow:none!important; }
+  [role="dialog"] .orimia-menu-import-v612 .orimia-menu-import-table-v612 td:first-child { position:absolute!important; left:10px!important; top:15px!important; background:transparent!important; }
+}
