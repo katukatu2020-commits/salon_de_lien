@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { resolveWorkingHours } from "@/lib/appointments/work-time-shading";
 import {
   CalendarCheck2,
   CalendarDays,
@@ -161,7 +162,8 @@ export default async function AppointmentsPage({ searchParams }: AppointmentsPag
   const nextMonth = monthShift(month, 1);
   const monthStart = new Date(`${month}-01T00:00:00+09:00`);
   const monthEnd = new Date(`${nextMonth}-01T00:00:00+09:00`);
-  const [appointments, latestGmailAppointment, bookingSettings, customerOptions, capacityOverrides] = await Promise.all([
+  const workDate = selectedDate ?? `${month}-01`;
+  const [appointments, latestGmailAppointment, bookingSettings, customerOptions, capacityOverrides, dailyWork, workPolicies, weeklyWork] = await Promise.all([
     prisma.appointment.findMany({
       where: {
         scheduledAt: { gte: monthStart, lt: monthEnd },
@@ -196,7 +198,14 @@ export default async function AppointmentsPage({ searchParams }: AppointmentsPag
           orderBy: { slotStartMinutes: "asc" },
           select: { slotStartMinutes: true, capacity: true }
         })
-      : Promise.resolve([])
+      : Promise.resolve([]),
+    prisma.staffDailySchedule.findMany({ where: { organizationId: session.organizationId, date: workDate } }),
+    prisma.$queryRaw<Array<{ staffKey: string; plannedStart: string; plannedEnd: string }>>`
+      SELECT "staffKey", "plannedStart", "plannedEnd" FROM "StaffAttendancePolicy" WHERE "organizationId"=${session.organizationId}
+    `,
+    prisma.$queryRaw<Array<{ staffKey: string; closedWeekdays: string | null }>>`
+      SELECT "staffKey", to_jsonb(s)->>'closedWeekdays' AS "closedWeekdays" FROM "StaffBookingSetting" s WHERE "organizationId"=${session.organizationId}
+    `
   ]);
   const todayKey = dateKey(new Date());
   const cells = calendarCells(month);
@@ -216,8 +225,12 @@ export default async function AppointmentsPage({ searchParams }: AppointmentsPag
       name: setting.staffName,
       role: legacyStaff?.role ?? "スタイリスト",
       maxConcurrentAppointments: setting.maxConcurrentAppointments,
-      workStartMinutes: setting.workStartMinutes,
-      workEndMinutes: setting.workEndMinutes
+      ...resolveWorkingHours(
+        { ...setting, closedWeekdays: weeklyWork.find(row => row.staffKey === setting.staffKey)?.closedWeekdays },
+        workDate,
+        workPolicies.find(row => row.staffKey === setting.staffKey),
+        dailyWork.find(row => row.staffKey === setting.staffKey)
+      )
     };
   });
   const timelineStaff = configuredTimelineStaff.length > 0

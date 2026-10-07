@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict'
+const base = process.env.ORIMIA_SMOKE_URL || 'https://salon-de-lien.com'
+const ready = await fetch(base + '/api/health/ready', { cache: 'no-store' })
+assert.equal(ready.status, 200)
+assert.equal(ready.headers.get('x-lien-staff-work-shading'), 'v710')
+assert.equal(ready.headers.get('x-lien-staff-work-calendar'), 'v704')
+assert.equal(ready.headers.get('x-lien-dealer-product-master'), 'v709')
+const chunk = await fetch(base + '/_next/static/chunks/app/admin/appointments/page-staff-work-shading-v710.js', { cache: 'no-store' })
+assert.equal(chunk.status, 200)
+const code = await chunk.text()
+assert.match(code, /function workTimeShading/)
+assert.match(code, /backgroundColor: "#e2e4e7"/)
+assert.match(code, /data-work-shade/)
+const denied = await fetch(base + '/api/admin/staff-work-calendar?month=2026-10', { redirect: 'manual' })
+assert.equal(denied.status, 401)
+console.log('v710 production smoke PASS: release, visible shading asset, existing schedule service and authentication')

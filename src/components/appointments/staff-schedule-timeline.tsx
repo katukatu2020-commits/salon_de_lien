@@ -1,5 +1,7 @@
 "use client";
 
+import { workTimeShading } from "@/lib/appointments/work-time-shading";
+
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -562,6 +564,7 @@ export function StaffScheduleTimeline({
           </div>
 
           {staff.map((member) => {
+            const shading = workTimeShading(member, SCHEDULE_START_MINUTES, SCHEDULE_END_MINUTES);
             const rows = appointmentsByStaff.get(member.name) ?? [];
             const activeRows = rows.map((appointment) => ({
               ...appointment,
@@ -580,8 +583,8 @@ export function StaffScheduleTimeline({
                   </Link>
                 </div>
                 <div className="relative min-w-0 overflow-hidden bg-white" data-staff-key={member.key} data-staff-name={member.name} style={{ height: rowHeight }}>
-                  <div className="pointer-events-none absolute inset-y-0 left-0 bg-[repeating-linear-gradient(135deg,#f5f1ec_0,#f5f1ec_6px,#fbf8f3_6px,#fbf8f3_12px)]" style={{ width: Math.max(0, member.workStartMinutes - SCHEDULE_START_MINUTES) * pixelsPerMinute }} />
-                  <div className="pointer-events-none absolute inset-y-0 right-0 bg-[repeating-linear-gradient(135deg,#f5f1ec_0,#f5f1ec_6px,#fbf8f3_6px,#fbf8f3_12px)]" style={{ width: Math.max(0, SCHEDULE_END_MINUTES - member.workEndMinutes) * pixelsPerMinute }} />
+                  <div aria-hidden="true" data-work-shade="before" className="pointer-events-none absolute inset-y-0 left-0" style={{ width: `${shading.before}%`, backgroundColor: "#e2e4e7" }} />
+                  <div aria-hidden="true" data-work-shade="after" className="pointer-events-none absolute inset-y-0 right-0" style={{ width: `${shading.after}%`, backgroundColor: "#e2e4e7" }} />
                   {displaySlots.map((slotStart) => (
                     <span key={`${member.key}-${slotStart}`} aria-hidden="true" className="pointer-events-none absolute inset-y-0 border-l border-[#ddd4ca]" style={{ left: (slotStart - SCHEDULE_START_MINUTES) * pixelsPerMinute }} />
                   ))}

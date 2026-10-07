@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test tests/security-primitives.test.ts tests/transactional-email.test.ts tests/checkout-display.test.ts tests/reservation-menu.test.ts tests/staff-break-drag.test.cjs tests/customer-kana.test.ts scripts/aws/runtime-patches/customer-kana-search-v707/customer-kana.test.cjs",
+    "test": "tsx --test tests/security-primitives.test.ts tests/transactional-email.test.ts tests/checkout-display.test.ts tests/reservation-menu.test.ts tests/staff-break-drag.test.cjs tests/customer-kana.test.ts tests/work-time-shading.test.ts scripts/aws/runtime-patches/customer-kana-search-v707/customer-kana.test.cjs",
     "prisma:generate": "prisma generate",
     "prisma:deploy": "prisma migrate deploy",
     "prisma:migrate": "prisma migrate dev",
