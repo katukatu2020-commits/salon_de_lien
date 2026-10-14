@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict'
+const base = process.env.SMOKE_BASE_URL || 'https://salon-de-lien.com'
+const ready = await fetch(base + '/api/health/ready')
+assert.equal(ready.status, 200)
+assert.equal(ready.headers.get('x-lien-store-code-settings'), 'v712')
+assert.equal(ready.headers.get('x-lien-hotpepper-menu-rows'), 'v711')
+const script = await fetch(base + '/admin-staff-experience-v276.js')
+assert.equal(script.status, 200)
+assert.match(script.headers.get('cache-control'), /no-store/)
+const text = await script.text()
+assert.ok(text.includes('data-store-code-v712'))
+assert.ok(!text.includes("document.querySelectorAll('[data-sm-store-code],.lien-store-qr-card').forEach(card => card.remove())"))
+const denied = await fetch(base + '/api/admin/store-profile')
+assert.equal(denied.status, 401)
+assert.ok(!JSON.stringify(await denied.json()).includes('storeCode'))
+console.log('v712 production smoke PASS: release, uncached display script, unauthenticated access denied; no production data changed')
