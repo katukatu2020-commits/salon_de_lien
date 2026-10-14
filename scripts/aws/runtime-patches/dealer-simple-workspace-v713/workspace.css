@@ -1,0 +1,94 @@
+/* Only the dealer shell changes; existing forms and domain-specific views remain intact. */
+.dw-body.dw-simple .dw-topbar{height:56px}
+.dw-body.dw-simple .dw-main{padding:22px 24px 40px}
+.dw-simple .wo-app-root{grid-template-columns:minmax(0,1fr);gap:12px}
+.dw-simple .wo-workspace,.dw-simple .dw-cutoff{min-width:0}
+.dw-simple .dw-page-head{gap:16px;justify-content:space-between;flex-wrap:wrap;margin-bottom:18px}
+.dw-simple .dw-page-head h1{font-size:24px}
+.dw-simple .dw-sidebar nav{gap:4px}
+.dw-simple .dw-sidebar nav details{border:0;background:transparent}
+.dw-simple .dw-sidebar nav summary{display:flex;align-items:center;gap:12px;min-height:46px;padding:10px 12px;font-size:14px;font-weight:650;color:#575862;cursor:pointer;list-style:none;border-radius:6px}
+.dw-simple .dw-sidebar nav summary::-webkit-details-marker{display:none}
+.dw-simple .dw-sidebar nav summary::after{content:'+';margin-left:auto;font-size:18px;font-weight:400}
+.dw-simple .dw-sidebar nav details[open]>summary::after{content:'−'}
+.dw-simple .dw-sidebar nav details[open]>summary{color:var(--dw-accent)}
+.dw-simple .dw-sidebar nav details>div{display:grid;margin:0 0 6px 21px;padding-left:12px;border-left:1px solid var(--dw-line)}
+.dw-simple .dw-sidebar nav details a{font-size:13px;font-weight:500;min-height:40px;padding:8px 10px;overflow-wrap:anywhere}
+.dw-simple .dw-sidebar nav a[aria-current="page"]{color:var(--dw-accent);background:var(--dw-soft);font-weight:700}
+.dw-simple .dw-page-head .dpm-entry{margin:0;padding:0}
+.dw-simple .dw-page-head .wo-button{min-height:40px;padding:8px 14px;font-size:13px;white-space:normal;text-align:center}
+.dw-body.dw-simple .wo-workspace{border:0;border-radius:0;background:transparent;overflow:visible}
+.dw-body.dw-simple .wo-workspace-head{padding:0 0 14px;background:transparent;min-height:0}
+.dw-simple .wo-pricing-salon{width:min(100%,480px)}
+.dw-simple .wo-list-pager-v628>span{display:none}
+.dw-simple .wo-list-pager-v628.is-single-v628{display:none}
+.dw-simple .wo-order-toolbar,.dw-simple .wo-contract-toolbar,.dw-simple .wo-product-toolbar,.dw-simple .wo-pricing-toolbar{padding:14px 0;background:transparent}
+.dw-simple .wo-order-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.dw-simple .wo-order-toolbar .wo-search{flex:1 1 280px;min-width:0}
+.dw-simple .wo-order-toolbar .wo-segmented{display:flex;flex:1 1 550px;min-width:0;max-width:100%;overflow-x:auto;gap:3px;padding:4px;scrollbar-width:thin}
+.dw-simple .wo-order-toolbar .wo-segmented button{flex:1 0 auto;min-width:max-content;width:auto;min-height:40px;padding:8px 10px;white-space:nowrap;font-size:13px;line-height:1.4;word-break:keep-all;border-radius:4px}
+.dw-simple .dw-filter-count{font-size:11px;opacity:.8;margin-left:6px;font-variant-numeric:tabular-nums}
+.dw-simple .dw-cutoff{margin:0;border:0}
+.dw-simple .dw-cutoff>summary{width:max-content;max-width:100%;margin-left:auto;font-weight:500;font-size:12px;padding:8px 0;min-height:40px}
+.dw-simple .dw-cutoff[open]{border-bottom:1px solid var(--dw-line);margin-bottom:12px}
+.dw-simple .dw-details{margin:12px 0;border-top:1px solid var(--dw-line);border-bottom:1px solid var(--dw-line);background:transparent}
+.dw-simple .dw-details>summary{padding:12px 4px;font-weight:600;font-size:14px;cursor:pointer;min-height:44px;color:#555762}
+.dw-simple .dw-details[open]>summary{margin-bottom:10px}
+.dw-simple .dw-pricing-bulk{width:100%;margin:0;border-bottom:0}
+.dw-simple .dw-pricing-bulk>summary{font-size:13px}
+.dw-simple .dw-product-create{background:transparent;border:0}
+.dw-simple .dw-product-create>summary{padding:8px 0;min-height:40px;width:max-content;max-width:100%;font-size:13px}
+.dw-simple .wo-dealer-orders,.dw-simple .wo-contract-table,.dw-simple .wo-catalog-table,.dw-simple .wo-pricing-table{background:#fff;border:1px solid var(--dw-line);border-radius:6px;overflow:hidden}
+.dw-simple .wo-contract-table a.dw-salon-link{color:var(--dw-ink);font-weight:700;text-decoration:underline;text-underline-offset:3px}
+.dw-simple .wo-catalog-table>article,.dw-simple .wo-contract-table>article{padding-top:14px;padding-bottom:14px}
+.dw-simple .wo-dealer-order-row>button,.dw-simple .wo-catalog-table>article,.dw-simple .wo-contract-table>article{font-size:14px}
+.dw-simple .wo-dealer-order-row>button small,.dw-simple .wo-catalog-table>article small,.dw-simple .wo-contract-table>article small{font-size:12px}
+.dw-simple .wo-dealer-order-head,.dw-simple .wo-catalog-table-head,.dw-simple .wo-contract-table-head{font-size:12px}
+.dw-body.dw-simple .erp-filters{padding:0 0 14px;border:0;border-bottom:1px solid var(--dw-line);border-radius:0;background:transparent;margin-bottom:14px}
+.dw-simple .erp-tabs,.dw-simple .flow-tabs{overflow-x:auto;flex-wrap:nowrap!important;max-width:100%;scrollbar-width:thin}
+.dw-simple .erp-tabs button,.dw-simple .flow-tabs button{flex-shrink:0;white-space:nowrap}
+.dw-simple .erp-section{box-shadow:none;border-radius:0;background:transparent;border:0;border-top:1px solid var(--dw-line)}
+.dw-simple .erp-section>header{padding:16px 0}
+.dw-simple .erp-metrics{gap:0;border-block:1px solid var(--dw-line);background:#fff;margin:14px 0 20px}
+.dw-simple .erp-metrics>*{box-shadow:none;border:0;border-right:1px solid var(--dw-line);border-radius:0;padding:16px}
+.dw-simple .erp-metrics strong{font-size:24px;line-height:1.4}
+.dw-simple[data-dealer-view="operations"] .erp-metrics{grid-template-columns:repeat(12,minmax(0,1fr))}
+.dw-simple[data-dealer-view="operations"] .erp-metrics>*{grid-column:span 3}
+.dw-simple[data-dealer-view="operations"] .erp-metrics>*:nth-child(-n+3){grid-column:span 4}
+.dw-simple .wo-calendar-head-v658{padding:0 0 14px;background:transparent;border:0}
+.dw-simple .wo-calendar-head-v658 p{font-size:12px;margin:0}
+.dw-simple .wo-calendar-kpis-v658{margin:0 0 12px}
+.dw-simple .wo-calendar-kpis-v658>article{padding:14px 16px;box-shadow:none}
+.dw-simple .wo-calendar-kpis-v658>article strong{font-size:26px}
+.dw-simple .wo-calendar-kpis-v658 .dw-details{margin:0;border:0;padding:0 16px;min-width:0}
+.dw-simple .wo-company-form,.dw-simple .wo-password-form-v653{background:#fff}
+.dw-simple .pc-heading h2{display:none}
+.dw-simple .flow-status:empty{display:none}
+.dw-simple #flow-app>h2{font-size:18px;margin:18px 0 12px}
+.dw-simple #flow-app>p{font-size:13px}
+.dw-body.dw-simple[data-dealer-role="STAFF"] .dw-product-create,.dw-body.dw-simple[data-dealer-role="STAFF"] .dw-pricing-bulk,.dw-body.dw-simple[data-dealer-role="STAFF"] .wo-pricing-bulk,.dw-body.dw-simple[data-dealer-role="STAFF"] .wo-pricing-save{display:none}
+@media(hover:hover){.dw-simple .dw-sidebar nav summary:hover{background:#f5f5f7}}
+@media(max-width:767.98px){
+  .dw-body.dw-simple .dw-topbar{height:52px}
+  .dw-body.dw-simple .dw-main{padding:18px 12px calc(88px + env(safe-area-inset-bottom))}
+  .dw-simple .dw-page-head h1{font-size:21px}
+  .dw-simple .dw-page-head{gap:10px;margin-bottom:12px}
+  .dw-simple .dw-page-head .wo-button{font-size:12px}
+  .dw-simple .dw-cutoff>summary{margin:0;min-height:44px}
+  .dw-simple .wo-order-toolbar{padding:0 0 12px}
+  .dw-simple .wo-order-toolbar .wo-search{order:-1;flex-basis:100%}
+  .dw-simple .wo-order-toolbar .wo-segmented{flex-basis:100%}
+  .dw-simple .wo-order-toolbar .wo-segmented button{min-height:44px;font-size:12px}
+  .dw-body.dw-simple .wo-dealer-order-row{padding-bottom:0}
+  .dw-simple .wo-product-filters-v659,.dw-simple .wo-pricing-toolbar-v659{min-width:0}
+  .dw-simple .erp-filters{gap:10px}
+  .dw-simple .erp-metrics strong{font-size:20px}
+  .dw-simple .erp-metrics>*{padding:12px}
+  .dw-simple[data-dealer-view="operations"] .erp-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .dw-simple[data-dealer-view="operations"] .erp-metrics>*{grid-column:auto}
+  .dw-simple[data-dealer-view="operations"] .erp-metrics>*:nth-child(-n+3){grid-column:span 2;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .dw-simple .wo-calendar-head-v658{display:flex;gap:12px;flex-wrap:wrap}
+  .dw-simple .wo-calendar-kpis-v658 .dw-details{padding:0 8px}
+  .dw-simple .dw-menu-groups{grid-template-columns:1fr 1fr}
+  .dw-simple .dw-menu-groups a{overflow-wrap:anywhere}
+}
